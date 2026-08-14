@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { isMissingColumnError } from '@/lib/supabase/errors'
+import { isDocFreeLocked, DOC_LOCKED_MESSAGE } from '@/lib/plan/free-lock'
 
 export async function POST(
   req: NextRequest,
@@ -28,7 +29,7 @@ export async function POST(
   // Verifica workspace — supporta sia owner che workspace_members
   let { data: workspace } = await supabase
     .from('workspaces')
-    .select('id')
+    .select('id, plan')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -43,7 +44,7 @@ export async function POST(
       .maybeSingle()
     if (membership) {
       const { data: mw } = await supabase
-        .from('workspaces').select('id')
+        .from('workspaces').select('id, plan')
         .eq('id', membership.workspace_id)
         .maybeSingle()
       workspace = mw
@@ -63,6 +64,10 @@ export async function POST(
 
   if (!doc) return NextResponse.json({ error: 'Documento non trovato' }, { status: 404 })
   if (doc.doc_type !== 'preventivo') return NextResponse.json({ error: 'Non è un preventivo' }, { status: 400 })
+  // Downgrade Pro→Free: un preventivo bloccato (oltre gli 8 inviati) non si converte.
+  if (await isDocFreeLocked(supabase, { plan: (workspace as { plan?: string }).plan ?? 'free', id: workspace.id }, doc)) {
+    return NextResponse.json({ error: DOC_LOCKED_MESSAGE }, { status: 403 })
+  }
 
   // Se non accettato e forceAccept=false → blocca
   if (doc.status !== 'accepted' && !forceAccept) {

@@ -16,6 +16,7 @@ import { buildPdfHtml } from '@/lib/pdf/template'
 import { fetchLogoBase64, preparePrintHtml } from '@/lib/pdf/logo'
 import { checkFreeBlock } from '@/lib/free-trial'
 import { isFreePlan } from '@/lib/plan/gate'
+import { isDocFreeLocked } from '@/lib/plan/free-lock'
 import type { PdfDocumentData } from '@/lib/pdf/template'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 
@@ -70,6 +71,14 @@ export async function GET(request: NextRequest, { params }: Params) {
       // nuovo è illeggibile per l'utente → meglio la pagina abbonamento.
       return NextResponse.redirect(new URL('/abbonamento', request.url))
     }
+  }
+
+  // ── Downgrade Pro→Free: documento bloccato (oltre gli 8 inviati) ──────
+  // Sola lettura significa "si apre e si guarda" nella scheda; il PDF è
+  // una delle azioni bloccate (Eli, 12 ago). Redirect a /abbonamento come
+  // per la bozza Free (un JSON grezzo nel tab sarebbe illeggibile).
+  if (await isDocFreeLocked(supabase, workspace, doc)) {
+    return NextResponse.redirect(new URL('/abbonamento', request.url))
   }
 
   // ── Template: snapshot → assegnato → default → qualsiasi ──

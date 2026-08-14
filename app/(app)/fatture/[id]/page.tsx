@@ -40,6 +40,8 @@ import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
 import { docNumberSlug } from '@/lib/documents/numero'
 import { residuoStornabile, sommaNoteAttive, baseStornabile, importoRitenuta, TOLLERANZA_STORNO } from '@/lib/documents/storno'
+import { isDocFreeLocked } from '@/lib/plan/free-lock'
+import { PRO_LOCK_HREF } from '@/lib/plan/gate'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -321,7 +323,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // ⚖️ Fattura già trasmessa allo SdI (stato ≠ "scartata") = emessa: niente
   // riattivazione, solo nota di credito. Oggi lo SdI è spento → sempre falso.
   const sdiTransmitted = !!(doc as any).sdi_status && (doc as any).sdi_status !== 'scartata' // eslint-disable-line @typescript-eslint/no-explicit-any
-  const canReactivate = isCancelled && !sdiTransmitted
+  // Downgrade Pro→Free: fattura INVIATA oltre le prime 8 = sola lettura
+  // (Eli, 12 ago). Le note (credito/debito) non sono 'fattura' → mai bloccate;
+  // le bozze restano aperte. Come per lo SdI: niente matita, ?edit=1 non apre
+  // il form, banner esplicito con «Torna a Pro».
+  const freeLocked = await isDocFreeLocked(supabase, { plan: workspace.plan, id: workspace.id }, doc)
+  // Riattivare una fattura annullata la riporterebbe alla modifica: su un
+  // documento bloccato non si offre (riaprirebbe la sola lettura).
+  const canReactivate = isCancelled && !sdiTransmitted && !freeLocked
 
   // ── MULTI-NOTA: le note di credito di questa fattura + il residuo ────────
   // (decisione Eli, 10 ago). Su una FATTURA trasmessa: elenco delle sue note
@@ -479,7 +488,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // dal salvataggio): la modifica non si offre nemmeno — regola dell'8 ago,
   // «se non si dovrebbe fare, non lo permettiamo». Vale anche per l'URL
   // ?edit=1 digitato a mano.
-  const editing = edit === '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted
+  const editing = edit === '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted && !freeLocked
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -497,7 +506,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             {formatDocNumber(doc.doc_number, doc.doc_type) !== '—' ? formatDocNumber(doc.doc_number, doc.doc_type) : 'Bozza'}
           </span>
         </span>
-        {edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted && (
+        {edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted && !freeLocked && (
           <Link
             href={`/fatture/${id}?edit=1`}
             style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#55534b' }}
@@ -522,6 +531,23 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       <div className="lg:hidden" style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9 }}>
         <StatusBadge status={doc.status} docType={doc.doc_type} />
       </div>
+
+      {/* Downgrade Pro→Free: fattura bloccata (oltre le 8 inviate). Spento e
+          spiegato, non nascosto: si apre e si consulta, ma le azioni sono
+          bloccate. Il dato Pro resta salvato — tornando a Pro riappare usabile. */}
+      {freeLocked && (
+        <div style={{ margin: '14px 15px 0' }} className="lg:mx-6 lg:mt-6">
+          <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#8a5a00]">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <div>
+              <b>Fattura bloccata</b> — è oltre le 8 del piano Free. Puoi aprirla e consultarla, ma non modificarla, inviarla, scaricarla o duplicarla.{' '}
+              <Link href={PRO_LOCK_HREF} style={{ fontWeight: 600, textDecoration: 'underline' }}>
+                Torna a Pro per sbloccarla
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hint una-tantum (progressive disclosure, 2 ago) alla prima fattura saldata.
           ⚠️ Compare SOLO col profilo pubblicato nella vetrina (feedback Eli 7 ago:
@@ -618,14 +644,19 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <PdfActions
-              documentId={id}
-              docNumberSlug={docNumberSlug(doc.doc_number ?? doc.id)}
-              docType={doc.doc_type}
-            />
+            {/* Fattura BLOCCATA (Free, oltre le 8): niente PDF né invio. Resta
+                lo StatusChangeDropdown (segna pagata = registrazione incasso,
+                non è una funzione Pro), come sulle trasmesse SdI. */}
+            {!freeLocked && (
+              <PdfActions
+                documentId={id}
+                docNumberSlug={docNumberSlug(doc.doc_number ?? doc.id)}
+                docType={doc.doc_type}
+              />
+            )}
             {/* 19 lug: su una fattura ANNULLATA niente "Invia al cliente" (il
                 cliente vedrebbe "annullata"): o si riattiva, o resta com'è. */}
-            {doc.public_token && !isCancelled && (
+            {doc.public_token && !isCancelled && !freeLocked && (
               <ShareButton
                 avvisoSdi={avvisoSdi}
                 documentId={id}
@@ -644,7 +675,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             {canReactivate && <RiattivaFatturaButton documentId={id} />}
             {/* Dialog email SENZA trigger: si apre dall'icona Email del pop-up
                 "Invia al cliente" (evento) — montato per ogni stato */}
-            {doc.status === 'draft' ? (
+            {!freeLocked && (doc.status === 'draft' ? (
               <SendEmailDialogController
                 avvisoSdi={avvisoSdi}
                 documentId={id}
@@ -670,7 +701,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 isResend
                 hideTrigger
               />
-            )}
+            ))}
             <StatusChangeDropdown
               documentId={id}
               currentStatus={doc.status}
@@ -862,8 +893,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         )}
 
-        {/* ── MOBILE: Anteprima + Condividi (lg:hidden) ── */}
-        <div className={editing ? 'hidden' : 'flex lg:hidden'} style={{ gap: 11 }}>
+        {/* ── MOBILE: Anteprima + Condividi (lg:hidden) ──
+            Su una fattura BLOCCATA (Free, oltre le 8) niente PDF né invio: sono
+            le azioni vietate. Resta la consultazione (le card qui sopra) e la
+            registrazione dell'incasso più sotto. */}
+        <div className={editing || freeLocked ? 'hidden' : 'flex lg:hidden'} style={{ gap: 11 }}>
           {/* Anteprima — overlay (19 lug): chiudendo si torna al punto esatto */}
           <AnteprimaButton
             src={`/api/documents/${id}/pdf?preview=1`}

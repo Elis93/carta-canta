@@ -21,6 +21,8 @@ import { AccontoCard } from '../_components/AccontoCard'
 import { WorkPhotosCard } from '../_components/WorkPhotosCard'
 import { ShareButton } from '../_components/ShareButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
+import { isDocFreeLocked } from '@/lib/plan/free-lock'
+import { PRO_LOCK_HREF } from '@/lib/plan/gate'
 import { ContextHint } from '@/components/shared/ContextHint'
 import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
@@ -143,6 +145,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     : null
 
   const isFree = workspace.plan === 'free'
+  // Downgrade Pro→Free: preventivo INVIATO oltre i primi 8 = sola lettura
+  // (Eli, 12 ago). Le bozze restano aperte; i piani a pagamento mai bloccati.
+  const freeLocked = await isDocFreeLocked(supabase, { plan: workspace.plan, id: workspace.id }, doc)
+  // ?edit=1 digitato a mano su un documento bloccato: rimbalza alla vista di
+  // lettura (il server rifiuta comunque il salvataggio, ma la modifica non si
+  // deve nemmeno aprire — regola dell'8 ago).
+  if (edit === '1' && freeLocked) redirect(`/preventivi/${id}`)
   const isDraft = doc.status === 'draft'
   const docItems = (doc as Record<string, unknown>).document_items as Array<Record<string, unknown>> | null ?? []
   const isCompleteVoce = (item: Record<string, unknown>) =>
@@ -344,9 +353,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{headerTitle}</span>
         </span>
         {edit !== '1' ? (
+          freeLocked ? null : (
           <Link href={`/preventivi/${id}?edit=1`} aria-label="Modifica preventivo" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Pencil size={18} style={{ color: '#55534b' }} />
           </Link>
+          )
         ) : (
           <Link href={`/preventivi/${id}`} aria-label="Chiudi modifica" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <X size={18} style={{ color: '#55534b' }} />
@@ -357,6 +368,23 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       {archiviato && (
         <div style={{ margin: '14px 15px 0' }} className="lg:mx-6 lg:mt-6">
           <ArchivioBanner documentId={id} docType="preventivo" />
+        </div>
+      )}
+
+      {/* Downgrade Pro→Free: preventivo bloccato (oltre gli 8 inviati). Spento
+          e spiegato: si apre e si consulta, ma non si modifica, invia, scarica
+          o duplica. Il dato resta salvato — tornando a Pro riappare usabile. */}
+      {freeLocked && (
+        <div style={{ margin: '14px 15px 0' }} className="lg:mx-6 lg:mt-6">
+          <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#8a5a00]">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <div>
+              <b>Preventivo bloccato</b> — è oltre gli 8 del piano Free. Puoi aprirlo e consultarlo, ma non modificarlo, inviarlo, scaricarlo o duplicarlo.{' '}
+              <Link href={PRO_LOCK_HREF} style={{ fontWeight: 600, textDecoration: 'underline' }}>
+                Torna a Pro per sbloccarlo
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 
@@ -643,7 +671,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             )}
           </div>
 
-          {/* Azioni riga 1: Anteprima (bianco bordato) + Condividi (navy pieno) */}
+          {/* Azioni riga 1: Anteprima (bianco bordato) + Condividi (navy pieno).
+              Su un preventivo BLOCCATO (Free, oltre gli 8) niente PDF né invio:
+              resta la sola consultazione. */}
+          {!freeLocked && (
           <div style={{ display: 'flex', gap: 11, padding: '0 15px', marginTop: 16 }}>
             {/* 19 lug: overlay, non navigazione — chiudendo si torna al punto esatto */}
             <AnteprimaButton
@@ -669,6 +700,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               />
             )}
           </div>
+          )}
 
           {/* Azioni riga 2: Segna accettato / Segna rifiutato (solo se in attesa) */}
           {(doc.status === 'sent' || doc.status === 'viewed') && (
@@ -677,8 +709,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          {/* Crea fattura (full-width navy) — solo se accettato e nessuna fattura collegata */}
-          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && (
+          {/* Crea fattura (full-width navy) — solo se accettato e nessuna fattura collegata.
+              Bloccato su Free oltre gli 8 (la conversione crea una fattura, vietata). */}
+          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && !freeLocked && (
             <div style={{ padding: '0 15px', marginTop: 11, display: 'flex', flexDirection: 'column', gap: 11 }}>
               {/* Hint una-tantum (progressive disclosure, 2 ago) */}
               <ContextHint id="converti-fattura">
@@ -703,7 +736,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {/* Riporta in bozza — SOLO accettazione manuale ("Segna accettato"
               per errore): mai se il cliente ha accettato dalla pagina pubblica
               (signer_name/accepted_ip = prova FES) o con fattura collegata. */}
-          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && !doc.signer_name && doc.accepted_ip == null && (
+          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && !doc.signer_name && doc.accepted_ip == null && !freeLocked && (
             <div style={{ padding: '0 15px', marginTop: 11 }}>
               <RiportaInBozzaButton documentId={id} fullWidth />
             </div>
@@ -803,11 +836,16 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 </Link>
               </Button>
             )}
-            <PdfActions
-              documentId={id}
-              docNumberSlug={docNumberSlug(doc.doc_number ?? doc.id)}
-            />
-            {doc.public_token && (
+            {/* Preventivo BLOCCATO (Free, oltre gli 8): niente PDF, invio o
+                conversione in fattura. Restano StatusChangeDropdown, Link
+                cliente e Scheda lavoro (consultazione/navigazione). */}
+            {!freeLocked && (
+              <PdfActions
+                documentId={id}
+                docNumberSlug={docNumberSlug(doc.doc_number ?? doc.id)}
+              />
+            )}
+            {doc.public_token && !freeLocked && (
               <ShareButton
                 documentId={id}
                 publicToken={doc.public_token}
@@ -825,7 +863,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             )}
             {/* Dialog email SENZA trigger: si apre dall'icona Email del pop-up
                 "Invia al cliente" (evento) — montato per ogni stato */}
-            {doc.status === 'draft' ? (
+            {!freeLocked && (doc.status === 'draft' ? (
               <SendEmailDialogController
                 documentId={id}
                 docNumber={doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null}
@@ -848,7 +886,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 isResend
                 hideTrigger
               />
-            )}
+            ))}
             {doc.status === 'accepted' && doc.doc_type !== 'fattura' && (
               fatturaOrigin ? (
                 <Button variant="outline" size="sm" asChild>
@@ -857,7 +895,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     Fattura {fatturaOrigin.doc_number ? formatDocNumber(fatturaOrigin.doc_number) : 'bozza'}
                   </Link>
                 </Button>
-              ) : (
+              ) : freeLocked ? null : (
                 <ConvertiFatturaButton documentId={id} />
               )
             )}
@@ -872,8 +910,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !linkedLavoroId && (
               <ApriLavoroButton documentId={id} />
             )}
-            {/* Riporta in bozza — solo accettazione manuale, senza fattura collegata */}
-            {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && !doc.signer_name && doc.accepted_ip == null && (
+            {/* Riporta in bozza — solo accettazione manuale, senza fattura
+                collegata. Bloccato su Free oltre gli 8 (riaprirebbe alla
+                modifica un documento in sola lettura). */}
+            {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && !doc.signer_name && doc.accepted_ip == null && !freeLocked && (
               <RiportaInBozzaButton documentId={id} />
             )}
           </div>

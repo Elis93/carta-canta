@@ -14,6 +14,7 @@ import { SortSelect } from './_components/SortSelect'
 import { ListPager } from '../_components/ListPager'
 import { ArchivioToggle } from '../_components/ArchivioToggle'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
+import { freeOpenSentIds } from '@/lib/plan/free-lock'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
 import { statusesFromQuery, coreQuery, linkedFatturaQuery } from '@/lib/documents/status-search'
@@ -296,6 +297,17 @@ export default async function PreventiviPage({ searchParams }: Props) {
           .in('id', docIds)
           .not('archived_at', 'is', null)
           .then((r) => (r.data ?? []).map((x) => x.id), () => [] as string[])
+      : []
+  )
+  // Downgrade Pro→Free: i preventivi INVIATI oltre i primi 8 sono in sola
+  // lettura. `freeOpenSentIds` ritorna null sui piani a pagamento → nessun
+  // blocco. Le bozze restano sempre aperte.
+  const openSentPrev = await freeOpenSentIds(supabase, workspace, 'preventivo')
+  const bloccatiIds = new Set(
+    openSentPrev
+      ? (documents ?? [])
+          .filter((d) => d.status !== 'draft' && !openSentPrev.has(d.id))
+          .map((d) => d.id)
       : []
   )
   const [{ data: convertedRows }, { data: viewRows }, { data: counts }, { count: catalogCount }] = await Promise.all([
@@ -642,6 +654,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
                     {(soloArchiviati || archiviatiIds.has(doc.id)) && (
                       <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                         Archiviato
+                      </span>
+                    )}
+                    {bloccatiIds.has(doc.id) && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#8a5a00', background: '#f5e9d0', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        🔒 Bloccato
                       </span>
                     )}
                     <span style={{ fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)', flexShrink: 0, marginLeft: 'auto' }}>

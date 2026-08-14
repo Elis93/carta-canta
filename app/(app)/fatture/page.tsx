@@ -11,6 +11,7 @@ import { StatusBadge } from '../preventivi/_components/StatusBadge'
 import { DocumentRowActions } from '../preventivi/_components/DocumentRowActions'
 import { getSdiQuota } from '@/lib/sdi/quota'
 import { archivioDisponibile } from '@/lib/documents/archivio'
+import { freeOpenSentIds } from '@/lib/plan/free-lock'
 import { SortSelect } from '../preventivi/_components/SortSelect'
 import { ListPager } from '../_components/ListPager'
 import { ArchivioToggle } from '../_components/ArchivioToggle'
@@ -345,6 +346,19 @@ export default async function FatturePage({ searchParams }: Props) {
       : []
   )
 
+  // Downgrade Pro→Free: le fatture INVIATE oltre le prime 8 sono in sola
+  // lettura. `freeOpenSentIds` ritorna null sui piani a pagamento → nessun
+  // blocco. Le bozze restano sempre aperte. Le note (credito/debito) non
+  // sono un doc_type 'fattura' → mai bloccate.
+  const openSentFatt = await freeOpenSentIds(supabase, workspace, 'fattura')
+  const bloccatiIds = new Set(
+    openSentFatt
+      ? (fatture ?? [])
+          .filter((f) => f.doc_type === 'fattura' && f.status !== 'draft' && !openSentFatt.has(f.id))
+          .map((f) => f.id)
+      : []
+  )
+
   // ⚠️ Niente riordino in JS, come nella lista Preventivi: con la lista
   // PAGINATA agiva solo sulle righe della pagina corrente e l'ordine saltava
   // fra una pagina e l'altra (Eli, 8 ago). Ordina il database su tutto
@@ -588,6 +602,11 @@ export default async function FatturePage({ searchParams }: Props) {
                     {(soloArchiviati || archiviatiIds.has(ft.id)) && (
                       <span style={{ fontSize: 11, fontWeight: 600, color: '#55534b', background: '#eeedea', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                         Archiviata
+                      </span>
+                    )}
+                    {bloccatiIds.has(ft.id) && (
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#8a5a00', background: '#f5e9d0', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        🔒 Bloccata
                       </span>
                     )}
                     <span style={{ fontSize: 13, color: dateInfo.urgent ? 'var(--cc-danger)' : 'var(--cc-text-2)', flexShrink: 0, marginLeft: 'auto' }}>

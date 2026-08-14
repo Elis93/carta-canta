@@ -24,6 +24,7 @@ import { revalidatePath } from 'next/cache'
 import React from 'react'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { checkFreeBlock } from '@/lib/free-trial'
+import { isDocFreeLocked } from '@/lib/plan/free-lock'
 import { allocateDocNumber, allocateInvoiceNumber } from '@/lib/actions/documents'
 import { registraConfermaFiscale } from '@/lib/documents/conferma-fiscale'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
@@ -170,6 +171,17 @@ export async function POST(request: NextRequest, { params }: Params) {
           : 'Impossibile inviare: il documento è già stato accettato, rifiutato o scaduto.',
       },
       { status: 422 }
+    )
+  }
+
+  // ── Downgrade Pro→Free: documento bloccato (oltre gli 8 inviati) ──────
+  // La sola lettura vieta anche il REINVIO (Eli, 12 ago). Le bozze non sono
+  // mai bloccate qui (il primo invio della 9ª è già fermato dal contatore
+  // Free più sotto): isDocFreeLocked ritorna false per le bozze.
+  if (await isDocFreeLocked(supabase, { plan: workspace.plan, id: workspace.id }, doc)) {
+    return NextResponse.json(
+      { error: 'Documento bloccato: è oltre gli 8 del piano Free. Torna a Pro per inviarlo.' },
+      { status: 403 }
     )
   }
 

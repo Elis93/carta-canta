@@ -573,6 +573,17 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       illimitati, con template personalizzati e altro.</>,
   },
   {
+    q: 'Sono tornato da Pro a Free: cosa succede ai documenti in più?',
+    parole: ['downgrade', 'torno a free', 'bloccato', 'bloccati', 'sola lettura', 'oltre gli 8', 'disdetta'],
+    a: <>Nulla viene cancellato. I primi <b>8 preventivi</b> e le prime <b>8 fatture</b> inviati
+      restano usabili come sul piano Free; quelli in più diventano di <b>sola lettura</b> — li apri
+      e li consulti, ma non puoi modificarli, inviarli, scaricarli in PDF o duplicarli (li riconosci
+      dal badge <b>🔒 Bloccato</b> nella lista). Anche i template personalizzati e i listini fornitori
+      restano visibili ma bloccati. Tutto torna com&rsquo;era{' '}
+      <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 600 }}>tornando a Pro</Link>:
+      i tuoi dati non si perdono mai.</>,
+  },
+  {
     q: 'Il preventivo è stato accettato: e ora?',
     a: <>Dal preventivo accettato tocca <b>Apri la scheda lavoro</b>: nella sezione <b>Lavori</b>{' '}(in Altro)
       segui il lavoro passo passo — da fare, in corso, finito, fatturato — con note, foto e

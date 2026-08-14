@@ -13,6 +13,7 @@ import type { FiscalOptions } from '@/types/index'
 import type { Database, Json } from '@/types/database'
 import { checkFreeBlock } from '@/lib/free-trial'
 import { isFreePlan } from '@/lib/plan/gate'
+import { isDocFreeLocked, DOC_LOCKED_MESSAGE } from '@/lib/plan/free-lock'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { DOC_NUMBER_RE, formatNotaCreditoNumber, formatNotaDebitoNumber } from '@/lib/documents/numero'
@@ -835,6 +836,8 @@ export async function updateDocumentAction(
   if (await isSdiTransmitted(supabase, documentId, existingDoc.doc_type)) {
     return { error: 'Questa fattura è già stata trasmessa allo SdI: non è più modificabile. Per correggerla serve una nota di credito.' }
   }
+  // Downgrade Pro→Free: documenti inviati oltre gli 8 in sola lettura (12 ago).
+  if (await isDocFreeLocked(supabase, workspace, existingDoc)) return { error: DOC_LOCKED_MESSAGE }
 
   const raw = Object.fromEntries(formData)
   const parsed = DocumentFormSchema.safeParse(raw)
@@ -1123,6 +1126,7 @@ export async function saveDraftAction(
   if (await isSdiTransmitted(supabase, documentId, existingDoc.doc_type)) {
     return { error: 'Questa fattura è già stata trasmessa allo SdI: non è più modificabile. Per correggerla serve una nota di credito.' }
   }
+  if (await isDocFreeLocked(supabase, workspace, existingDoc)) return { error: DOC_LOCKED_MESSAGE }
 
   // Se il documento è già stato inviato ma non ha ancora uno snapshot,
   // lo creiamo adesso dai dati correnti (prima di sovrascriverli).
@@ -2127,6 +2131,9 @@ export async function duplicateDocumentAction(
 
   if (!original) return { error: 'Documento non trovato' }
 
+  // Downgrade Pro→Free: un documento bloccato (oltre gli 8 inviati) non si duplica.
+  if (await isDocFreeLocked(supabase, workspace, original)) return { error: DOC_LOCKED_MESSAGE }
+
   // Piano Free: blocca la duplicazione di preventivi se trial scaduto o quota raggiunta
   if (workspace.plan === 'free' && original.doc_type === 'preventivo') {
     const trial = checkFreeBlock(workspace)
@@ -3035,7 +3042,7 @@ export async function registerManualResendAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
 
-  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan')
   if (!workspace) return { error: 'Workspace non trovato' }
 
   const { data: doc } = await supabase
@@ -3047,6 +3054,7 @@ export async function registerManualResendAction(
     .maybeSingle()
 
   if (!doc) return { error: 'Documento non trovato' }
+  if (await isDocFreeLocked(supabase, workspace, doc)) return { error: DOC_LOCKED_MESSAGE }
   if (doc.status === 'draft' || !doc.sent_at) {
     return { error: 'Questo documento non risulta ancora inviato: usa «Invia al cliente».' }
   }
