@@ -290,8 +290,8 @@ export default async function AltroPage() {
           <MenuRow
             href="/farti-trovare"
             icon={Store}
-            label="Fatti trovare dai clienti"
-            desc="Richieste, recensioni e vetrina"
+            label="Vetrina"
+            desc="Fatti trovare dai clienti · richieste e recensioni"
             descAlways
             hint={richiesteBadge}
           />
@@ -316,7 +316,7 @@ export default async function AltroPage() {
         </div>
         <div data-tour="altro-account" className="cc-card" style={{ borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 14px' }}>
           <MenuRow href="/impostazioni" icon={Settings} label="Impostazioni" desc="Dati attività, fiscale, notifiche" />
-          <MenuRow href="/account" icon={UserRound} label="Account e sicurezza" desc="Scarica i tuoi dati, commercialista, blocco dell’app" />
+          <MenuRow href="/account" icon={UserRound} label="Account e commercialista" desc="Il pacchetto per il commercialista, i tuoi dati e la sicurezza" descAlways />
           <MenuRow
             href="/abbonamento"
             icon={Crown}

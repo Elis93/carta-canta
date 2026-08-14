@@ -1383,6 +1383,14 @@ export function PreventivoForm({
             <div className="cc-section-label" style={{ marginBottom: 8 }}>Compila le voci con l&rsquo;AI</div>
             {AI_VOCI_ENABLED ? (
               <>
+                {/* #8 (Eli 14 ago): dire COSA caricare e A COSA SERVE — prima i
+                    tasti «Dalle foto/note» non lo spiegavano. */}
+                <p style={{ fontSize: 11.5, color: 'var(--cc-muted)', margin: '0 2px 10px', lineHeight: 1.5 }}>
+                  Non ti va di scriverle a mano? <b>Fotografa</b> un preventivo scritto a mano,
+                  un elenco di materiali o un listino (immagini JPG, PNG o HEIC), oppure parti
+                  dalle <b>note</b> che hai preso: l&rsquo;app le legge e ti propone le voci già
+                  compilate, da controllare e correggere.
+                </p>
                 {(mode === 'create' || defaultValues?.status === 'draft') && (
                   <input
                     ref={photoInputRef}

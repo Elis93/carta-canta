@@ -289,10 +289,14 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
                 <label htmlFor="sdi-auto" style={{ fontSize: 13, color: '#161616', lineHeight: 1.45, cursor: 'pointer' }}>
                   <b>Trasmissione automatica allo SdI</b>
                   <span style={{ display: 'block', fontSize: 12, color: '#767676', marginTop: 2 }}>
-                    Quando invii una fattura al cliente, l&rsquo;app la trasmette da sola
-                    all&rsquo;Agenzia il giorno dopo (24 ore per ripensarci: si annulla con
-                    un tocco dalla fattura). Spegnendola, trasmetti tu a mano — con il
-                    conto alla rovescia dei 12 giorni a ricordartelo.
+                    La fattura elettronica, oltre che al cliente, va mandata
+                    all&rsquo;<b>Agenzia delle Entrate</b> tramite il <b>Sistema di
+                    Interscambio (SdI)</b>: è questo passaggio che la rende ufficialmente
+                    emessa. Con l&rsquo;opzione attiva ci pensa l&rsquo;app — quando invii
+                    una fattura al cliente, il giorno dopo la trasmette da sola
+                    all&rsquo;Agenzia (24 ore per ripensarci: si annulla con un tocco dalla
+                    fattura). Se la spegni, la trasmetti tu a mano dalla fattura, e l&rsquo;app
+                    ti ricorda la scadenza con il conto alla rovescia dei 12 giorni.
                   </span>
                 </label>
               </div>
