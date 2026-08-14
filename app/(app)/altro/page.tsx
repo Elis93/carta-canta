@@ -19,6 +19,7 @@ import {
   Store,
   UserRound,
   Calculator,
+  Gift,
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { userInitials } from '@/lib/utils/user-initials'
@@ -329,6 +330,7 @@ export default async function AltroPage() {
               ) : undefined
             }
           />
+          <MenuRow href="/referral" icon={Gift} label="Porta un amico" desc="Invita altri artigiani e ottieni premi sull’abbonamento" />
           <MenuRow href="/aiuto"   icon={HelpCircle} label="Aiuto e contatti" />
           <MenuRow href="/novita"  icon={Sparkles} label="Novità" />
           <MenuRow href="/cestino" icon={Trash2} label="Cestino" desc="Documenti eliminati, recuperabili per 15 giorni" last />

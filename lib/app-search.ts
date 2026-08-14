@@ -139,8 +139,8 @@ export const VOCI_APP: VoceApp[] = [
     parole: ['tutorial', 'guida', 'giro guidato', 'come si usa', 'spiegazione'] },
   { label: 'Novità', dove: 'Altro', href: '/novita',
     parole: ['novità', 'cosa è cambiato', 'aggiornamenti', 'nuove funzioni'] },
-  { label: 'Invita un collega', dove: 'Altro', href: '/referral',
-    parole: ['invita', 'referral', 'amico', 'collega', 'codice invito', 'premio'] },
+  { label: 'Porta un amico', dove: 'Altro', href: '/referral',
+    parole: ['invita', 'referral', 'amico', 'collega', 'codice invito', 'premio', 'porta un amico'] },
 ]
 
 /** Minuscolo, senza accenti e senza doppi spazi: "P.IVA" e "piva" pareggiano. */
