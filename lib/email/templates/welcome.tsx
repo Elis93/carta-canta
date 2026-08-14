@@ -52,7 +52,7 @@ export function WelcomeEmail({
             <Hr style={hr} />
 
             <Text style={h2}>Con il piano gratuito hai:</Text>
-            <Text style={list}>— Fino a 8 preventivi</Text>
+            <Text style={list}>— 8 preventivi</Text>
             <Text style={list}>— PDF professionale con il tuo logo</Text>
             <Text style={list}>— Link di accettazione con firma del cliente</Text>
             <Text style={list}>— Clienti, catalogo e bilancio di base</Text>
