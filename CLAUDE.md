@@ -29,6 +29,13 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 12 ago (15) — «Codice referral» → «Codice invito» in tutto il testo visibile
+Eli: «sostituisci la scritta Codice referral in Codice Invito perché si capisce meglio, ovunque compaia».
+- Cambiato SOLO il **testo visibile**: label del campo nel signup (`SignupForm`), e in `ReferralPageClient` la label «Il tuo codice invito», i messaggi («Codice invito non ancora disponibile», «Non hai ancora inviti»), la nota di calcolo («in base agli inviti… Gli inviti…») e tutte le condizioni dei premi («almeno 3 inviti…»). Plurale «inviti» dove la grammatica lo richiede.
+- ⚠️ **NON toccati** (sono codice, non testo): la rotta `/referral`, le tabelle `referral_*`, la RPC `get_or_create_referral_code`, import/interfacce/nomi, e la voce di menu che è già «Porta un amico». Allineato anche un commento per coerenza.
+- Casing usato: «Codice invito» (sentence case, come il precedente «Codice referral»); se serve «Invito» maiuscolo è una riga.
+- **FAQ**: rilette, nessuna toccata (nessuna FAQ cita «referral»). tsc+build+701/701 verdi · scan 67/0.
+
 ### ✅ 12 ago (14) — Card voce mobile: Sconto · IVA · Costo su UNA riga, allineata, senza ricarico
 Tre richieste di Eli sulla card voce (mobile, voce aperta).
 - **① «un'unica riga di sconto, IVA e costo, così non abbiamo tante righe per voce»**: le due righe (Sconto/IVA + Costo a sé) diventano una sola **Sconto · IVA · 🔒 Costo**. Il costo inline sostituisce `VoceCosto` SOLO su mobile; sul **desktop** `VoceCosto` resta (ora dentro `hidden lg:block`). La spunta «bene significativo» continua su mobile-aperta e desktop (estratta dal wrapper di VoceCosto).

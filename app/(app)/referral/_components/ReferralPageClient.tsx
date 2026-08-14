@@ -27,7 +27,7 @@ interface ReferralPageClientProps {
 interface Scenario {
   id:        'full' | 'partial'
   label:     string           // "Scenario completo"
-  condition: string           // "almeno 3 referral con Piano Team"
+  condition: string           // "almeno 3 inviti con Piano Team"
   benefit:   string           // "Rinnovo mensile non addebitato"
   detail:    string           // "(risparmio €49/mese)"
 }
@@ -47,12 +47,12 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
       return {
         headline:  'Porta almeno 3 amici che attivano un abbonamento → ottieni 1 mese di Piano Pro gratuito.',
         step2:     'I tuoi amici si registrano e attivano il Piano Pro.',
-        threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
+        threshold: 'Almeno 3 inviti con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
         scenarios: [
           {
             id:        'full',
             label:     'Beneficio',
-            condition: 'almeno 3 referral con qualsiasi abbonamento attivo',
+            condition: 'almeno 3 inviti con qualsiasi abbonamento attivo',
             benefit:   '1 mese di Piano Pro gratuito',
             detail:    '(attivato automaticamente il 1° del mese successivo)',
           },
@@ -65,12 +65,12 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
         return {
           headline:  'Porta almeno 3 amici con un abbonamento attivo ogni mese → la scadenza del tuo Pro annuale viene posticipata di 1 mese.',
           step2:     'I tuoi amici si registrano e attivano il Piano Pro.',
-          threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
+          threshold: 'Almeno 3 inviti con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
           scenarios: [
             {
               id:        'full',
               label:     'Beneficio',
-              condition: 'almeno 3 referral con qualsiasi abbonamento attivo',
+              condition: 'almeno 3 inviti con qualsiasi abbonamento attivo',
               benefit:   'Scadenza abbonamento posticipata di 1 mese',
               detail:    '(la data di rinnovo si sposta avanti di 30 giorni)',
             },
@@ -80,12 +80,12 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
       return {
         headline:  'Porta almeno 3 amici con un abbonamento attivo ogni mese → il tuo rinnovo Pro di €19 non viene addebitato.',
         step2:     'I tuoi amici si registrano e attivano il Piano Pro.',
-        threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
+        threshold: 'Almeno 3 inviti con qualsiasi abbonamento attivo, conteggiati il 1° di ogni mese.',
         scenarios: [
           {
             id:        'full',
             label:     'Beneficio',
-            condition: 'almeno 3 referral con qualsiasi abbonamento attivo',
+            condition: 'almeno 3 inviti con qualsiasi abbonamento attivo',
             benefit:   'Rinnovo mensile di €19 non addebitato',
             detail:    '(il mese è completamente gratuito)',
           },
@@ -98,12 +98,12 @@ function getBenefitData(plan: string, billingInterval: string | null): BenefitDa
       return {
         headline:  'Porta almeno 3 amici con un abbonamento attivo → ottieni un beneficio mensile.',
         step2:     'I tuoi amici si registrano e attivano qualsiasi piano a pagamento.',
-        threshold: 'Almeno 3 referral con qualsiasi abbonamento attivo.',
+        threshold: 'Almeno 3 inviti con qualsiasi abbonamento attivo.',
         scenarios: [
           {
             id:      'full',
             label:   'Beneficio',
-            condition: 'almeno 3 referral',
+            condition: 'almeno 3 inviti',
             benefit: '1 beneficio mensile',
             detail:  '',
           },
@@ -120,15 +120,15 @@ const SYNOPTIC_RULES: {
 }[] = [
   {
     plan: 'Free',
-    rows: [{ condition: 'almeno 3 referral con qualsiasi piano', benefit: '→ 1 mese Piano Pro gratuito' }],
+    rows: [{ condition: 'almeno 3 inviti con qualsiasi piano', benefit: '→ 1 mese Piano Pro gratuito' }],
   },
   {
     plan: 'Pro mensile',
-    rows: [{ condition: 'almeno 3 referral con qualsiasi piano', benefit: '→ Rinnovo €19 non addebitato' }],
+    rows: [{ condition: 'almeno 3 inviti con qualsiasi piano', benefit: '→ Rinnovo €19 non addebitato' }],
   },
   {
     plan: 'Pro annuale',
-    rows: [{ condition: 'almeno 3 referral con qualsiasi piano', benefit: '→ Scadenza posticipata di 1 mese' }],
+    rows: [{ condition: 'almeno 3 inviti con qualsiasi piano', benefit: '→ Scadenza posticipata di 1 mese' }],
   },
 ]
 
@@ -211,7 +211,7 @@ export function ReferralPageClient({
       {/* ── Codice + Link ── */}
       {code && shareUrl ? (
         <div className="rounded-lg border bg-card p-4 space-y-4">
-          <p className="text-sm font-medium">Il tuo codice referral</p>
+          <p className="text-sm font-medium">Il tuo codice invito</p>
 
           <div className="flex gap-2 items-center">
             <div className="flex-1 rounded-md border bg-muted/50 px-3 py-2 font-mono text-lg font-bold tracking-widest text-center">
@@ -279,7 +279,7 @@ export function ReferralPageClient({
         </div>
       ) : (
         <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
-          Codice referral non ancora disponibile. Ricarica la pagina.
+          Codice invito non ancora disponibile. Ricarica la pagina.
         </div>
       )}
 
@@ -323,7 +323,7 @@ export function ReferralPageClient({
       {totalUses === 0 && (
         <div className="text-center py-6 text-sm text-muted-foreground">
           <Gift className="size-10 mx-auto mb-3 text-muted-foreground/30" />
-          <p>Non hai ancora referral. Condividi il tuo codice per iniziare!</p>
+          <p>Non hai ancora inviti. Condividi il tuo codice per iniziare!</p>
         </div>
       )}
 
@@ -365,8 +365,8 @@ export function ReferralPageClient({
 
       {/* ── Note legali ── */}
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Il beneficio viene calcolato il 1° di ogni mese in base ai referral con abbonamento
-        attivo in quel momento. I referral con abbonamento scaduto o cancellato non contano.
+        Il beneficio viene calcolato il 1° di ogni mese in base agli inviti con abbonamento
+        attivo in quel momento. Gli inviti con abbonamento scaduto o cancellato non contano.
         Per i piani mensili il credito viene scalato automaticamente dalla prossima fattura.
         Per i piani annuali la data di scadenza viene estesa direttamente.
         Non trasferibile. Carta Canta si riserva il diritto di modificare o interrompere

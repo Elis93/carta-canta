@@ -259,8 +259,8 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
           <div style={{ height: 14 }} />
 
 
-          {/* Codice referral */}
-          <div style={fieldLabel}>Codice referral</div>
+          {/* Codice invito */}
+          <div style={fieldLabel}>Codice invito</div>
           <div style={{ ...fieldBox, display: 'flex', alignItems: 'center', gap: 8, padding: '11px 12px' }}>
             <Gift style={{ width: 17, height: 17, color: 'var(--cc-muted)', flex: '0 0 auto' }} />
             <input
