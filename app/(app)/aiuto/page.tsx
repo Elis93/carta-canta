@@ -71,7 +71,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       <b>Rinnova</b>{' '}e ricarica il file: le voci si abbinano da sole (per codice o descrizione),
       i costi si aggiornano e vedi il riepilogo dei rincari. In preventivo, scegliendo una voce dal
       listino, entra col costo e il <b>prezzo proposto</b>{' '}(costo + ricarico) — e l&rsquo;app ti
-      avvisa se il listino scade prima del preventivo. I costi restano <b>solo per i tuoi occhi</b>:
+      avvisa se il listino scade prima del preventivo. Se un listino <b>scade</b>{' '}mentre un
+      preventivo ancora aperto ne usa i prezzi, ricevi un avviso nella <b>campanella</b>: rinnovalo
+      per non promettere un prezzo che il fornitore potrebbe non fare più (l&rsquo;avviso si
+      disattiva da <VaiA a="impNotifiche" />). I costi restano <b>solo per i tuoi occhi</b>:
       il cliente non li vede mai.</>,
   },
   {

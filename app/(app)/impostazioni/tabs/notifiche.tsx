@@ -18,6 +18,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
   inapp_messaggio:      true,
   inapp_richiamo:       true,
   inapp_richiesta:      true,
+  inapp_listino_scaduto: true,
   inapp_sdi_scarto:       true,
   inapp_sdi_trasmissione: true,
 }
@@ -214,6 +215,14 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           description="Nuove richieste di contatto da Fatti trovare dai clienti"
           checked={prefs.inapp_richiesta !== false}
           onChange={(v) => setNotif('inapp_richiesta', v)}
+          disabled={isPending}
+        />
+        <Divider />
+        <NotifRow
+          label="Listino fornitore scaduto"
+          description="Quando un preventivo ancora aperto usa i prezzi di un listino scaduto"
+          checked={prefs.inapp_listino_scaduto !== false}
+          onChange={(v) => setNotif('inapp_listino_scaduto', v)}
           disabled={isPending}
         />
         {SDI_ENABLED && (

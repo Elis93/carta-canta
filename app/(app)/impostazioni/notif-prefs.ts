@@ -17,6 +17,7 @@ export function extractNotifPrefs(rawPrefs: Record<string, unknown> | null): Not
     inapp_richiesta:      rawPrefs.inapp_richiesta      !== false,
     inapp_preventivo_fermo: rawPrefs.inapp_preventivo_fermo !== false,
     inapp_messaggio:      rawPrefs.inapp_messaggio      !== false,
+    inapp_listino_scaduto: rawPrefs.inapp_listino_scaduto !== false,
     inapp_sdi_scarto:       rawPrefs.inapp_sdi_scarto       !== false,
     inapp_sdi_trasmissione: rawPrefs.inapp_sdi_trasmissione !== false,
   }

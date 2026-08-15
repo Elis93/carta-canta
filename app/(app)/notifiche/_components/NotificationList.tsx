@@ -7,7 +7,7 @@ import { useTransition, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Eye, Banknote, AlertTriangle, Receipt, BellRing, MessageSquare, Clock } from 'lucide-react'
+import { Eye, Banknote, AlertTriangle, Receipt, BellRing, MessageSquare, Clock, Tag } from 'lucide-react'
 import { markNotificationsReadAction } from '@/lib/actions/notifications'
 import type { AppNotification } from '@/lib/notifications'
 
@@ -35,6 +35,7 @@ const TYPE_ICON: Record<AppNotification['type'], { icon: React.ReactNode; border
   messaggio:          { icon: <MessageSquare size={15} />, border: '#d9cdf0', color: '#6a44b5' },
   sdi_scartata:       { icon: <AlertTriangle size={15} />, border: '#ecc9c9', color: '#b05656' },
   sdi_da_trasmettere: { icon: <Receipt size={15} />,       border: '#e8d6ad', color: '#b0863e' },
+  listino_scaduto:    { icon: <Tag size={15} />,           border: '#f0d2b8', color: '#c06a2a' },
 }
 
 export function NotificationList({ notifications }: { notifications: AppNotification[] }) {

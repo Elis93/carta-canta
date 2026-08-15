@@ -475,6 +475,8 @@ const NotificationPrefsSchema = z.object({
   inapp_preventivo_fermo: z.boolean().default(true),
   // Messaggio del cliente dalla pagina pubblica del documento (4 ago)
   inapp_messaggio: z.boolean().default(true),
+  // Listino fornitore scaduto usato da un preventivo ancora aperto (15 ago, fase 3)
+  inapp_listino_scaduto: z.boolean().default(true),
   // SdI (attive solo con NEXT_PUBLIC_SDI_ENABLED)
   inapp_sdi_scarto:       z.boolean().default(true),
   inapp_sdi_trasmissione: z.boolean().default(true),

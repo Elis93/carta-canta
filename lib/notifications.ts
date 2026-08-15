@@ -19,7 +19,7 @@ type ServerClient = Awaited<ReturnType<typeof createClient>>
 
 export interface AppNotification {
   key: string
-  type: 'viewed' | 'acconto' | 'richiamo' | 'richiesta' | 'preventivo_fermo' | 'messaggio' | 'sdi_scartata' | 'sdi_da_trasmettere'
+  type: 'viewed' | 'acconto' | 'richiamo' | 'richiesta' | 'preventivo_fermo' | 'messaggio' | 'sdi_scartata' | 'sdi_da_trasmettere' | 'listino_scaduto'
   title: string
   body: string
   when: string | null
@@ -50,6 +50,7 @@ export async function getAppNotifications(
   const showRichieste = prefs?.inapp_richiesta !== false
   const showSdiScarto = SDI_ENABLED
   const showSdiPending = SDI_ENABLED && prefs?.inapp_sdi_trasmissione !== false
+  const showListinoScaduto = prefs?.inapp_listino_scaduto !== false
 
   const notifications: AppNotification[] = []
 
@@ -67,7 +68,11 @@ export async function getAppNotifications(
   // toccati di recente — la scrittura del log aggiorna updated_at.
   const msgCutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, richiesteRes, fermoRes, messaggiRes, readsRes, senzaPromemoria] = await Promise.all([
+  // Oggi come data pura (YYYY-MM-DD): un listino con `valid_until` PRIMA di oggi
+  // è scaduto. Confronto per data di calendario, senza fuso (valid_until è DATE).
+  const oggiData = new Date().toISOString().slice(0, 10)
+
+  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, richiesteRes, fermoRes, messaggiRes, readsRes, senzaPromemoria, listiniScadutiRes, listiniUsatiRes] = await Promise.all([
     showViewed
       ? supabase
           .from('documents')
@@ -216,6 +221,41 @@ export async function getAppNotifications(
     // che l'artigiano ha messo via, il comando «non ricordarmelo più» non
     // manterrebbe la promessa che fa.
     documentiSenzaPromemoria(supabase, workspaceId),
+    // Listini fornitori SCADUTI (valid_until passata) — tabella 063, tollerante.
+    showListinoScaduto
+      ? (async () => {
+          try {
+            return await db
+              .from('supplier_lists')
+              .select('id, name, valid_until')
+              .eq('workspace_id', workspaceId)
+              .not('valid_until', 'is', null)
+              .lt('valid_until', oggiData)
+              .limit(50)
+          } catch {
+            return { data: null }
+          }
+        })()
+      : Promise.resolve({ data: null }),
+    // Quali listini sono USATI da un preventivo ancora aperto (sent/viewed):
+    // solo su quelli l'avviso è urgente — il cliente potrebbe accettare un
+    // prezzo che il fornitore non fa più. Join document_items → documents.
+    showListinoScaduto
+      ? (async () => {
+          try {
+            return await db
+              .from('document_items')
+              .select('supplier_list_id, documents!inner(workspace_id, status, deleted_at)')
+              .not('supplier_list_id', 'is', null)
+              .eq('documents.workspace_id', workspaceId)
+              .in('documents.status', ['sent', 'viewed'])
+              .is('documents.deleted_at', null)
+              .limit(500)
+          } catch {
+            return { data: null }
+          }
+        })()
+      : Promise.resolve({ data: null }),
   ])
 
   const readKeys = new Set<string>(
@@ -466,6 +506,31 @@ export async function getAppNotifications(
           read: readKeys.has(key),
         })
       }
+    }
+  }
+
+  // ── Listini fornitori SCADUTI usati da un preventivo ancora aperto (fase 3) ─
+  if (showListinoScaduto) {
+    const listiniUsati = new Set<string>(
+      ((listiniUsatiRes?.data ?? []) as Array<{ supplier_list_id: string | null }>)
+        .map((r) => r.supplier_list_id)
+        .filter((x): x is string => !!x),
+    )
+    for (const l of (listiniScadutiRes?.data ?? []) as Array<{ id: string; name: string; valid_until: string }>) {
+      // Solo se un preventivo APERTO lo usa: un listino scaduto ma non in uso
+      // non è urgente, e la campanella non deve diventare un elenco di rumore.
+      if (!listiniUsati.has(l.id)) continue
+      const key = `listino_scaduto:${l.id}`
+      const dataIt = l.valid_until.split('-').reverse().join('/')
+      notifications.push({
+        key,
+        type: 'listino_scaduto',
+        title: `Listino «${l.name}» scaduto`,
+        body: `I prezzi del fornitore sono scaduti il ${dataIt} e un preventivo ancora aperto li usa: rinnova il listino per non promettere un prezzo che il fornitore potrebbe non fare più.`,
+        when: `${l.valid_until}T00:00:00`,
+        href: `/catalogo/fornitori/${l.id}`,
+        read: readKeys.has(key),
+      })
     }
   }
 
