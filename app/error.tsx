@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Loader2 } from 'lucide-react'
+import { isChunkLoadError, recoverFromChunkError } from '@/lib/chunk-error'
 
 export default function Error({
   error,
@@ -11,9 +12,24 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  // Chunk vecchio dopo un deploy → ricarica la versione nuova invece di
+  // mostrare l'errore (vedi lib/chunk-error.ts).
+  const chunk = isChunkLoadError(error)
+  const [showError, setShowError] = useState(!chunk)
+
   useEffect(() => {
     console.error('[app/error]', error)
-  }, [error])
+    if (chunk && !recoverFromChunkError()) setShowError(true)
+  }, [error, chunk])
+
+  if (!showError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 text-center">
+        <Loader2 className="size-7 animate-spin text-muted-foreground mb-4" />
+        <p className="text-sm text-muted-foreground">Aggiorno l&rsquo;app…</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 text-center">

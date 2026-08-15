@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Loader2 } from 'lucide-react'
+import { isChunkLoadError, recoverFromChunkError } from '@/lib/chunk-error'
 
 export default function AppError({
   error,
@@ -12,9 +13,30 @@ export default function AppError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  // App aperta da giorni + nuovo deploy = chunk vecchio che dà 404 al primo
+  // spostamento (Eli 15 ago: "a volte quando esco e rientro esce «Qualcosa è
+  // andato storto»"). Non è un vero errore: si recupera ricaricando la versione
+  // nuova. Mostriamo «Aggiorno…» invece del testo d'errore per non spaventare.
+  const chunk = isChunkLoadError(error)
+  const [showError, setShowError] = useState(!chunk)
+
   useEffect(() => {
     console.error('[AppError]', error)
-  }, [error])
+    if (chunk) {
+      // Se il reload è appena avvenuto e l'errore torna, NON è un chunk vecchio:
+      // esci dal ciclo e mostra l'errore vero.
+      if (!recoverFromChunkError()) setShowError(true)
+    }
+  }, [error, chunk])
+
+  if (!showError) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+        <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Aggiorno l&rsquo;app…</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
