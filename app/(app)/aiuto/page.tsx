@@ -627,9 +627,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Come funzionano appuntamenti e agenda?',
     parole: ['calendario', 'sopralluogo', 'appuntamento'],
-    a: <>In un <b>sopralluogo</b> imposta il campo <b>Appuntamento</b> (data e ora): lo ritrovi
-      nell&rsquo;<b>Agenda</b> (in Altro) e, il giorno stesso, anche nella Home sotto
-      {' '}<b>Oggi in agenda</b>, col bottone per avviare la navigazione verso il cantiere.</>,
+    a: <>In un <b>sopralluogo</b>, nella sezione <b>Cliente e cantiere</b>, apri
+      {' '}<b>Appuntamento</b> e imposta data e ora: lo ritrovi nell&rsquo;<b>Agenda</b> (in Altro)
+      e, il giorno stesso, anche nella Home sotto <b>Oggi in agenda</b>, col bottone per avviare
+      la navigazione verso il cantiere.</>,
   },
   {
     q: 'Come calcolo metri quadri, piastrelle o vernice?',

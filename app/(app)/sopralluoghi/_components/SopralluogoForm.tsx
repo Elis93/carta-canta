@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
-import { Camera, Images, Loader2, X, FileText, Navigation, Ruler, Pencil } from 'lucide-react'
+import { Camera, Images, Loader2, X, FileText, Navigation, Ruler, Pencil, ChevronDown, CalendarClock, HardHat } from 'lucide-react'
 import { toast } from 'sonner'
 import { usePhotoLightbox, ZoomHotspot } from '@/components/shared/PhotoLightbox'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
@@ -79,6 +79,55 @@ const CHIPS: Array<{ label: string; text: string }> = [
   { label: '➕ Manodopera', text: 'Manodopera: ore previste ' },
 ]
 
+// ── Sezione collassabile — le tre parti del sopralluogo si aprono e si
+//    chiudono come le voci del preventivo (Eli, 15 ago 2026: «l3 sezioni non
+//    sono divise e chiare e Agenda prende molto spazio»). Chiusa mostra un
+//    riepilogo; aperta mostra i campi. Componente a livello di modulo, senza
+//    stato proprio (FIX-31): lo stato «aperto» vive nel form.
+const secHeaderBtn: React.CSSProperties = {
+  width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+  border: 'none', background: 'none', padding: 0, cursor: 'pointer',
+  fontFamily: 'inherit', textAlign: 'left',
+}
+const secSummary: React.CSSProperties = {
+  flex: 1, minWidth: 0, textAlign: 'right', fontSize: 13, fontWeight: 500,
+  color: 'var(--cc-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+}
+
+function Sezione({
+  icon: Icon, title, summary, open, onToggle, children,
+}: {
+  icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
+  title: string
+  summary?: string
+  open: boolean
+  onToggle: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <div style={cardStyle}>
+      <button type="button" onClick={onToggle} style={secHeaderBtn} aria-expanded={open}>
+        <Icon size={16} style={{ color: '#8a887f', flexShrink: 0 }} />
+        <span style={{ ...secLabel, marginBottom: 0, flexShrink: 0 }}>{title}</span>
+        {!open && summary && <span style={secSummary}>{summary}</span>}
+        <ChevronDown
+          size={18}
+          style={{ marginLeft: 'auto', flexShrink: 0, color: '#8a887f', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}
+        />
+      </button>
+      {open && <div style={{ marginTop: 12 }}>{children}</div>}
+    </div>
+  )
+}
+
+/** "YYYY-MM-DDTHH:MM" (ora italiana) → "GG/MM · HH:MM" per il riepilogo chiuso. */
+function fmtAppuntamento(v: string): string {
+  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/)
+  if (!m) return v
+  const [, , mm, dd, hh, min] = m
+  return `${dd}/${mm} · ${hh}:${min}`
+}
+
 export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | null }) {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -110,6 +159,16 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   // Spinner solo sul bottone premuto (non su entrambi)
   const [pendingAction, setPendingAction] = useState<'transform' | 'save' | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Sezioni collassabili (Eli #1): Cliente e Appunti aperte (il cuore del
+  // sopralluogo); Foto chiusa e Appuntamento chiuso — sono i due blocchi che
+  // «prendono molto spazio». L'appuntamento resta aperto se ne esiste già uno.
+  const [openCliente, setOpenCliente] = useState(true)
+  const [openAppunti, setOpenAppunti] = useState(true)
+  const [openFoto, setOpenFoto] = useState(false)
+  const [openAppt, setOpenAppt] = useState(Boolean(defaults?.scheduledAt))
+  // Giorno scelto senza ora: il picker deve restare visibile per correggere.
+  useEffect(() => { if (apptIncomplete) setOpenAppt(true) }, [apptIncomplete])
 
   function buildFormData(): FormData {
     const fd = new FormData()
@@ -237,12 +296,21 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
     })
   }
 
+  // Riepiloghi mostrati quando la sezione è chiusa
+  const clienteSummary = client?.name?.trim() || title.trim() || 'Da compilare'
+  const appuntiSummary = (() => {
+    const line = notes.split('\n').map((s) => s.trim()).find(Boolean)
+    if (line) return line.length > 42 ? line.slice(0, 42) + '…' : line
+    if (misure.length) return `${misure.length} ${misure.length === 1 ? 'misura' : 'misure'}`
+    return 'Vuoto'
+  })()
+  const fotoSummary = photos.length ? `${photos.length} foto` : 'Nessuna foto'
+
   return (
     <div style={{ padding: '14px 15px 16px', display: 'flex', flexDirection: 'column', gap: 13 }}>
 
-      {/* Cliente / Cantiere */}
-      <div style={cardStyle}>
-        <div style={secLabel}>Cliente / Cantiere</div>
+      {/* SEZIONE 1 — Cliente e cantiere (con l'appuntamento annidato) */}
+      <Sezione icon={HardHat} title="Cliente e cantiere" summary={clienteSummary} open={openCliente} onToggle={() => setOpenCliente((v) => !v)}>
         <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
         <input
           value={title}
@@ -268,23 +336,42 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
             <Navigation size={14} /> Naviga con Google Maps
           </a>
         )}
-        <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
-            Appuntamento <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>(facoltativo)</span>
-          </div>
-          <AppointmentPicker
-            value={scheduledAt}
-            onChange={setScheduledAt}
-            onIncompleteChange={setApptIncomplete}
-            excludeKind="sopralluogo"
-            excludeId={sopId}
-          />
-        </div>
-      </div>
 
-      {/* Appunti */}
-      <div style={cardStyle}>
-        <div style={secLabel}>Appunti</div>
+        {/* Appuntamento (Agenda) — chiuso di default: è il blocco che «prende
+            molto spazio». Chiuso mostra la data scelta o «Nessuno». */}
+        <div style={{ borderTop: '0.5px solid #eee', marginTop: 12, paddingTop: 12 }}>
+          <button
+            type="button"
+            // Non si chiude finché l'ora manca: il picker deve restare visibile.
+            onClick={() => { if (openAppt && apptIncomplete) return; setOpenAppt((v) => !v) }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}
+            aria-expanded={openAppt}
+          >
+            <CalendarClock size={15} style={{ color: '#8a887f', flexShrink: 0 }} />
+            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', flexShrink: 0 }}>Appuntamento</span>
+            {!openAppt && (
+              <span style={{ ...secSummary, fontSize: 12 }}>
+                {scheduledAt ? fmtAppuntamento(scheduledAt) : 'Nessuno · facoltativo'}
+              </span>
+            )}
+            <ChevronDown size={16} style={{ marginLeft: 'auto', flexShrink: 0, color: '#8a887f', transform: openAppt ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+          </button>
+          {openAppt && (
+            <div style={{ marginTop: 10 }}>
+              <AppointmentPicker
+                value={scheduledAt}
+                onChange={setScheduledAt}
+                onIncompleteChange={setApptIncomplete}
+                excludeKind="sopralluogo"
+                excludeId={sopId}
+              />
+            </div>
+          )}
+        </div>
+      </Sezione>
+
+      {/* SEZIONE 2 — Appunti e misure */}
+      <Sezione icon={FileText} title="Appunti e misure" summary={appuntiSummary} open={openAppunti} onToggle={() => setOpenAppunti((v) => !v)}>
         <textarea
           value={notes}
           onChange={(e) => {
@@ -363,7 +450,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
             rimodificarle. Passano nelle Note interne del preventivo.
           </p>
         </div>
-      </div>
+      </Sezione>
 
       {/* Calcolatrice (stesso overlay centrato di "Calcola quantità", F13) */}
       {calcOpen && (
@@ -394,9 +481,8 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
         </div>
       )}
 
-      {/* Foto */}
-      <div style={cardStyle}>
-        <div style={secLabel}>Foto {photos.length > 0 && <span style={{ letterSpacing: 0, color: 'var(--cc-muted)', textTransform: 'none' }}>({photos.length})</span>}</div>
+      {/* SEZIONE 3 — Foto (chiusa di default: la griglia prende spazio) */}
+      <Sezione icon={Camera} title="Foto" summary={fotoSummary} open={openFoto} onToggle={() => setOpenFoto((v) => !v)}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
           {photos.map((p, i) => (
             <div key={p.id} style={{ position: 'relative', height: 76, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
@@ -462,7 +548,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           </p>
         )}
         {lightbox}
-      </div>
+      </Sezione>
 
       {error && <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 500 }}>{error}</p>}
 
