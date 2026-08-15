@@ -101,8 +101,10 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
           </Alert>
         )}
 
-        {/* Ragione sociale */}
-        <div style={fieldLabel}>Ragione sociale</div>
+        {/* Ragione sociale — l'unico campo OBBLIGATORIO: senza, i documenti non
+            hanno intestazione e l'app rimanda comunque qui. Per questo il passo
+            non si salta (Eli, #0): si segna l'obbligatorietà con l'asterisco. */}
+        <div style={fieldLabel}>Ragione sociale <span style={{ color: '#c0392b' }}>*</span></div>
         <input
           id="ragione_sociale"
           name="ragione_sociale"
@@ -195,6 +197,11 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
             />
           </div>
         </div>
+
+        <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '14px 0 0' }}>
+          <span style={{ color: '#c0392b' }}>*</span> Campo obbligatorio. Gli altri puoi
+          aggiungerli ora o più avanti dalle Impostazioni.
+        </p>
 
         <button type="submit" disabled={isPending} style={{ ...primaryBtn, opacity: isPending ? 0.7 : 1 }}>
           {isPending ? (
@@ -425,23 +432,10 @@ export default function OnboardingPage() {
         {step === 1 && <Step1 onSuccess={() => setStep(2)} />}
         {step === 2 && <Step3 onComplete={handleComplete} />}
 
-        {/* Salta per ora (solo step 1, come da mockup) */}
-        {step === 1 && (
-          <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--cc-muted)', padding: '18px 0' }}>
-            <button
-              type="button"
-              onClick={() => {
-                // Cookie "salto onboarding": senza, il layout dell'app rimanda subito
-                // qui (ragione_sociale mancante) e il bottone sembra non funzionare.
-                document.cookie = 'cc_onboarding_skip=1; path=/; max-age=2592000; samesite=lax'
-                router.push('/dashboard')
-              }}
-              style={{ background: 'none', border: 'none', color: 'var(--cc-muted)', fontSize: 13, cursor: 'pointer' }}
-            >
-              Salta per ora
-            </button>
-          </div>
-        )}
+        {/* Il «Salta per ora» del passo 1 è stato TOLTO (Eli, #0): la ragione
+            sociale è obbligatoria (l'app rimanderebbe comunque qui), quindi qui
+            non si salta. Al passo 2 («Tutto pronto!») resta «Vai alla dashboard»
+            per chi vuole entrare subito. */}
       </div>
     </div>
   )

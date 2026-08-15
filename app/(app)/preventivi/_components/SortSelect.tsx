@@ -21,13 +21,14 @@ const SORT_OPTIONS = [
   { value: 'amount_asc',  label: 'Importo ↑' },
 ]
 
-// Default = 'oldest' ("Meno recenti"). La preferenza è salvata in un COOKIE di
-// sessione (niente Max-Age → si azzera chiudendo il browser) letto SERVER-SIDE
-// dalle pagine /preventivi e /fatture: la lista arriva già nell'ordine scelto
-// al primo paint, senza il router.replace post-mount che causava il "salto"
-// visibile dei documenti ~1s dopo l'apertura della pagina.
+// Default = 'recent' ("Ultima modifica" → updated_at DESC). Eli, 15 ago 2026:
+// la prima volta le liste si vedono dall'ultimo documento modificato.
+// La preferenza è salvata in un COOKIE di sessione (niente Max-Age → si azzera
+// chiudendo il browser) letto SERVER-SIDE dalle pagine /preventivi e /fatture:
+// la lista arriva già nell'ordine scelto al primo paint, senza il
+// router.replace post-mount che causava il "salto" visibile dei documenti.
 // Cookie PER-PAGINA: la scelta fatta sui Preventivi non si applica alle Fatture.
-const DEFAULT_SORT = 'oldest'
+const DEFAULT_SORT = 'recent'
 
 export function SortSelect({ currentSort }: { currentSort?: string }) {
   const router = useRouter()

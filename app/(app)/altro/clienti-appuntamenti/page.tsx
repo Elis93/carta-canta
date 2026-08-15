@@ -9,7 +9,7 @@ export default function ClientiAppuntamentiPage() {
     <HubShell title="Clienti e appuntamenti">
       <MenuRow href="/clienti"      icon={Users}        label="Clienti" desc="La tua rubrica" descAlways />
       <MenuRow href="/calendario"   icon={CalendarDays} label="Agenda appuntamenti" desc="Sopralluoghi e lavori della settimana" descAlways />
-      <MenuRow href="/sopralluoghi" icon={HardHat}      label="Sopralluoghi" desc="Foto e appunti presi dal cliente" descAlways last />
+      <MenuRow href="/sopralluoghi" icon={HardHat}      label="Sopralluoghi" desc="Foto e appunti presi presso il cliente" descAlways last />
     </HubShell>
   )
 }

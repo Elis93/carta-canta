@@ -110,10 +110,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
     .is('deleted_at', null)
 
   // Applica ordinamento
-  // DEFAULT (nessun parametro o 'oldest'): "Meno recenti" → updated_at ASC.
-  // Così non c'è più il "flip" all'apertura della pagina.
-  if (sort === 'recent') {
-    query = query.order('updated_at', { ascending: false }) // Ultima modifica
+  // DEFAULT (nessun parametro o 'recent'): "Ultima modifica" → updated_at DESC
+  // (Eli, 15 ago 2026: la prima volta i documenti si vedono dall'ultimo
+  // modificato). La preferenza è nel cookie per-pagina, quindi niente "flip".
+  if (sort === 'oldest') {
+    query = query.order('updated_at', { ascending: true }) // Meno recenti
   } else if (sort === 'expiry') {
     query = query
       .order('expires_at', { ascending: true, nullsFirst: false })
@@ -131,8 +132,8 @@ export default async function PreventiviPage({ searchParams }: Props) {
   } else if (sort === 'amount_asc') {
     query = query.order('total', { ascending: true, nullsFirst: false })
   } else {
-    // default ('oldest' o nessun parametro): meno recenti per primi
-    query = query.order('updated_at', { ascending: true })
+    // default ('recent' o nessun parametro): ultima modifica per prima
+    query = query.order('updated_at', { ascending: false })
   }
 
   // ⚠️ L'ARCHIVIO NASCONDE DALLA NAVIGAZIONE, NON DALLA RICERCA (Eli, 8 ago:

@@ -74,7 +74,7 @@ export function TextSizeToggle() {
     >
       {/* 2 ago sera (Eli): "si capisce già cosa fa" — via la descrizione sotto */}
       <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 600, color: '#161616' }}>
-        Testo grande e leggibile
+        Testo grande
       </span>
       {/* Levetta */}
       <span

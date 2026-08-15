@@ -124,9 +124,10 @@ export default async function FatturePage({ searchParams }: Props) {
     .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
     .is('deleted_at', null)
 
-  // Ordinamento — default 'oldest' (updated_at ASC), coerente con Preventivi
-  if (sort === 'recent') {
-    query = query.order('updated_at', { ascending: false })
+  // Ordinamento — default 'recent' (updated_at DESC = ultima modifica),
+  // coerente con Preventivi (Eli, 15 ago 2026).
+  if (sort === 'oldest') {
+    query = query.order('updated_at', { ascending: true })
   } else if (sort === 'expiry') {
     query = query
       .order('expires_at', { ascending: true, nullsFirst: false })
@@ -143,7 +144,8 @@ export default async function FatturePage({ searchParams }: Props) {
   } else if (sort === 'amount_asc') {
     query = query.order('total', { ascending: true, nullsFirst: false })
   } else {
-    query = query.order('updated_at', { ascending: true })
+    // default ('recent' o nessun parametro): ultima modifica per prima
+    query = query.order('updated_at', { ascending: false })
   }
 
   if (date_from && /^\d{4}-\d{2}-\d{2}$/.test(date_from))

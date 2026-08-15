@@ -117,7 +117,7 @@ export function FabCreateMenu() {
               <span style={{ ...OI, background: '#f4efe3' }}><HardHat size={20} style={{ color: 'var(--cc-navy)' }} /></span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <b style={{ display: 'block', fontSize: 15.5, fontWeight: 600, color: '#161616' }}>Nuovo sopralluogo</b>
-                <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>Foto e appunti presi dal cliente</span>
+                <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>Foto e appunti presi presso il cliente</span>
               </span>
             </Link>
           </div>

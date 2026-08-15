@@ -68,7 +68,7 @@ export const VOCI_APP: VoceApp[] = [
   { label: 'Agenda appuntamenti', dove: 'Altro', href: '/calendario',
     parole: ['agenda', 'appuntamenti', 'calendario', 'settimana', 'quando devo andare'] },
   { label: 'Sopralluoghi', dove: 'Altro', href: '/sopralluoghi',
-    desc: 'Foto e appunti presi dal cliente',
+    desc: 'Foto e appunti presi presso il cliente',
     parole: ['sopralluogo', 'sopralluoghi', 'visita', 'foto dal cliente', 'appunti'] },
   { label: 'Clienti', dove: 'Altro', href: '/clienti',
     desc: 'La rubrica dei tuoi clienti',

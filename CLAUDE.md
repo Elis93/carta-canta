@@ -1521,7 +1521,7 @@ Questa regola PREVALE su crescita, marketing e velocità di rilascio. In pratica
 - `StatusBadge` con prop `docType` per distinguere fatture da preventivi (accepted→"Pagata", rejected→"Annullata").
 - IVA visibile su mobile per regime ordinario (grid-cols-5 nel VociTable mobile).
 - `safeAccentColor` obbligatorio in `TemplatePreview.tsx` e `template.ts` per evitare testo chiaro su sfondo bianco.
-- **Ordinamento lista preventivi (aggiornato sessione 26):** default = **`oldest` ("Meno recenti", `updated_at ASC`)** — NON più `recent`. La preferenza utente è in **sessionStorage** (chiave `preventivi_sort_v2`), vale solo per la sessione. Questo elimina il "flip" all'apertura della pagina (prima il default server `recent` + localStorage `oldest` causava un `router.replace` visibile). NB: supera le note della sessione 18 che descrivevano localStorage + default `recent`.
+- **Ordinamento liste preventivi/fatture (aggiornato 15 ago 2026):** default = **`recent` ("Ultima modifica", `updated_at DESC`)** — Eli: la prima volta le liste si vedono dall'ultimo documento modificato. La preferenza è in un **COOKIE di sessione PER-PAGINA** (`cc_sort_preventivi` / `cc_sort_fatture`, niente Max-Age) letto **server-side** dalle pagine → la lista arriva già ordinata al primo paint, niente "flip" post-mount. Preventivi e fatture hanno memoria **separata**. `DEFAULT_SORT = 'recent'` in `SortSelect.tsx`; nel branch di query delle due pagine `'oldest'` è ASC esplicito e il ramo `else` (default/`recent`) è DESC. (Storia: fino al 14 ago il default era `oldest` + sessionStorage `preventivi_sort_v2`, ora non più usato.)
 
 ### B.3 Regole numerazione documenti
 
