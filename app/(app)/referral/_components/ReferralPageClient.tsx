@@ -178,7 +178,7 @@ export function ReferralPageClient({
       {/* ── Beneficio per il tuo piano ── */}
       <div className="rounded-xl border-2 border-primary/25 bg-primary/5 p-4 space-y-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary/70">
-          Il tuo beneficio
+          Il tuo beneficio se porti un amico
         </p>
 
         {benefit.scenarios.map((s) => (
