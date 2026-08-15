@@ -62,11 +62,15 @@ export function FabCreateMenu() {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
           background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-          marginTop: -14, fontFamily: 'inherit',
+          fontFamily: 'inherit',
         }}
       >
+        {/* Solo il CERCHIO sporge (marginTop negativo qui, non sull'intero
+            bottone): così l'etichetta «Crea» resta in basso, allineata con le
+            altre della barra (Eli 15 ago: «stessa distanza col + al centro»
+            — le scritte devono stare tutte sulla stessa riga). */}
         <div
           style={{
             width: 50, height: 50, borderRadius: '50%',
@@ -75,11 +79,12 @@ export function FabCreateMenu() {
             boxShadow: 'var(--cc-shadow-fab)',
             transition: 'transform .18s ease',
             transform: open ? 'rotate(45deg)' : 'none',
+            marginTop: -22,
           }}
         >
           <Plus size={24} strokeWidth={2} />
         </div>
-        <span style={{ fontSize: 11, lineHeight: 1, color: 'var(--cc-text-3)' }}>Crea</span>
+        <span style={{ fontSize: 12, lineHeight: 1, color: 'var(--cc-text-3)' }}>Crea</span>
       </button>
 
       {mounted && open && createPortal(
