@@ -25,6 +25,7 @@ import { ExportCommercialistaButton } from '@/components/shared/ExportCommercial
 import { AccountantCard } from '@/components/shared/AccountantCard'
 import { DeleteAccountCard } from '@/components/shared/DeleteAccountCard'
 import { BiometricToggle } from '@/components/security/BiometricToggle'
+import { TwoFactorCard } from '@/components/security/TwoFactorCard'
 import { SignOutEverywhereCard } from './SignOutEverywhereCard'
 
 const cardStyle: React.CSSProperties = {
@@ -48,6 +49,9 @@ export function DatiSections({
       <div>
         {/* ── Blocco dell'app (impronta / volto) ── */}
         <BiometricToggle />
+
+        {/* ── Verifica in due passaggi (2FA) ── */}
+        <TwoFactorCard />
 
         {/* ── Chiudi tutte le sessioni aperte ── */}
         <SignOutEverywhereCard />

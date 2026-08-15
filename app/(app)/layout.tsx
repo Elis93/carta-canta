@@ -45,7 +45,7 @@ async function AppLayoutInner({
 }: {
   children: React.ReactNode
 }) {
-  const { user, workspace } = await getSessionWorkspace()
+  const { supabase, user, workspace } = await getSessionWorkspace()
 
   // Il middleware garantisce che questa route group sia accessibile solo agli utenti
   // autenticati. Se user è null qui è un'anomalia (es. errore di rete verso Supabase
@@ -63,6 +63,20 @@ async function AppLayoutInner({
       'Sessione non disponibile. Ricarica la pagina o rieffettua il login.'
     )
   }
+
+  // ── Verifica in due passaggi (2FA): se l'utente ha il 2FA attivo ma NON l'ha
+  // completato in questa sessione, va alla schermata di verifica. Riguarda SOLO
+  // chi ha abilitato il 2FA (raggio d'azione limitato agli opt-in).
+  // ⚠️ FAIL-OPEN: se la lettura dell'AAL fallisce o è ambigua NON blocchiamo
+  // nessuno — un bug qui non deve chiudere fuori gli utenti; al massimo il 2FA
+  // non viene imposto. Il `redirect()` sta FUORI dal try/catch: lancia
+  // NEXT_REDIRECT, che il catch non deve mai inghiottire.
+  let mfaPending = false
+  try {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    mfaPending = !!aal && aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2'
+  } catch { /* fail-open: nessun blocco */ }
+  if (mfaPending) redirect('/mfa')
 
   if (!workspace) redirect('/onboarding')
 

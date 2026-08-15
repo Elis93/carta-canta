@@ -13,6 +13,7 @@ import { PLAN_FEATURES, AI_IMPORT_ENABLED, type PlanType } from '@/lib/stripe/pl
 import { createPortalSessionAction } from '@/lib/actions/subscription'
 import { FREE_DOC_LIMIT, FREE_INVOICE_LIMIT, FREE_TRIAL_DAYS, checkFreeBlock } from '@/lib/free-trial'
 import { BackButton } from '@/components/shared/BackButton'
+import { TwoFactorNudge } from '@/components/security/TwoFactorNudge'
 
 const PLAN_DISPLAY: Record<PlanType, { label: string; color: string }> = {
   free:     { label: 'Free',     color: 'bg-gray-100 text-gray-700' },
@@ -72,6 +73,11 @@ export default async function AbbonamentoPage() {
 
         {/* Banner successo */}
         <div className="px-4 pt-3">
+          {currentPlan !== 'free' && (
+            <div className="pb-3">
+              <TwoFactorNudge plan={currentPlan} />
+            </div>
+          )}
           <Suspense fallback={null}>
             <SuccessBanner />
           </Suspense>
