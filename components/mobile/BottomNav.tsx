@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Home, FileText, Receipt, Menu, Plus } from 'lucide-react'
+import { Home, FileText, Receipt, Menu } from 'lucide-react'
+import { FabCreateMenu } from './FabCreateMenu'
 
 // Nasconde la BottomNav mentre si scrive in un campo (feedback Eli 22 lug #21):
 // altrimenti su Android la barra fixed sale sopra la tastiera. Con un campo a
@@ -150,39 +151,9 @@ export function MobileBottomNav() {
           )
         })}
 
-        {/* FAB centrale — dentro la barra, margin-top:-14px lo fa sporgere */}
-        <Link
-          href="/preventivi/nuovo"
-          aria-label="Nuovo preventivo"
-          data-tour="fab"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 4,
-            textDecoration: 'none',
-            marginTop: -14,
-          }}
-        >
-          <div
-            style={{
-              width: 50,
-              height: 50,
-              borderRadius: '50%',
-              background: 'var(--cc-navy)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: 'var(--cc-shadow-fab)',
-            }}
-          >
-            <Plus size={24} strokeWidth={2} />
-          </div>
-          <span style={{ fontSize: 11, lineHeight: 1, color: 'var(--cc-text-3)' }}>
-            Preventivo
-          </span>
-        </Link>
+        {/* FAB centrale — dentro la barra, margin-top:-14px lo fa sporgere.
+            Toccandolo si aprono DUE scelte: Preventivo o Sopralluogo (Eli 14 ago). */}
+        <FabCreateMenu />
 
         {/* Tab destra */}
         {RIGHT_TABS.map(tab => {

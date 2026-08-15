@@ -244,7 +244,7 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
             element: lazy('[data-tour="fab"]'),
             popover: {
               title: 'Si parte da qui',
-              description: desc('Da qui crei un nuovo preventivo, da qualsiasi schermata (sul telefono \u00e8 il bottone <b>+</b>).', 2),
+              description: desc('Da qui crei un nuovo <b>preventivo</b> o un <b>sopralluogo</b>, da qualsiasi schermata (sul telefono \u00e8 il bottone <b>+</b>: toccalo e scegli).', 2),
             },
           },
         ],
