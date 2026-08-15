@@ -14,6 +14,11 @@ function PasswordInput({
   ...props
 }: Omit<React.ComponentProps<'input'>, 'type'>) {
   const [visible, setVisible] = React.useState(false)
+  // Accessibilità (WCAG 4.1.2): l'etichetta visibile «Password» è uno <span>
+  // non associato all'input → axe segnala un errore CRITICO. Se il chiamante non
+  // fornisce un nome accessibile, ricadi su "Password". L'aria-label è PRIMA
+  // dello spread: se il chiamante ne passa uno, vince il suo.
+  const hasAccessibleName = props['aria-label'] != null || props['aria-labelledby'] != null
 
   return (
     <div className="relative">
@@ -21,6 +26,7 @@ function PasswordInput({
         type={visible ? 'text' : 'password'}
         data-slot="input"
         disabled={disabled}
+        aria-label={hasAccessibleName ? undefined : 'Password'}
         className={cn(
           // Stesso stile di Input + padding-right per il bottone
           'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 pr-9 text-base transition-colors outline-none',
