@@ -12,6 +12,17 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
     data: 'Metà agosto 2026',
+    titolo: 'Menu più semplice, creazione più veloce, cestino a portata di mano',
+    punti: [
+      'Il tasto «+» in basso ora chiede cosa vuoi creare: Nuovo preventivo o Nuovo sopralluogo. I due gesti più frequenti in un tocco, senza passare dai menu.',
+      '«Altro» riorganizzato: meno voci a vista, raggruppate per quello che servono — «Clienti e appuntamenti», «Catalogo e strumenti», «Abbonamento e inviti», «Aiuto e novità» — con sotto ognuna una riga che dice cosa ci trovi. Tocchi il gruppo e scegli dentro.',
+      'Il Cestino è entrato nelle liste: dentro Preventivi e Fatture trovi il tasto «Cestino» accanto all’«Archivio». Ognuno mostra i documenti eliminati del suo tipo, che recuperi con un tocco entro 15 giorni.',
+      '«Fatti trovare dai clienti» ora si chiama «Vetrina»: lo stesso posto dove pubblichi il tuo profilo e raccogli richieste e recensioni, con un nome più chiaro.',
+      'Le voci nuove si salvano da sole nel Catalogo: quando scrivi in un preventivo una voce che non c’era, l’app la aggiunge al tuo catalogo (senza doppioni). La volta dopo la ritrovi fra i suggerimenti.',
+    ],
+  },
+  {
+    data: 'Metà agosto 2026',
     titolo: 'Note di credito, proposte più chiare e conferme di accettazione',
     punti: [
       'IVA al 10% e beni significativi: quando installi una caldaia, degli infissi o dei sanitari, il 10% vale solo fino al valore del lavoro — quello che avanza va al 22%. Spunti «È un bene significativo» sulla voce e l’app fa i conti, divide la riga in due e scrive in fattura il valore del bene, come chiede la legge. Compare solo fuori dal forfettario, sulle voci al 10%.',

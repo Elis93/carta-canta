@@ -13,6 +13,8 @@ import { DraftSavedBanner } from './_components/DraftSavedBanner'
 import { SortSelect } from './_components/SortSelect'
 import { ListPager } from '../_components/ListPager'
 import { ArchivioToggle } from '../_components/ArchivioToggle'
+import { CestinoToggle } from '../_components/CestinoToggle'
+import { CestinoInline } from '../_components/CestinoInline'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { freeOpenSentIds } from '@/lib/plan/free-lock'
 import { formatDocNumber } from '@/lib/utils'
@@ -71,6 +73,29 @@ export default async function PreventiviPage({ searchParams }: Props) {
   // spacciata per archivio. Meglio riportare alla lista, che almeno dice
   // il vero.
   if (soloArchiviati && !archivioOk) redirect('/preventivi')
+
+  // CESTINO (#11, 14 ago): il tab «Cestino» mostra i preventivi eliminati,
+  // accanto all'Archivio. È una vista a sé — dati diversi (deleted_at), azioni
+  // diverse (ripristina/elimina), client component — quindi NON passa dalla
+  // query normale: si esce subito, altrimenti `.eq('status','cestino')`
+  // fallirebbe sull'enum. Non dipende dalla migration archivio.
+  if (status === 'cestino') {
+    return (
+      <div className="p-4 lg:p-6 max-w-5xl mx-auto">
+        <div className="lg:hidden -mx-4 -mt-4 mb-4 cc-title-band" style={{ padding: '15px 15px 13px' }}>
+          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Preventivi</h1>
+        </div>
+        <div className="hidden lg:flex items-center gap-3 mb-4">
+          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Preventivi</h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-2" style={{ marginBottom: 14 }}>
+          {archivioOk && <ArchivioToggle base="/preventivi" attivo={false} />}
+          <CestinoToggle base="/preventivi" attivo />
+        </div>
+        <CestinoInline docTypes={['preventivo']} />
+      </div>
+    )
+  }
 
   // Query preventivi — ordinamento configurabile tramite ?sort=
   let query = supabase
@@ -523,6 +548,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             allineata a destra, invece di far sbordare la pagina. */}
         <div className="flex flex-wrap items-center gap-2 lg:hidden" style={{ margin: '14px 0' }}>
           {archivioOk && <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} />}
+          <CestinoToggle base="/preventivi" attivo={false} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
             <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
             <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
@@ -536,6 +562,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
           </div>
           {archivioOk && <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} />}
+          <CestinoToggle base="/preventivi" attivo={false} />
           <AdvancedFilters />
           <SortSelect currentSort={sort} />
         </div>

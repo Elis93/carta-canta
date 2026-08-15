@@ -15,6 +15,8 @@ import { freeOpenSentIds } from '@/lib/plan/free-lock'
 import { SortSelect } from '../preventivi/_components/SortSelect'
 import { ListPager } from '../_components/ListPager'
 import { ArchivioToggle } from '../_components/ArchivioToggle'
+import { CestinoToggle } from '../_components/CestinoToggle'
+import { CestinoInline } from '../_components/CestinoInline'
 import { DraftSavedBanner } from '../preventivi/_components/DraftSavedBanner'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
@@ -91,6 +93,29 @@ export default async function FatturePage({ searchParams }: Props) {
   // spacciata per archivio. Meglio riportare alla lista, che almeno dice
   // il vero.
   if (soloArchiviati && !archivioOk) redirect('/fatture')
+
+  // CESTINO (#11, 14 ago) — gemello della lista preventivi: il tab «Cestino»
+  // mostra le fatture (e le note di credito/debito) eliminate, accanto
+  // all'Archivio. Vista a sé (dati/azioni diversi, client component): si esce
+  // subito, senza passare dalla query normale. Non dipende dalla migration
+  // archivio.
+  if (status === 'cestino') {
+    return (
+      <div className="p-4 lg:p-6 max-w-4xl mx-auto">
+        <div className="lg:hidden -mx-4 -mt-4 mb-4 cc-title-band" style={{ padding: '15px 15px 13px' }}>
+          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Fatture</h1>
+        </div>
+        <div className="hidden lg:flex items-center gap-3 mb-4">
+          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Fatture</h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-2" style={{ marginBottom: 14 }}>
+          {archivioOk && <ArchivioToggle base="/fatture" attivo={false} />}
+          <CestinoToggle base="/fatture" attivo />
+        </div>
+        <CestinoInline docTypes={['fattura', 'nota_credito', 'nota_debito']} />
+      </div>
+    )
+  }
 
   let query = supabase
     .from('documents')
@@ -511,6 +536,7 @@ export default async function FatturePage({ searchParams }: Props) {
             allineata a destra, invece di far sbordare la pagina. */}
         <div className="flex flex-wrap items-center gap-2 lg:hidden" style={{ margin: '14px 0' }}>
           {archivioOk && <ArchivioToggle base="/fatture" attivo={soloArchiviati} q={q} sort={sortParam} />}
+          <CestinoToggle base="/fatture" attivo={false} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
             <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
             <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
@@ -525,6 +551,7 @@ export default async function FatturePage({ searchParams }: Props) {
             <SearchBar placeholder="Cerca per numero, cliente, stato, voce…" paramName="q" />
           </div>
           {archivioOk && <ArchivioToggle base="/fatture" attivo={soloArchiviati} q={q} sort={sortParam} />}
+          <CestinoToggle base="/fatture" attivo={false} />
           <AdvancedFilters basePath="/fatture" />
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px' }}>
             <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />

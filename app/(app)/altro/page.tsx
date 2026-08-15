@@ -13,7 +13,6 @@ import {
   UserRound,
   Crown,
   HelpCircle,
-  Trash2,
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { userInitials } from '@/lib/utils/user-initials'
@@ -198,11 +197,14 @@ export default async function AltroPage() {
         </div>
       </div>
 
-      {/* ── Utilità del telefono + cestino ── */}
+      {/* ── Utilità del telefono ──
+          Il Cestino NON è più qui (#11, 14 ago): ora vive DENTRO Preventivi e
+          Fatture, accanto all'Archivio — come l'Archivio, che nemmeno lui sta
+          in «Altro». È il posto giusto: sono documenti, si recuperano dalla
+          loro lista. Resta raggiungibile anche dalla ricerca e dalle FAQ. */}
       <div style={{ marginTop: 16 }}>
         <div style={cardStyle}>
-          <MenuRow href="/cestino" icon={Trash2} label="Cestino" desc="Documenti eliminati, recuperabili per 15 giorni" descAlways />
-          <div style={{ borderTop: '0.5px solid #eee', padding: '9px 0' }}>
+          <div style={{ padding: '9px 0' }}>
             <TextSizeToggle />
           </div>
           <div style={{ borderTop: '0.5px solid #eee' }}>

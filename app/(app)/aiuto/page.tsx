@@ -134,8 +134,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Cosa succede se elimino un preventivo o una fattura?',
     parole: ['cestino', 'cancellare', 'buttato', 'per sbaglio', 'recuperare'],
-    a: <>Non sparisce subito: finisce nel <VaiA a="cestino" />, dove resta{' '}
-      <b>15 giorni</b>{' '}e da cui puoi rimetterlo a posto con un tocco. Passati i 15 giorni viene
+    a: <>Non sparisce subito: finisce nel <b>Cestino</b>, dove resta{' '}
+      <b>15 giorni</b>{' '}e da cui puoi rimetterlo a posto con un tocco. Trovi il cestino col
+      tasto <b>Cestino</b>{' '}dentro Preventivi o Fatture, accanto all&rsquo;<b>Archivio</b>{' '}—
+      ognuno mostra i documenti del suo tipo. Passati i 15 giorni viene
       cancellato per davvero, e da lì non si recupera più. Nel cestino puoi anche eliminarlo
       subito e per sempre, ma è una scelta senza ritorno. Il <b>numero</b>{' '}del documento
       eliminato <b>non viene riusato</b>: nella numerazione resta un buco, ed è normale — è
