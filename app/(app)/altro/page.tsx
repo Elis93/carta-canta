@@ -11,7 +11,6 @@ import {
   Store,
   Settings,
   UserRound,
-  Crown,
   HelpCircle,
 } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
@@ -80,10 +79,10 @@ export default async function AltroPage() {
   ) : null
 
   const profileItems = [
-    { key: 'dati',    label: 'Dati attività (ragione sociale)', done: !!workspace.ragione_sociale,              href: '/impostazioni?tab=generale' },
-    { key: 'phone',   label: 'Telefono (per farti contattare)', done: !!workspace.phone,                        href: '/impostazioni?tab=generale#telefono' },
-    { key: 'logo',    label: 'Carica il tuo logo',              done: !!workspace.logo_url,                     href: '/impostazioni?tab=generale#logo' },
-    { key: 'ateco',   label: 'Codice ATECO (voci suggerite)',   done: (workspace.ateco_codes?.length ?? 0) > 0, href: '/impostazioni?tab=fiscale#ateco' },
+    { key: 'dati',    label: 'Dati attività (ragione sociale)', done: !!workspace.ragione_sociale,              href: '/impostazioni/generale' },
+    { key: 'phone',   label: 'Telefono (per farti contattare)', done: !!workspace.phone,                        href: '/impostazioni/generale#telefono' },
+    { key: 'logo',    label: 'Carica il tuo logo',              done: !!workspace.logo_url,                     href: '/impostazioni/generale#logo' },
+    { key: 'ateco',   label: 'Codice ATECO (voci suggerite)',   done: (workspace.ateco_codes?.length ?? 0) > 0, href: '/impostazioni/fiscale#ateco' },
     { key: 'listino', label: 'Carica il listino nel catalogo',  done: (catalogCount ?? 0) > 0,                  href: '/catalogo' },
   ]
   const profileDoneCount = profileItems.filter((i) => i.done).length
@@ -102,7 +101,7 @@ export default async function AltroPage() {
       <div style={{ padding: '0 15px' }}>
 
       {/* ── Scheda profilo — tap: Impostazioni, tab Generale ── */}
-      <Link href="/impostazioni?tab=generale" style={{ textDecoration: 'none', display: 'block', margin: '16px 0 0' }}>
+      <Link href="/impostazioni/generale" style={{ textDecoration: 'none', display: 'block', margin: '16px 0 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 13, background: '#fff', borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '13px 14px' }}>
           <WorkspaceLogo
             logoUrl={workspace.logo_url}
@@ -180,14 +179,12 @@ export default async function AltroPage() {
       <div style={{ marginTop: 16 }}>
         <div className="cc-section-label" style={sectionLabelStyle}>Account e aiuto</div>
         <div data-tour="altro-account" style={cardStyle}>
-          <MenuRow href="/impostazioni" icon={Settings} label="Impostazioni" desc="Dati, fiscale, notifiche, pagamenti" descAlways />
-          <MenuRow href="/account" icon={UserRound} label="Account e commercialista" desc="Il pacchetto per il commercialista, i tuoi dati e la sicurezza" descAlways />
+          <MenuRow href="/impostazioni" icon={Settings} label="Impostazioni" desc="Dati attività, fiscale, pagamenti, notifiche" descAlways />
           <MenuRow
-            href="/altro/abbonamento-inviti"
-            icon={Crown}
-            iconColor="var(--cc-gold)"
-            label="Abbonamento e inviti"
-            desc="Il tuo piano e i premi invitando"
+            href="/account"
+            icon={UserRound}
+            label="Account e abbonamento"
+            desc="Accesso, sicurezza, i tuoi dati, commercialista, piano e inviti"
             descAlways
             hint={isFree ? (
               <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--cc-navy)' }}>Passa a Pro</span>

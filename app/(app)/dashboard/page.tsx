@@ -487,10 +487,10 @@ export default async function DashboardPage() {
   const unreadNotifications = appNotifications.filter((n) => !n.read).length
 
   const profileItems: ProfileItem[] = [
-    { key: 'dati',   label: 'Dati attività (ragione sociale)', done: !!workspace.ragione_sociale,               href: '/impostazioni?tab=generale' },
-    { key: 'phone',  label: 'Telefono (per farti contattare)',  done: !!workspace.phone,                         href: '/impostazioni?tab=generale#telefono' },
-    { key: 'logo',   label: 'Carica il tuo logo',               done: !!workspace.logo_url,                      href: '/impostazioni?tab=generale#logo' },
-    { key: 'ateco',  label: 'Codice ATECO (voci suggerite)',    done: (workspace.ateco_codes?.length ?? 0) > 0,  href: '/impostazioni?tab=fiscale#ateco' },
+    { key: 'dati',   label: 'Dati attività (ragione sociale)', done: !!workspace.ragione_sociale,               href: '/impostazioni/generale' },
+    { key: 'phone',  label: 'Telefono (per farti contattare)',  done: !!workspace.phone,                         href: '/impostazioni/generale#telefono' },
+    { key: 'logo',   label: 'Carica il tuo logo',               done: !!workspace.logo_url,                      href: '/impostazioni/generale#logo' },
+    { key: 'ateco',  label: 'Codice ATECO (voci suggerite)',    done: (workspace.ateco_codes?.length ?? 0) > 0,  href: '/impostazioni/fiscale#ateco' },
     { key: 'listino', label: 'Carica il listino nel catalogo',  done: (catalogCount ?? 0) > 0,                   href: '/catalogo' },
   ]
   const profileIncomplete = profileItems.some((i) => !i.done)

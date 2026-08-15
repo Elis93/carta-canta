@@ -462,7 +462,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
             {atecoCodes.length === 0 && (
               <p className="text-xs text-muted-foreground/70 max-w-xs">
                 Vuoi ricevere voci preimpostate per il tuo settore?{' '}
-                <Link href="/impostazioni?tab=fiscale#ateco" className="underline underline-offset-2 hover:text-foreground">
+                <Link href="/impostazioni/fiscale#ateco" className="underline underline-offset-2 hover:text-foreground">
                   Imposta il codice ATECO
                 </Link>
                 {' '}nelle impostazioni.

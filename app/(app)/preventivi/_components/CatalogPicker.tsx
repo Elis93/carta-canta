@@ -449,7 +449,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                                   `rel="noopener"` perché il link apre una scheda nuova:
                                   il preventivo in compilazione resta dov'è. */}
                               <a
-                                href="/impostazioni?tab=fiscale#ateco"
+                                href="/impostazioni/fiscale#ateco"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="underline underline-offset-2 hover:text-foreground"

@@ -47,7 +47,7 @@ export function BiometricPrompt() {
     } catch {
       // Annullato dall'utente al prompt del sistema
       toast.info('Nessun problema: puoi attivarlo quando vuoi.', {
-        action: { label: 'Impostazioni', onClick: () => router.push('/impostazioni?tab=generale') },
+        action: { label: 'Impostazioni', onClick: () => router.push('/impostazioni/generale') },
       })
     } finally {
       setBusy(false)
@@ -58,7 +58,7 @@ export function BiometricPrompt() {
     setBiometricPrompted()
     setVisible(false)
     toast.info('Puoi attivarlo quando vuoi.', {
-      action: { label: 'Impostazioni', onClick: () => router.push('/impostazioni?tab=generale') }, closeButton: true })
+      action: { label: 'Impostazioni', onClick: () => router.push('/impostazioni/generale') }, closeButton: true })
   }
 
   if (!visible) return null

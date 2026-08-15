@@ -19,7 +19,7 @@ export async function sendSecurityAlert(opts: {
   to: string | null | undefined
   title: string
   what: string
-  /** path relativo, es. '/impostazioni?tab=pagamenti' */
+  /** path relativo, es. '/impostazioni/pagamenti' */
   actionPath: string
   actionLabel: string
 }): Promise<void> {

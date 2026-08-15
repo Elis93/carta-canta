@@ -41,11 +41,14 @@ export async function getAppNotifications(
 ): Promise<AppNotification[]> {
   const showViewed = prefs?.inapp_visto !== false
   const showFermo = prefs?.inapp_preventivo_fermo !== false
-  const showMessaggi = prefs?.inapp_messaggio !== false
+  // ⚠️ SEMPRE attivi, senza interruttore (Eli 15 ago, #7): perderli costa —
+  // un messaggio del cliente senza risposta, o una fattura scartata dallo SdI
+  // che nessuno corregge. Il resto degli avvisi resta un'opzione.
+  const showMessaggi = true
   const showAcconto = prefs?.inapp_acconto !== false
   const showRichiamo = prefs?.inapp_richiamo !== false
   const showRichieste = prefs?.inapp_richiesta !== false
-  const showSdiScarto = SDI_ENABLED && prefs?.inapp_sdi_scarto !== false
+  const showSdiScarto = SDI_ENABLED
   const showSdiPending = SDI_ENABLED && prefs?.inapp_sdi_trasmissione !== false
 
   const notifications: AppNotification[] = []

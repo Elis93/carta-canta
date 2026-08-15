@@ -812,7 +812,7 @@ export async function updateWorkspacePayments(
       to: user.email,
       title: 'Coordinate di pagamento modificate',
       what: `${dettaglio} Da adesso è questo il dato che compare sui documenti che invii.`,
-      actionPath: '/impostazioni?tab=pagamenti',
+      actionPath: '/impostazioni/pagamenti',
       actionLabel: 'Controlla le coordinate',
     })
     // ⚠️ Nel registro va SOLO quale campo è cambiato, mai il valore: un IBAN

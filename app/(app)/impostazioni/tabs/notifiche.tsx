@@ -194,14 +194,6 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
         />
         <Divider />
         <NotifRow
-          label="Messaggio dal cliente"
-          description="Il cliente ti scrive dalla pagina del preventivo o della fattura"
-          checked={prefs.inapp_messaggio !== false}
-          onChange={(v) => setNotif('inapp_messaggio', v)}
-          disabled={isPending}
-        />
-        <Divider />
-        <NotifRow
           label="Preventivo fermo da giorni"
           description="Promemoria quando un preventivo inviato resta 7 giorni senza risposta"
           checked={prefs.inapp_preventivo_fermo !== false}
@@ -234,16 +226,15 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
               onChange={(v) => setNotif('inapp_sdi_trasmissione', v)}
               disabled={isPending}
             />
-            <Divider />
-            <NotifRow
-              label="Fattura scartata dallo SdI"
-              description="Avviso in app + email col motivo dello scarto"
-              checked={prefs.inapp_sdi_scarto !== false}
-              onChange={(v) => setNotif('inapp_sdi_scarto', v)}
-              disabled={isPending}
-            />
           </>
         )}
+
+        {/* Avvisi che NON si spengono (Eli, #7): perderli costa. */}
+        <div style={{ marginTop: 13, paddingTop: 12, borderTop: '0.5px solid #eee', fontSize: 12, color: '#767676', lineHeight: 1.5 }}>
+          <b style={{ color: '#55534b' }}>Sempre attivi:</b>{' '}«Messaggio dal cliente»
+          {SDI_ENABLED && <> e «Fattura scartata dallo SdI»</>}. Sono avvisi che è
+          meglio non perdere, quindi non si disattivano.
+        </div>
       </div>
 
       {/* F15: niente dicitura "salvate automaticamente" — il toast di conferma basta */}

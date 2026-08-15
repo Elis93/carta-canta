@@ -25,17 +25,17 @@ export const DESTINAZIONI = {
   strumenti:       { href: '/altro',                       label: 'Strumenti' },
   calcoli:         { href: '/calcoli',                     label: 'Calcoli' },
   account:         { href: '/account',                     label: 'Account e sicurezza' },
-  sicurezza:       { href: '/account?sez=sicurezza',       label: 'Account e sicurezza › Sicurezza' },
+  sicurezza:       { href: '/account/sicurezza',       label: 'Account e sicurezza › Sicurezza' },
   vetrina:         { href: '/farti-trovare',               label: 'Fatti trovare dai clienti' },
   recensioni:      { href: '/recensioni',                  label: 'Recensioni' },
   abbonamento:     { href: '/abbonamento',                 label: 'Abbonamento' },
   bilancio:        { href: '/bilancio',                    label: 'Bilancio' },
   cestino:         { href: '/cestino',                     label: 'Cestino' },
   daTrasmettere:   { href: '/fatture/da-trasmettere',      label: 'Fatture da trasmettere' },
-  impGenerale:     { href: '/impostazioni?tab=generale',   label: 'Impostazioni' },
-  impFiscale:      { href: '/impostazioni?tab=fiscale',    label: 'Impostazioni fiscali' },
-  impPagamenti:    { href: '/impostazioni?tab=pagamenti',  label: 'Come farti pagare' },
-  impNotifiche:    { href: '/impostazioni?tab=notifiche',  label: 'Notifiche' },
+  impGenerale:     { href: '/impostazioni/generale',   label: 'Impostazioni' },
+  impFiscale:      { href: '/impostazioni/fiscale',    label: 'Impostazioni fiscali' },
+  impPagamenti:    { href: '/impostazioni/pagamenti',  label: 'Come farti pagare' },
+  impNotifiche:    { href: '/impostazioni/notifiche',  label: 'Notifiche' },
 } as const
 
 export type Destinazione = keyof typeof DESTINAZIONI
