@@ -155,7 +155,69 @@ export async function deleteSopralluogoAction(id: string): Promise<ActionResult>
     .eq('workspace_id', workspace.id)
   if (error) return { error: 'Eliminazione non riuscita.' }
   revalidatePath('/sopralluoghi')
+  revalidatePath('/cestino')
   return { success: 'Sopralluogo eliminato' }
+}
+
+/** Ripristina un sopralluogo dal cestino (deleted_at → null). */
+export async function restoreSopralluogoAction(id: string): Promise<{ error?: string; success?: string }> {
+  const workspace = await getWorkspace()
+  if (!workspace) return { error: 'Sessione scaduta.' }
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
+  const { error } = await (supabase as any)
+    .from('sopralluoghi')
+    .update({ deleted_at: null })
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+    .not('deleted_at', 'is', null) // ripristina solo se è davvero nel cestino
+  if (error) return { error: 'Ripristino non riuscito.' }
+  revalidatePath('/sopralluoghi')
+  revalidatePath('/cestino')
+  return { success: 'Sopralluogo ripristinato' }
+}
+
+/** Elimina DEFINITIVAMENTE un sopralluogo già nel cestino (irreversibile). */
+export async function purgeSopralluogoAction(id: string): Promise<{ error?: string; success?: string }> {
+  const workspace = await getWorkspace()
+  if (!workspace) return { error: 'Sessione scaduta.' }
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
+  const db = supabase as any
+
+  // Solo un sopralluogo del workspace e GIÀ nel cestino (difesa)
+  const { data: row } = await db
+    .from('sopralluoghi')
+    .select('id')
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+    .not('deleted_at', 'is', null)
+    .maybeSingle()
+  if (!row) return { error: 'Sopralluogo non trovato nel cestino.' }
+
+  // Foto collegate: prima i file dallo storage (admin → funziona anche per un
+  // collaboratore), poi le righe. Senza, resterebbero orfane per sempre.
+  const { data: photos } = await db
+    .from('work_photos')
+    .select('storage_path')
+    .eq('sopralluogo_id', id)
+  const paths = (photos ?? [])
+    .map((p: { storage_path: string | null }) => p.storage_path)
+    .filter((p: string | null): p is string => !!p)
+  if (paths.length > 0) {
+    await createAdminClient().storage.from('work-photos').remove(paths) // best-effort
+    await db.from('work_photos').delete().eq('sopralluogo_id', id)
+  }
+
+  const { error } = await db
+    .from('sopralluoghi')
+    .delete()
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+  if (error) return { error: 'Eliminazione definitiva non riuscita.' }
+  revalidatePath('/sopralluoghi')
+  revalidatePath('/cestino')
+  return { success: 'Sopralluogo eliminato definitivamente' }
 }
 
 /** Registra una foto caricata nel bucket work-photos (dal client). */

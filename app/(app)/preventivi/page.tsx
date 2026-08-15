@@ -92,7 +92,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
           {archivioOk && <ArchivioToggle base="/preventivi" attivo={false} />}
           <CestinoToggle base="/preventivi" attivo />
         </div>
-        <CestinoInline docTypes={['preventivo']} />
+        <CestinoInline scope="preventivo" />
       </div>
     )
   }

@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { Plus, Search, CheckCircle2, ChevronRight, CalendarDays, Navigation } from 'lucide-react'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
+import { CestinoToggle } from '../_components/CestinoToggle'
+import { CestinoInline } from '../_components/CestinoInline'
 
 export const metadata = { title: 'Sopralluoghi' }
 
@@ -53,12 +55,33 @@ function initials(row: SopralluogoRow): string {
 export default async function SopralluoghiPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ q?: string; status?: string }>
 }) {
-  const { q = '' } = await searchParams
+  const { q = '', status } = await searchParams
   const { supabase, user, workspace } = await getSessionWorkspace()
   if (!user) redirect('/login')
   if (!workspace) redirect('/onboarding')
+
+  // CESTINO (#10, 15 ago): il tab «Cestino» mostra i sopralluoghi eliminati,
+  // con ripristino ed eliminazione definitiva. Vista a sé (client component),
+  // come nelle liste Preventivi/Fatture.
+  if (status === 'cestino') {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
+          <BackButton fallback="/altro" />
+          <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Sopralluoghi</span>
+          <span style={{ width: 24 }} />
+        </div>
+        <div style={{ padding: '14px 15px 90px' }}>
+          <div className="flex flex-wrap items-center gap-2" style={{ marginBottom: 14 }}>
+            <CestinoToggle base="/sopralluoghi" attivo />
+          </div>
+          <CestinoInline scope="sopralluogo" />
+        </div>
+      </div>
+    )
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts
   const db = supabase as any
@@ -145,6 +168,11 @@ export default async function SopralluoghiPage({
           />
         </div>
       </form>
+
+      {/* Accesso al cestino dei sopralluoghi (#10) */}
+      <div className="flex flex-wrap items-center gap-2" style={{ margin: '12px 15px 0' }}>
+        <CestinoToggle base="/sopralluoghi" attivo={false} />
+      </div>
 
       {/* Agenda — prossimi appuntamenti (calendario sopralluoghi) */}
       {upcoming.length > 0 && (

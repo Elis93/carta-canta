@@ -17,7 +17,7 @@ import { Trash2 } from 'lucide-react'
 // ============================================================
 
 export function CestinoToggle({ base, attivo, inline = false }: {
-  base: '/preventivi' | '/fatture'
+  base: '/preventivi' | '/fatture' | '/sopralluoghi'
   /** true = stai già guardando il cestino: il tasto riporta alla lista */
   attivo: boolean
   /** true = vive DENTRO la barra dei comandi (niente bordo/ombra propri) */

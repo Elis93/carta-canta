@@ -127,9 +127,9 @@ export const VOCI_APP: VoceApp[] = [
     parole: ['elimina account', 'cancellare account', 'chiudere account', 'disdire'] },
 
   // ── Il resto ───────────────────────────────────────────────────────────
-  { label: 'Cestino', dove: 'Preventivi e Fatture', href: '/cestino',
-    desc: 'Documenti eliminati, recuperabili per 15 giorni',
-    parole: ['cestino', 'cancellato', 'eliminato', 'buttato', 'recuperare', 'ripristinare', 'per sbaglio'] },
+  { label: 'Cestino', dove: 'Preventivi, Fatture e Sopralluoghi', href: '/cestino',
+    desc: 'Preventivi, fatture e sopralluoghi eliminati, recuperabili per 15 giorni',
+    parole: ['cestino', 'cancellato', 'eliminato', 'buttato', 'recuperare', 'ripristinare', 'per sbaglio', 'sopralluogo'] },
   { label: 'Abbonamento', dove: 'Altro', href: '/abbonamento',
     parole: ['abbonamento', 'piano', 'pro', 'pagare app', 'fattura carta canta', 'disdetta', 'prezzo'] },
   { label: 'Aiuto e contatti', dove: 'Altro', href: '/aiuto',

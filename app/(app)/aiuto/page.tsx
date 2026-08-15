@@ -136,8 +136,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     parole: ['cestino', 'cancellare', 'buttato', 'per sbaglio', 'recuperare'],
     a: <>Non sparisce subito: finisce nel <b>Cestino</b>, dove resta{' '}
       <b>15 giorni</b>{' '}e da cui puoi rimetterlo a posto con un tocco. Trovi il cestino col
-      tasto <b>Cestino</b>{' '}dentro Preventivi o Fatture, accanto all&rsquo;<b>Archivio</b>{' '}—
-      ognuno mostra i documenti del suo tipo. Passati i 15 giorni viene
+      tasto <b>Cestino</b>{' '}dentro Preventivi, Fatture e Sopralluoghi, accanto
+      all&rsquo;<b>Archivio</b>{' '}— ognuno mostra gli elementi del suo tipo. Passati i 15 giorni viene
       cancellato per davvero, e da lì non si recupera più. Nel cestino puoi anche eliminarlo
       subito e per sempre, ma è una scelta senza ritorno. Il <b>numero</b>{' '}del documento
       eliminato <b>non viene riusato</b>: nella numerazione resta un buco, ed è normale — è

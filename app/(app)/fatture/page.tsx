@@ -112,7 +112,7 @@ export default async function FatturePage({ searchParams }: Props) {
           {archivioOk && <ArchivioToggle base="/fatture" attivo={false} />}
           <CestinoToggle base="/fatture" attivo />
         </div>
-        <CestinoInline docTypes={['fattura', 'nota_credito', 'nota_debito']} />
+        <CestinoInline scope="fattura" />
       </div>
     )
   }
