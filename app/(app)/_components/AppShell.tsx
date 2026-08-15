@@ -26,6 +26,7 @@ import { SidebarNav } from './NavItem'
 import { LogoutButton } from './LogoutButton'
 import { WorkspaceLogo } from './WorkspaceLogo'
 import { MobileBottomNav } from '@/components/mobile/BottomNav'
+import { RoutePrefetcher } from '@/components/shared/RoutePrefetcher'
 
 // FIX-30: etichette piano leggibili (no capitalize CSS che lascia "lifetime" minuscolo)
 const PLAN_LABELS: Record<string, string> = {
@@ -174,6 +175,9 @@ export function AppShell({
 
       {/* ── BOTTOM NAV + FAB (solo mobile, lg:hidden interno) ── */}
       <MobileBottomNav />
+
+      {/* Precarica in background le pagine più probabili (a tempo morto) — #2 */}
+      <RoutePrefetcher />
 
     </div>
   )
