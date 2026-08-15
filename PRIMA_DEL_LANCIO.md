@@ -58,6 +58,36 @@ Redis). Restano:
 
 ---
 
+## 🟢 QUALITÀ / ACCESSIBILITÀ / PRESTAZIONI (dal confronto con la checklist «app pronta al lancio», 15 ago 2026)
+
+Emersi confrontando l'app con lo standard di un SaaS pronto (ricerca web 15 ago).
+Non tutti bloccano il lancio, ma vanno spuntati:
+
+- [ ] **Stress / load test** (richiesta di Eli 15 ago): provare che l'app regga i
+      primi picchi di traffico reale prima di aprire a utenti veri. Strumento tipo
+      k6 / Artillery su login, creazione preventivo, pagina pubblica `/p/[token]`,
+      route PDF. ⚠️ Da qui non è eseguibile (la rete verso il sito è bloccata):
+      lo lancia Eli o si fa su un ambiente con accesso di rete.
+- [~] **Accessibilità WCAG 2.2 AA** — audit axe fatto il 15 ago sulle pagine
+      pubbliche: **login e signup ora puliti**, contrasto del grigio secondario
+      sistemato in tutta l'app (`--cc-muted` #8a887f→#6f6d64), campo password con
+      nome accessibile, titolo /signup corretto. **Residui minori**: 2 nodi di
+      contrasto su `/` e `/prova` (colori diversi da --cc-muted) + i link del
+      footer di `/prova` da rendere distinguibili (sottolineatura). Da rifare
+      l'audit sulle pagine INTERNE (dietro login) prima del lancio.
+- [ ] **Core Web Vitals sul sito VERO** (INP ≤200ms, LCP ≤2,5s, CLS <0,1):
+      misurare con Lighthouse/PageSpeed sull'URL pubblico (da qui la rete è
+      bloccata). CLS locale è 0; INP va misurato con interazione reale.
+- [ ] **Status page pubblica** (opzionale ma consigliata): una pagina «stato del
+      servizio» che l'utente guarda quando qualcosa non va (oggi c'è solo il
+      monitor uptime interno). Es. una pagina statica o un servizio gratuito.
+- [ ] **CSP stretta** (lockdown script inline con nonce + `strict-dynamic`):
+      oggi la CSP «sicura» è attiva ma `script-src` resta permissivo per non
+      rompere i servizi terzi. Vedi `SICUREZZA.md` §5. *(CSP = Content Security
+      Policy: la regola che dice al browser da QUALI domini può caricare script,
+      stili, immagini — così un eventuale codice iniettato non gira. «Stringerla»
+      = ridurre quei domini al minimo.)*
+
 ## ✅ GIÀ FATTO (per riferimento)
 
 - 🛰️ Monitoraggio uptime (UptimeRobot su cartacanta.app + email di avviso) — 20 lug
