@@ -232,9 +232,9 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
                 + '<div style="margin-top:10px"><button type="button" id="cc-tour-textlarge" '
                 + 'style="border:1px solid #e8d6ad;background:#fdf9ef;color:#8a5208;border-radius:999px;'
                 + 'padding:7px 12px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer"></button></div>'
-                // Mobile: la tab Altro in basso è marcata (markTour); desktop:
-                // la bottom-nav non esiste → il toggle vive in Impostazioni.
-                + '<div style="margin-top:5px;font-size:11px;color:#8a887f"><span class="cc-tour-mobile">Lo trovi quando vuoi in <b>Altro › Strumenti</b>: è la voce illuminata qui sotto.</span><span class="cc-tour-desktop">Lo trovi quando vuoi in <b>Impostazioni › Generale</b>.</span></div>',
+                // Il toggle «Testo grande» vive nella card in fondo ad «Altro»
+                // (mobile: la tab Altro in basso è marcata da markTour).
+                + '<div style="margin-top:5px;font-size:11px;color:#8a887f"><span class="cc-tour-mobile">Lo trovi quando vuoi in <b>Altro</b>, in fondo alla pagina: la tab è illuminata qui sotto.</span><span class="cc-tour-desktop">Lo trovi quando vuoi in <b>Altro</b>, in fondo alla pagina.</span></div>',
                 1
               ),
               nextBtnText: 'Iniziamo →',

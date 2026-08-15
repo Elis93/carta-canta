@@ -32,7 +32,7 @@ interface MiniTour { pathPrefix: string; steps: MiniStep[] }
 // Le chiavi combaciano con ProfileItem.key della checklist in Home.
 const TOURS: Record<string, MiniTour> = {
   dati: {
-    pathPrefix: '/impostazioni',
+    pathPrefix: '/impostazioni/generale',
     steps: [{
       selector: '#ragione_sociale',
       title: 'Scrivi qui la ragione sociale',
@@ -40,7 +40,7 @@ const TOURS: Record<string, MiniTour> = {
     }],
   },
   phone: {
-    pathPrefix: '/impostazioni',
+    pathPrefix: '/impostazioni/generale',
     steps: [{
       selector: '#telefono',
       title: 'Il numero per farti richiamare',
@@ -48,7 +48,7 @@ const TOURS: Record<string, MiniTour> = {
     }],
   },
   logo: {
-    pathPrefix: '/impostazioni',
+    pathPrefix: '/impostazioni/generale',
     steps: [{
       selector: '[data-tour="logo-card"]',
       title: 'Carica il tuo logo',
@@ -56,7 +56,7 @@ const TOURS: Record<string, MiniTour> = {
     }],
   },
   ateco: {
-    pathPrefix: '/impostazioni',
+    pathPrefix: '/impostazioni/fiscale',
     steps: [{
       selector: '[data-tour="ateco-field"]',
       title: 'Il tuo codice ATECO',
