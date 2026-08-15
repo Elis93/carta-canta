@@ -18,8 +18,9 @@ const SDI_ATTIVO = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Come creo e invio un preventivo?',
-    a: <>Dalla Home tocca <b>Nuovo preventivo</b>, scegli (o crea) il cliente, aggiungi le voci — anche
-      dettandole col microfono o prendendole dal Catalogo — e tocca <b>Invia al cliente</b>. Il cliente
+    a: <>Tocca il <b>+</b>{' '}in basso e scegli <b>Nuovo preventivo</b>, poi scegli (o crea) il cliente,
+      aggiungi le voci — anche dettandole col microfono o prendendole dal Catalogo — e tocca{' '}
+      <b>Invia al cliente</b>. Il cliente
       riceve un link dove vede il preventivo e può accettarlo con un tocco.</>,
   },
   // Solo se la funzione AI è attiva in produzione (flag)
@@ -167,7 +168,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Posso far comparire l’acconto già impostato su ogni preventivo?',
     parole: ['acconto', 'anticipo', 'caparra', '30%', 'default', 'sempre uguale', 'impostazioni'],
-    a: <>Sì. In <VaiA a="impGenerale" />, sezione <b>Generale</b>, c&rsquo;è{' '}
+    a: <>Sì. In <VaiA a="impGenerale" />, sezione <b>Dati dell&rsquo;attività</b>, c&rsquo;è{' '}
       <b>Acconto da chiedere</b>: scegli <b>Percentuale</b>{' '}(del totale, per esempio 30%) oppure{' '}<b>Cifra fissa</b>{' '}in euro, e da lì in avanti ogni preventivo <b>nuovo</b>{' '}nasce con
       quell&rsquo;acconto già scritto. Su ciascun preventivo puoi comunque cambiarlo o
       toglierlo: l&rsquo;impostazione è un punto di partenza, non un vincolo.
@@ -261,15 +262,15 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       fallisce in silenzio.
       <br /><br />
       Preferisci trasmettere sempre tu? Spegni l&rsquo;interruttore in{' '}
-      <b>Impostazioni › Fiscale › Trasmissione automatica allo SdI</b>: resterà tutto
+      <b>Impostazioni › Dati fiscali › Trasmissione automatica allo SdI</b>: resterà tutto
       manuale, guidato dal conto alla rovescia. Le <b>note di credito</b>{' '}non partono
       mai da sole: quelle le trasmetti sempre tu.</>,
   },
   {
     q: 'La fattura è stata scartata dallo SdI: cosa faccio?',
     parole: ['scartata', 'scarto', 'rifiutata', 'errore sdi', 'codice destinatario', 'duplicata', 'reinvia'],
-    a: <>Niente panico: uno scarto vuol dire che <b>c&rsquo;è un dato da correggere</b>, non
-      che hai combinato un guaio — per l&rsquo;Agenzia una fattura scartata è come se non
+    a: <>Uno scarto non è un guaio: significa solo che <b>c&rsquo;è un dato da correggere</b>.
+      Per l&rsquo;Agenzia una fattura scartata è come se non
       fosse mai partita. Sulla fattura trovi il motivo <b>spiegato in parole semplici</b>,
       con scritto <b>cosa fare</b>: l&rsquo;app riconosce gli errori più comuni (codice
       destinatario sbagliato, P.IVA del cliente non valida, fattura duplicata, conti che
@@ -414,8 +415,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       le altre diciture: &laquo;bozze&raquo;, &laquo;rifiutati&raquo;, &laquo;in attesa&raquo;…). Un
       preventivo scaduto si può <b>reinviare</b>{' '}dal suo dettaglio: la validità riparte da oggi.
       <br /><br />
-      Nel campo di ricerca funzionano anche: <b>modificati</b>{' '}(i documenti ritoccati dopo
-      l&rsquo;invio, quelli col badge viola) e, nei Preventivi, la parola <b>fattura</b>{' '}—
+      La stessa ricerca vale per <b>modificati</b>{' '}(i documenti ritoccati dopo
+      l&rsquo;invio, quelli col badge viola) e, nei Preventivi, per la parola <b>fattura</b>{' '}—
       da sola trova i preventivi che una fattura ce l&rsquo;hanno già, con uno stato
       (&laquo;bozza fattura&raquo;, &laquo;fatture pagate&raquo;) trova quelli con la fattura
       collegata in quello stato.</>,
@@ -517,8 +518,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Ho incassato un acconto: devo fare qualcosa entro una data?',
     parole: ['acconto', 'anticipo', 'caparra', 'fattura di acconto', '12 giorni', 'incasso'],
-    a: <>Sì, ed è una cosa che sorprende molti. <b>Chiedere</b>{' '}un acconto non fa scattare
-      nulla: è solo una richiesta. Ma <b>incassarlo</b>{' '}sì — per la legge l&rsquo;operazione
+    a: <>Sì. <b>Chiedere</b>{' '}un acconto non fa scattare
+      nulla: è solo una richiesta. <b>Incassarlo</b>{' '}sì — per la legge l&rsquo;operazione
       si considera effettuata al pagamento, quindi da quel giorno hai <b>12 giorni</b>{' '}per
       emettere (e trasmettere) la <b>fattura per la parte incassata</b>.
       <br /><br />
@@ -566,10 +567,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Ho perso il telefono o temo che qualcuno sia entrato nel mio account: cosa faccio?',
     parole: ['impronta', 'password', 'sicurezza', 'rubato', 'accesso', 'blocco'],
-    a: <>Vai in <VaiA a="sicurezza">Account e sicurezza</VaiA>{' '}e tocca <b>Esci da tutti i dispositivi</b>:
+    a: <>Vai in <VaiA a="sicurezza" />{' '}e tocca <b>Esci da tutti i dispositivi</b>:
       chiude l&rsquo;accesso ovunque (anche dove non hai il telefono in mano), poi rientri con la
       tua password. Subito dopo <b>cambiala</b>{' '}dalla pagina di accesso. Controlla anche le tue{' '}
-      <b>coordinate di pagamento</b>{' '}in Impostazioni &rsaquo; Pagamenti: chi entra in un
+      <b>coordinate di pagamento</b>{' '}in <VaiA a="impPagamenti">Coordinate di pagamento</VaiA>: chi entra in un
       gestionale di fatture di solito punta a cambiare l&rsquo;IBAN per dirottare i bonifici dei
       tuoi clienti. Ogni volta che l&rsquo;IBAN o la password cambiano ti arriva comunque{' '}
       <b>un&rsquo;email di avviso</b>: se ne ricevi una che non ti aspetti, scrivici subito da Aiuto.</>,
@@ -604,7 +605,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     q: 'Come conto le ore passate in cantiere?',
     parole: ['timer', 'manodopera', 'ore', 'tempo'],
     a: <>Sul <b>Lavoro</b>{' '}usa il timer <b>Avvia/Ferma</b>{' '}o inserisci le ore a mano. Se imposti
-      il <b>costo orario</b>{' '}in <VaiA a="impFiscale">Impostazioni › Fiscale</VaiA>, la manodopera entra nello
+      il <b>costo orario</b>{' '}in <VaiA a="impFiscale">Impostazioni › Dati fiscali</VaiA>, la manodopera entra nello
       &ldquo;Speso&rdquo; e vedi il margine reale del lavoro.</>,
   },
   {
@@ -655,7 +656,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     a: <>Sì: in <VaiA a="strumenti" />{' '}attiva <b>Testo grande e leggibile</b> — scritte e
       pulsanti diventano più grandi in tutta l&rsquo;app e sotto le voci dei menu compare una breve
       spiegazione. Si spegne con lo stesso interruttore. Dal computer lo trovi in{' '}
-      <VaiA a="impGenerale">Impostazioni › Generale</VaiA>.</>,
+      <VaiA a="impGenerale">Impostazioni › Dati dell&rsquo;attività</VaiA>.</>,
   },
   {
     q: 'Come chiedo una recensione a un cliente?',
@@ -664,8 +665,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       è già scritto, col link dentro — tu scegli se mandarlo su <b>WhatsApp</b>, per <b>email</b>{' '}
       o copiare il testo. Il momento migliore è subito dopo il lavoro, quando il cliente è
       contento. La card compare solo se hai <b>pubblicato la vetrina</b>: senza, la recensione
-      non la vedrebbe nessuno. Le recensioni ricevute le trovi in{' '}
-      <VaiA a="vetrina">Fatti trovare dai clienti</VaiA>.</>,
+      non la vedrebbe nessuno. Le recensioni ricevute le trovi in <VaiA a="vetrina" />.</>,
   },
   {
     q: 'Come mi faccio trovare dai nuovi clienti?',
@@ -677,7 +677,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Come collego il mio commercialista?',
     parole: ['studio', 'contabile', 'fisco', 'invito'],
-    a: <>Da <VaiA a="account">Account e sicurezza › Il tuo commercialista</VaiA>{' '}inserisci l&rsquo;email dello studio:
+    a: <>Da <VaiA a="account">Account e abbonamento › I tuoi dati e commercialista</VaiA>{' '}inserisci l&rsquo;email dello studio:
       riceve un invito e, accedendo con quella email, vede fatture, incassi e spese in <b>sola
       lettura</b>{' '}e scarica il registro per la contabilità. Puoi revocare l&rsquo;accesso quando vuoi.
       In alternativa scarichi tu il <b>Pacchetto commercialista</b> (dalle Fatture o da <VaiA a="account" />) e glielo mandi.</>,
@@ -688,7 +688,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     a: <>Sì, sempre e con qualsiasi piano. I dati stanno su <b>server in Europa</b>{' '}e restano
       tuoi: preventivi e fatture si esportano in CSV dalle rispettive liste, il catalogo da{' '}
       <VaiA a="catalogo">Catalogo → Esporta il catalogo</VaiA>, e da{' '}
-      <VaiA a="account">Account e sicurezza › Scarica i tuoi dati</VaiA>{' '}scarichi tutto in un
+      <VaiA a="account">Account e abbonamento › I tuoi dati e commercialista</VaiA>{' '}scarichi tutto in un
       file (clienti, documenti, spese). Nessun vincolo: l&rsquo;abbonamento si disdice quando
       vuoi, e per chiudere del tutto c&rsquo;è la pagina{' '}
       <Link href="/cancella-account" style={{ color: '#1a1a2e', fontWeight: 600 }}>Cancellazione account</Link>.</>,
