@@ -156,9 +156,10 @@
   --cc-text-2: #55534b;
   --cc-text-3: #827f74;
   /* Grigio dei testi secondari (note, sottotitoli, aiuti).
-     DEFAULT identico allo storico #8a887f; la modalità "Testo grande e
-     leggibile" (classe cc-large su <html>) lo scurisce per gli occhi over-50. */
-  --cc-muted: #8a887f;
+     15 ago 2026: scurito da #8a887f (3,55:1 su bianco, sotto il minimo WCAG AA
+     di 4,5:1 — trovato dall'audit axe) a #6f6d64 (~5,2:1). La modalità "Testo
+     grande" (classe cc-large) lo scurisce ancora a #55534b per gli occhi over-50. */
+  --cc-muted: #6f6d64;
   /* bordi */
   --cc-border-color: #e8e6df;
   --cc-border-strong: #d7d4cb;

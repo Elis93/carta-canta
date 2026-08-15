@@ -26,7 +26,7 @@
 - **Navy brand** (primario, testo forte, bottoni, nav attiva): `#1a1a2e`
 - **Oro brand** (accento "Pro"/bonus, asterischi obbligatori): `#c9a44c` · scuro `#b08d3e`
 - **Sfondo pagina** (dietro le card, solo mobile): `#f8f6f1` — grigio caldo, così le card bianche si staccano. È in `AppShell.tsx` sul `<main>`; su desktop resta `bg-background`. Schiarito tre volte fra il 2 e il 3 agosto: `#f0eee8` → `#f3f1ec` → `#f6f4ef` → `#f8f6f1`.
-- **Grigio dei testi secondari:** usare **sempre `var(--cc-muted)`**, mai il letterale `#8a887f`. Nella modalità "Testo grande e leggibile" quella variabile si scurisce da sola (a `#55534b`) per alzare il contrasto; scrivendo il valore fisso quel meccanismo salta.
+- **Grigio dei testi secondari:** usare **sempre `var(--cc-muted)`** (dal 15 ago 2026 vale **`#6f6d64`** ≈5,2:1 su bianco; prima `#8a887f` ≈3,55:1, sotto il minimo WCAG AA 4,5:1). Nella modalità "Testo grande" la variabile si scurisce da sola (a `#55534b`); scrivendo il valore fisso quel meccanismo — e la conformità al contrasto — salta.
 - **Card / superfici bianche:** `#ffffff`
 - **Campo "ricerca/seleziona" chiaro** (es. "Cerca cliente"): bg `#f7f7f8`, bordo `0.5px #e6e6e6`
 - **Testo:** primario `#161616` · secondario `#55534b` · placeholder/note `#8a887f`
