@@ -1126,23 +1126,35 @@ export function PreventivoForm({
     return { acconto, saldo: roundFiscale(total - acconto) }
   })()
 
-  // ── Aggancio scadenza listino ↔ validità preventivo (Fase 2, pilastro D) ──
-  // Se una voce viene da un listino fornitore che scade PRIMA della validità
-  // del preventivo, avviso con "Allinea" (un tocco: validità = giorni del
-  // listino). Solo preventivi; il cliente vede solo "Valido fino al…".
-  const listinoAvviso = (() => {
-    if (!isPreventivo || supplierLists.length === 0) return null
-    const usati = new Set(voci.map((v) => v.supplier_list_id).filter(Boolean) as string[])
-    if (usati.size === 0) return null
+  // ── Avvisi listino fornitore (Fase 2, pilastro D) ──
+  // Due avvisi distinti che nascono dai listini USATI dalle voci:
+  //  · SCADUTO (giorni < 0): i costi presi da lì potrebbero non essere più
+  //    veri → riguarda il MARGINE, quindi vale su preventivi E fatture (una
+  //    fattura duplicata da un vecchio preventivo eredita quei costi).
+  //  · IN SCADENZA prima della validità del preventivo: solo preventivi (il
+  //    cliente potrebbe accettare quando i costi sono già cambiati), con
+  //    «Allinea» (un tocco: validità = giorni del listino).
+  const listiniUsati = new Set(voci.map((v) => v.supplier_list_id).filter(Boolean) as string[])
+  const listinoScaduto = (() => {
+    if (supplierLists.length === 0 || listiniUsati.size === 0) return null
     let worst: { name: string; giorni: number } | null = null
     for (const l of supplierLists) {
-      if (!usati.has(l.id) || !l.valid_until) continue
+      if (!listiniUsati.has(l.id) || !l.valid_until) continue
       const g = giorniAllaScadenza(l.valid_until)
-      if (!worst || g < worst.giorni) worst = { name: l.name, giorni: g }
+      if (g < 0 && (!worst || g < worst.giorni)) worst = { name: l.name, giorni: g }
     }
-    if (!worst) return null
+    return worst
+  })()
+  const listinoInScadenza = (() => {
+    if (!isPreventivo || supplierLists.length === 0 || listiniUsati.size === 0) return null
     const vd = parseInt(validityDays, 10)
-    if (!Number.isFinite(vd) || worst.giorni >= vd) return null
+    if (!Number.isFinite(vd)) return null
+    let worst: { name: string; giorni: number } | null = null
+    for (const l of supplierLists) {
+      if (!listiniUsati.has(l.id) || !l.valid_until) continue
+      const g = giorniAllaScadenza(l.valid_until)
+      if (g >= 0 && g < vd && (!worst || g < worst.giorni)) worst = { name: l.name, giorni: g }
+    }
     return worst
   })()
 
@@ -1994,26 +2006,35 @@ export function PreventivoForm({
       {/* ── Margine privato (F1 listino fornitore): compare solo se almeno
              una voce ha un costo; con le proposte attive segue la proposta
              in vista, come il riepilogo. 🔒 mai al cliente (B.2). ────── */}
-      {/* ── Avviso scadenza listino fornitore (Fase 2, pilastro D) ────── */}
-      {listinoAvviso && (
+      {/* ── Avvisi listino fornitore (Fase 2, pilastro D) ────── */}
+      {/* SCADUTO: costi non più veri → margine. Vale anche sulle FATTURE
+          (una fattura duplicata da un vecchio preventivo eredita quei costi). */}
+      {listinoScaduto && (
         <div style={{ background: '#fdf9ef', border: '1px solid #e8d6ad', borderRadius: 12, padding: '11px 13px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
             <AlertCircle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 2 }} />
             <div style={{ flex: 1, fontSize: 13, color: '#6b5626', lineHeight: 1.5 }}>
-              {listinoAvviso.giorni < 0 ? (
-                <>Il listino di <b>{listinoAvviso.name}</b>{' '}è <b>scaduto</b>: i costi delle voci prese da lì potrebbero non essere più quelli veri. Ricontrolla i prezzi o rinnova il listino prima di inviare.</>
-              ) : (
-                <>I prezzi del fornitore <b>{listinoAvviso.name}</b> valgono ancora <b>{listinoAvviso.giorni === 1 ? '1 giorno' : `${listinoAvviso.giorni} giorni`}</b>, ma il preventivo vale {validityDays} giorni: il cliente potrebbe accettare quando i tuoi costi sono già cambiati.</>
-              )}
+              Il listino di <b>{listinoScaduto.name}</b>{' '}è <b>scaduto</b>: i costi delle voci prese da lì potrebbero non essere più quelli veri. Ricontrolla i prezzi o rinnova il listino{isPreventivo ? ' prima di inviare' : ''}.
             </div>
           </div>
-          {listinoAvviso.giorni >= 1 && (
+        </div>
+      )}
+      {/* IN SCADENZA prima della validità: solo preventivi, con «Allinea». */}
+      {listinoInScadenza && (
+        <div style={{ background: '#fdf9ef', border: '1px solid #e8d6ad', borderRadius: 12, padding: '11px 13px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <AlertCircle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 2 }} />
+            <div style={{ flex: 1, fontSize: 13, color: '#6b5626', lineHeight: 1.5 }}>
+              I prezzi del fornitore <b>{listinoInScadenza.name}</b> valgono ancora <b>{listinoInScadenza.giorni === 1 ? '1 giorno' : `${listinoInScadenza.giorni} giorni`}</b>, ma il preventivo vale {validityDays} giorni: il cliente potrebbe accettare quando i tuoi costi sono già cambiati.
+            </div>
+          </div>
+          {listinoInScadenza.giorni >= 1 && (
             <button
               type="button"
-              onClick={() => { setValidityDays(String(listinoAvviso.giorni)); markDirty() }}
+              onClick={() => { setValidityDays(String(listinoInScadenza.giorni)); markDirty() }}
               style={{ marginTop: 9, width: '100%', minHeight: 40, border: '1px solid #e0c98f', borderRadius: 10, background: '#fff', color: '#8a6a2f', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              Allinea: preventivo valido {listinoAvviso.giorni === 1 ? '1 giorno' : `${listinoAvviso.giorni} giorni`}
+              Allinea: preventivo valido {listinoInScadenza.giorni === 1 ? '1 giorno' : `${listinoInScadenza.giorni} giorni`}
             </button>
           )}
         </div>

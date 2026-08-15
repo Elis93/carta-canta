@@ -58,7 +58,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // PERF: documento (con cliente JOINato), template, aperture e foto lavoro
   // sono tutti keyati su id di route / workspace → UN solo round trip
   // (prima erano tre onde in serie).
-  const [{ data: doc }, { data: templates }, { data: viewsRaw }, workPhotosData, vetrina] = await Promise.all([
+  const [{ data: doc }, { data: templates }, { data: viewsRaw }, workPhotosData, vetrina, supplierLists] = await Promise.all([
     supabase
       .from('documents')
       .select('*, document_items(*), clients(id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia)')
@@ -96,6 +96,15 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       .eq('workspace_id', workspace.id)
       .maybeSingle()
       .then((r: { data: { enabled?: boolean; published_at?: string | null } | null }) => r.data, () => null),
+    // Listini fornitori (063) — avviso «listino scaduto» nel form: una fattura
+    // duplicata da un vecchio preventivo eredita i costi di un listino magari
+    // già scaduto (tollerante pre-migration).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 063 non ancora in types/database.ts
+    (supabase as any)
+      .from('supplier_lists')
+      .select('id, name, valid_until')
+      .eq('workspace_id', workspace.id)
+      .then((r: { data: Array<{ id: string; name: string; valid_until: string | null }> | null }) => r.data ?? [], () => [] as Array<{ id: string; name: string; valid_until: string | null }>),
   ])
 
   if (!doc) notFound()
@@ -1201,6 +1210,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             // («Aggiorna fattura», «Voci fattura», popup col numero «Fatt.»).
             docType={isNotaCredito ? 'nota_credito' : 'fattura'}
             defaultClient={formDefaultClient}
+            supplierLists={supplierLists}
           />
         </div>
         )}
