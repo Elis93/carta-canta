@@ -167,8 +167,11 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   const [openAppunti, setOpenAppunti] = useState(true)
   const [openFoto, setOpenFoto] = useState(false)
   const [openAppt, setOpenAppt] = useState(Boolean(defaults?.scheduledAt))
-  // Giorno scelto senza ora: il picker deve restare visibile per correggere.
-  useEffect(() => { if (apptIncomplete) setOpenAppt(true) }, [apptIncomplete])
+  // Giorno scelto senza ora: il picker deve restare visibile per correggere
+  // (finding M4). Serve aprire ANCHE la sezione madre «Cliente e cantiere»,
+  // altrimenti collassandola il picker sparirebbe pur restando il blocco al
+  // salvataggio. I toggle sono anche guardati sotto (non si chiude finché manca l'ora).
+  useEffect(() => { if (apptIncomplete) { setOpenCliente(true); setOpenAppt(true) } }, [apptIncomplete])
 
   function buildFormData(): FormData {
     const fd = new FormData()
@@ -309,8 +312,9 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   return (
     <div style={{ padding: '14px 15px 16px', display: 'flex', flexDirection: 'column', gap: 13 }}>
 
-      {/* SEZIONE 1 — Cliente e cantiere (con l'appuntamento annidato) */}
-      <Sezione icon={HardHat} title="Cliente e cantiere" summary={clienteSummary} open={openCliente} onToggle={() => setOpenCliente((v) => !v)}>
+      {/* SEZIONE 1 — Cliente e cantiere (con l'appuntamento annidato). Non si
+          chiude finché manca l'ora dell'appuntamento: il picker è qui dentro. */}
+      <Sezione icon={HardHat} title="Cliente e cantiere" summary={clienteSummary} open={openCliente} onToggle={() => { if (openCliente && apptIncomplete) return; setOpenCliente((v) => !v) }}>
         <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
         <input
           value={title}
