@@ -139,13 +139,30 @@ export async function updateWorkspaceData(
     return { error: firstError }
   }
 
-  const { data: workspace } = await supabase
+  let { data: workspace } = await supabase
     .from('workspaces')
     .select('id')
     .eq('owner_id', user.id)
     .maybeSingle()
 
-  if (!workspace) return { error: 'Workspace non trovato.' }
+  // Onboarding a prova di trappola (15 ago): un utente autenticato che NON ha
+  // un workspace (cancellato a mano, o mai creato perché la sessione era già
+  // viva e non è ripassato dal callback OAuth che chiama ensureWorkspace) deve
+  // poter creare l'attività salvando QUI — non restare bloccato su «Workspace
+  // non trovato» senza via d'uscita, come capitato nel collaudo del 15 ago.
+  if (!workspace) {
+    const res = await ensureWorkspace(user.id, {
+      email: user.email ?? undefined,
+      fullName: (user.user_metadata?.full_name as string | undefined) ?? undefined,
+    })
+    if (res === 'error') return { error: 'Non riesco a creare la tua attività. Riprova.' }
+    ;({ data: workspace } = await supabase
+      .from('workspaces')
+      .select('id')
+      .eq('owner_id', user.id)
+      .maybeSingle())
+    if (!workspace) return { error: 'Non riesco a creare la tua attività. Riprova.' }
+  }
 
   // ATECO: aggiornati SOLO se il form li contiene. Il tab "Generale" non ha
   // il campo → prima azzerava sempre i codici impostati nel tab Fiscale.

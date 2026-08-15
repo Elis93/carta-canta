@@ -218,7 +218,12 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
     // ── Fase A — Home: Benvenuto + bottone [+] ──
     if (pathname === '/dashboard' && (!step || restart)) {
       setStore(RESTART_KEY, null)
-      const t = setTimeout(() => startPhase(
+      const t = setTimeout(() => {
+        // Non partire SOPRA il blocco app (15 ago, foto di Eli): il lucchetto
+        // copre /dashboard ma la rotta sotto è /dashboard, quindi il tour
+        // partiva sopra il lucchetto. Se è a schermo, non si parte.
+        if (typeof document !== 'undefined' && document.querySelector('[aria-label="App bloccata"]')) return
+        startPhase(
         [
           {
             // F16: mentre il benvenuto è aperto, la tab "Altro" in basso è
@@ -252,7 +257,8 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           setStore(STEP_KEY, 'form')
           router.push('/preventivi/nuovo')
         },
-      ), 400)
+        )
+      }, 400)
       return () => clearTimeout(t)
     }
 

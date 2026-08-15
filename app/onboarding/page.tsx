@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { updateWorkspaceData, uploadLogo } from '@/lib/actions/workspace'
+import { createClient } from '@/lib/supabase/client'
 import { AtecoMultiSelect } from '@/components/shared/AtecoMultiSelect'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 
@@ -402,6 +403,14 @@ export default function OnboardingPage() {
     router.push('/preventivi/nuovo')
   }
 
+  // Via d'uscita sempre presente (15 ago): senza, chi arriva qui senza poter
+  // salvare (es. account in stato incoerente) resta intrappolato, come capitato
+  // a Eli nel collaudo. «Esci» chiude la sessione e riporta al login.
+  async function handleEsci() {
+    try { await createClient().auth.signOut() } catch { /* best effort */ }
+    router.push('/login')
+  }
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#fff' }}>
       <div className="w-full max-w-[420px] mx-auto">
@@ -436,6 +445,17 @@ export default function OnboardingPage() {
             sociale è obbligatoria (l'app rimanderebbe comunque qui), quindi qui
             non si salta. Al passo 2 («Tutto pronto!») resta «Vai alla dashboard»
             per chi vuole entrare subito. */}
+
+        {/* Via d'uscita sempre presente: nessuno resta intrappolato qui. */}
+        <div style={{ textAlign: 'center', padding: '18px 0 8px' }}>
+          <button
+            type="button"
+            onClick={handleEsci}
+            style={{ background: 'none', border: 'none', color: 'var(--cc-muted)', fontSize: 13, textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Esci e torna al login
+          </button>
+        </div>
       </div>
     </div>
   )

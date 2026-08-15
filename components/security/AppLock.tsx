@@ -45,7 +45,18 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     let alive = true
     createClient().auth.getUser().then(({ data }) => {
       if (!alive) return
-      const ids = data.user?.identities
+      // GUARDIA SESSIONE (15 ago, collaudo Eli): se l'account non esiste più
+      // (es. cancellato), il lucchetto non ha senso e intrappolerebbe l'utente
+      // in uno schermo da cui non si sblocca. Puliamo i flag locali del blocco
+      // e andiamo al login. Un `user` null qui = sessione davvero non valida
+      // (offline → la promise viene rifiutata e cade nel .catch, non qui).
+      if (!data.user) {
+        try { setBiometricEnabled(false); setAppLockEnabled(false) } catch { /* storage bloccato */ }
+        try { void createClient().auth.signOut() } catch { /* best effort */ }
+        window.location.href = '/login'
+        return
+      }
+      const ids = data.user.identities
       // Nessuna identità nota → assumiamo password (comportamento storico).
       const v = !ids || ids.length === 0 || ids.some((i) => i.provider === 'email')
       setHasPassword(v)
@@ -155,9 +166,13 @@ export function AppLock({ userEmail }: { userEmail: string }) {
   const unlockBiometric = useCallback(async (auto = false) => {
     setBusy(true)
     setError(null)
+    // ⚠️ Copy coerente (15 ago): a un account GOOGLE non si dice mai «usa la
+    // password» — non ce l'ha. La via è uscire e rientrare con Google. Era il
+    // difetto della prima foto di Eli («Usa la password» senza campo password).
+    const fallback = hasPassword ? 'usa la password' : 'esci e rientra con Google'
     try {
       const optRes = await fetch('/api/passkey/auth/options', { method: 'POST' })
-      if (!optRes.ok) { if (!auto) setError('Impronta non disponibile. Usa la password.'); setBusy(false); return }
+      if (!optRes.ok) { if (!auto) setError(`Impronta non disponibile. ${hasPassword ? 'Usa la password.' : 'Esci e rientra con Google.'}`); setBusy(false); return }
       const options = await optRes.json()
       const assertion = await startAuthentication({ optionsJSON: options })
       const verRes = await fetch('/api/passkey/auth/verify', {
@@ -165,7 +180,7 @@ export function AppLock({ userEmail }: { userEmail: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ response: assertion }),
       })
-      if (!verRes.ok) { setError('Impronta non riconosciuta. Riprova o usa la password.'); setBusy(false); return }
+      if (!verRes.ok) { setError(`Impronta non riconosciuta. Riprova o ${fallback}.`); setBusy(false); return }
       // ⚠️ RACE della cerimonia (bug Eli 2 ago: "metto l'impronta e me la
       // richiede altre due volte"): la tendina di sistema dell'impronta manda
       // l'app in 'hidden'; se il 'visible' arriva DOPO questo sblocco, il
@@ -178,11 +193,11 @@ export function AppLock({ userEmail }: { userEmail: string }) {
       markActive()
       setLocked(false)
     } catch {
-      if (!auto) setError('Sblocco annullato. Riprova o usa la password.')
+      if (!auto) setError(`Sblocco annullato. Riprova o ${fallback}.`)
     } finally {
       setBusy(false)
     }
-  }, [])
+  }, [hasPassword])
 
   // ── Impronta come POP-UP automatico (Eli 4 ago) ─────────────────────────
   // Appena il lucchetto compare, la tendina di sistema dell'impronta parte da
@@ -321,7 +336,9 @@ export function AppLock({ userEmail }: { userEmail: string }) {
         onClick={fullLogout}
         style={{ marginTop: 18, background: 'transparent', border: 'none', color: 'rgba(243,237,224,.7)', fontSize: 13, fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}
       >
-        Esci dall&rsquo;account
+        {/* Per un account Google «esci» significa rientrare con Google: lo diciamo
+            (era il vicolo cieco della prima foto di Eli). */}
+        {hasPassword ? <>Esci dall&rsquo;account</> : <>Esci e rientra con Google</>}
       </button>
     </div>
   )

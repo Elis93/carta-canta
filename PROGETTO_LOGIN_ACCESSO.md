@@ -1,5 +1,13 @@
 # Login e accesso — analisi e piano (15 ago 2026)
 
+> ✅ **IMPLEMENTATO il 15 ago** (dopo «piano login ok» di Eli): P1 (onboarding
+> crea il workspace se manca + «Esci»), P2 (guardia sessione: account
+> inesistente → login), P3 (copy coerente: account Google mai «usa la password»,
+> ma «esci e rientra con Google» — verificato con Chromium sui due varianti),
+> P4 (tutorial non parte sopra il blocco). Da **collaudare sul telefono vero**
+> (i flussi auth si provano solo su device). Le decisioni §3 restano la memoria.
+
+
 > Nato dal collaudo di Eli del 15 ago: dopo aver cancellato a mano l'account su
 > Supabase e rifatto il login, è rimasta **bloccata** su «Configura la tua
 > attività» con «Workspace non trovato», senza modo di tornare al login; il
