@@ -20,6 +20,7 @@ import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDi
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { FiscalSummary } from './FiscalSummary'
+import { DiscountField } from './DiscountField'
 import { MargineBox } from './MargineBox'
 import { VociTable } from './VociTable'
 import { AiImportButton } from './AiImportButton'
@@ -2031,48 +2032,13 @@ export function PreventivoForm({
         altreProposte={optionsActive ? altreProposte : undefined}
         discountSlot={
           <div ref={discountSectionRef}>
-            {!discountOpen ? (
-              <button
-                type="button"
-                onClick={() => setDiscountOpen(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, fontWeight: 500, color: 'var(--cc-navy)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-              >
-                <Plus size={14} /> Aggiungi sconto
-              </button>
-            ) : (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text)' }}>Sconto</span>
-                  <button
-                    type="button"
-                    onClick={() => { setDiscountPct(''); setDiscountFixed(''); setDiscountError(null); setDiscountOpen(false); markDirty() }}
-                    aria-label="Rimuovi sconto"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cc-text-3)', padding: 2 }}
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mb-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="discount_pct" style={{ fontSize: 14 }}>Sconto %</Label>
-                    <div className="relative">
-                      <Input id="discount_pct" name="discount_pct" type="number" min="0" max="100" step="0.01" placeholder="0" value={discountPct} onChange={(e) => { setDiscountPct(e.target.value); markDirty() }} onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }} style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 15 }} />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="discount_fixed" style={{ fontSize: 14 }}>Sconto in €</Label>
-                    <div className="relative">
-                      <Input id="discount_fixed" name="discount_fixed" type="number" min="0" step="0.01" placeholder="0.00" value={discountFixed} onChange={(e) => { setDiscountFixed(e.target.value); markDirty() }} onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }} style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 15 }} />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">€</span>
-                    </div>
-                  </div>
-                </div>
-                {discountError && (
-                  <p className="text-sm text-destructive" role="alert">{discountError}</p>
-                )}
-              </div>
-            )}
+            <DiscountField
+              pct={discountPct} setPct={setDiscountPct}
+              fixed={discountFixed} setFixed={setDiscountFixed}
+              open={discountOpen} setOpen={setDiscountOpen}
+              error={discountError}
+              onDirty={() => { markDirty(); setDiscountError(null) }}
+            />
           </div>
         }
       />

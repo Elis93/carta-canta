@@ -65,12 +65,6 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
           </span>
         )}
       </div>
-      {discountSlot && (
-        <div style={{ borderBottom: '0.5px solid var(--cc-border-color)', marginBottom: 12, paddingBottom: 12 }}>
-          {discountSlot}
-        </div>
-      )}
-
       {/* ── Lista voci LIVE (2 ago sera, Eli: "nel riepilogo voglio vedere le
           voci aggiunte, così controllo al volo descrizioni e prezzi") ──
           Si aggiorna a ogni modifica: stessa fonte dei totali qui sotto. */}
@@ -105,6 +99,13 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>Subtotale</span>
             <span>{curr(fiscal.subtotal)}</span>
           </div>
+
+          {/* Sconto a mano dell'artigiano — SUBITO sotto il Subtotale (Eli 15
+              ago, #3): «Subtotale → possibilità di sconto → Imponibile → IVA →
+              Totale». Compatto (un campo + interruttore %/€, in DiscountField). */}
+          {discountSlot && (
+            <div style={{ padding: '2px 0' }}>{discountSlot}</div>
+          )}
 
           {/* Sconto */}
           {hasDiscount && (
