@@ -24,6 +24,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { trasmettiDocumentoSdi, type WorkspaceTrasmissione } from '@/lib/sdi/trasmetti'
 import { sendSdiAutoFallitaEmail } from '@/lib/sdi/auto-fallita-email'
+import { recordCronRun } from '@/lib/cron/heartbeat'
 
 const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
@@ -150,5 +151,6 @@ export async function GET(request: NextRequest) {
   }
 
   console.log(`[cron/sdi-auto] trasmesse: ${trasmesse} · rimandate al manuale: ${rimandateAlManuale} · in coda: ${(due ?? []).length}`)
+  await recordCronRun('sdi-auto', { trasmesse, rimandate: rimandateAlManuale })
   return NextResponse.json({ ok: true, trasmesse, rimandateAlManuale })
 }

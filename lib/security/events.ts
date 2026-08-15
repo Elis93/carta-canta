@@ -42,6 +42,7 @@ export type SecurityEventKind =
   | 'sdi_sent'
   | 'studio_access'        // accesso del commercialista ai dati di un cliente
   | 'orphan_cleanup'       // esito della riconciliazione mensile degli archivi
+  | 'cron_ok'              // battito di un cron: ha completato con successo
 
 /**
  * Impronta dell'indirizzo IP. Restituisce null se non c'è il sale: meglio

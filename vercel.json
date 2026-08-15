@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/sdi-auto",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/health",
+      "schedule": "0 7,19 * * *"
     }
   ]
 }

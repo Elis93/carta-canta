@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { riconcilia, riferimentiFoto, riferimentiLogo, type OrphanReport } from '@/lib/storage/orphans'
 import { logSecurityEvent } from '@/lib/security/events'
+import { recordCronRun } from '@/lib/cron/heartbeat'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -77,5 +78,6 @@ export async function GET(request: NextRequest) {
   }
 
   console.log('[cron/orphan-files]', JSON.stringify(report))
+  await recordCronRun('orphan-files', { prova: provaSoltanto })
   return NextResponse.json({ success: true, provaSoltanto, report })
 }

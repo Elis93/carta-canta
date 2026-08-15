@@ -11,6 +11,7 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
 import { sendEmail } from '@/lib/email/send'
+import { recordCronRun } from '@/lib/cron/heartbeat'
 import { PreventivoInScadenzaEmail } from '@/lib/email/templates/preventivo_in_scadenza'
 import { PreventivoInScadenzaClienteEmail } from '@/lib/email/templates/preventivo_in_scadenza_cliente'
 import { PreventivoScadutoEmail } from '@/lib/email/templates/preventivo_scaduto'
@@ -404,6 +405,7 @@ export async function GET(request: NextRequest) {
     } catch { /* funzione assente: migration non applicata */ }
   }
 
+  await recordCronRun('expire-documents', { purged: purged ?? 0, viewsPurged, requestsPurged })
   return NextResponse.json({
     success: true, ...results,
     purged: purged ?? 0, viewsPurged, requestsPurged,

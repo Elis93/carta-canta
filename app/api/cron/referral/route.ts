@@ -23,6 +23,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe/stripe'
+import { recordCronRun } from '@/lib/cron/heartbeat'
 
 const CREDIT_CENTS       = 1900 // €19 = 1 mese Pro
 const MIN_ACTIVE_REFERRALS = 3  // soglia minima referral attivi per ottenere il premio
@@ -283,5 +284,6 @@ export async function GET(request: NextRequest) {
   }
 
   console.log(`[cron/referral] Completato ${rewardMonth}:`, results)
+  await recordCronRun('referral')
   return NextResponse.json({ success: true, rewardMonth, ...results })
 }
