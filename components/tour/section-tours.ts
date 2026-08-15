@@ -55,13 +55,13 @@ export const SECTION_TOURS: Record<string, SectionTour> = {
       },
       {
         selector: '[data-tour="altro-lavoro"]',
-        title: 'Qui c’è il lavoro di tutti i giorni',
-        desc: 'Il <b>cantiere</b> (da fare, in corso, finito), l’<b>agenda</b> degli appuntamenti, i <b>sopralluoghi</b> con foto e appunti, e la <b>rubrica</b> dei clienti.',
+        title: 'Qui c’è il lavoro di ogni giorno',
+        desc: 'I tuoi <b>Lavori</b> (da fare, in corso, finito). In <b>Clienti e appuntamenti</b> trovi la rubrica, l’agenda e i sopralluoghi; in <b>Catalogo e strumenti</b> le voci, i listini, i calcoli e i template.',
       },
       {
         selector: '[data-tour="altro-strumenti"]',
-        title: 'Gli strumenti che ti fanno guadagnare',
-        desc: 'Il <b>Bilancio</b> ti dice quanto entra e quanto esce. Il <b>catalogo</b> riempie i preventivi in un tocco. La <b>vetrina</b> ti fa trovare da clienti nuovi.',
+        title: 'Come sta andando',
+        desc: 'Il <b>Bilancio</b> ti dice quanto entra e quanto esce. La <b>Vetrina</b> ti fa trovare da clienti nuovi e raccoglie richieste e recensioni.',
       },
       {
         selector: '[data-tour="altro-account"]',
