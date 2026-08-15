@@ -148,6 +148,46 @@ body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = conseg
 
 ---
 
+## A-ter. COLLAUDO 2FA + login rifatto + loop impronta (15 agosto, dal telefono)
+
+> Aggiunta del 15 agosto (richiesta tua: "segna tutti i collaudi da fare, li farò più avanti").
+> Prerequisiti 2FA: ✅ migration 084 applicata · ✅ TOTP abilitato su Supabase
+> (Authentication → Multi-Factor → TOTP: Enabled). Serve un'app Authenticator
+> vera sul telefono (Google Authenticator, Authy…).
+> ⚠️ Questi flussi si provano **solo su device**: qui non erano collaudabili
+> (rete bloccata, nessuna sessione reale, MFA non abilitato in test).
+
+### A-ter.1 · Verifica in due passaggi (2FA)
+| # | Cosa fare | Cosa deve succedere |
+|---|---|---|
+| M1 | Account › Sicurezza › «Verifica in due passaggi» → **Attiva** | Compare il **QR** da inquadrare con l'app Authenticator (+ il segreto scritto, per chi non può inquadrare) |
+| M2 | Inquadra il QR con l'app, scrivi il **codice a 6 cifre** e conferma | Compaiono i **10 codici di recupero** (formato XXXX-XXXX); il tasto «Copia i codici» funziona; si vedono **una sola volta** |
+| M3 | Tocca «Ho salvato i codici» | La card diventa **Attiva** e mostra «Ti restano 10 codici di recupero» |
+| M4 | **Esci** dall'account e rientra con email+password | Dopo la password ti manda su **`/mfa`**: chiede il **codice a 6 cifre** dell'app → lo scrivi → entri |
+| M5 | Ripeti l'accesso ma su `/mfa` scegli **«Usa un codice di recupero»** e inseriscine uno | Entri; il 2FA si **disattiva** (te lo dice) e in Sicurezza «Verifica in due passaggi» risulta di nuovo spenta → la riattivi con un nuovo QR |
+| M6 | Riattiva il 2FA, poi in Sicurezza tocca **«Rigenera i codici di recupero»** | Ti chiede il codice dell'app (AAL2) e mostra 10 codici **nuovi**; i vecchi non valgono più |
+| M7 | In Sicurezza tocca **«Disattiva la verifica in due passaggi»** | Chiede conferma; poi al login successivo **non** chiede più il codice |
+| M8 | Vai su **Abbonamento** con un piano a pagamento e 2FA **spento** | Compare il riquadro «Proteggi il tuo account · Attiva» → porta a Sicurezza; con 2FA **attivo** il riquadro **non** compare; su piano **Free** non compare mai |
+| M9 | ⚠️ Con un account **SENZA** 2FA, resta nell'app fermo **oltre 15 minuti** dopo il login e poi tocca qualcosa | **NON** deve buttarti fuori (il «Limit AAL1 sessions» ON vale solo per chi ha un fattore da verificare). Se ti disconnette, avvisami: va spento quel setting |
+
+### A-ter.2 · Login rifatto (i 4 problemi del tuo collaudo)
+| # | Cosa fare | Cosa deve succedere |
+|---|---|---|
+| L1 | Cancella l'account su Supabase (Authentication → **Users**), poi rientra e prova «Configura la tua attività» | **Crea** il workspace invece di dire «Workspace non trovato»; c'è sempre «Esci e torna al login» come via d'uscita |
+| L2 | Con un account **Google** attiva il blocco impronta, poi al lucchetto tocca per sbloccare | Se l'impronta non è disponibile il messaggio dice **«esci e rientra con Google»** (mai «usa la password», che non hai) |
+| L3 | Su un account **email** al lucchetto | C'è il **campo password** e i messaggi citano la password |
+| L4 | Con il lucchetto a schermo, apri il tutorial di /dashboard | Il tutorial **non parte** sopra il lucchetto |
+
+### A-ter.3 · Loop impronta + pop-up registrazione (i fix di stasera)
+| # | Cosa fare | Cosa deve succedere |
+|---|---|---|
+| L5 | Ricrea il tuo caso: entra con Google, poi cancella quell'account su Supabase, poi entra con un **altro** account Google sullo stesso telefono | Il lucchetto **non deve intrappolarti**: se l'impronta non è più valida compare **«Rimuovi il blocco e continua»** che ti fa entrare; «Esci e rientra con Google» ora funziona davvero (non ricade nel loop) |
+| L6 | Se resti bloccata prima di aggiornare l'app | Sblocco immediato: cancella i **dati del sito cartacanta.app** dalle impostazioni del browser |
+| L7 | **Registra** un nuovo account | «Account creato! Controlla la tua email» compare come **pop-up** chiudibile con la **X** (o toccando lo sfondo, o Esc) |
+| L8 | Registrati con un'email **già esistente** (o un indirizzo Google) | Compare comunque il pop-up (anti-enumerazione), ma **l'email di conferma non arriva**: è normale, il riquadro giallo su /verifica-email lo spiega («accedi da qui» / «Accedi con Google») |
+
+---
+
 ## C-bis. Due collaudi rimasti indietro da luglio
 
 - [ ] **Collaboratori (piano Team, se lo userai)** — un collaboratore invitato deve poter creare e inviare preventivi e fatture, generare i PDF e collegare i documenti, senza l'errore "Workspace non trovato".
