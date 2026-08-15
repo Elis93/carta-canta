@@ -12,7 +12,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { startAuthentication } from '@simplewebauthn/browser'
 import { Fingerprint, Loader2, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { isAppLockEnabled, isBiometricEnabled, getTimeoutMin, markActive, lastActive, setAppLockEnabled, setBiometricEnabled } from '@/lib/biometric/local'
+import { isAppLockEnabled, isBiometricEnabled, getTimeoutMin, markActive, lastActive, setAppLockEnabled, setBiometricEnabled, getBiometricUid } from '@/lib/biometric/local'
 
 export function AppLock({ userEmail }: { userEmail: string }) {
   const [locked, setLocked] = useState(false)
@@ -33,6 +33,10 @@ export function AppLock({ userEmail }: { userEmail: string }) {
   })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Impronta STANTIA: la passkey di questo dispositivo non esiste più sul server
+  // per l'utente collegato (tipico dopo aver cambiato o cancellato l'account).
+  // Nessun tentativo la farà funzionare → serve una via d'uscita esplicita.
+  const [deadPasskey, setDeadPasskey] = useState(false)
   // Sblocco con password
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
@@ -63,6 +67,24 @@ export function AppLock({ userEmail }: { userEmail: string }) {
       // Memorizza per i prossimi blocchi: la lock screen nasce già con la
       // faccia giusta, niente più cambio di pagina a metà.
       try { localStorage.setItem('cc_has_pw', v ? '1' : '0') } catch { /* storage bloccato */ }
+
+      // GUARDIA IMPRONTA STANTIA (15 ago, loop segnalato da Eli): l'impronta è
+      // registrata per un utente preciso. Se su questo dispositivo è entrato un
+      // ALTRO account (o quello vecchio è stato cancellato e ricreato), la
+      // passkey non vale più qui: il lucchetto apparirebbe e non si sbloccherebbe
+      // mai. Se conosciamo l'utente d'origine e non combacia, togliamo il blocco
+      // stantio invece di intrappolare. (I flag legacy senza uid non entrano qui:
+      // per loro resta la via d'uscita a runtime quando la passkey fallisce.)
+      try {
+        const bioUid = getBiometricUid()
+        if (isBiometricEnabled() && bioUid && bioUid !== data.user.id) {
+          setBiometricEnabled(false)          // toglie anche l'uid stantio
+          if (!v) setAppLockEnabled(false)     // Google senza password: niente più modo di bloccare
+          setHasBio(false)
+          lockedRef.current = false
+          setLocked(false)
+        }
+      } catch { /* storage bloccato: se ne occupa la via d'uscita a runtime */ }
     }).catch(() => { /* offline / errore: teniamo il valore memorizzato */ })
     return () => { alive = false }
   }, [])
@@ -172,7 +194,24 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     const fallback = hasPassword ? 'usa la password' : 'esci e rientra con Google'
     try {
       const optRes = await fetch('/api/passkey/auth/options', { method: 'POST' })
-      if (!optRes.ok) { if (!auto) setError(`Impronta non disponibile. ${hasPassword ? 'Usa la password.' : 'Esci e rientra con Google.'}`); setBusy(false); return }
+      if (!optRes.ok) {
+        // Nessuna passkey per QUESTO utente sul server: l'impronta salvata su
+        // questo dispositivo non è più valida (cambio/cancellazione account).
+        // Smettiamo di offrirla e apriamo una via d'uscita: senza questo, un
+        // account Google (che non ha password) resta chiuso fuori — è il loop
+        // segnalato da Eli. Vale anche in modalità automatica: così l'utente
+        // vede subito l'uscita, senza dover toccare nulla.
+        try { setBiometricEnabled(false) } catch { /* storage bloccato */ }
+        setHasBio(false)
+        // deadPasskey è un FATTO (la passkey non esiste per questo utente), non
+        // dipende da hasPassword — che può risolversi DOPO (getUser è async, e
+        // l'attivazione automatica dell'impronta parte prima). È il render, a
+        // hasPassword risolto, a decidere quale via d'uscita mostrare.
+        setDeadPasskey(true)
+        if (!auto && hasPassword) setError('Impronta non disponibile su questo dispositivo. Usa la password.')
+        setBusy(false)
+        return
+      }
       const options = await optRes.json()
       const assertion = await startAuthentication({ optionsJSON: options })
       const verRes = await fetch('/api/passkey/auth/verify', {
@@ -241,12 +280,27 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     }
   }
 
+  // Impronta stantia (Google senza password): la passkey non vale più su questo
+  // dispositivo. La sessione SOTTO il lucchetto è però valida — siamo già passati
+  // dal login — quindi lasciar entrare l'utente autenticato e ripulire i flag è
+  // sicuro (per un account Google il blocco impronta non è comunque una barriera:
+  // rientrare con Google lo scavalca già, decisione 21 lug). Toglie il vicolo cieco.
+  function rimuoviBloccoEContinua() {
+    try { setBiometricEnabled(false); setAppLockEnabled(false) } catch { /* storage bloccato */ }
+    hiddenAt.current = Date.now()
+    lockedRef.current = false
+    markActive()
+    setDeadPasskey(false)
+    setLocked(false)
+  }
+
   async function fullLogout() {
     // Rete di sicurezza anti-lockout: se questo account non ha modo di sbloccare
-    // (nessuna password E nessuna impronta), disattiviamo il blocco all'uscita così
-    // che al ri-login non resti intrappolato nello stesso schermo (loop). Non riduce
-    // la sicurezza: per rientrare serve comunque autenticarsi al login.
-    if (!hasPassword && !isBiometricEnabled()) {
+    // — nessuna password E nessuna impronta valida (nessuna registrata, o quella
+    // di questo dispositivo è stantia) — disattiviamo il blocco all'uscita così
+    // che al ri-login non resti intrappolato nello stesso schermo (loop). Non
+    // riduce la sicurezza: per rientrare serve comunque autenticarsi al login.
+    if (!hasPassword && (deadPasskey || !isBiometricEnabled())) {
       try { setBiometricEnabled(false); setAppLockEnabled(false) } catch { /* storage bloccato */ }
     }
     try { await createClient().auth.signOut() } catch { /* best effort */ }
@@ -276,12 +330,34 @@ export function AppLock({ userEmail }: { userEmail: string }) {
       </div>
       <div style={{ color: '#f3ede0', fontSize: 19, fontWeight: 700, marginBottom: 6 }}>App bloccata</div>
       <div style={{ color: 'rgba(243,237,224,.75)', fontSize: 14, maxWidth: 320, lineHeight: 1.5, marginBottom: 22 }}>
-        {noUnlockAvailable
-          ? 'Per rientrare esci e accedi di nuovo con il tuo account.'
-          : hasPassword
-            ? `Per rientrare inserisci la password${hasBio ? ' o usa l’impronta' : ''}.`
-            : 'Per rientrare usa l’impronta.'}
+        {deadPasskey
+          ? hasPassword
+            ? 'L’impronta di questo dispositivo non è più valida. Per rientrare usa la password.'
+            : 'L’impronta salvata su questo dispositivo non è più valida: è stata impostata con un altro account.'
+          : noUnlockAvailable
+            ? 'Per rientrare esci e accedi di nuovo con il tuo account.'
+            : hasPassword
+              ? `Per rientrare inserisci la password${hasBio ? ' o usa l’impronta' : ''}.`
+              : 'Per rientrare usa l’impronta.'}
       </div>
+
+      {/* Impronta stantia su account Google (senza password): via d'uscita che
+          toglie il blocco e ti fa entrare — sei già connesso. Su un account con
+          password, invece, il campo password qui sotto è già la via giusta. */}
+      {deadPasskey && !hasPassword && (
+        <button
+          type="button"
+          onClick={rimuoviBloccoEContinua}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            width: '100%', maxWidth: 320, minHeight: 50, borderRadius: 12, border: 'none',
+            background: '#c9a44c', color: '#1a1a2e', fontSize: 15, fontWeight: 700,
+            fontFamily: 'inherit', cursor: 'pointer', marginBottom: 14,
+          }}
+        >
+          Rimuovi il blocco e continua
+        </button>
+      )}
 
       {hasBio && (
         <button

@@ -11,6 +11,7 @@ const K_LOCK = 'cc_lock'           // "blocca l'app all'uscita" (vale anche senz
 const K_TIMEOUT = 'cc_biometric_timeout'
 const K_ACTIVE = 'cc_biometric_active'
 const K_PROMPTED = 'cc_biometric_prompted'
+const K_UID = 'cc_biometric_uid'   // id dell'utente per cui l'impronta è stata registrata
 
 // Minuti dopo i quali riscattare l'impronta. 0 = ad ogni apertura.
 export const TIMEOUT_OPTIONS: { value: number; label: string }[] = [
@@ -35,6 +36,7 @@ export function setBiometricEnabled(on: boolean): void {
       markActive()
     } else {
       localStorage.removeItem(K_ENABLED) // toglie l'impronta; il blocco resta se attivo (sblocco con password)
+      localStorage.removeItem(K_UID)     // l'impronta non è più legata a nessun utente
     }
   } catch { /* storage bloccato */ }
 }
@@ -82,6 +84,24 @@ export function markActive(): void {
 export function lastActive(): number {
   if (typeof window === 'undefined') return 0
   try { return Number(localStorage.getItem(K_ACTIVE) ?? 0) || 0 } catch { return 0 }
+}
+
+// ⚠️ L'impronta (passkey) è registrata sul SERVER contro un utente preciso. Se
+// su questo dispositivo si cambia account — o si cancella e ricrea l'account —
+// il flag locale «impronta attiva» sopravvive ma la passkey non vale più per il
+// nuovo utente: il lucchetto apparirebbe e non si sbloccherebbe mai (loop
+// segnalato da Eli, 15 ago). Leghiamo quindi il flag all'id dell'utente: se non
+// combacia, AppLock sa che l'impronta è stantia e toglie il blocco invece di
+// intrappolare. I flag legacy (senza uid) restano gestiti dalla via d'uscita a
+// runtime nel lucchetto.
+export function setBiometricUid(uid: string): void {
+  if (typeof window === 'undefined') return
+  try { localStorage.setItem(K_UID, uid) } catch { /* storage bloccato */ }
+}
+
+export function getBiometricUid(): string | null {
+  if (typeof window === 'undefined') return null
+  try { return localStorage.getItem(K_UID) } catch { return null }
 }
 
 // La richiesta post-login "vuoi attivare lo sblocco?" si mostra una volta sola

@@ -16,7 +16,7 @@ import { listMyPasskeysAction, deletePasskeyAction, type PasskeyInfo } from '@/l
 import { registerPasskey, guessDeviceLabel } from '@/lib/biometric/register'
 import {
   isBiometricEnabled, setBiometricEnabled, isAppLockEnabled, setAppLockEnabled,
-  getTimeoutMin, setTimeoutMin, setBiometricPrompted, TIMEOUT_OPTIONS,
+  getTimeoutMin, setTimeoutMin, setBiometricPrompted, setBiometricUid, TIMEOUT_OPTIONS,
 } from '@/lib/biometric/local'
 
 // Copy della card, estratte in costanti: il testo accanto a `hasPassword === …`
@@ -93,6 +93,13 @@ export function BiometricToggle() {
       const res = await registerPasskey(guessDeviceLabel())
       if (!res.ok) { toast.error(res.error ?? 'Registrazione non riuscita. Riprova.'); return }
       setBiometricEnabled(true) // attiva anche il blocco
+      // Lega l'impronta all'utente per cui è stata registrata: se un domani su
+      // questo dispositivo entrasse un altro account, AppLock capirà che questa
+      // passkey non vale per lui e non intrappolerà nel lucchetto.
+      try {
+        const { data } = await createClient().auth.getUser()
+        if (data.user?.id) setBiometricUid(data.user.id)
+      } catch { /* best effort: senza uid resta la via d'uscita a runtime */ }
       setBioOn(true)
       setLockOn(true)
       const list = await listMyPasskeysAction()

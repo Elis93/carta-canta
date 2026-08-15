@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Mail, X, Gift } from 'lucide-react'
@@ -79,9 +80,21 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
   // recupero via email.
   const passwordStrong = isPasswordStrong(password)
 
-  // FIX-21: banner persistente per email di verifica (no auto-dismiss, no redirect automatico)
+  // FIX-21: pop-up di conferma email (no auto-dismiss, no redirect automatico).
+  // Eli (15 ago): il messaggio «Account creato» deve comparire in un POP-UP
+  // chiudibile con la X, non come banner in linea.
   const [emailBannerDismissed, setEmailBannerDismissed] = useState(false)
   const showEmailBanner = state?.success === 'verifica-email' && !emailBannerDismissed
+  // Portal montato solo lato client (evita mismatch SSR).
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  // Chiusura con Esc, come ogni altro overlay dell'app.
+  useEffect(() => {
+    if (!showEmailBanner) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setEmailBannerDismissed(true) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [showEmailBanner])
 
   // FIX-14: flag "redirect in corso" solo per il flusso onboarding (email già confermata)
   const isRedirecting = state?.success === 'onboarding'
@@ -159,34 +172,6 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
           <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>oppure</span>
           <div style={{ flex: 1, height: 1, background: '#eee' }} />
         </div>
-
-        {/* FIX-21: banner persistente di conferma email */}
-        {showEmailBanner && (
-          <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 mb-4">
-            <Mail className="size-4 shrink-0 mt-0.5" />
-            <div className="flex-1 space-y-1">
-              <p className="font-semibold">Account creato! Controlla la tua email</p>
-              <p className="text-xs text-green-700">
-                Abbiamo inviato un link di conferma al tuo indirizzo.
-                Clicca il link per attivare l&apos;account e completare l&apos;iscrizione.
-              </p>
-              <Link
-                href="/verifica-email"
-                className="text-xs text-green-700 underline underline-offset-2 hover:text-green-900"
-              >
-                Non hai ricevuto l&apos;email? Vai alla pagina di verifica →
-              </Link>
-            </div>
-            <button
-              type="button"
-              aria-label="Chiudi"
-              onClick={() => setEmailBannerDismissed(true)}
-              className="shrink-0 rounded p-0.5 text-green-600 hover:text-green-900 hover:bg-green-100 transition-colors"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-        )}
 
         {/* Form */}
         <form action={formAction} onSubmit={handleSubmit}>
@@ -338,6 +323,51 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
           Accedi
         </Link>
       </div>
+
+      {/* ── POP-UP «Account creato» (Eli 15 ago) ─────────────────────────────
+          Portal su body: un overlay a schermo intero non deve poter essere
+          ritagliato da un antenato con transform/overflow (regola §B.2). Si
+          chiude con la X, toccando lo sfondo o con Esc. */}
+      {mounted && showEmailBanner && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Account creato"
+          onClick={() => setEmailBannerDismissed(true)}
+          style={{ position: 'fixed', inset: 0, zIndex: 100000, background: 'rgba(20,20,40,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ position: 'relative', width: '100%', maxWidth: 380, background: '#fff', borderRadius: 16, boxShadow: '0 20px 50px -12px rgba(20,20,40,.4)', padding: '26px 22px 22px', textAlign: 'center' }}
+          >
+            <button
+              type="button"
+              aria-label="Chiudi"
+              onClick={() => setEmailBannerDismissed(true)}
+              style={{ position: 'absolute', top: 12, right: 12, background: 'transparent', border: 'none', color: '#9a988f', cursor: 'pointer', display: 'flex', padding: 4, borderRadius: 8 }}
+            >
+              <X className="size-5" />
+            </button>
+            <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#d4efe2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+              <Mail style={{ width: 30, height: 30, color: '#2f8a63' }} strokeWidth={1.8} />
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#161616', marginBottom: 8 }}>
+              Account creato! Controlla la tua email
+            </div>
+            <p style={{ fontSize: 13.5, color: '#55534b', lineHeight: 1.55, margin: '0 0 16px' }}>
+              Abbiamo inviato un link di conferma al tuo indirizzo. Clicca il link per
+              attivare l&rsquo;account e completare l&rsquo;iscrizione.
+            </p>
+            <Link
+              href="/verifica-email"
+              style={{ display: 'inline-block', fontSize: 13, fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline', textUnderlineOffset: 2 }}
+            >
+              Non hai ricevuto l&rsquo;email? Vai alla pagina di verifica →
+            </Link>
+          </div>
+        </div>,
+        document.body,
+      )}
     </>
   )
 }
