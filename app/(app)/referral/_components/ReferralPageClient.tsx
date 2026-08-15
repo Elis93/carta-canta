@@ -8,7 +8,6 @@ import { useState } from 'react'
 import { Copy, Check, Gift, Users, Star, Clock, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 
 interface ReferralPageClientProps {
@@ -161,60 +160,58 @@ export function ReferralPageClient({
   const benefit = getBenefitData(plan, billingInterval)
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
-
-      {/* ── Intestazione ── */}
-      <div>
-        <h1 className="text-2xl font-semibold flex items-center gap-2">
-          <Gift className="size-6 text-primary" />
+    <div>
+      {/* ── Intestazione — fascia bianca a filo oro, come le altre pagine ── */}
+      <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', padding: '15px 15px 13px' }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e', display: 'flex', alignItems: 'center', gap: 9 }}>
+          <Gift style={{ width: 22, height: 22, color: '#b08d3e' }} aria-hidden />
           Porta un amico
         </h1>
-        {/* Frase specifica per il piano — no genericità */}
-        <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+      </div>
+
+      <div className="max-w-2xl mx-auto space-y-5" style={{ padding: '16px 15px 24px' }}>
+        {/* Frase specifica per il piano */}
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--cc-muted)', marginTop: -2 }}>
           {benefit.headline}
         </p>
-      </div>
 
-      {/* ── Beneficio per il tuo piano ── */}
-      <div className="rounded-xl border-2 border-primary/25 bg-primary/5 p-4 space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-primary/70">
-          Il tuo beneficio se porti un amico
-        </p>
-
-        {benefit.scenarios.map((s) => (
-          <div key={s.id} className="space-y-0.5">
-            <p className="text-base font-bold text-foreground">{s.benefit}</p>
-            <p className="text-xs text-muted-foreground">{s.detail}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Come funziona ── */}
-      <div className="rounded-lg border bg-card px-4 py-4 space-y-3">
-        <p className="text-sm font-semibold">Come funziona</p>
-        <ol className="space-y-2.5">
-          {[
-            'Condividi il tuo codice o link con colleghi artigiani, freelance o professionisti.',
-            benefit.step2,
-            'Il beneficio viene applicato automaticamente ogni mese — nessun codice da inserire.',
-          ].map((step, i) => (
-            <li key={i} className="flex gap-3 text-sm text-muted-foreground">
-              <span className="size-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center shrink-0 font-semibold mt-0.5">
-                {i + 1}
-              </span>
-              {step}
-            </li>
+        {/* ── Beneficio per il tuo piano ── */}
+        <div style={{ background: '#fff', borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', borderLeft: '3px solid #c9a44c', padding: '14px 15px' }}>
+          <div className="cc-section-label" style={{ margin: '0 0 8px' }}>Il tuo beneficio se porti un amico</div>
+          {benefit.scenarios.map((s) => (
+            <div key={s.id} style={{ marginTop: 4 }}>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#161616', margin: 0 }}>{s.benefit}</p>
+              <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', margin: '2px 0 0' }}>{s.detail}</p>
+            </div>
           ))}
-        </ol>
-      </div>
+        </div>
+
+        {/* ── Come funziona ── */}
+        <div style={{ background: '#fff', borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '14px 15px' }}>
+          <div className="cc-section-label" style={{ margin: '0 0 10px' }}>Come funziona</div>
+          <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 11 }}>
+            {[
+              'Condividi il tuo codice o link con colleghi artigiani, freelance o professionisti.',
+              benefit.step2,
+              'Il beneficio viene applicato automaticamente ogni mese — nessun codice da inserire.',
+            ].map((step, i) => (
+              <li key={i} style={{ display: 'flex', gap: 11, fontSize: 13.5, color: '#3a3a3a', alignItems: 'flex-start' }}>
+                <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--cc-navy)', color: '#fff', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {i + 1}
+                </span>
+                <span style={{ paddingTop: 2 }}>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
 
       {/* ── Codice + Link ── */}
       {code && shareUrl ? (
-        <div className="rounded-lg border bg-card p-4 space-y-4">
-          <p className="text-sm font-medium">Il tuo codice invito</p>
+        <div className="space-y-4" style={{ background: '#fff', borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '14px 15px' }}>
+          <div className="cc-section-label" style={{ margin: 0 }}>Il tuo codice invito</div>
 
           <div className="flex gap-2 items-center">
-            <div className="flex-1 rounded-md border bg-muted/50 px-3 py-2 font-mono text-lg font-bold tracking-widest text-center">
+            <div className="flex-1 rounded-md px-3 py-2 font-mono text-lg font-bold tracking-widest text-center" style={{ background: '#faf7f0', border: '1px solid #ece7db' }}>
               {code}
             </div>
             <Button
@@ -278,34 +275,36 @@ export function ReferralPageClient({
           </p>
         </div>
       ) : (
-        <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
+        <div className="text-sm" style={{ background: '#fff', borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '14px 15px', color: 'var(--cc-muted)' }}>
           Codice invito non ancora disponibile. Ricarica la pagina.
         </div>
       )}
 
       {/* ── Statistiche ── */}
+      {(() => { const statCard: React.CSSProperties = { background: '#fff', borderRadius: 11, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 6px 20px -12px rgba(20,20,40,.2)', padding: '11px 4px', textAlign: 'center' }; return (
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-lg border bg-card p-3 text-center">
-          <Users className="size-5 text-muted-foreground mx-auto mb-1" />
-          <p className="text-2xl font-bold">{totalUses}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Invitati registrati</p>
+        <div style={statCard}>
+          <Users className="size-5 mx-auto mb-1" style={{ color: 'var(--cc-muted)' }} />
+          <p style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>{totalUses}</p>
+          <p style={{ fontSize: 10.5, color: 'var(--cc-muted)', margin: '2px 0 0' }}>Invitati registrati</p>
         </div>
-        <div className="rounded-lg border bg-card p-3 text-center">
-          <Star className="size-5 text-amber-500 mx-auto mb-1" />
-          <p className="text-2xl font-bold text-[#b0863e]">{totalRewards}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Invitati abbonati</p>
+        <div style={statCard}>
+          <Star className="size-5 mx-auto mb-1" style={{ color: '#b0863e' }} />
+          <p style={{ fontSize: 22, fontWeight: 800, color: '#b0863e', margin: 0 }}>{totalRewards}</p>
+          <p style={{ fontSize: 10.5, color: 'var(--cc-muted)', margin: '2px 0 0' }}>Invitati abbonati</p>
         </div>
-        <div className="rounded-lg border bg-card p-3 text-center">
-          <TrendingUp className="size-5 text-[#2f8a63] mx-auto mb-1" />
-          <p className="text-2xl font-bold text-[#2f8a63]">{totalFreeMonths}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Benefici applicati</p>
+        <div style={statCard}>
+          <TrendingUp className="size-5 mx-auto mb-1" style={{ color: '#2f8a63' }} />
+          <p style={{ fontSize: 22, fontWeight: 800, color: '#2f8a63', margin: 0 }}>{totalFreeMonths}</p>
+          <p style={{ fontSize: 10.5, color: 'var(--cc-muted)', margin: '2px 0 0' }}>Benefici applicati</p>
         </div>
-        <div className="rounded-lg border bg-card p-3 text-center">
-          <Clock className="size-5 text-muted-foreground mx-auto mb-1" />
-          <p className="text-2xl font-bold">{pendingRewards}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Benefici in attesa</p>
+        <div style={statCard}>
+          <Clock className="size-5 mx-auto mb-1" style={{ color: 'var(--cc-muted)' }} />
+          <p style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>{pendingRewards}</p>
+          <p style={{ fontSize: 10.5, color: 'var(--cc-muted)', margin: '2px 0 0' }}>Benefici in attesa</p>
         </div>
       </div>
+      ) })()}
 
       {/* Banner premi in attesa */}
       {pendingRewards > 0 && (
@@ -327,51 +326,40 @@ export function ReferralPageClient({
         </div>
       )}
 
-      {/* ── Regole per tutti i piani (sempre visibile, compatta) ── */}
-      <div className="rounded-lg border bg-card overflow-hidden">
-        <p className="px-4 py-3 text-sm font-semibold border-b">
-          Riepilogo benefici per piano
-        </p>
-        <div className="divide-y text-xs">
-          {SYNOPTIC_RULES.map((rule) => {
-            const isHighlighted =
-              rule.plan.toLowerCase().startsWith(plan) ||
-              (plan === 'pro'  && rule.plan.toLowerCase().startsWith('pro')) ||
-              false // piano team rimosso dall'UI
-            return (
-              <div key={rule.plan} className={isHighlighted ? 'bg-primary/5' : ''}>
-                {rule.rows.map((row, i) => (
-                  <div
-                    key={i}
-                    className={[
-                      'grid grid-cols-[90px_1fr_1fr] gap-2 px-4 py-2 items-start',
-                      isHighlighted ? 'font-medium' : 'text-muted-foreground',
-                    ].join(' ')}
-                  >
-                    <span className="font-semibold text-foreground">
-                      {i === 0 ? rule.plan : ''}
-                    </span>
-                    <span className="text-muted-foreground">{row.condition}</span>
-                    <span className="text-foreground">{row.benefit}</span>
-                  </div>
-                ))}
-              </div>
-            )
-          })}
+        {/* ── Regole per tutti i piani (sempre visibile, compatta) ── */}
+        <div className="overflow-hidden" style={{ background: '#fff', borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)' }}>
+          <div className="cc-section-label" style={{ margin: 0, padding: '13px 15px 11px', borderBottom: '0.5px solid #eee' }}>Riepilogo benefici per piano</div>
+          <div className="text-xs">
+            {SYNOPTIC_RULES.map((rule) => {
+              const isHighlighted =
+                rule.plan.toLowerCase().startsWith(plan) ||
+                (plan === 'pro'  && rule.plan.toLowerCase().startsWith('pro')) ||
+                false // piano team rimosso dall'UI
+              return (
+                <div key={rule.plan} style={{ background: isHighlighted ? '#faf6ec' : undefined, borderTop: '0.5px solid #f0efe9' }}>
+                  {rule.rows.map((row, i) => (
+                    <div key={i} className="grid grid-cols-[90px_1fr_1fr] gap-2 items-start" style={{ padding: '8px 15px', fontWeight: isHighlighted ? 500 : 400 }}>
+                      <span style={{ fontWeight: 600, color: '#161616' }}>{i === 0 ? rule.plan : ''}</span>
+                      <span style={{ color: 'var(--cc-muted)' }}>{row.condition}</span>
+                      <span style={{ color: '#3a3a3a' }}>{row.benefit}</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
         </div>
+
+        {/* ── Note legali ── */}
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--cc-muted)' }}>
+          Il beneficio viene calcolato il 1° di ogni mese in base agli inviti con abbonamento
+          attivo in quel momento. Gli inviti con abbonamento scaduto o cancellato non contano.
+          Per i piani mensili il credito viene scalato automaticamente dalla prossima fattura.
+          Per i piani annuali la data di scadenza viene estesa direttamente.
+          Non trasferibile. Carta Canta si riserva il diritto di modificare o interrompere
+          il programma in qualsiasi momento con preavviso ragionevole.
+        </p>
       </div>
-
-      <Separator />
-
-      {/* ── Note legali ── */}
-      <p className="text-xs text-muted-foreground leading-relaxed">
-        Il beneficio viene calcolato il 1° di ogni mese in base agli inviti con abbonamento
-        attivo in quel momento. Gli inviti con abbonamento scaduto o cancellato non contano.
-        Per i piani mensili il credito viene scalato automaticamente dalla prossima fattura.
-        Per i piani annuali la data di scadenza viene estesa direttamente.
-        Non trasferibile. Carta Canta si riserva il diritto di modificare o interrompere
-        il programma in qualsiasi momento con preavviso ragionevole.
-      </p>
     </div>
   )
 }
