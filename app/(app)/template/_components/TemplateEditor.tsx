@@ -287,8 +287,8 @@ export function TemplateEditor({
                 aria-hidden="true"
               />
               {!isPro && (
-                <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#b08d3e' }}>
-                  <Lock size={12} /> Pro
+                <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: '#b0863e', border: '1px solid #e8d6ad', background: '#fbf7ee', padding: '4px 11px', borderRadius: 999, letterSpacing: '.02em' }}>
+                  <Lock size={13} /> Solo con Pro
                 </span>
               )}
             </div>

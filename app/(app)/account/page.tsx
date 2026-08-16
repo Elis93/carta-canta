@@ -29,16 +29,16 @@ export default async function AccountPage({
     <HubShell title="Account e abbonamento">
       <MenuRow href="/account/accesso" icon={UserRound} label="Indirizzo e accesso" desc="L’email con cui entri e l’eliminazione dell’account" descAlways />
       <MenuRow href="/account/sicurezza" icon={ShieldCheck} label="Sicurezza e blocco app" desc="Blocco con impronta ed esci da tutti i dispositivi" descAlways />
-      <MenuRow href="/account/dati" icon={Database} label="I tuoi dati e commercialista" desc="Scarica i tuoi dati e il pacchetto per il commercialista" descAlways />
+      <MenuRow href="/account/dati" icon={Database} label="I tuoi dati e commercialista" desc="Collega il tuo commercialista ai tuoi documenti · scarica i tuoi dati" descAlways />
       <MenuRow
         href="/abbonamento"
         icon={Crown}
         iconColor="var(--cc-gold)"
         label="Abbonamento"
-        desc="Il tuo piano, fatturazione, passa a Pro"
+        desc="Il tuo piano e la fatturazione"
         descAlways
-        hint={isFree ? (
-          <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--cc-navy)' }}>Passa a Pro</span>
+        hintBelow={isFree ? (
+          <span style={{ display: 'inline-block', border: '1px solid var(--cc-navy)', color: 'var(--cc-navy)', fontSize: 11, fontWeight: 600, padding: '2px 9px', borderRadius: 999, letterSpacing: '.02em' }}>Passa a Pro</span>
         ) : undefined}
       />
       <MenuRow href="/referral" icon={Gift} label="Porta un amico" desc="Invita altri artigiani e ottieni premi sull’abbonamento" descAlways last />

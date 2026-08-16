@@ -66,7 +66,7 @@ export const SECTION_TOURS: Record<string, SectionTour> = {
       {
         selector: '[data-tour="altro-account"]',
         title: 'Impostazioni e account',
-        desc: 'In <b>Impostazioni</b> trovi i tuoi dati, il fiscale, i pagamenti e le notifiche, ognuno nella sua pagina. In <b>Account e abbonamento</b> ci sono l’accesso, la sicurezza, i tuoi dati, il <b>commercialista</b> (il pacchetto delle fatture per lui), il piano e gli inviti. E quando accanto a un campo vedi il tondino <b>ⓘ</b>, toccalo: spiega a cosa serve quella funzione.',
+        desc: 'In <b>Impostazioni</b> trovi i tuoi dati, il fiscale, i pagamenti e le notifiche, ognuno nella sua pagina. In <b>Account e abbonamento</b> ci sono l’accesso, la sicurezza, i tuoi dati, il <b>commercialista</b> (collega il tuo alla app, così vede le fatture da sé), il piano e gli inviti. E quando accanto a un campo vedi il tondino <b>ⓘ</b>, toccalo: spiega a cosa serve quella funzione.',
       },
     ],
   },

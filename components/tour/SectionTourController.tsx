@@ -44,10 +44,13 @@ export function SectionTourController() {
     const [key, tour] = entry
 
     // Rilancio esplicito da Account e dati: ha la precedenza e ignora il segno.
+    // ⚠️ NON si consuma qui: la richiesta si rimuove SOLO quando un passo è
+    // davvero evidenziato (onHighlightStarted). Così, se la guida non parte —
+    // lucchetto a schermo, o redirect a /login per sessione scaduta — la
+    // richiesta resta e riprova quando torni sulla pagina giusta.
     let richiesta = false
     try {
       richiesta = sessionStorage.getItem(SECTION_TOUR_REQUEST) === key
-      if (richiesta) sessionStorage.removeItem(SECTION_TOUR_REQUEST)
     } catch { /* storage negato: si comporta come "nessuna richiesta" */ }
 
     if (!richiesta) {
@@ -64,15 +67,25 @@ export function SectionTourController() {
     const t0 = Date.now()
     let stopped = false
 
+    // Il blocco app (impronta) copre la pagina SENZA cambiare rotta: come il
+    // tour principale (P4, 15 ago), la guida non deve MAI partirci sopra.
+    const appLocked = () =>
+      typeof document !== 'undefined' && !!document.querySelector('[aria-label="App bloccata"]')
+
     const tick = () => {
       if (stopped) return
-      if (!visibleEl(tour.steps[0].selector)) {
+      // Navigato altrove nel frattempo? (es. redirect a /login per sessione
+      // scaduta, con la richiesta ancora pendente): la guida NON deve comparire
+      // sulla schermata di accesso (Eli, 16 ago: «il tutorial Altro è partito
+      // quando ero ancora nella schermata di login»).
+      if (!window.location.pathname.startsWith(tour.path)) return
+      // Aspetta che il primo elemento ci sia E che il lucchetto non sia a
+      // schermo: fino a 8s, poi rinuncia in silenzio (il segno «già vista» NON
+      // è ancora stato messo → alla prossima visita ci riprova).
+      if (appLocked() || !visibleEl(tour.steps[0].selector)) {
         if (Date.now() - t0 < 8000) setTimeout(tick, 200)
         return
       }
-      // Il segno si mette SOLO quando la guida parte davvero: se la pagina non
-      // si è caricata, alla prossima visita ci riprova invece di darla per vista.
-      try { localStorage.setItem(seenKey(key), '1') } catch { /* noop */ }
 
       const steps: DriveStep[] = tour.steps
         .filter((s) => visibleEl(s.selector))
@@ -82,6 +95,7 @@ export function SectionTourController() {
         }))
       if (steps.length === 0) return
 
+      let marcata = false
       const d = driver({
         showProgress: steps.length > 1,
         progressText: '{{current}} di {{total}}',
@@ -96,6 +110,17 @@ export function SectionTourController() {
         stageRadius: 12,
         popoverClass: 'cc-tour-popover',
         steps,
+        // ⚠️ Il segno «già vista» e il consumo della richiesta si mettono SOLO
+        // quando un passo è DAVVERO evidenziato. Se la guida viene distrutta
+        // prima di comparire (redirect, unmount, lucchetto), alla prossima
+        // visita ci riprova invece di darla per vista — è il bug «il tutorial
+        // di Altro non è partito alla prima visita» (Eli, 16 ago).
+        onHighlightStarted: () => {
+          if (marcata) return
+          marcata = true
+          try { localStorage.setItem(seenKey(key), '1') } catch { /* noop */ }
+          try { sessionStorage.removeItem(SECTION_TOUR_REQUEST) } catch { /* noop */ }
+        },
         onDestroyed: () => { driverRef.current = null },
       })
       driverRef.current = d

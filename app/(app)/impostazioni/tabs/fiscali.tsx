@@ -271,10 +271,13 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             <label htmlFor="count-labor" style={{ fontSize: 13, color: '#161616', lineHeight: 1.45, cursor: 'pointer' }}>
               <b>Conta la manodopera nel margine</b>
               <span style={{ display: 'block', fontSize: 12, color: '#767676', marginTop: 2 }}>
-                Nella scheda Lavoro, il costo orario &times; le ore del timer viene tolto
-                dal margine. Se lavori in <b>forfettario</b>{' '}puoi spegnerlo: le tue ore
-                non sono soldi usciti dal conto, e il margine mostra quanto ti resta
-                davvero in cassa. Le ore restano comunque visibili sul Lavoro.
+                Nella scheda di un Lavoro c&rsquo;è il margine: quanto ti resta tra il
+                preventivato e quello che spendi davvero (materiali e, se attivi questa
+                spunta, le tue ore). Con la spunta attiva, il costo orario &times; le ore
+                conteggiate col timer viene tolto dal margine. Se lavori in{' '}
+                <b>forfettario</b>{' '}puoi disattivarla: le tue ore non sono soldi usciti
+                dal conto, così il margine mostra quanto ti resta davvero in cassa. Le ore
+                restano comunque visibili nella Scheda Lavoro, in «Economia del lavoro».
               </span>
             </label>
           </div>
@@ -327,11 +330,18 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
                     La fattura elettronica, oltre che al cliente, va mandata
                     all&rsquo;<b>Agenzia delle Entrate</b> tramite il <b>Sistema di
                     Interscambio (SdI)</b>: è questo passaggio che la rende ufficialmente
-                    emessa. Con l&rsquo;opzione attiva ci pensa l&rsquo;app — quando invii
-                    una fattura al cliente, il giorno dopo la trasmette da sola
-                    all&rsquo;Agenzia (24 ore per ripensarci: si annulla con un tocco dalla
-                    fattura). Se la spegni, la trasmetti tu a mano dalla fattura, e l&rsquo;app
-                    ti ricorda la scadenza con il conto alla rovescia dei 12 giorni.
+                    emessa.
+                    <span style={{ display: 'block', marginTop: 6 }}>
+                      <b>Spunta accesa (consigliato):</b>{' '}quando invii la fattura al
+                      cliente, il giorno dopo l&rsquo;app la trasmette in automatico
+                      all&rsquo;Agenzia. Hai 24 ore per ripensarci: fino a quel momento puoi
+                      fermare la trasmissione con un tocco dentro alla fattura stessa.
+                    </span>
+                    <span style={{ display: 'block', marginTop: 6 }}>
+                      <b>Spunta spenta:</b>{' '}la trasmissione all&rsquo;Agenzia delle
+                      Entrate va fatta a mano, con il tasto dentro alla fattura. L&rsquo;app
+                      ti ricorda la scadenza (12 giorni) con un conto alla rovescia.
+                    </span>
                   </span>
                 </label>
               </div>

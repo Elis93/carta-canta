@@ -177,7 +177,7 @@ export function ReferralPageClient({
 
         {/* ── Beneficio per il tuo piano ── */}
         <div style={{ background: '#fff', borderRadius: 13, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', borderLeft: '3px solid #c9a44c', padding: '14px 15px' }}>
-          <div className="cc-section-label" style={{ margin: '0 0 8px' }}>Il tuo beneficio se porti un amico</div>
+          <div className="cc-section-label" style={{ margin: '0 0 8px' }}>Il tuo beneficio se porti 3 amici</div>
           {benefit.scenarios.map((s) => (
             <div key={s.id} style={{ marginTop: 4 }}>
               <p style={{ fontSize: 15, fontWeight: 700, color: '#161616', margin: 0 }}>{s.benefit}</p>

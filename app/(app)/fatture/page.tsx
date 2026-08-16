@@ -3,7 +3,8 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Button } from '@/components/ui/button'
-import { Inbox, Download, Plus, FileInput, ArrowUpDown, FileCheck2, FileMinus2, FilePlus2 } from 'lucide-react'
+import { Inbox, Download, Plus, FileInput, ArrowUpDown, FileCheck2, FileMinus2, FilePlus2, AlertTriangle } from 'lucide-react'
+import { checkFreeBlock, FREE_INVOICE_LIMIT } from '@/lib/free-trial'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
@@ -406,6 +407,12 @@ export default async function FatturePage({ searchParams }: Props) {
     avvisoSdiWs = acceso && quotaOk ? 'auto' : 'manuale'
   }
 
+  // Piano Free: contatore delle 8 FATTURE inviate (083), gemello del banner
+  // preventivi. ⚠️ Il limite morde sull'INVIO, non sulla creazione — quindi
+  // l'avviso dice «inviare» e NON disabilita «Nuova fattura».
+  const isFree = workspace.plan === 'free'
+  const freeInvoiceStatus = isFree ? checkFreeBlock(workspace, 'fattura') : null
+
   return (
     <div className="p-4 lg:p-6 max-w-4xl mx-auto">
       {/* Pop-up "Bozza salvata" con numero assegnato (redirect da Nuova fattura) */}
@@ -414,6 +421,36 @@ export default async function FatturePage({ searchParams }: Props) {
       <div className="lg:hidden -mx-4 -mt-4 mb-4 cc-title-band" style={{ padding: '15px 15px 13px' }}>
         <h1 className="cc-page-title" style={{ fontSize: 22 }}>Fatture</h1>
       </div>
+
+      {/* ── BANNER PIANO FREE (limite 8 fatture inviate, 083) ── */}
+      {isFree && freeInvoiceStatus?.blocked && freeInvoiceStatus.reason === 'doc_limit' && (
+        <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656] mb-4">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <p>
+            <strong>Hai raggiunto il limite di {FREE_INVOICE_LIMIT} fatture gratuite.</strong>{' '}
+            Non puoi inviarne altre al cliente (creare bozze e trasmettere allo SdI restano possibili).{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>{' '}
+            per fatture illimitate.
+          </p>
+        </div>
+      )}
+      {isFree && !freeInvoiceStatus?.blocked && freeInvoiceStatus && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+          background: 'var(--cc-card)', borderRadius: 11, boxShadow: 'var(--cc-shadow)',
+          borderLeft: '3px solid #c9a44c', padding: '10px 14px', marginBottom: 16,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16, color: '#c9a44c' }}>♛</span>
+            <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>
+              <strong style={{ color: 'var(--cc-text)', fontWeight: 600 }}>{freeInvoiceStatus.docsUsed}/{FREE_INVOICE_LIMIT}</strong> fatture gratuite
+            </span>
+          </div>
+          <Link href="/abbonamento" style={{ fontSize: 13, fontWeight: 600, color: '#c9a44c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            Passa a Pro →
+          </Link>
+        </div>
+      )}
 
       {/* ── HEADER (desktop only) ── */}
       <div className="hidden lg:flex items-center justify-between gap-3 mb-4">

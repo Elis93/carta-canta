@@ -24,7 +24,7 @@ export default async function CalcoliPage() {
       <div style={{ padding: '15px' }}>
         <p style={{ fontSize: 13, color: 'var(--cc-muted)', margin: '0 0 12px', lineHeight: 1.5 }}>
           Due conti veloci di cantiere. Con &laquo;Copia&raquo; incolli il risultato dove vuoi; dentro un
-          preventivo trovi lo stesso strumento accanto alla quantità, col tasto &laquo;Usa&raquo;.
+          preventivo trovi lo stesso strumento accanto alla quantità.
         </p>
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '15px' }}>
           <Calcolatrice />

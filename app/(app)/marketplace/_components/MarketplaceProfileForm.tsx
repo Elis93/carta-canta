@@ -143,7 +143,7 @@ export function MarketplaceProfileForm({
           </p>
         ) : (
           <p style={{ fontSize: 12, color: '#767676', margin: '10px 0 0' }}>
-            I profili Pro compaiono in cima ai risultati; il tuo è comunque presente.{' '}
+            I profili Pro compaiono in cima ai risultati.{' '}
             <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Passa a Pro →</Link>
           </p>
         )}
@@ -206,7 +206,7 @@ export function MarketplaceProfileForm({
             Contatti mostrati ai clienti
           </div>
           <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '0 0 6px' }}>
-            I clienti possono sempre scriverti dal modulo qui sotto al profilo. In più puoi mostrare:
+            I clienti possono sempre scriverti dal modulo sotto al profilo. In più puoi mostrare:
           </p>
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', cursor: 'pointer' }}>
             <input type="checkbox" checked={showPhone} onChange={(e) => setShowPhone(e.target.checked)} style={{ width: 18, height: 18, accentColor: '#1a1a2e' }} />

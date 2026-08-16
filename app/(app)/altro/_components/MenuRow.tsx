@@ -11,6 +11,7 @@ export function MenuRow({
   desc,
   descAlways = false,
   hint,
+  hintBelow,
   iconColor,
   last = false,
 }: {
@@ -21,7 +22,10 @@ export function MenuRow({
       "Testo grande e leggibile" (classe cc-desc); con descAlways è sempre visibile. */
   desc?: string
   descAlways?: boolean
+  /** Badge/pillola a DESTRA (stato: conteggi, PRO). */
   hint?: React.ReactNode
+  /** CTA/pillola SOTTO la descrizione (Eli 16 ago: «Passa a Pro» non a destra). */
+  hintBelow?: React.ReactNode
   iconColor?: string
   last?: boolean
 }) {
@@ -54,6 +58,7 @@ export function MenuRow({
             {desc}
           </span>
         )}
+        {hintBelow && <span style={{ display: 'block', marginTop: 7 }}>{hintBelow}</span>}
       </span>
       {hint && <span style={{ flexShrink: 0, marginRight: 8 }}>{hint}</span>}
       <ChevronRight

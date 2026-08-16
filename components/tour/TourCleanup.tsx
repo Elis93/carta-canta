@@ -17,20 +17,31 @@
 
 import { useEffect } from 'react'
 
+function strip() {
+  // Classi che driver.js mette su <html>/<body> (blocco scroll + fade)
+  for (const root of [document.documentElement, document.body]) {
+    root.classList.remove('driver-active', 'driver-fade', 'driver-simple')
+  }
+  // Overlay (SVG), popover e stage appesi a <body>
+  document
+    .querySelectorAll('.driver-overlay, .driver-overlay-animated, .driver-popover, .driver-stage')
+    .forEach((el) => el.remove())
+  // Classi lasciate sugli elementi evidenziati (nostre + di driver.js)
+  document
+    .querySelectorAll('.driver-active-element, .cc-tour-mark, .cc-tour-lift')
+    .forEach((el) => el.classList.remove('driver-active-element', 'cc-tour-mark', 'cc-tour-lift'))
+}
+
 export function TourCleanup() {
   useEffect(() => {
-    // Classi che driver.js mette su <html>/<body> (blocco scroll + fade)
-    for (const root of [document.documentElement, document.body]) {
-      root.classList.remove('driver-active', 'driver-fade', 'driver-simple')
-    }
-    // Overlay (SVG), popover e stage appesi a <body>
-    document
-      .querySelectorAll('.driver-overlay, .driver-overlay-animated, .driver-popover, .driver-stage')
-      .forEach((el) => el.remove())
-    // Classi lasciate sugli elementi evidenziati (nostre + di driver.js)
-    document
-      .querySelectorAll('.driver-active-element, .cc-tour-mark, .cc-tour-lift')
-      .forEach((el) => el.classList.remove('driver-active-element', 'cc-tour-mark', 'cc-tour-lift'))
+    // Due passate: subito e dopo un attimo. Il redirect a /login e l'append
+    // dell'overlay di driver.js sono asincroni e possono incrociarsi — una
+    // guida partita nell'istante dello scambio di layout appenderebbe il suo
+    // overlay DOPO la prima pulizia. La seconda passata lo cattura (Eli, 16
+    // ago: «il tutorial è partito sulla schermata di login»).
+    strip()
+    const t = setTimeout(strip, 300)
+    return () => clearTimeout(t)
   }, [])
 
   return null

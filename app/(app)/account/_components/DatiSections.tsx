@@ -79,11 +79,15 @@ export function DatiSections({
           </a>
         </div>
 
+        {/* ── Invita il tuo commercialista (accesso read-only) ──
+            Promosso SOPRA il pacchetto CSV (Eli, 16 ago): puntiamo a far
+            COLLEGARE il commercialista, così vede da sé le fatture, invece di
+            scaricare i dati e inviarglieli a mano. Il pacchetto resta come
+            alternativa per chi preferisce il file. */}
+        <AccountantCard />
+
         {/* ── Pacchetto per il commercialista (registro fatture CSV) ── */}
         <ExportCommercialistaButton variant="card" />
-
-        {/* ── Invita il tuo commercialista (accesso read-only) ── */}
-        <AccountantCard />
       </div>
     )
   }

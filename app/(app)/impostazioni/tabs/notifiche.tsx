@@ -238,12 +238,9 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           </>
         )}
 
-        {/* Avvisi che NON si spengono (Eli, #7): perderli costa. */}
-        <div style={{ marginTop: 13, paddingTop: 12, borderTop: '0.5px solid #eee', fontSize: 12, color: '#767676', lineHeight: 1.5 }}>
-          <b style={{ color: '#55534b' }}>Sempre attivi:</b>{' '}«Messaggio dal cliente»
-          {SDI_ENABLED && <> e «Fattura scartata dallo SdI»</>}. Sono avvisi che è
-          meglio non perdere, quindi non si disattivano.
-        </div>
+        {/* «Messaggio dal cliente» e «Fattura scartata dallo SdI» restano sempre
+            attivi (lib/notifications.ts non ha un interruttore per loro), ma non
+            lo spieghiamo più qui: Eli «non avvisiamo e basta» (16 ago). */}
       </div>
 
       {/* F15: niente dicitura "salvate automaticamente" — il toast di conferma basta */}

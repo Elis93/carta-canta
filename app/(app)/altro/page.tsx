@@ -186,11 +186,11 @@ export default async function AltroPage() {
             label="Account e abbonamento"
             desc="Accesso, sicurezza, i tuoi dati, commercialista, piano e inviti"
             descAlways
-            hint={isFree ? (
-              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--cc-navy)' }}>Passa a Pro</span>
+            hintBelow={isFree ? (
+              <span style={{ display: 'inline-block', border: '1px solid var(--cc-navy)', color: 'var(--cc-navy)', fontSize: 11, fontWeight: 600, padding: '2px 9px', borderRadius: 999, letterSpacing: '.02em' }}>Passa a Pro</span>
             ) : undefined}
           />
-          <MenuRow href="/altro/aiuto-novita" icon={HelpCircle} label="Aiuto e novità" desc="Domande frequenti e novità" descAlways last />
+          <MenuRow href="/altro/aiuto-novita" icon={HelpCircle} label="Aiuto e novità" desc="Domande frequenti, tutorial e novità" descAlways last />
         </div>
       </div>
 
