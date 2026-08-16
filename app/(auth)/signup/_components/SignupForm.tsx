@@ -343,6 +343,9 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
             <button
               type="button"
               aria-label="Chiudi"
+              // Porta il focus DENTRO il dialog all'apertura (a11y: chi usa la
+              // tastiera/lo screen reader atterra qui, non sul form sotto).
+              autoFocus
               onClick={() => setEmailBannerDismissed(true)}
               style={{ position: 'absolute', top: 12, right: 12, background: 'transparent', border: 'none', color: '#9a988f', cursor: 'pointer', display: 'flex', padding: 4, borderRadius: 8 }}
             >

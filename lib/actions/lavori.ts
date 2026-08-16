@@ -338,7 +338,16 @@ export async function saveRapportoAction(formData: FormData): Promise<{ error?: 
     .eq('id', id)
     .eq('workspace_id', workspace.id)
     .is('report_signed_at', null)
-  if (laborErr && !isMissingColumnError(laborErr)) return { error: 'Salvataggio non riuscito.' }
+  // ⚠️ BEST-EFFORT (ricontrollo 15 ago): il rapportino (testo + link) è GIÀ
+  // salvato dall'update principale sopra. Se SOLO la preferenza «mostra le ore»
+  // non si scrive (un blip di rete sul secondo statement), NON facciamo fallire
+  // l'intera operazione — altrimenti l'artigiano vedrebbe «Salvataggio non
+  // riuscito» e non riceverebbe il link, pur avendo il rapportino in DB. Il
+  // default è «ore nascoste», quindi un mancato salvataggio lascia il dato
+  // privato (direzione sicura); si ripristina risalvando.
+  if (laborErr && !isMissingColumnError(laborErr)) {
+    console.error('[saveRapporto] preferenza mostra-ore non salvata:', laborErr)
+  }
 
   revalidatePath(`/lavori/${id}`)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'

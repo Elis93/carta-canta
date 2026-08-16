@@ -43,6 +43,7 @@ export type SecurityEventKind =
   | 'studio_access'        // accesso del commercialista ai dati di un cliente
   | 'orphan_cleanup'       // esito della riconciliazione mensile degli archivi
   | 'cron_ok'              // battito di un cron: ha completato con successo
+  | 'mfa_recovery_used'    // usato un codice di recupero → il 2FA si è disattivato
 
 /**
  * Impronta dell'indirizzo IP. Restituisce null se non c'è il sale: meglio

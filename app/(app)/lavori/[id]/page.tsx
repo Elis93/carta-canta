@@ -142,8 +142,10 @@ export default async function LavoroDetailPage({
         clientPhone: lav.clients?.phone ?? null,
         clientEmail: lav.clients?.email ?? null,
         showLabor: showLaborFlag,
-        // La spunta serve solo se ci sono ore da mostrare (saldo salvato o timer acceso).
-        hasLaborHours: (ore?.minutes ?? 0) > 0 || Boolean(ore?.startedAt),
+        // La spunta serve solo se ci sono ore GIÀ SALVATE da mostrare: il cliente
+        // vede `labor_minutes` salvati (non il timer in corso), quindi con 0 minuti
+        // salvati la spunta non avrebbe effetto → non la mostriamo.
+        hasLaborHours: (ore?.minutes ?? 0) > 0,
       }
     }
 
@@ -195,8 +197,11 @@ export default async function LavoroDetailPage({
     ? ore.minutes + (ore.startedAt ? Math.max(0, Math.floor((Date.now() - new Date(ore.startedAt).getTime()) / 60000)) : 0)
     : 0
   const laborCost = countLabor && hourlyCost != null && oreTotaliMin > 0 ? (oreTotaliMin / 60) * hourlyCost : 0
-  // Ore lavorate senza costo contato: si mostrano comunque, come informazione.
-  const oreEscluse = !countLabor && oreTotaliMin > 0
+  // Ore lavorate senza costo contato: si mostrano come informazione SOLO se un
+  // costo orario esiste (altrimenti la manodopera non sarebbe stata contata
+  // comunque, e «non contate nel margine» sarebbe fuorviante — il toggle non ha
+  // avuto alcun effetto).
+  const oreEscluse = !countLabor && oreTotaliMin > 0 && hourlyCost != null
 
   const speseMateriali = spese.length > 0 ? spese.reduce((s, e) => s + Number(e.amount), 0) : (spese.length === 0 && preventivato != null ? 0 : null)
   const speseTotale = speseMateriali != null ? speseMateriali + laborCost : (laborCost > 0 ? laborCost : null)

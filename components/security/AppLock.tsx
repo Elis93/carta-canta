@@ -195,20 +195,25 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     try {
       const optRes = await fetch('/api/passkey/auth/options', { method: 'POST' })
       if (!optRes.ok) {
-        // Nessuna passkey per QUESTO utente sul server: l'impronta salvata su
-        // questo dispositivo non è più valida (cambio/cancellazione account).
-        // Smettiamo di offrirla e apriamo una via d'uscita: senza questo, un
-        // account Google (che non ha password) resta chiuso fuori — è il loop
-        // segnalato da Eli. Vale anche in modalità automatica: così l'utente
-        // vede subito l'uscita, senza dover toccare nulla.
-        try { setBiometricEnabled(false) } catch { /* storage bloccato */ }
-        setHasBio(false)
-        // deadPasskey è un FATTO (la passkey non esiste per questo utente), non
-        // dipende da hasPassword — che può risolversi DOPO (getUser è async, e
-        // l'attivazione automatica dell'impronta parte prima). È il render, a
-        // hasPassword risolto, a decidere quale via d'uscita mostrare.
-        setDeadPasskey(true)
-        if (!auto && hasPassword) setError('Impronta non disponibile su questo dispositivo. Usa la password.')
+        // ⚠️ Distinzione CRITICA (ricontrollo 15 ago): la route options risponde
+        // 404 SOLO se l'utente non ha passkey (passkey davvero morta); risponde
+        // 401 se il refresh token è in race all'apertura — proprio quando parte
+        // l'attivazione automatica — e 5xx su un blip. Trattare ogni non-ok come
+        // «passkey morta» disattiverebbe in silenzio un'impronta VALIDA e, su un
+        // account Google, offrirebbe di rimuovere il blocco per un hiccup di rete.
+        if (optRes.status === 404) {
+          // Passkey inesistente per questo utente (cambio/cancellazione account):
+          // si smette di offrirla e si apre la via d'uscita. È un FATTO, non
+          // dipende da hasPassword (che può risolversi dopo): il render sceglie
+          // quale uscita mostrare.
+          try { setBiometricEnabled(false) } catch { /* storage bloccato */ }
+          setHasBio(false)
+          setDeadPasskey(true)
+          if (!auto && hasPassword) setError('Impronta non disponibile su questo dispositivo. Usa la password.')
+        } else if (!auto) {
+          // Errore transitorio: NON tocchiamo i flag dell'impronta. Si riprova.
+          setError('Non riesco a leggere l’impronta adesso. Riprova tra un istante.')
+        }
         setBusy(false)
         return
       }

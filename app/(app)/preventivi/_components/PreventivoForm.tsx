@@ -1136,7 +1136,8 @@ export function PreventivoForm({
   //    «Allinea» (un tocco: validità = giorni del listino).
   const listiniUsati = new Set(voci.map((v) => v.supplier_list_id).filter(Boolean) as string[])
   const listinoScaduto = (() => {
-    if (supplierLists.length === 0 || listiniUsati.size === 0) return null
+    // Su una NOTA DI CREDITO non ha senso (è uno storno, non un'offerta col suo margine).
+    if (isNota || supplierLists.length === 0 || listiniUsati.size === 0) return null
     let worst: { name: string; giorni: number } | null = null
     for (const l of supplierLists) {
       if (!listiniUsati.has(l.id) || !l.valid_until) continue

@@ -16,11 +16,24 @@
 // fattore) così può rientrare, e poi lo riconfigura. Per rimuovere il fattore
 // mentre l'utente è ancora a AAL1 (non ha potuto fare il TOTP) serve l'API
 // ADMIN (`auth.admin.mfa.deleteFactor`), che non richiede AAL2.
+//
+// ⚠️ LIMITE NOTO — enforcement solo a livello di PAGINA (ricontrollo 15 ago).
+// L'obbligo AAL2 vive solo nel layout `(app)` (redirect a /mfa). Le SERVER
+// ACTION e le API route autenticate NON controllano l'AAL: un attaccante con la
+// SOLA password di un account 2FA (sessione aal1) è bloccato dall'interfaccia ma
+// potrebbe invocare direttamente le action/route e leggere/scrivere i dati. È il
+// limite noto di Supabase MFA. Chiuderlo per davvero richiede un controllo
+// `currentLevel==='aal2'` nel middleware per i path `(app)` (copre anche i POST
+// delle server action) — un cambio SICUREZZA-critico al proxy, da fare in un
+// giro dedicato prima di considerare il 2FA una barriera dura. Oggi il 2FA alza
+// comunque l'asticella per l'accesso all'app, e il fail-open non chiude fuori
+// nessuno.
 // ============================================================
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateRecoveryCodes, hashRecoveryCode } from '@/lib/mfa/recovery-codes'
+import { logSecurityEvent } from '@/lib/security/events'
 
 /** Traduce gli errori tecnici dell'MFA in messaggi per l'artigiano. */
 function mapMfaError(msg: string | undefined): string {
@@ -96,7 +109,18 @@ export async function confirmTotpEnroll(factorId: string, code: string): Promise
     .from('mfa_recovery_codes')
     .insert(codes.map((c) => ({ user_id: user.id, code_hash: hashRecoveryCode(c) })))
   if (insErr) {
-    return { error: 'Verifica riuscita, ma non riesco a salvare i codici di recupero. Rigenerali dalle impostazioni.' }
+    // ⚠️ ATTIVAZIONE ATOMICA (ricontrollo 15 ago): challengeAndVerify ha già
+    // reso VERIFICATO il fattore (2FA acceso sul server). Se i codici non si
+    // salvano e lasciassimo il fattore attivo, l'utente resterebbe con 2FA ON e
+    // ZERO codici di recupero → lockout se perde il telefono. Rollback: togliamo
+    // il fattore, così è «tutto o niente» (TOTP + codici, oppure niente).
+    try {
+      const { data: factors } = await admin.auth.admin.mfa.listFactors({ userId: user.id })
+      for (const f of factors?.factors ?? []) {
+        await admin.auth.admin.mfa.deleteFactor({ id: f.id, userId: user.id })
+      }
+    } catch { /* best effort: se il rollback fallisce, l'utente può disattivare da capo */ }
+    return { error: 'Non riesco a salvare i codici di recupero: la verifica non è stata attivata. Riprova.' }
   }
   return { recoveryCodes: codes }
 }
@@ -114,7 +138,14 @@ export async function regenerateRecoveryCodes(): Promise<{ error?: string; recov
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 084
   const admin = createAdminClient() as any
   await admin.from('mfa_recovery_codes').delete().eq('user_id', user.id)
-  await admin.from('mfa_recovery_codes').insert(codes.map((c) => ({ user_id: user.id, code_hash: hashRecoveryCode(c) })))
+  const { error: insErr } = await admin
+    .from('mfa_recovery_codes')
+    .insert(codes.map((c) => ({ user_id: user.id, code_hash: hashRecoveryCode(c) })))
+  // ⚠️ Se l'insert fallisce dopo il delete, l'utente resta SENZA codici validi
+  // (i vecchi cancellati, i nuovi mai salvati): non gli restituiamo codici che
+  // non esistono nel DB — glielo diciamo, i vecchi non valgono più ma il 2FA è
+  // ancora attivo (può ritentare la rigenerazione).
+  if (insErr) return { error: 'Non riesco a rigenerare i codici di recupero. Riprova.' }
   return { recoveryCodes: codes }
 }
 
@@ -168,5 +199,9 @@ export async function useRecoveryCode(code: string): Promise<{ error?: string; s
   }
   // I codici restanti non servono più (2FA off; la riconfigurazione ne farà di nuovi).
   await admin.from('mfa_recovery_codes').delete().eq('user_id', user.id)
+  // Traccia di sicurezza (ricontrollo 15 ago): usare un codice di recupero
+  // DISATTIVA il 2FA a AAL1 — è un evento rilevante (se non sei stato tu, qualcuno
+  // con la tua password è entrato aggirando il secondo fattore). Best-effort.
+  await logSecurityEvent({ kind: 'mfa_recovery_used', userId: user.id })
   return { success: true }
 }
