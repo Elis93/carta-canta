@@ -186,6 +186,13 @@ body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = conseg
 | L7 | **Registra** un nuovo account | «Account creato! Controlla la tua email» compare come **pop-up** chiudibile con la **X** (o toccando lo sfondo, o Esc) |
 | L8 | Registrati con un'email **già esistente** (o un indirizzo Google) | Compare comunque il pop-up (anti-enumerazione), ma **l'email di conferma non arriva**: è normale, il riquadro giallo su /verifica-email lo spiega («accedi da qui» / «Accedi con Google») |
 
+### A-ter.4 · Listino fase 3 — rifiniture (⚠️ dopo la migration 085)
+| # | Cosa fare | Cosa deve succedere |
+|---|---|---|
+| F1 | Prendi una fattura le cui voci vengono da un **listino fornitore scaduto** (o duplica un vecchio preventivo con listino scaduto) e aprila in modifica | Compare l'avviso ambra «Il listino di X è scaduto: i costi… ricontrolla i prezzi» (prima usciva solo sui preventivi) |
+| F2 | In **Impostazioni › Fiscale**, con un **costo orario** impostato, togli la spunta **«Conta la manodopera nel margine»** e salva | La spunta **resta spenta** dopo il salvataggio (non si riaccende) |
+| F3 | Apri un **Lavoro** con ore registrate (timer) e guarda l'**Economia del lavoro** | Con la spunta ON: riga «Manodopera (X h) €Y» tolta dal margine. Con la spunta OFF: riga «Ore lavorate (X h) — non contate nel margine», e il margine **non** sottrae il costo delle ore |
+
 ---
 
 ## C-bis. Due collaudi rimasti indietro da luglio
