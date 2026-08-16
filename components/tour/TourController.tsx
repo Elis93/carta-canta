@@ -146,7 +146,7 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
       }
     }
 
-    function startPhase(steps: DriveStep[], onLastNext?: () => void, onClosed?: () => void) {
+    function startPhase(steps: DriveStep[], onLastNext?: () => void, onClosed?: () => void, stagePaddingOverride?: number) {
       const d: Driver = driver({
         showProgress: false,
         nextBtnText: 'Avanti',
@@ -161,7 +161,10 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
         // Overlay tenue: lo sfondo (es. tabella voci al passo 3) resta
         // leggibile — feedback Eli "non si vedono i dettagli dietro".
         overlayOpacity: 0.4,
-        stagePadding: 6,
+        // Il ritaglio dell'evidenziazione. Fase A lo alza (24) perché il tasto
+        // «+» sporge ~22px sopra il box del bottone (margine negativo che tiene
+        // bassa la barra): con 6 la cima del + restava fuori dall'evidenziazione.
+        stagePadding: stagePaddingOverride ?? 6,
         stageRadius: 12,
         popoverClass: 'cc-tour-popover',
         steps,
@@ -257,6 +260,8 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           setStore(STEP_KEY, 'form')
           router.push('/preventivi/nuovo')
         },
+        undefined,
+        24, // evidenziazione più larga: copre il + che sporge dalla barra E la scritta «Crea»
         )
       }, 400)
       return () => clearTimeout(t)
@@ -273,22 +278,22 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
       const stopWait = whenVisible('[data-tour="invia"]', 8000, () => startPhase(
         [
           {
-            element: lazy('[data-tour="cliente"]'),
-            // F16: dentro la card ritagliata, anello bianco+oro sul riquadro
-            // della descrizione (col microfono) e sul bottone delle foto AI —
-            // così si VEDONO i punti di cui parla il testo.
-            onHighlighted: () => markTour(['[data-tour="voce-mic"]', '[data-tour="ai-foto"]']),
+            // Evidenziamo la VOCE (col microfono): così il popover scende SOTTO
+            // la voce e non copre più l'elenco delle voci (feedback Eli: «il
+            // riquadro copre le voci, spostalo più in basso»). La card Cliente,
+            // in alto, resta segnata con l'anello bianco+oro.
+            element: lazy('[data-tour="voce-mic"]'),
+            onHighlighted: () => markTour(['[data-tour="cliente"]', '[data-tour="ai-foto"]']),
             onDeselected: () => clearTourMarks(),
             popover: {
               title: 'Cliente e lavori',
               description: desc(
                 AI_ATTIVA
-                  ? 'Cerca il cliente (o crealo subito da qui) e aggiungi le voci: dettale col <b>microfono 🎤</b> o fattele <b>proporre dalle foto (AI)</b> — sono i riquadri illuminati.'
-                  : 'Cerca il cliente (o crealo subito da qui) e aggiungi le voci del lavoro. Col <b>microfono 🎤</b> (illuminato qui sopra) puoi dettarle a voce, comodo in cantiere.',
+                  ? 'In alto scegli il <b>cliente</b> (o crealo al volo). Poi aggiungi le voci: dettale col <b>microfono 🎤</b> (illuminato qui) o fattele <b>proporre dalle foto (AI)</b>.'
+                  : 'In alto scegli il <b>cliente</b> (o crealo al volo). Poi aggiungi le voci del lavoro: col <b>microfono 🎤</b> (illuminato qui) puoi dettarle a voce, comodo in cantiere.',
                 3
               ),
-              // Card cliente evidenziata; le voci sotto restano leggibili
-              // (overlay 0.4) col popover in basso.
+              // Popover SOTTO la voce evidenziata → non copre l'elenco.
               side: 'bottom',
               align: 'center',
             },
@@ -297,7 +302,7 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
             element: lazy('[data-tour="invia"]'),
             popover: {
               title: 'Invialo in un tocco',
-              description: desc('<b>Invia al cliente</b> ti fa scegliere il canale: WhatsApp, Email o link da copiare. Il numero viene assegnato da solo.', 4),
+              description: desc('<b>Invia al cliente</b> ti fa scegliere il canale: WhatsApp, Email o link da copiare.', 4),
               // Il popover sta SOPRA il bottone evidenziato, senza coprirlo
               side: 'top',
               align: 'center',
@@ -312,13 +317,13 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
               // F16: badge di ESEMPIO disegnati nel popover (stessi colori di
               // StatusBadge) — si vedono anche senza preventivi creati.
               description: desc(
-                'Il <b>badge di stato</b> ti dirà se il cliente ha visto o accettato. Eccoli:'
+                'A <b>ogni documento</b> viene associato un <b>badge di stato</b>, che ti dice a colpo d’occhio com’è andata. Eccoli:'
                 + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 8px">'
                 + demoBadge('Inviato', '#d8e8fb')
                 + demoBadge('Visto', '#fbe1ee')
                 + demoBadge('Accettato', '#d4efe2')
                 + '</div>'
-                + 'La <b>cronologia</b> tiene tutta la storia. Per il resto, segui <b>Completa il profilo</b> in Home.'
+                + 'La <b>cronologia</b> tiene tutta la storia. Per procedere con tutte le funzioni, segui <b>Completa il profilo</b> in Home.'
                 // Il punto ⓘ (SpiegaCampo): disegnato qui come i badge demo,
                 // così si sa riconoscerlo anche prima di incontrarne uno.
                 + '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #ececec">Quando accanto a un campo vedi il tondino '

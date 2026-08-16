@@ -624,6 +624,10 @@
    anche quando il quirk <400ms salta onDestroyed): se la classe cc-tour-lift
    restasse orfana, la nav NON può comunque rimanere morta. */
 .driver-active nav.cc-tour-lift { z-index: 10001 !important; pointer-events: none; }
+/* Passo 1: alzando la barra per mostrare «Altro» si illuminava TUTTA la barra.
+   Ora le celle NON marcate si attenuano → resta illuminata solo «Altro»
+   (feedback Eli: «il resto della barra non deve essere illuminato»). */
+.driver-active nav.cc-tour-lift > div > *:not(.cc-tour-mark) { opacity: 0.32; transition: opacity .15s; }
 
 /* F16: testo del popover che cambia tra telefono e computer (su desktop la
    bottom-nav non esiste: l'impostazione del testo vive in Impostazioni). */
@@ -662,6 +666,16 @@ html.cc-large .driver-overlay,
 html.cc-large .driver-popover {
   zoom: 0.869565; /* = 1 / 1.15 → zoom effettivo 1, coordinate corrette */
 }
+
+/* ⚠️ Il contro-zoom sopra riporta il popover del tutorial a zoom NETTO 1.0 → il
+   suo testo resterebbe normale mentre il resto dell'app è a 1.15 (Eli: «anche le
+   scritte del tutorial devono ingrandirsi»). Rimettiamo le dimensioni del TESTO
+   a ×1.15 (la posizione non è toccata, il popover cresce solo in altezza). */
+html.cc-large .cc-tour-popover .driver-popover-title { font-size: 17px; }
+html.cc-large .cc-tour-popover .driver-popover-description { font-size: 15px; }
+html.cc-large .cc-tour-popover .cc-tour-progress { font-size: 12.5px; }
+html.cc-large .cc-tour-popover .driver-popover-footer button.driver-popover-next-btn { font-size: 15px; }
+html.cc-large .cc-tour-popover .driver-popover-close-btn { width: 32px; height: 32px; }
 
 /* ── Velo anti-lampo del blocco app (LockVeil, 4 ago) ──────────────────
    Applicato da uno script inline PRIMA del primo disegno: copre la pagina
