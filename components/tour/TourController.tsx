@@ -99,7 +99,7 @@ function desc(html: string, stepNum: number): string {
 /** Badge di stato DEMO nel popover finale (stessi colori di StatusBadge) —
  *  F16: un esempio visibile anche senza preventivi creati. */
 function demoBadge(label: string, bg: string): string {
-  return `<span style="display:inline-block;border-radius:999px;padding:3px 11px;font-size:12px;font-weight:600;color:#2b2b2b;background:${bg}">${label}</span>`
+  return `<span class="cc-tour-demobadge" style="display:inline-block;border-radius:999px;padding:3px 11px;font-size:12px;font-weight:600;color:#2b2b2b;background:${bg}">${label}</span>`
 }
 
 /** F16: marca "in bianco" riquadri SECONDARI durante un passo (anello

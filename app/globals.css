@@ -670,12 +670,19 @@ html.cc-large .driver-popover {
 /* ⚠️ Il contro-zoom sopra riporta il popover del tutorial a zoom NETTO 1.0 → il
    suo testo resterebbe normale mentre il resto dell'app è a 1.15 (Eli: «anche le
    scritte del tutorial devono ingrandirsi»). Rimettiamo le dimensioni del TESTO
-   a ×1.15 (la posizione non è toccata, il popover cresce solo in altezza). */
-html.cc-large .cc-tour-popover .driver-popover-title { font-size: 17px; }
-html.cc-large .cc-tour-popover .driver-popover-description { font-size: 15px; }
-html.cc-large .cc-tour-popover .cc-tour-progress { font-size: 12.5px; }
-html.cc-large .cc-tour-popover .driver-popover-footer button.driver-popover-next-btn { font-size: 15px; }
+   a ×1.15 (la posizione non è toccata, il popover cresce solo in altezza).
+   Il testo con dimensioni via CLASSE si scala qui sotto; quello con px INLINE
+   (bottone «testo grande», riga «Lo trovi in Altro», badge demo) va forzato con
+   !important perché lo stile inline vincerebbe. */
+html.cc-large .cc-tour-popover .driver-popover-title { font-size: 18px; }
+html.cc-large .cc-tour-popover .driver-popover-description { font-size: 15.5px; }
+html.cc-large .cc-tour-popover .cc-tour-progress { font-size: 13px; }
+html.cc-large .cc-tour-popover .driver-popover-footer button.driver-popover-next-btn { font-size: 15.5px; }
 html.cc-large .cc-tour-popover .driver-popover-close-btn { width: 32px; height: 32px; }
+html.cc-large .cc-tour-popover #cc-tour-textlarge { font-size: 14.5px !important; }
+html.cc-large .cc-tour-popover .cc-tour-mobile,
+html.cc-large .cc-tour-popover .cc-tour-desktop { font-size: 13px !important; }
+html.cc-large .cc-tour-popover .cc-tour-demobadge { font-size: 14px !important; }
 
 /* ── Velo anti-lampo del blocco app (LockVeil, 4 ago) ──────────────────
    Applicato da uno script inline PRIMA del primo disegno: copre la pagina
