@@ -195,6 +195,17 @@ body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = conseg
 | F4 | (⚠️ dopo la **migration 086**) Su un Lavoro con ore registrate, apri il **rapportino** senza toccare nulla, poi l'**Anteprima del rapportino** | Le ore **NON** compaiono (dato privato); compare la spunta «Mostra le ore al cliente» **spenta** |
 | F5 | Attiva la spunta **«Mostra le ore al cliente»**, salva il rapportino, riapri l'Anteprima e la pagina `/r/…` del cliente | Ora compare «Ore di lavoro in cantiere: X h Y min» su entrambe. Le ore restano comunque sempre visibili a te nell'Economia del lavoro |
 
+### A-ter.5 · Tutorial — 6 rifiniture (dal telefono, rivedendo il giro guidato)
+> Riapri il tutorial da **Aiuto › Tutorial › Rivedi il tutorial**.
+| # | Cosa fare | Cosa deve succedere |
+|---|---|---|
+| T1 | Attiva **«Testo grande»** (dal primo passo del tutorial, o da Impostazioni) e riguarda il giro | Le scritte DENTRO i riquadri del tutorial sono più grandi (prima restavano piccole); i riquadri restano al loro posto, crescono solo in altezza |
+| T2 | **Passo 1** (Benvenuto), guarda la barra in basso | È illuminata **solo** la voce «Altro»; le altre voci della barra sono attenuate |
+| T3 | **Passo 2** («Si parte da qui») | Sono evidenziati **insieme** il tasto **+** (per intero, anche la cima che sporge) e la scritta **Crea** |
+| T4 | **Passo 3** («Cliente e lavori») | Il riquadro del tutorial **non copre** l'elenco delle voci: sta **sotto** la voce evidenziata (col microfono). La card Cliente resta segnata in alto. ⚠️ Se lo scroll è strano, dimmelo |
+| T5 | **Passo 4** («Invialo in un tocco») | Il testo NON dice più «Il numero viene assegnato da solo» |
+| T6 | **Ultimo passo** («Hai finito!») | Dice «A **ogni documento** viene associato un **badge di stato**…» e chiude con «**Per procedere con tutte le funzioni**, segui Completa il profilo» |
+
 ---
 
 ## C-bis. Due collaudi rimasti indietro da luglio
