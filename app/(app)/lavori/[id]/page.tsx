@@ -46,7 +46,7 @@ export default async function LavoroDetailPage({
   // PERF: colonne 052, riga principale e spese collegate sono query
   // indipendenti (tutte keyate su id+workspace) → un solo round trip
   // invece di tre in serie. Ogni ramo resta tollerante pre-migration.
-  const [extraRes, lavRes, expRes] = await Promise.all([
+  const [extraRes, lavRes, expRes, showLaborFlag] = await Promise.all([
     db
       .from('lavori')
       .select('recall_at, recall_note, labor_minutes, timer_started_at')
@@ -72,6 +72,19 @@ export default async function LavoroDetailPage({
       .is('deleted_at', null)
       .order('date', { ascending: false })
       .then((r: { data: unknown[] | null }) => r.data, () => null),
+    // «Mostra le ore al cliente» (086) — query a sé e tollerante: se la aggiungessi
+    // al select condiviso sopra, pre-086 fallirebbe l'intera query (perdendo ore
+    // e recall). Colonna assente → false (comportamento voluto: ore nascoste).
+    db
+      .from('lavori')
+      .select('show_labor_to_client')
+      .eq('id', id)
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+      .then(
+        (r: { data: { show_labor_to_client?: boolean } | null }) => r.data?.show_labor_to_client === true,
+        () => false,
+      ),
   ])
   if (!extraRes.error && extraRes.data) {
     const extra = extraRes.data
@@ -128,6 +141,9 @@ export default async function LavoroDetailPage({
         signerName: lav.report_signer_name ?? null,
         clientPhone: lav.clients?.phone ?? null,
         clientEmail: lav.clients?.email ?? null,
+        showLabor: showLaborFlag,
+        // La spunta serve solo se ci sono ore da mostrare (saldo salvato o timer acceso).
+        hasLaborHours: (ore?.minutes ?? 0) > 0 || Boolean(ore?.startedAt),
       }
     }
 

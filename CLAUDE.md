@@ -29,6 +29,15 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 15 ago (10) — Le ORE del rapportino sono un dato interno: nascoste al cliente, spunta per mostrarle (⚠️ migration 086)
+Eli: *«il numero vero di ore deve rimanere solo per l'artigiano. Anche nel rapportino non devono comparire, o far scegliere con una spunta se mostrarle»*. Ha ragione — le ore sono un dato interno come costo/ricarico/margine (§B.2): il cliente potrebbe contestare il prezzo o dedurre quanto sei veloce. Finora il rapportino le mostrava **sempre**.
+- **⚠️ migration 086** (`lavori.show_labor_to_client BOOLEAN NOT NULL DEFAULT false`, VALIDATA su PG16: default `f`, idempotente, attivabile). **Default nascoste.**
+- **Spunta «Mostra le ore al cliente»** in `RapportinoCard` (solo se ci sono ore da mostrare, `hasLaborHours`), salvata da `saveRapportoAction` con **update SEPARATO e tollerante** (pre-086 il salvataggio del rapportino non deve fallire) + guardia `.is('report_signed_at', null)` come il testo. Riscritta la nota vecchia («il cliente vede anche le ore segnate»).
+- **Tre superfici del cliente gatate sul flag**: pagina `/r/[token]` (retry-without su 42703), PDF cliente `/r/[token]/pdf`, e — importante — l'**anteprima dell'artigiano** `/api/lavori/[id]/rapportino-pdf`, che è dichiarata «stessa vista del cliente» → rispetta anch'essa la spunta. Le ore vere restano SEMPRE all'artigiano nella **scheda Lavoro** («Economia del lavoro»), dove già vivono.
+- ⚠️ **La lettura del flag sulla pagina Lavoro è una query A SÉ tollerante**: metterla nel select condiviso avrebbe fatto fallire l'intera query pre-086, perdendo anche ore e recall. Colonna assente ovunque → `false` (= nascoste, il default voluto).
+- **FAQ** del rapportino aggiornata (ore private, spunta per mostrarle).
+- ⚠️ **Da applicare da Eli**: la **migration 086** (SQL in chat). tsc+build+**732** test verdi · scan spazi puliti · migration validata su PG16.
+
 ### ✅ 15 ago (9) — LISTINO FASE 3, rifiniture: avviso «listino scaduto» sulle fatture + manodopera fuori dal margine (⚠️ migration 085)
 Ultime due rifiniture del progetto listini (fase 3), chiuse una per una.
 - **[avviso duplica listino scaduto] L'avviso sui costi di un listino SCADUTO ora vale anche sulle FATTURE.** Esisteva solo sui preventivi ed era legato alla validità (logica preventivo). L'ho **separato** in due (`PreventivoForm`): il ramo **«scaduto»** (giorni<0, i costi potrebbero non essere più veri → riguarda il MARGINE) vale su preventivi E fatture — una **fattura duplicata** da un vecchio preventivo eredita quei costi; il ramo **«in scadenza + Allinea validità»** resta solo preventivi. `supplierLists` ora passato anche alla pagina fattura (query tollerante pre-063, gemella di quella dei preventivi).
@@ -1451,6 +1460,7 @@ permanenti in §B.2, poi accodare il resto allo storico.
 
 ### Stato migration (aggiornato 15 ago 2026)
 **001-083 applicate (081 e 082 applicate da Eli il 12 ago; 083 applicata da Eli il 14 ago). 084 applicata da Eli il 15 ago.**
+**086** («Mostra le ore al cliente nel rapportino»: `lavori.show_labor_to_client BOOLEAN NOT NULL DEFAULT false`). Validata su PG16: default `f`, idempotente, attivabile. Codice tollerante pre-086 (query a sé + retry-without su 42703 + update separato; colonna assente → false = ore nascoste). ⚠️ **Da applicare da Eli.** Applicabile prima o dopo il deploy.
 **085** («Interruttore conta-la-manodopera-nel-margine»: `workspaces.count_labor_in_margin BOOLEAN NOT NULL DEFAULT true`). Validata su PG16: default `t` sulla riga esistente, idempotente, spegnibile→`f`. Il codice è tollerante pre-085 (cast + update che ignora la colonna assente; letture `!== false` → true). ⚠️ **Da applicare da Eli.** Applicabile prima o dopo il deploy.
 **084** («Codici di recupero del 2FA»: `mfa_recovery_codes`). ✅ APPLICATA da Eli il 15 ago (+ TOTP abilitato su Supabase → Auth → Multi-Factor).
 **083** («Limite di 8 fatture inviate sul piano Free»: `workspaces.sent_invoice_quota_used` + backfill dalle fatture non-draft + RPC atomica `increment_invoice_quota`, gemella della 059). Validata su PG16: backfill corretto (esclude bozze e cestinate), RPC incrementa, idempotente. ✅ **APPLICATA da Eli il 14 ago.**

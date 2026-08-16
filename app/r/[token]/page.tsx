@@ -107,14 +107,18 @@ export default async function PublicRapportoPage({ params }: Props) {
   // il cliente non vede nessuna foto). Tutto tollerante pre-migration.
   let laborMinutes = 0
   let lavDocumentId: string | null = null
+  // 086: le ore sono un dato interno dell'artigiano → al cliente si mostrano
+  // SOLO se l'artigiano ha attivato la spunta. Colonna assente → false (nascoste).
+  let showLaborToClient = false
   try {
     let { data: extra, error: extraErr } = await db
       .from('lavori')
-      .select('labor_minutes, document_id')
+      .select('labor_minutes, document_id, show_labor_to_client')
       .eq('id', lav.id)
       .maybeSingle()
     if (extraErr?.code === '42703') {
-      // Pre-migration 052: le ore non esistono ancora — solo il documento
+      // Pre-migration 052/086: la colonna non esiste ancora — solo il documento
+      // (senza ore, che restano comunque nascoste: è il default voluto).
       ;({ data: extra, error: extraErr } = await db
         .from('lavori')
         .select('document_id')
@@ -125,6 +129,7 @@ export default async function PublicRapportoPage({ params }: Props) {
       const m = Number((extra as { labor_minutes?: number }).labor_minutes ?? 0)
       laborMinutes = Number.isFinite(m) && m > 0 ? Math.round(m) : 0
       lavDocumentId = (extra as { document_id?: string | null }).document_id ?? null
+      showLaborToClient = (extra as { show_labor_to_client?: boolean }).show_labor_to_client === true
     }
   } catch { /* pre-migration */ }
 
@@ -149,7 +154,7 @@ export default async function PublicRapportoPage({ params }: Props) {
   const fotoTotali = photos.length
   photos = photos.filter((p) => photoUrls.has(p.storage_path))
   const fotoMancanti = fotoTotali - photos.length
-  const oreLabel = laborMinutes > 0
+  const oreLabel = showLaborToClient && laborMinutes > 0
     ? `${Math.floor(laborMinutes / 60) > 0 ? `${Math.floor(laborMinutes / 60)} h ` : ''}${laborMinutes % 60 > 0 || laborMinutes < 60 ? `${laborMinutes % 60} min` : ''}`.trim()
     : null
 

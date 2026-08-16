@@ -30,11 +30,16 @@ export interface RapportinoData {
   clientPhone: string | null
   /** Email del cliente (per il bottone Email — mailto:, parte dalla posta dell'artigiano) */
   clientEmail: string | null
+  /** 086: mostrare le ore al cliente nel rapportino (default false = nascoste) */
+  showLabor: boolean
+  /** true se ci sono ore tracciate su questo lavoro (altrimenti la spunta è inutile) */
+  hasLaborHours: boolean
 }
 
 export function RapportinoCard({ data }: { data: RapportinoData }) {
   const router = useRouter()
   const [text, setText] = useState(data.text ?? '')
+  const [showLabor, setShowLabor] = useState(data.showLabor)
   const [url, setUrl] = useState<string | null>(data.url)
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -47,6 +52,7 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
       const fd = new FormData()
       fd.set('id', data.lavoroId)
       fd.set('report_text', text)
+      if (showLabor) fd.set('show_labor_to_client', 'on')
       const result = await runAction(() => saveRapportoAction(fd), 'salvare il rapportino')
       if (result?.error) { setError(result.error); return }
       if (result?.url) setUrl(result.url)
@@ -127,9 +133,30 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
             <span style={{ fontSize: 12, color: '#767676' }}>Il cliente lo firma dal telefono, come il preventivo</span>
           </div>
           <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '8px 0 0' }}>
-            Nel rapportino il cliente vede anche le <b>ore segnate</b>{' '}su questo lavoro e le{' '}
-            <b>foto rese visibili</b>{' '}con l&rsquo;occhio nella card Foto lavoro.
+            Nel rapportino il cliente vede le <b>foto rese visibili</b>{' '}con l&rsquo;occhio nella
+            card Foto lavoro.
           </p>
+
+          {/* 086: le ore sono un dato interno → nascoste al cliente di default;
+              la spunta compare solo se ci sono ore da mostrare. */}
+          {data.hasLaborHours && (
+            <label htmlFor="show-labor" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: '#fafafa', borderRadius: 10, padding: '11px 12px', marginTop: 8, cursor: 'pointer' }}>
+              <input
+                id="show-labor"
+                type="checkbox"
+                checked={showLabor}
+                onChange={(e) => setShowLabor(e.target.checked)}
+                style={{ width: 18, height: 18, marginTop: 1, accentColor: '#1a1a2e', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 13, color: '#161616', lineHeight: 1.45 }}>
+                <b>Mostra le ore al cliente</b>
+                <span style={{ display: 'block', fontSize: 12, color: '#767676', marginTop: 2 }}>
+                  Le ore segnate su questo lavoro restano tue: compaiono nel rapportino del
+                  cliente solo se attivi questa spunta.
+                </span>
+              </span>
+            </label>
+          )}
 
           {error && <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 500, marginTop: 8 }}>{error}</p>}
 

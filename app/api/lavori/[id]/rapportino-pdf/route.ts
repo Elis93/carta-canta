@@ -62,12 +62,13 @@ export async function GET(
     report_signature_image?: string | null
     labor_minutes?: number | null
     document_id?: string | null
+    show_labor_to_client?: boolean | null
     clients: { name: string | null; surname: string | null } | null
   } | null = null
   try {
     let { data, error } = await db
       .from('lavori')
-      .select('id, title, address, finished_at, report_text, report_sent_at, report_signed_at, report_signer_name, report_signature_image, labor_minutes, document_id, clients ( name, surname )')
+      .select('id, title, address, finished_at, report_text, report_sent_at, report_signed_at, report_signer_name, report_signature_image, labor_minutes, document_id, show_labor_to_client, clients ( name, surname )')
       .eq('id', id)
       .eq('workspace_id', workspace.id)
       .maybeSingle()
@@ -116,7 +117,8 @@ export async function GET(
     finishedAt: lav.finished_at,
     sentAt: lav.report_sent_at,
     reportText: lav.report_text,
-    oreLabel: oreLabelFromMinutes(Number(lav.labor_minutes ?? 0)),
+    // 086: anche l'anteprima dell'artigiano è «la vista del cliente» → ore solo con la spunta.
+    oreLabel: lav.show_labor_to_client === true ? oreLabelFromMinutes(Number(lav.labor_minutes ?? 0)) : null,
     photos: photos.filter((p) => photoUrls.has(p.storage_path)).map((p) => ({ url: photoUrls.get(p.storage_path)!, label: p.label })),
     signedAt: lav.report_signed_at,
     signerName: lav.report_signer_name,

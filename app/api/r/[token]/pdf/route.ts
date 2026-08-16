@@ -81,10 +81,12 @@ export async function GET(
   // Ore + foto visibili (tolleranti pre-migration, come /r)
   let laborMinutes = 0
   let lavDocumentId: string | null = null
+  // 086: ore mostrate al cliente solo con la spunta attiva (default nascoste).
+  let showLaborToClient = false
   try {
     let { data: extra, error: extraErr } = await db
       .from('lavori')
-      .select('labor_minutes, document_id')
+      .select('labor_minutes, document_id, show_labor_to_client')
       .eq('id', lav.id)
       .maybeSingle()
     if (extraErr?.code === '42703') {
@@ -98,6 +100,7 @@ export async function GET(
       const m = Number((extra as { labor_minutes?: number }).labor_minutes ?? 0)
       laborMinutes = Number.isFinite(m) && m > 0 ? Math.round(m) : 0
       lavDocumentId = (extra as { document_id?: string | null }).document_id ?? null
+      showLaborToClient = (extra as { show_labor_to_client?: boolean }).show_labor_to_client === true
     }
   } catch { /* pre-migration */ }
 
@@ -124,7 +127,7 @@ export async function GET(
     finishedAt: lav.finished_at,
     sentAt: lav.report_sent_at,
     reportText: lav.report_text,
-    oreLabel: oreLabelFromMinutes(laborMinutes),
+    oreLabel: showLaborToClient ? oreLabelFromMinutes(laborMinutes) : null,
     photos: photos.filter((p) => photoUrls.has(p.storage_path)).map((p) => ({ url: photoUrls.get(p.storage_path)!, label: p.label })),
     signedAt: lav.report_signed_at,
     signerName: lav.report_signer_name,

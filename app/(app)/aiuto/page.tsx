@@ -644,10 +644,12 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   },
   {
     q: 'Cos’è il rapportino di fine lavoro?',
-    parole: ['firma', 'fine lavori', 'prova', 'consegna'],
+    parole: ['firma', 'fine lavori', 'prova', 'consegna', 'ore', 'mostra ore'],
     a: <>A lavoro finito, dal <b>Lavoro</b>{' '}scrivi cosa hai fatto e mandi al cliente un link: lui
       firma dal telefono e tu conservi la <b>prova della consegna</b>{' '}(con data, ora e nome).
-      Dopo la firma il testo non si può più modificare.</>,
+      Dopo la firma il testo non si può più modificare. Le <b>ore segnate</b>{' '}sul lavoro
+      restano <b>private</b>: compaiono nel rapportino del cliente solo se attivi la spunta{' '}
+      <b>«Mostra le ore al cliente»</b>.</>,
   },
   {
     q: 'Come funzionano appuntamenti e agenda?',

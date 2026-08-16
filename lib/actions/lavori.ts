@@ -328,6 +328,18 @@ export async function saveRapportoAction(formData: FormData): Promise<{ error?: 
     return { error: 'Il rapportino è appena stato firmato dal cliente: non si può più modificare.' }
   }
 
+  // «Mostra le ore al cliente» (086) — update SEPARATO e tollerante: le ore
+  // sono un dato interno, di default nascoste al cliente; senza la migration il
+  // salvataggio del rapportino non deve fallire. Guardia sul non-firmato come sopra.
+  const showLabor = formData.get('show_labor_to_client') === 'on'
+  const { error: laborErr } = await db
+    .from('lavori')
+    .update({ show_labor_to_client: showLabor })
+    .eq('id', id)
+    .eq('workspace_id', workspace.id)
+    .is('report_signed_at', null)
+  if (laborErr && !isMissingColumnError(laborErr)) return { error: 'Salvataggio non riuscito.' }
+
   revalidatePath(`/lavori/${id}`)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
   return { url: `${appUrl}/r/${token}` }
