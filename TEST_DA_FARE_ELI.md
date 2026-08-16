@@ -192,6 +192,8 @@ body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = conseg
 | F1 | Prendi una fattura le cui voci vengono da un **listino fornitore scaduto** (o duplica un vecchio preventivo con listino scaduto) e aprila in modifica | Compare l'avviso ambra «Il listino di X è scaduto: i costi… ricontrolla i prezzi» (prima usciva solo sui preventivi) |
 | F2 | In **Impostazioni › Fiscale**, con un **costo orario** impostato, togli la spunta **«Conta la manodopera nel margine»** e salva | La spunta **resta spenta** dopo il salvataggio (non si riaccende) |
 | F3 | Apri un **Lavoro** con ore registrate (timer) e guarda l'**Economia del lavoro** | Con la spunta ON: riga «Manodopera (X h) €Y» tolta dal margine. Con la spunta OFF: riga «Ore lavorate (X h) — non contate nel margine», e il margine **non** sottrae il costo delle ore |
+| F4 | (⚠️ dopo la **migration 086**) Su un Lavoro con ore registrate, apri il **rapportino** senza toccare nulla, poi l'**Anteprima del rapportino** | Le ore **NON** compaiono (dato privato); compare la spunta «Mostra le ore al cliente» **spenta** |
+| F5 | Attiva la spunta **«Mostra le ore al cliente»**, salva il rapportino, riapri l'Anteprima e la pagina `/r/…` del cliente | Ora compare «Ore di lavoro in cantiere: X h Y min» su entrambe. Le ore restano comunque sempre visibili a te nell'Economia del lavoro |
 
 ---
 
