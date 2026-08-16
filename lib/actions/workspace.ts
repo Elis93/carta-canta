@@ -468,6 +468,21 @@ export async function updateWorkspaceFiscal(
     }
   }
 
+  // Conta la manodopera nel margine dei lavori (colonna 085) — update separato,
+  // tollerante, e SOLO se il campo è arrivato dal form (sentinella: la checkbox
+  // spenta non manda nulla, e l'onboarding usa la stessa action senza il campo
+  // → senza la guardia ogni salvataggio lo azzererebbe in silenzio).
+  if (formData.get('count_labor_presente') !== null) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 085 non ancora in types/database.ts
+    const { error: laborErr } = await (supabase as any)
+      .from('workspaces')
+      .update({ count_labor_in_margin: formData.get('count_labor_in_margin') === 'on' })
+      .eq('id', workspace.id)
+    if (laborErr && !isMissingColumnError(laborErr)) {
+      return { error: 'Impostazioni salvate, ma il conteggio della manodopera no. Riprova.' }
+    }
+  }
+
   revalidatePath('/(app)', 'layout')
   return { success: 'Impostazioni fiscali salvate.' }
 }

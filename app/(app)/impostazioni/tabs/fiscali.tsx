@@ -117,6 +117,13 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
   const [sdiAuto, setSdiAuto] = useState(
     (workspace as { sdi_auto_enabled?: boolean | null }).sdi_auto_enabled !== false
   )
+  // Conta la manodopera nel margine dei lavori (085) — default ON (comportamento
+  // storico). I forfettari possono spegnerlo: le loro ore non sono soldi usciti
+  // dal conto. Colonna assente pre-085 → undefined → true. Dichiarato QUI (prima
+  // del ref block sotto) perché countLaborCorrente lo referenzia.
+  const [countLabor, setCountLabor] = useState(
+    (workspace as { count_labor_in_margin?: boolean | null }).count_labor_in_margin !== false
+  )
   // ⚠️ React 19 chiama form.reset() DOPO ogni submit: su una casella
   // governata dallo stato il reset riporta il DOM al valore iniziale senza
   // cambiare nessuno stato — la spunta si riaccendeva da sola pur avendo
@@ -125,13 +132,17 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
   const sdiAutoRef = useRef<HTMLInputElement>(null)
   const sdiAutoCorrente = useRef(sdiAuto)
   sdiAutoCorrente.current = sdiAuto
+  const countLaborRef = useRef<HTMLInputElement>(null)
+  const countLaborCorrente = useRef(countLabor)
+  countLaborCorrente.current = countLabor
   useEffect(() => {
-    const form = sdiAutoRef.current?.form
+    const form = sdiAutoRef.current?.form ?? countLaborRef.current?.form
     if (!form) return
     const onReset = () => {
       // Il reset agisce DOPO l'evento: si rimette a posto al giro successivo.
       requestAnimationFrame(() => {
         if (sdiAutoRef.current) sdiAutoRef.current.checked = sdiAutoCorrente.current
+        if (countLaborRef.current) countLaborRef.current.checked = countLaborCorrente.current
       })
     }
     form.addEventListener('reset', onReset)
@@ -243,6 +254,30 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             maxLength={8}
             style={fieldStyle}
           />
+
+          {/* Conta la manodopera nel margine dei lavori (085). Sentinella per
+              non azzerarlo dall'onboarding (stessa action senza il campo). */}
+          <input type="hidden" name="count_labor_presente" value="1" />
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: '#fafafa', borderRadius: 10, padding: '11px 12px', marginTop: 10 }}>
+            <input
+              ref={countLaborRef}
+              id="count-labor"
+              type="checkbox"
+              name="count_labor_in_margin"
+              checked={countLabor}
+              onChange={(e) => setCountLabor(e.target.checked)}
+              style={{ width: 18, height: 18, marginTop: 1, accentColor: '#1a1a2e', flexShrink: 0 }}
+            />
+            <label htmlFor="count-labor" style={{ fontSize: 13, color: '#161616', lineHeight: 1.45, cursor: 'pointer' }}>
+              <b>Conta la manodopera nel margine</b>
+              <span style={{ display: 'block', fontSize: 12, color: '#767676', marginTop: 2 }}>
+                Nella scheda Lavoro, il costo orario &times; le ore del timer viene tolto
+                dal margine. Se lavori in <b>forfettario</b>{' '}puoi spegnerlo: le tue ore
+                non sono soldi usciti dal conto, e il margine mostra quanto ti resta
+                davvero in cassa. Le ore restano comunque visibili sul Lavoro.
+              </span>
+            </label>
+          </div>
 
           <div style={{ height: 14 }} />
 

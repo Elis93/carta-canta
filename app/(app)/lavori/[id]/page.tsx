@@ -170,12 +170,17 @@ export default async function LavoroDetailPage({
     await signPhotoPaths(createAdminClient(), workPhotos.map((p) => p.storage_path)),
   )
 
-  // Manodopera (052): ore × costo orario del workspace — entra nello "Speso"
+  // Manodopera (052): ore × costo orario del workspace — entra nello "Speso".
+  // 085: l'interruttore «conta la manodopera nel margine» (default ON) permette
+  // di ESCLUDERLA (forfettari: le loro ore non sono soldi usciti dal conto).
   const hourlyCost = Number((workspace as { hourly_cost?: number | null }).hourly_cost ?? 0) || null
+  const countLabor = (workspace as { count_labor_in_margin?: boolean | null }).count_labor_in_margin !== false
   const oreTotaliMin = ore
     ? ore.minutes + (ore.startedAt ? Math.max(0, Math.floor((Date.now() - new Date(ore.startedAt).getTime()) / 60000)) : 0)
     : 0
-  const laborCost = hourlyCost != null && oreTotaliMin > 0 ? (oreTotaliMin / 60) * hourlyCost : 0
+  const laborCost = countLabor && hourlyCost != null && oreTotaliMin > 0 ? (oreTotaliMin / 60) * hourlyCost : 0
+  // Ore lavorate senza costo contato: si mostrano comunque, come informazione.
+  const oreEscluse = !countLabor && oreTotaliMin > 0
 
   const speseMateriali = spese.length > 0 ? spese.reduce((s, e) => s + Number(e.amount), 0) : (spese.length === 0 && preventivato != null ? 0 : null)
   const speseTotale = speseMateriali != null ? speseMateriali + laborCost : (laborCost > 0 ? laborCost : null)
@@ -245,6 +250,14 @@ export default async function LavoroDetailPage({
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', marginTop: 8, borderTop: '0.5px solid #eee', fontSize: 13 }}>
               <span style={{ color: '#161616' }}>Manodopera ({Math.floor(oreTotaliMin / 60)} h {String(oreTotaliMin % 60).padStart(2, '0')} min)</span>
               <span style={{ color: '#55534b', fontWeight: 600, flexShrink: 0 }}>{formatCurrency(laborCost)}</span>
+            </div>
+          )}
+          {/* 085: manodopera esclusa dal margine → ore mostrate come sola
+              informazione (senza costo), così il dato non si perde. */}
+          {oreEscluse && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', marginTop: 8, borderTop: '0.5px solid #eee', fontSize: 13 }}>
+              <span style={{ color: '#161616' }}>Ore lavorate ({Math.floor(oreTotaliMin / 60)} h {String(oreTotaliMin % 60).padStart(2, '0')} min)</span>
+              <span style={{ color: 'var(--cc-muted)', fontSize: 12, flexShrink: 0 }}>non contate nel margine</span>
             </div>
           )}
           {spese.length > 0 && (

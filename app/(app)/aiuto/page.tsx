@@ -63,6 +63,16 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       avvisa se il listino scade prima del preventivo.</>,
   },
   {
+    q: 'Nel margine del lavoro contano anche le mie ore. Posso escluderle?',
+    parole: ['manodopera', 'ore', 'costo orario', 'margine', 'lavoro', 'economia', 'forfettario', 'timer'],
+    a: <>Sì. Nella scheda del <b>Lavoro</b>, l&rsquo;«Economia del lavoro» toglie dal margine il
+      <b> costo orario &times; le ore</b>{' '}del timer (il costo orario si imposta in{' '}
+      <VaiA a="impFiscale">Dati fiscali</VaiA>). Se lavori in <b>forfettario</b>{' '}le tue ore
+      non sono soldi usciti dal conto: puoi togliere la spunta{' '}
+      <b>«Conta la manodopera nel margine»</b>{' '}in Dati fiscali, così il margine mostra quanto
+      ti resta davvero in cassa. Le ore restano comunque visibili sul Lavoro.</>,
+  },
+  {
     q: 'Come gestisco i listini dei fornitori?',
     a: <>Con <b>Pro</b>, in <VaiA a="listini" />{' '}crei un listino
       col nome del fornitore e il tuo <b>ricarico</b>{' '}(es. 25%). Le voci le importi con una{' '}
@@ -620,7 +630,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     parole: ['timer', 'manodopera', 'ore', 'tempo'],
     a: <>Sul <b>Lavoro</b>{' '}usa il timer <b>Avvia/Ferma</b>{' '}o inserisci le ore a mano. Se imposti
       il <b>costo orario</b>{' '}in <VaiA a="impFiscale">Impostazioni › Dati fiscali</VaiA>, la manodopera entra nello
-      &ldquo;Speso&rdquo; e vedi il margine reale del lavoro.</>,
+      &ldquo;Speso&rdquo; e vedi il margine reale del lavoro. Nella stessa pagina puoi{' '}
+      <b>escluderla dal margine</b>{' '}(utile in forfettario).</>,
   },
   {
     q: 'Posso farmi ricordare di richiamare un cliente?',
