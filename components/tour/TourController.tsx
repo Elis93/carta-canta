@@ -261,7 +261,7 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           router.push('/preventivi/nuovo')
         },
         undefined,
-        24, // evidenziazione più larga: copre il + che sporge dalla barra E la scritta «Crea»
+        28, // evidenziazione più larga: copre il + che sporge ~22px dalla barra E la scritta «Crea»
         )
       }, 400)
       return () => clearTimeout(t)
@@ -278,23 +278,23 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
       const stopWait = whenVisible('[data-tour="invia"]', 8000, () => startPhase(
         [
           {
-            // Evidenziamo la VOCE (col microfono): così il popover scende SOTTO
-            // la voce e non copre più l'elenco delle voci (feedback Eli: «il
-            // riquadro copre le voci, spostalo più in basso»). La card Cliente,
-            // in alto, resta segnata con l'anello bianco+oro.
-            element: lazy('[data-tour="voce-mic"]'),
-            onHighlighted: () => markTour(['[data-tour="cliente"]', '[data-tour="ai-foto"]']),
+            // La card Cliente è l'elemento ILLUMINATO (ritaglio driver → in
+            // chiaro sopra l'overlay). ⚠️ Eli 15 ago: evidenziare la voce
+            // rendeva la card cliente SCURA — ora torna illuminata lei. Il
+            // popover va SOPRA (side:top) così NON copre l'elenco delle voci,
+            // che sta sotto la card.
+            element: lazy('[data-tour="cliente"]'),
+            onHighlighted: () => markTour(['[data-tour="voce-mic"]', '[data-tour="ai-foto"]']),
             onDeselected: () => clearTourMarks(),
             popover: {
               title: 'Cliente e lavori',
               description: desc(
                 AI_ATTIVA
-                  ? 'In alto scegli il <b>cliente</b> (o crealo al volo). Poi aggiungi le voci: dettale col <b>microfono 🎤</b> (illuminato qui) o fattele <b>proporre dalle foto (AI)</b>.'
-                  : 'In alto scegli il <b>cliente</b> (o crealo al volo). Poi aggiungi le voci del lavoro: col <b>microfono 🎤</b> (illuminato qui) puoi dettarle a voce, comodo in cantiere.',
+                  ? 'Cerca il <b>cliente</b> (o crealo al volo) e aggiungi le voci del lavoro: dettale col <b>microfono 🎤</b> o fattele <b>proporre dalle foto (AI)</b>.'
+                  : 'Cerca il <b>cliente</b> (o crealo al volo) e aggiungi le voci del lavoro. Col <b>microfono 🎤</b> puoi dettarle a voce, comodo in cantiere.',
                 3
               ),
-              // Popover SOTTO la voce evidenziata → non copre l'elenco.
-              side: 'bottom',
+              side: 'top',
               align: 'center',
             },
           },
@@ -317,13 +317,13 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
               // F16: badge di ESEMPIO disegnati nel popover (stessi colori di
               // StatusBadge) — si vedono anche senza preventivi creati.
               description: desc(
-                'A <b>ogni documento</b> viene associato un <b>badge di stato</b>, che ti dice a colpo d’occhio com’è andata. Eccoli:'
+                'A <b>ogni documento</b> viene associato un <b>badge di stato</b>, che ti informa a colpo d’occhio lo stato del documento. Eccoli:'
                 + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 8px">'
                 + demoBadge('Inviato', '#d8e8fb')
                 + demoBadge('Visto', '#fbe1ee')
                 + demoBadge('Accettato', '#d4efe2')
                 + '</div>'
-                + 'La <b>cronologia</b> tiene tutta la storia. Per procedere con tutte le funzioni, segui <b>Completa il profilo</b> in Home.'
+                + 'La <b>cronologia</b> mostra tutta la storia del documento. Per accedere a tutte le funzioni dell’app, <b>Completa il profilo</b> in Home.'
                 // Il punto ⓘ (SpiegaCampo): disegnato qui come i badge demo,
                 // così si sa riconoscerlo anche prima di incontrarne uno.
                 + '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #ececec">Quando accanto a un campo vedi il tondino '
