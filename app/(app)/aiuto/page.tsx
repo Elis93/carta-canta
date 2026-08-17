@@ -53,11 +53,14 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   },
   {
     q: 'Posso segnare quanto pago io e vedere il margine?',
-    parole: ['costo', 'ricarico', 'guadagno', 'quanto ci guadagno'],
-    a: <>Sì: su ogni voce del preventivo (e nel Catalogo) c&rsquo;è il campo <b>Costo (solo per te)</b>.
-      Compilandolo vedi ricarico e margine della voce e, sopra il riepilogo, il riquadro{' '}
-      <b>Margine</b>{' '}con la composizione. Li vedi <b>solo tu</b>: non compaiono mai su documenti,
-      pagine o email viste dal cliente. Con <b>Pro</b>, in{' '}
+    parole: ['costo', 'ricarico', 'guadagno', 'quanto ci guadagno', 'margine'],
+    a: <>Sì. Il <b>costo</b>{' '}(quanto paghi tu) si segna sulle voci del <b>Catalogo</b>{' '}e arriva
+      nel documento <b>da solo</b>{' '}quando scegli una voce dal catalogo, dai listini o dai
+      suggerimenti mentre scrivi — nella card della voce non c&rsquo;è un campo da compilare.
+      Sopra il riepilogo compare allora il riquadro <b>Margine · solo tu lo vedi</b>: aprendolo
+      trovi una riga per voce con il costo (che puoi <b>correggere o completare</b>{' '}lì) e il
+      margine. Li vedi <b>solo tu</b>: non compaiono mai su documenti, pagine o email viste dal
+      cliente. Con <b>Pro</b>, in{' '}
       <VaiA a="catalogo" />{' '}importi anche i <b>listini dei fornitori</b>{' '}(pure con una
       foto): scegli la voce in preventivo e l&rsquo;app propone il prezzo col tuo ricarico, e ti
       avvisa se il listino scade prima del preventivo.</>,
@@ -560,7 +563,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       <b>Uscite</b> = le <b>spese che registri tu</b>{' '}(Bilancio › Aggiungi spesa), divise in{' '}
       <b>Costi dei lavori</b>{' '}(quelle che colleghi a un lavoro) e <b>Spese generali</b>.
       <br /><br />
-      <b>Cosa NON entra, e perché:</b>{' '}il <b>costo</b>{' '}che segni sulle voci del preventivo
+      <b>Cosa NON entra, e perché:</b>{' '}il <b>costo</b>{' '}delle voci del preventivo
       (serve al tuo margine, non è un soldo uscito: la spesa vera la registri quando compri) ·
       le <b>ore</b>{' '}del timer (il tuo tempo non esce dal conto corrente — le trovi nella
       scheda del lavoro) · i <b>listini fornitori</b>, che sono cataloghi di prezzi.

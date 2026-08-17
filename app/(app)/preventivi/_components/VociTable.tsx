@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Plus, Trash2, Lock, ChevronRight, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, ChevronRight, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { parseImportoIt } from '@/lib/utils'
@@ -15,7 +15,6 @@ import { useFontiVoci, SuggerimentiVociDropdown } from './VoceSuggerimenti'
 import { suggerisciVoci, normalizzaTesto, type FonteVoce } from '@/lib/documents/suggerimenti-voce'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { CalcQuantitaButton } from '@/components/calc/CalcQuantitaButton'
-import { margineVoce } from '@/lib/margine/calcolo'
 
 // ── NumericInput ──────────────────────────────────────────────────────────────
 interface NumericInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
@@ -106,62 +105,14 @@ function newVoce(sortOrder: number): VoceItem {
 
 const ORO = '#b08d3e'
 
-// ── Costo e margine della voce (F1 listino fornitore) ────────────────────────
-// 🔒 Regola B.2: costo/ricarico/margine sono SOLO per l'artigiano — questa
-// riga vive nel form e non arriva mai a PDF, pagine pubbliche o email.
-// 2 ago (Eli): campo SEMPRE visibile e compatto, allineato agli altri campi
-// della voce — etichetta sopra, campo e pillola del margine sulla STESSA riga
-// (la versione a link + righe sparse era "un mischione disorganizzato").
-// 3 ago (mockup variante A/B approvato): TUTTO su una riga — etichetta
-// inline «🔒 Costo», campo, pillola del margine. L'esteso "(solo per te)"
-// resta nell'aria-label del campo.
-function VoceCosto({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<VoceItem>) => void }) {
-  const m = margineVoce(voce)
-  const fmt2 = (v: number) => v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  return (
-    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--cc-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-        <Lock size={11} style={{ flexShrink: 0 }} /> Costo
-      </span>
-      <div className="relative" style={{ width: 96, flexShrink: 0 }}>
-        <NumericInput
-          locale
-          value={voce.unit_cost ?? 0}
-          onChange={(n) => onUpdate({ unit_cost: n > 0 ? n : null })}
-          aria-label="Costo d'acquisto (solo per te)"
-          style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
-        />
-        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
-      </div>
-      {/* Pillola del margine: stessa altezza del campo, ricarico a sinistra
-          e cifra a destra — tutto su una riga, mai a capo */}
-      {m && (
-        <div style={{
-          flex: 1, minWidth: 0, height: 40, boxSizing: 'border-box',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-          borderRadius: 10, padding: '0 10px',
-          color: m.margine < 0 ? '#b05656' : '#5a4f8a',
-          background: m.margine < 0 ? '#faeeee' : '#f6f4fb',
-        }}>
-          <span style={{ fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {m.margine < 0
-              ? 'sotto costo'
-              /* ⚠️ IL NUMERO PRIMA DELLA PAROLA. Prima era «ricarico 64,3%» e
-                 nella pillola usciva «ricarico 64…» (foto di Eli): a essere
-                 tagliata era proprio la cifra. Con la percentuale in testa il
-                 taglio si mangia la parola — «643% ricar…» — e il numero
-                 resta leggibile a qualsiasi larghezza. Via anche i decimali:
-                 il decimo di punto non serve a nessuno. */
-              : `${Math.round(m.ricaricoPct)}% ricarico`}
-          </span>
-          <b style={{ fontSize: 12.5, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-            {m.margine < 0 ? `−${fmt2(Math.abs(m.margine))}` : `+${fmt2(m.margine)}`}&nbsp;€
-          </b>
-        </div>
-      )}
-    </div>
-  )
-}
+// ── Il COSTO non vive più nella card della voce (Eli, 17 ago) ────────────────
+// Era l'unico campo della voce che non riguarda il cliente, e chi compilava il
+// primo preventivo lo trovava in mezzo a Prezzo e Sconto senza capirlo
+// (feedback collaudatori #3). Ora si vede e si corregge SOLO nella card
+// «Margine · solo tu lo vedi» (MargineBox), dove il concetto vive — stessa
+// scelta del ricarico (12 ago). I costi continuano ad arrivare da soli da
+// catalogo, listini e suggerimenti (`unit_cost` resta nei dati e nel
+// salvataggio: nessun documento perde niente).
 
 // ── Beni significativi (081) ────────────────────────────────────────────────
 // Compare SOLO dove ha senso: regime non forfettario (un forfettario non
@@ -697,13 +648,13 @@ export function VociTable({
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
                     </div>
                   </div>
-                  {/* ⚠️ UNA riga sola per Sconto · IVA · Costo (Eli, 12 ago) — e
-                      dal 17 ago le SEI celle vivono in un UNICO contenitore
-                      griglia: a 3 colonne il disegno è identico a prima (due
-                      righe: Unità·Q.tà·Prezzo / Sconto·IVA·Costo), ma in «Testo
+                  {/* ⚠️ Sconto e IVA sulla seconda riga (Eli, 12 ago) — le celle
+                      vivono in un UNICO contenitore griglia: a 3 colonne il
+                      disegno è Unità·Q.tà·Prezzo / Sconto·IVA, in «Testo
                       grande» (cc-large, 2 colonne) il flusso accoppia da sé
                       Prezzo e Sconto sulla stessa riga invece di lasciarli
-                      orfani uno sopra l'altro (foto di Eli). */}
+                      orfani uno sopra l'altro (foto di Eli, 17 ago). Il campo
+                      Costo che chiudeva la riga è traslocato in MargineBox. */}
                   <div className="space-y-1">
                     <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
                     <div className="relative">
@@ -724,7 +675,7 @@ export function VociTable({
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">%</span>
                     </div>
                   </div>
-                  {showVat ? (
+                  {showVat && (
                     <div className="space-y-1">
                       <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
                       <Select
@@ -755,46 +706,13 @@ export function VociTable({
                         </SelectContent>
                       </Select>
                     </div>
-                  ) : (
-                    // Forfettario: nessuna IVA → colonna di mezzo vuota, così il
-                    // Costo resta allineato sotto il Prezzo (Eli, 12 ago).
-                    // In «Testo grande» (2 colonne) il segnaposto SPARISCE via
-                    // CSS: senza, il Costo finirebbe nella colonna destra dopo
-                    // una cella vuota.
-                    <div aria-hidden className="cc-voce-spacer" />
                   )}
-                  {/* Costo d'acquisto (🔒 solo per te) — terza colonna, inline
-                      con Sconto e IVA. Su mobile sostituisce la riga a sé di
-                      VoceCosto (che resta solo sul desktop). */}
-                  <div className="space-y-1">
-                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'flex', alignItems: 'center', gap: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      <Lock size={10} style={{ flexShrink: 0 }} /> Costo
-                    </span>
-                    <div className="relative">
-                      <NumericInput
-                        locale
-                        value={voce.unit_cost ?? 0}
-                        onChange={(n) => updateVoce(voce._key, { unit_cost: n > 0 ? n : null })}
-                        aria-label="Costo d'acquisto (solo per te)"
-                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
-                      />
-                      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
-                    </div>
-                  </div>
                 </div>
-                {/* ⚠️ Nessuna riga di ricarico qui (Eli, 12 ago: «lasciare queste
-                    informazioni solo nella card del margine più sotto»). Il
-                    margine per-voce e il totale vivono in MargineBox. */}
+                {/* ⚠️ Niente Costo e niente ricarico qui (Eli, 12 e 17 ago):
+                    vivono solo nella card Margine più sotto (MargineBox). */}
               </div>
               )}
 
-              {/* Costo e margine privato (F1): sul DESKTOP resta la riga a sé
-                  (VoceCosto). Su MOBILE il costo è già inline nella riga
-                  Sconto·IVA·Costo e il margine è la riga sotto (12 ago) →
-                  VoceCosto solo su desktop. */}
-              <div className="hidden lg:block">
-                <VoceCosto voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
-              </div>
               {/* La spunta «bene significativo» resta su mobile-aperta e desktop */}
               {fiscalRegime !== 'forfettario'
                 && (voce.vat_rate ?? defaultVatRate ?? 22) === 10

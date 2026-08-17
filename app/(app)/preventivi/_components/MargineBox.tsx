@@ -11,11 +11,59 @@
 // il componente vive solo nel form, dentro l'area (app).
 // ============================================================
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Lock, ChevronDown } from 'lucide-react'
 import { margineDocumento, margineVoce } from '@/lib/margine/calcolo'
 import { parseImportoIt } from '@/lib/utils'
 import type { VoceItem } from './PreventivoForm'
+
+// ── Campo costo della voce (traslocato QUI dalla card della voce, Eli 17 ago) ─
+// Il Costo confondeva chi compila il primo preventivo («non è chiara la
+// differenza tra prezzo, sconto e costo», collaudatori #3): era l'unico campo
+// della voce che non riguarda il cliente. Ora arriva da solo da catalogo,
+// listini e suggerimenti, e si vede/corregge solo qui — dove il concetto vive.
+function CostoInput({ value, onChange }: { value: number | null; onChange: (n: number | null) => void }) {
+  const fmt = (v: number | null) => v == null
+    ? ''
+    : v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const [display, setDisplay] = useState(() => fmt(value))
+  const [focused, setFocused] = useState(false)
+  useEffect(() => {
+    if (!focused) setDisplay(fmt(value))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, focused])
+  return (
+    <span className="relative" style={{ width: 92, flexShrink: 0, display: 'inline-block' }}>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={display}
+        placeholder="costo"
+        aria-label="Costo d'acquisto della voce (solo per te)"
+        onFocus={(e) => { setFocused(true); e.currentTarget.select() }}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/[^\d.,]/g, '')
+          setDisplay(raw)
+          if (raw.trim() === '') { onChange(null); return }
+          const n = parseImportoIt(raw)
+          if (!isNaN(n)) onChange(n > 0 ? n : null)
+        }}
+        onBlur={() => {
+          setFocused(false)
+          const n = parseImportoIt(display)
+          if (display.trim() === '' || isNaN(n) || n <= 0) { setDisplay(''); onChange(null) }
+          else { setDisplay(fmt(n)); onChange(n) }
+        }}
+        style={{
+          width: '100%', height: 34, boxSizing: 'border-box', borderRadius: 9,
+          border: '1px solid #d6d0e8', background: '#fff', padding: '0 18px 0 8px',
+          fontSize: 13, fontVariantNumeric: 'tabular-nums', color: '#161616',
+        }}
+      />
+      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style={{ color: '#8a84a3' }}>€</span>
+    </span>
+  )
+}
 
 const VIOLA = '#5a4f8a'
 const VERDE = '#2f8a63'
@@ -31,6 +79,7 @@ export function MargineBox({
   discountPct,
   discountFixed,
   tierLabel,
+  onUpdateVoce,
 }: {
   voci: VoceItem[]
   /** Sconto documento come stringhe grezze del form (stesse di fiscalOpts) */
@@ -42,6 +91,12 @@ export function MargineBox({
    * linguetta cambia anche il margine (Eli, 7 ago).
    */
   tierLabel?: string | null
+  /**
+   * Aggiorna una voce per `_key` nel form. Dal 17 ago (Eli) il costo si
+   * corregge QUI, non più nella card della voce: senza callback le righe
+   * restano di sola lettura (compatibilità).
+   */
+  onUpdateVoce?: (key: string, updates: Partial<VoceItem>) => void
 }) {
   const [open, setOpen] = useState(false)
 
@@ -118,16 +173,49 @@ export function MargineBox({
           COMPOSIZIONE, una riga per voce col suo margine + lo sconto. */}
       {open && (
         <div style={{ borderTop: '1px solid #e4dff2', padding: '9px 13px 12px' }}>
+          {/* Dal 17 ago (Eli) il COSTO si vede e si corregge QUI, non pi\u00F9 nella
+              card della voce: una riga per voce con descrizione, campo costo e
+              margine. Il costo arriva da solo da catalogo/listini; qui lo si
+              controlla \u2014 e si completa dove manca, cos\u00EC compare anche la %. */}
+          {onUpdateVoce && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8a84a3', padding: '2px 0 4px' }}>
+              <span>Voce</span>
+              <span style={{ display: 'flex', gap: 10 }}>
+                <span style={{ width: 92 }}>Costo</span>
+                <span>Margine</span>
+              </span>
+            </div>
+          )}
           {meaningful.map((v, i) => {
             const mv = margineVoce(v)
+            if (!onUpdateVoce) {
+              return (
+                <Riga
+                  key={v._key}
+                  label={v.description.trim() || `Voce ${i + 1}`}
+                  value={mv ? fmtEuro(mv.margine) : 'senza costo'}
+                  color={mv ? (mv.margine < 0 ? ROSSO : '#161616') : '#b08d3e'}
+                  muted={!mv}
+                />
+              )
+            }
             return (
-              <Riga
-                key={v._key}
-                label={v.description.trim() || `Voce ${i + 1}`}
-                value={mv ? fmtEuro(mv.margine) : 'senza costo'}
-                color={mv ? (mv.margine < 0 ? ROSSO : '#161616') : '#b08d3e'}
-                muted={!mv}
-              />
+              <div key={v._key} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, padding: '4px 0', color: '#55534b' }}>
+                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {v.description.trim() || `Voce ${i + 1}`}
+                </span>
+                <CostoInput
+                  value={v.unit_cost ?? null}
+                  onChange={(n) => onUpdateVoce(v._key, { unit_cost: n })}
+                />
+                <span style={{
+                  width: 76, textAlign: 'right', fontWeight: 600, flexShrink: 0,
+                  color: mv ? (mv.margine < 0 ? ROSSO : '#161616') : '#b8b3c9',
+                  fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap',
+                }}>
+                  {mv ? fmtEuro(mv.margine) : '\u2014'}
+                </span>
+              </div>
             )
           })}
           {m.scontoDocumento > 0 && (
@@ -135,7 +223,9 @@ export function MargineBox({
           )}
           <p style={{ fontSize: 11.5, color: '#6a6488', lineHeight: 1.5, margin: '8px 0 0' }}>
             {negative ? 'Stai lavorando sotto costo. ' : ''}
-            Solo per i tuoi occhi: mai su PDF, link o email al cliente.
+            {onUpdateVoce
+              ? 'Il costo \u00E8 quanto paghi tu (arriva da solo da catalogo e listini; qui lo correggi). Solo per i tuoi occhi: mai su PDF, link o email al cliente.'
+              : 'Solo per i tuoi occhi: mai su PDF, link o email al cliente.'}
             {m.marginePct == null && m.vociSenzaCosto > 0 ? ' La % compare quando ogni voce ha un costo.' : ''}
           </p>
         </div>

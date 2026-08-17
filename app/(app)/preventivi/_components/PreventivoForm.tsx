@@ -1996,7 +1996,19 @@ export function PreventivoForm({
         </div>
       )}
 
-      <MargineBox voci={activeVoci} discountPct={discountPct} discountFixed={discountFixed} tierLabel={optionsActive ? OPTION_TIER_LABELS[activeTier] : null} />
+      <MargineBox
+        voci={activeVoci}
+        discountPct={discountPct}
+        discountFixed={discountFixed}
+        tierLabel={optionsActive ? OPTION_TIER_LABELS[activeTier] : null}
+        // Dal 17 ago (Eli) il costo si corregge dentro la card Margine: si
+        // aggiorna per _key sull'INTERA lista (con le proposte attive le chiavi
+        // restano uniche fra i tier, le altre proposte non si toccano).
+        onUpdateVoce={(key, updates) => {
+          setVoci((prev) => prev.map((v) => (v._key === key ? { ...v, ...updates } : v)))
+          markDirty()
+        }}
+      />
 
       {/* ── Riepilogo fiscale (con slot sconto integrato) ────── */}
       <FiscalSummary

@@ -451,7 +451,16 @@ export function FatturaForm({
           C'era solo sul preventivo: sulla fattura, che è il documento su cui si
           incassa davvero, mancava. 🔒 Resta privato: non entra in nessuna
           superficie vista dal cliente (regola B.2). */}
-      <MargineBox voci={voci} discountPct={discountPct} discountFixed={discountFixed} />
+      <MargineBox
+        voci={voci}
+        discountPct={discountPct}
+        discountFixed={discountFixed}
+        // Dal 17 ago (Eli) il costo si vede e si corregge qui, non più nella
+        // card della voce.
+        onUpdateVoce={(key, updates) =>
+          setVoci((prev) => prev.map((v) => (v._key === key ? { ...v, ...updates } : v)))
+        }
+      />
 
       {/* ── Riepilogo fiscale (con slot sconto integrato, come nel preventivo) ── */}
       <FiscalSummary
