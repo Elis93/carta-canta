@@ -179,14 +179,22 @@ export function calcolaDocumento(
   //     AdE lo conferma escludendo dal calcolo automatico solo TD16-TD19 —
   //     una TD04 sopra soglia finisce nell'Elenco A comunque.
   // `doc_type` assente = comportamento da fattura (compatibilità).
-  // ⚠️ Il bollo NON dipende dal regime, dipende dall'ASSENZA DI IVA: è dovuto
-  // su ogni documento senza imposta sopra 77,47 € (art. 13 tariffa
-  // DPR 642/1972 · DM 17/06/2014). Legarlo al solo forfettario era un difetto
-  // latente, emerso costruendo l'inversione contabile: una fattura in reverse
-  // charge è a IVA zero e il bollo lì è dovuto esattamente come al
-  // forfettario. Chi paga materialmente il bollo nel reverse charge è
-  // materia da commercialista (N16), ma che sia dovuto non è in discussione.
-  const senzaIva = opts.fiscal_regime === 'forfettario' || opts.reverse_charge === true
+  // ⚠️ Il criterio giusto NON è «nessuna IVA esposta»: è «operazione NON
+  //   SOGGETTA a IVA» (principio di alternatività, art. 6 Tabella B
+  //   DPR 642/1972). Il REVERSE CHARGE è un'operazione SOGGETTA a IVA —
+  //   l'imposta esiste, la assolve il committente — quindi il bollo NON è
+  //   dovuto (circ. AdE 37/E/2006 sui subappalti edili; la stessa AdE, nella
+  //   guida sul bollo delle fatture elettroniche, esclude TUTTI gli N6.* dal
+  //   calcolo automatico dell'Elenco B: pretende il bollo solo su N2.1, N2.2,
+  //   N3.5, N3.6, N4). L'11 ago avevamo sovracorretto («IVA zero = bollo»):
+  //   addebitava 2 € mai dovuti e li dichiarava nell'XML. Corretto il 17 ago
+  //   dopo ricerca su fonti ufficiali (collaudo: «non siamo sicuri che si
+  //   faccia»). Il FORFETTARIO resta col bollo: N2.2 è operazione non
+  //   soggetta, ed è nell'Elenco B dell'AdE. E il flag reverse_charge NON
+  //   toglie il bollo al forfettario: in uscita lui l'inversione non la
+  //   applica (resta N2.2, c'è un test apposta) → l'operazione resta non
+  //   soggetta e il bollo resta dovuto.
+  const senzaIva = opts.fiscal_regime === 'forfettario'
   const bollo =
     senzaIva && afterDiscount > 77.47 && opts.doc_type !== 'preventivo'
       ? 2.0

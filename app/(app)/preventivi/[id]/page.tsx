@@ -354,8 +354,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </span>
         {edit !== '1' ? (
           freeLocked ? null : (
-          <Link href={`/preventivi/${id}?edit=1`} aria-label="Modifica preventivo" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Pencil size={18} style={{ color: '#55534b' }} />
+          // Matita CON etichetta (collaudo 17 ago: «non si capisce la matita»)
+          <Link href={`/preventivi/${id}?edit=1`} aria-label="Modifica preventivo" style={{ display: 'flex', alignItems: 'center', gap: 5, borderRadius: 999, background: '#f4f4f5', padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#55534b', textDecoration: 'none', flexShrink: 0 }}>
+            <Pencil size={15} /> Modifica
           </Link>
           )
         ) : (

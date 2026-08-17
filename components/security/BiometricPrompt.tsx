@@ -13,7 +13,8 @@ import { browserSupportsWebAuthn, platformAuthenticatorIsAvailable } from '@simp
 import { Fingerprint, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { registerPasskey, guessDeviceLabel } from '@/lib/biometric/register'
-import { isBiometricEnabled, setBiometricEnabled, wasBiometricPrompted, setBiometricPrompted } from '@/lib/biometric/local'
+import { isBiometricEnabled, setBiometricEnabled, setBiometricUid, wasBiometricPrompted, setBiometricPrompted } from '@/lib/biometric/local'
+import { createClient } from '@/lib/supabase/client'
 
 export function BiometricPrompt() {
   const [visible, setVisible] = useState(false)
@@ -41,6 +42,15 @@ export function BiometricPrompt() {
       const res = await registerPasskey(guessDeviceLabel())
       if (!res.ok) { toast.error(res.error ?? 'Registrazione non riuscita. Riprova.'); return }
       setBiometricEnabled(true)
+      // ⚠️ L'impronta va LEGATA all'utente (cc_biometric_uid) anche da QUI:
+      // il Layer A anti-loop del 15 ago protegge solo chi ha l'uid, e questo
+      // prompt post-login è il percorso più battuto per attivarla — senza,
+      // restava un flag «legacy» scoperto (audit 17 ago). Best-effort: se
+      // getUser non risponde, resta la via d'uscita a runtime.
+      try {
+        const { data } = await createClient().auth.getUser()
+        if (data.user) setBiometricUid(data.user.id)
+      } catch { /* best effort */ }
       setBiometricPrompted()
       setVisible(false)
       toast.success('Fatto! La prossima volta entri con l’impronta.', { closeButton: true })

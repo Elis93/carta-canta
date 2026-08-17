@@ -419,15 +419,32 @@ aggiorna la tabella; ② il caso del **contratto unico d'appalto** che comprende
 prestazioni in reverse charge sia altre (va spezzato o segue una regola sola?);
 ③ serve una **dichiarazione del committente** da conservare, o basta la P.IVA?
 
-**N17 — BOLLO: era legato al REGIME, doveva essere legato all'ASSENZA DI IVA.**
-Difetto latente trovato costruendo il reverse charge: il motore applicava i 2 € solo ai
-forfettari, ma il bollo è dovuto su ogni documento **senza imposta** sopra 77,47 €
-(art. 13 tariffa DPR 642/1972 · DM 17/06/2014) — e una fattura in inversione contabile è a
-IVA zero esattamente come quella di un forfettario. Corretto: ora la condizione è
-«nessuna IVA addebitata», non «forfettario».
-*Da confermare:* nel reverse charge il bollo lo assolve chi EMETTE o chi INTEGRA la
-fattura? Noi lo mettiamo in capo a chi emette (com'è per il forfettario), ma è il punto su
-cui abbiamo trovato meno certezze.
+**N17 — BOLLO e REVERSE CHARGE: ⚠️ CORRETTO IL 17 AGO — il bollo NON è dovuto.**
+Storia in due tempi. L'11 ago avevamo esteso il bollo alle fatture in inversione contabile
+(«IVA zero = bollo dovuto»). Un collaudatore ha sollevato il dubbio e la ricerca su fonti
+ufficiali gli ha dato ragione: per il **principio di alternatività** (art. 6 Tabella B
+DPR 642/1972) l'inversione contabile è un'operazione **soggetta a IVA** — la versa il
+committente — quindi **esente da bollo** (circ. AdE 37/E/2006 sui subappalti edili in
+reverse charge; e la stessa AdE, nella guida sul bollo delle e-fatture, esclude TUTTI gli
+N6.* dal calcolo automatico dell'Elenco B: pretende il bollo solo su N2.1, N2.2, N3.5,
+N3.6, N4). **Il motore ora non applica il bollo al reverse charge**; il forfettario
+(N2.2, nell'Elenco B) resta col bollo com'era.
+*Da confermare (non domanda aperta — le fonti sono univoche):* che sulla fattura SOLO
+reverse charge sopra 77,47 € il bollo non vada applicato, e che sul caso misto
+(parte reverse + parte con IVA esposta) il bollo scatti solo se le eventuali componenti
+esenti/fuori campo — non quelle in reverse — superano da sole 77,47 € (RM 98/E/2001).
+
+**N20 — FATTURE agli ENTI PUBBLICI: l'app le BLOCCA con spiegazione (17 ago).**
+Ricerca su fonti ufficiali (feedback collaudatori): una fattura a una PA richiede il
+formato **FPA12** col Codice Univoco Ufficio a **6 caratteri** (Indice PA), quasi sempre lo
+**split payment** (art. 17-ter — prorogato dalla Decisione UE 2026/1728 fino al 30/6/2029;
+i FORFETTARI ne sono esclusi, circ. 15/E/2015), e **CIG/CUP** senza i quali la PA non può
+pagare (art. 25 DL 66/2014). Il nostro FPR12 verso una PA = **scarto certo 00427**.
+L'app ora **rifiuta la trasmissione** quando il codice destinatario ha 6 caratteri, con
+il messaggio: fattura all'ente pubblico → dal gestionale del commercialista. Il supporto
+vero (FPA12+split) è un progetto a sé, da valutare post-lancio se c'è domanda.
+*Da confermare:* che il blocco con rimando al commercialista sia la scelta giusta per i
+suoi clienti artigiani (quanti fatturano a comuni/scuole?).
 
 **N18 — MULTI-ALIQUOTA nell'XML: era rifiutata, ora è supportata.**
 Fino a oggi l'app si rifiutava di trasmettere una fattura con aliquote diverse fra le voci

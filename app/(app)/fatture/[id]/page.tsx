@@ -516,12 +516,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </span>
         </span>
         {edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted && !freeLocked && (
+          // Matita CON etichetta (collaudo 17 ago), gemella del preventivo
           <Link
             href={`/fatture/${id}?edit=1`}
-            style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#55534b' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, borderRadius: 999, background: '#f4f4f5', padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#55534b', textDecoration: 'none', flexShrink: 0 }}
             aria-label="Modifica fattura"
           >
-            <Pencil size={18} />
+            <Pencil size={15} /> Modifica
           </Link>
         )}
         {/* ✕ per uscire dalla modifica — come sul dettaglio preventivo */}

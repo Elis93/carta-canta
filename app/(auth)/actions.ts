@@ -357,7 +357,12 @@ async function signupActionInner(
 // ============================================================
 export async function logoutAction() {
   const supabase = await createClient()
-  await supabase.auth.signOut()
+  // scope 'local': «Esci» slogga QUESTO dispositivo. Il default di supabase-js
+  // è 'global' — uscire dal telefono buttava fuori anche il computer, che alla
+  // riapertura chiedeva l'accesso «senza motivo» (audit 17 ago; stessa
+  // decisione già presa il 12 ago per il bottone del login). Per chiudere
+  // TUTTE le sessioni c'è l'azione dedicata in Account › Sicurezza.
+  await supabase.auth.signOut({ scope: 'local' })
   redirect('/login')
 }
 

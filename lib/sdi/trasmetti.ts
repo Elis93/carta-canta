@@ -197,6 +197,15 @@ export async function trasmettiDocumentoSdi(opts: {
   if (clientCf && !CF_PERSONA.test(clientCf) && !CF_ENTE.test(clientCf)) {
     return { status: 422, body: { error: `Il Codice Fiscale del cliente (${clientCf}) non sembra corretto: controllalo in rubrica e riprova.` } }
   }
+  // ⚠️ ENTE PUBBLICO (ricerca su fonti ufficiali, 17 ago): il Codice Univoco
+  // Ufficio delle PA è di 6 caratteri (Indice PA) e la fattura verso una PA
+  // viaggia in formato FPA12 con regole proprie (split payment art. 17-ter,
+  // CIG/CUP obbligatori per il pagamento, rifiuto entro 15 giorni) che l'app
+  // non supporta. Trasmetterla col nostro FPR12 = scarto certo 00427,
+  // inspiegabile per l'artigiano → rifiuto SPIEGATO prima della trasmissione.
+  if (clientDest && /^[A-Z0-9]{6}$/.test(clientDest)) {
+    return { status: 422, body: { error: 'Questo codice destinatario ha 6 caratteri: è il codice di un ente pubblico (comune, scuola, ASL). Le fatture alla Pubblica Amministrazione usano un formato diverso (FatturaPA) con regole proprie — scissione dei pagamenti, CIG/CUP — che Carta Canta non supporta ancora: falla emettere dal gestionale del commercialista.' } }
+  }
   // Codice destinatario compilato ma NON valido: prima veniva sostituito in
   // SILENZIO con '0000000' (recapito generico) — la fattura arrivava allo SdI
   // ma non al canale telematico del cliente, che se ne accorgeva solo dopo.

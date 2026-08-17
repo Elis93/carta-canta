@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation'
 import { ShieldCheck, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRecoveryCode } from '@/lib/actions/mfa'
+import { markActive } from '@/lib/biometric/local'
 
 export default function MfaChallengePage() {
   const router = useRouter()
@@ -58,6 +59,10 @@ export default function MfaChallengePage() {
     try {
       const { error: err } = await createClient().auth.mfa.challengeAndVerify({ factorId, code: cleaned })
       if (err) { setError('Codice non valido. Controlla l’ora del telefono e riprova.'); setBusy(false); return }
+      // Verificarsi CONTA come attività: senza, chi ha il blocco impronta col
+      // timeout «Ad ogni apertura» si vedeva chiedere l'impronta SUBITO dopo
+      // aver appena dimostrato la propria identità col codice (audit 17 ago).
+      markActive()
       router.replace('/dashboard')
       router.refresh()
     } catch {
@@ -74,12 +79,14 @@ export default function MfaChallengePage() {
     if (res?.error) { setError(res.error); setBusy(false); return }
     // Il codice di recupero ha disattivato il 2FA: ora la sessione non è più in
     // attesa → si entra. L'utente riconfigurerà il 2FA dalle impostazioni.
+    markActive() // vedi verifyCode: niente lucchetto subito dopo essersi verificati
     router.replace('/dashboard')
     router.refresh()
   }
 
   async function esci() {
-    try { await createClient().auth.signOut() } catch { /* best effort */ }
+    // scope 'local': si esce da QUESTO dispositivo, non da tutti (audit 17 ago).
+    try { await createClient().auth.signOut({ scope: 'local' }) } catch { /* best effort */ }
     router.replace('/login')
   }
 

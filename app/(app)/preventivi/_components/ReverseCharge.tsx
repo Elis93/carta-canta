@@ -92,8 +92,8 @@ export function ReverseCharge({
           background: '#fdf6e7', color: '#8a6d1f', fontSize: 12.5, lineHeight: 1.4,
         }}>
           La fattura uscirà <b>senza IVA</b>, con la dicitura «inversione contabile».
-          {' '}Sopra 77,47 € porta la <b>marca da bollo di 2 €</b>, come tutte le
-          fatture senza imposta.
+          {' '}Niente marca da bollo: l&rsquo;operazione resta soggetta a IVA
+          (la versa il cliente), quindi il bollo non è dovuto.
         </div>
       )}
     </div>

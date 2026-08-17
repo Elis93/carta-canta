@@ -75,13 +75,30 @@ export function BiometricToggle() {
     setBusy(true)
     try {
       // Spegnere il blocco rende inutile l'impronta → rimuovi anche le passkey.
-      for (const p of passkeys) await deletePasskeyAction(p.id)
+      // ⚠️ Gli esiti si LEGGONO (audit 17 ago): prima un {error} veniva
+      // ignorato — i flag locali si azzeravano, il toast diceva «disattivato»,
+      // ma le righe restavano sul server come dispositivi fantasma. Il blocco
+      // locale si spegne comunque (è la volontà dell'utente), ma se qualche
+      // impronta non si è tolta dal server lo si dice.
+      let falliti = 0
+      for (const p of passkeys) {
+        try {
+          const res = await deletePasskeyAction(p.id)
+          if (res?.error) falliti += 1
+        } catch { falliti += 1 }
+      }
       setBiometricEnabled(false)
       setAppLockEnabled(false)
       setBioOn(false)
       setLockOn(false)
-      setPasskeys([])
-      toast.success('Blocco disattivato.', { closeButton: true })
+      if (falliti === 0) {
+        setPasskeys([])
+        toast.success('Blocco disattivato.', { closeButton: true })
+      } else {
+        const list = await listMyPasskeysAction().catch(() => ({ passkeys }))
+        setPasskeys(list.passkeys)
+        toast.error('Blocco disattivato, ma un’impronta non si è tolta dal server: riprova a rimuoverla dall’elenco.', { closeButton: true })
+      }
     } finally {
       setBusy(false)
     }
@@ -123,10 +140,14 @@ export function BiometricToggle() {
       // Account Google (senza password): tolta l'ultima impronta NON resta alcun
       // modo di sbloccare → spegniamo anche il blocco, altrimenti alla prossima
       // riapertura l'unica uscita sarebbe il logout.
-      if (hasPassword === false) { setAppLockEnabled(false); setLockOn(false) }
+      // ⚠️ `hasPassword !== true`, non `=== false`: se getUser non ha ancora
+      // risolto (null) e l'utente fa in tempo a rimuovere l'ultima impronta,
+      // nel dubbio si va nella direzione SICURA — blocco spento, mai un blocco
+      // senza alcun modo di sbloccare (audit 17 ago).
+      if (hasPassword !== true) { setAppLockEnabled(false); setLockOn(false) }
     }
     toast.success(
-      hasPassword === false && next.length === 0 ? TOAST_RIMOSSA_BLOCCO_SPENTO : TOAST_RIMOSSA_RESTA_PW,
+      hasPassword !== true && next.length === 0 ? TOAST_RIMOSSA_BLOCCO_SPENTO : TOAST_RIMOSSA_RESTA_PW,
       { closeButton: true }
     )
   }

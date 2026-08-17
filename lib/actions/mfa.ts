@@ -34,6 +34,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateRecoveryCodes, hashRecoveryCode } from '@/lib/mfa/recovery-codes'
 import { logSecurityEvent } from '@/lib/security/events'
+import { getLoginFailureCount, recordLoginFailure } from '@/lib/auth-rate-limit'
 
 /** Traduce gli errori tecnici dell'MFA in messaggi per l'artigiano. */
 function mapMfaError(msg: string | undefined): string {
@@ -179,6 +180,13 @@ export async function useRecoveryCode(code: string): Promise<{ error?: string; s
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato.' }
 
+  // Freno sui tentativi (audit 17 ago): 40 bit rendono il brute force
+  // infattibile, ma senza limite i tentativi falliti non avevano né freno né
+  // traccia. Stesso contatore del login (finestra 15 min per IP).
+  if ((await getLoginFailureCount()) >= 10) {
+    return { error: 'Troppi tentativi: aspetta qualche minuto e riprova.' }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 084 + API admin MFA
   const admin = createAdminClient() as any
   const hash = hashRecoveryCode(code)
@@ -189,7 +197,10 @@ export async function useRecoveryCode(code: string): Promise<{ error?: string; s
     .eq('code_hash', hash)
     .is('used_at', null)
     .maybeSingle()
-  if (!match) return { error: 'Codice di recupero non valido o già usato.' }
+  if (!match) {
+    await recordLoginFailure()
+    return { error: 'Codice di recupero non valido o già usato.' }
+  }
 
   await admin.from('mfa_recovery_codes').update({ used_at: new Date().toISOString() }).eq('id', match.id)
   // Disattiva il 2FA: rimuovi i fattori (admin → funziona a AAL1).

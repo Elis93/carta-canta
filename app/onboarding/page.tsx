@@ -92,7 +92,18 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
   }, [state, onSuccess])
 
   return (
-    <form action={formAction}>
+    <form
+      action={formAction}
+      // ⚠️ L'Invio della tastiera in un campo di testo NON deve inviare il
+      // form (collaudo 17 ago: «stavo scrivendo la ragione sociale ed è
+      // entrato da solo nell'app»): sul telefono il tasto Invio arriva
+      // facilmente mentre si scrive, il `required` passa perché qualche
+      // lettera c'è già, e il form partiva coi dati a metà. Si invia solo
+      // col bottone (l'Invio su un BOTTONE resta un click, non passa di qui).
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') e.preventDefault()
+      }}
+    >
       <input type="hidden" name="fiscal_regime" value={fiscalRegime} />
 
       <div style={cardStyle}>
@@ -407,7 +418,9 @@ export default function OnboardingPage() {
   // salvare (es. account in stato incoerente) resta intrappolato, come capitato
   // a Eli nel collaudo. «Esci» chiude la sessione e riporta al login.
   async function handleEsci() {
-    try { await createClient().auth.signOut() } catch { /* best effort */ }
+    // scope 'local': uscire dall'onboarding non deve sloggare gli ALTRI
+    // dispositivi (il default di supabase-js è 'global' — audit 17 ago).
+    try { await createClient().auth.signOut({ scope: 'local' }) } catch { /* best effort */ }
     router.push('/login')
   }
 

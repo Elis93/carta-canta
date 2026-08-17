@@ -81,6 +81,17 @@ restare un «nice to have».)
      `/mfa` finché non verifica; ③ dopo la verifica (aal2) → tutto normale;
   ④ un POST diretto a una server action a aal1 → bloccato dal middleware.
 
+## Pagine che sfuggono ANCHE al gate di pagina (audit 17 ago)
+- **/onboarding** sta fuori dal gruppo `(app)`: una sessione aal1 di un account
+  2FA la carica e può chiamare `updateWorkspaceData`/`uploadLogo`. La Fase 1
+  (middleware) la coprirebbe da sé se `isAppRoute` include /onboarding.
+- **/reset-password/confirm** è in PUBLIC_PATHS: il link di recovery crea una
+  sessione aal1 e `updateUser({password})` gira a aal1 → chi intercetta
+  l'email di reset può cambiare la password di un account 2FA senza il secondo
+  fattore (non entra nell'app, ma può chiudere fuori il titolare). Da valutare
+  in Fase 1/2 se esigere aal2 per il cambio password quando l'account ha un
+  fattore attivo (o invalidare i fattori? decisione delicata, anti-lockout).
+
 ## Stato
 - [ ] Fase 1 (middleware) — dopo ok Eli.
 - [ ] Fase 2 (API route) — da decidere se serve.

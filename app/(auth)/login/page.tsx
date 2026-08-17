@@ -10,6 +10,7 @@ import { OAuthButtons } from '@/components/shared/OAuthButtons'
 import { TurnstileWidget } from '@/components/shared/TurnstileWidget'
 import { loginAction } from '../actions'
 import { createClient } from '@/lib/supabase/client'
+import { markActive } from '@/lib/biometric/local'
 
 // ── Stili condivisi mockup ──────────────────────────────────
 const fieldLabel: React.CSSProperties = {
@@ -44,7 +45,13 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
   const [captchaKey, setCaptchaKey] = useState(0)
 
   useEffect(() => {
-    if (state?.success) router.push(state.success)
+    if (state?.success) {
+      // Un login riuscito CONTA come attività per il blocco impronta: senza,
+      // AppLock montava con il marker stantio e chiedeva l'impronta SUBITO
+      // dopo aver appena messo la password (audit 17 ago).
+      try { markActive() } catch { /* storage bloccato */ }
+      router.push(state.success)
+    }
     if (state?.needsCaptcha) setShowCaptcha(true)
     if (state?.error) setCaptchaKey((k) => k + 1)
   }, [state, router])

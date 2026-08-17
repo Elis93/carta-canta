@@ -44,10 +44,27 @@ export function TwoFactorCard() {
   // Recovery codes shown once
   const [codes, setCodes] = useState<string[]>([])
   const [copied, setCopied] = useState(false)
+  // Da dove arrivano i codici a schermo: decide il toast di chiusura («attiva»
+  // solo alla PRIMA attivazione — dopo «Rigenera» il 2FA era già attivo).
+  const [origineCodici, setOrigineCodici] = useState<'attiva' | 'rigenera'>('attiva')
 
   useEffect(() => {
     getMfaStatus().then((s) => { setRemaining(s.remainingCodes); setPhase(s.enabled ? 'on' : 'off') }).catch(() => setPhase('off'))
   }, [])
+
+  // Grazia per il blocco impronta durante la configurazione (audit 17 ago):
+  // per inquadrare il QR e leggere il codice si DEVE passare all'app
+  // Authenticator — AppLock legge questo marker e non fa scattare il lucchetto
+  // in mezzo alla configurazione. Validità 10 min, si toglie appena si esce
+  // dalle fasi di enroll (e all'unmount).
+  useEffect(() => {
+    const attivo = phase === 'enrolling' || phase === 'codes'
+    try {
+      if (attivo) sessionStorage.setItem('cc_2fa_flow', String(Date.now()))
+      else sessionStorage.removeItem('cc_2fa_flow')
+    } catch { /* storage bloccato */ }
+    return () => { try { sessionStorage.removeItem('cc_2fa_flow') } catch { /* noop */ } }
+  }, [phase])
 
   async function attiva() {
     setBusy(true); setError(null)
@@ -64,13 +81,19 @@ export function TwoFactorCard() {
     const res = await confirmTotpEnroll(factorId, code)
     setBusy(false)
     if (res.error || !res.recoveryCodes) { setError(res.error ?? 'Codice non valido.'); return }
+    setOrigineCodici('attiva')
     setCodes(res.recoveryCodes); setPhase('codes')
   }
 
   async function fatto() {
     const s = await getMfaStatus()
     setRemaining(s.remainingCodes); setCodes([]); setPhase(s.enabled ? 'on' : 'off')
-    toast.success('Verifica in due passaggi attiva', { closeButton: true })
+    // Dopo «Rigenera» il 2FA era GIÀ attivo: dire «attiva» lì era un messaggio
+    // sbagliato (audit 17 ago).
+    toast.success(
+      origineCodici === 'attiva' ? 'Verifica in due passaggi attiva' : 'Codici di recupero aggiornati',
+      { closeButton: true }
+    )
   }
 
   async function rigenera() {
@@ -78,6 +101,7 @@ export function TwoFactorCard() {
     const res = await regenerateRecoveryCodes()
     setBusy(false)
     if (res.error || !res.recoveryCodes) { setError(res.error ?? 'Non riesco a rigenerare i codici.'); return }
+    setOrigineCodici('rigenera')
     setCodes(res.recoveryCodes); setPhase('codes')
   }
 
@@ -123,7 +147,7 @@ export function TwoFactorCard() {
       {phase === 'off' && (
         <>
           <p style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.5, margin: '2px 0 0' }}>
-            Aggiunge un secondo passaggio all&rsquo;accesso: oltre alla password, un codice dall&rsquo;app Authenticator del telefono. Così, anche se qualcuno scoprisse la tua password, non entrerebbe.
+            Aggiunge un secondo passaggio quando fai il <b>login</b>: oltre alla password, un codice dall&rsquo;app Authenticator del telefono. Così, anche se qualcuno scoprisse la tua password, non entrerebbe. Non viene chiesto a ogni apertura dell&rsquo;app: per quella c&rsquo;è il blocco con impronta.
           </p>
           <button type="button" onClick={attiva} disabled={busy} style={btnPrimary}>
             {busy ? <Loader2 size={16} className="animate-spin" /> : 'Attiva'}
@@ -181,7 +205,8 @@ export function TwoFactorCard() {
       {phase === 'on' && (
         <>
           <p style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.5, margin: '2px 0 0' }}>
-            All&rsquo;accesso ti verrà chiesto il codice dell&rsquo;app. Ti restano <b style={{ color: '#55534b' }}>{remaining} codici di recupero</b>.
+            Al prossimo <b>login</b> ti verrà chiesto il codice dell&rsquo;app (non a ogni
+            apertura). Ti restano <b style={{ color: '#55534b' }}>{remaining} codici di recupero</b>.
           </p>
           <button type="button" onClick={rigenera} disabled={busy} style={btnGhost}>
             {busy ? <Loader2 size={15} className="animate-spin" /> : 'Rigenera i codici di recupero'}

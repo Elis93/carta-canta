@@ -571,23 +571,33 @@ describe('reverse charge — art. 17 c.6 lett. a-ter DPR 633/1972', () => {
       { fiscal_regime: 'ordinario', currency: 'EUR', doc_type: 'fattura', reverse_charge: true },
     )
     expect(r.taxAmount).toBe(0)
-    expect(r.total).toBe(1002) // 1000 + 2 di bollo (documento senza IVA)
+    expect(r.total).toBe(1000) // NIENTE bollo: operazione soggetta a IVA (assolta dal committente)
   })
 
-  it('⚠️ il BOLLO è dovuto sopra 77,47 € anche fuori dal forfettario', () => {
-    // Il bollo non dipende dal regime ma dall'ASSENZA di IVA: una fattura in
-    // reverse charge è a imposta zero esattamente come quella di un
-    // forfettario. Legarlo al solo regime era un difetto latente.
+  it('⚠️ il BOLLO NON è dovuto sul reverse charge, nemmeno sopra 77,47 €', () => {
+    // Principio di alternatività IVA/bollo (art. 6 Tabella B DPR 642/1972):
+    // l'inversione contabile è un'operazione SOGGETTA a IVA — la assolve il
+    // committente — quindi esente da bollo (circ. AdE 37/E/2006; la guida AdE
+    // sul bollo e-fatture esclude tutti gli N6.* dall'Elenco B). La versione
+    // dell'11 ago («IVA zero = bollo») sovracorreggeva: 2 € mai dovuti.
     const sopra = calcolaDocumento(
       [makeItem({ quantity: 1, unit_price: 100, vat_rate: 22 })],
       { fiscal_regime: 'ordinario', currency: 'EUR', doc_type: 'fattura', reverse_charge: true },
     )
-    expect(sopra.bollo).toBe(2)
+    expect(sopra.bollo).toBe(0)
     const sotto = calcolaDocumento(
       [makeItem({ quantity: 1, unit_price: 50, vat_rate: 22 })],
       { fiscal_regime: 'ordinario', currency: 'EUR', doc_type: 'fattura', reverse_charge: true },
     )
     expect(sotto.bollo).toBe(0)
+  })
+
+  it('il flag reverse_charge NON toglie il bollo al forfettario (in uscita resta N2.2)', () => {
+    const r = calcolaDocumento(
+      [makeItem({ quantity: 1, unit_price: 100, vat_rate: 22 })],
+      { fiscal_regime: 'forfettario', currency: 'EUR', doc_type: 'fattura', reverse_charge: true },
+    )
+    expect(r.bollo).toBe(2)
   })
 
   it('nessuna riga «IVA x%» nel riepilogo', () => {

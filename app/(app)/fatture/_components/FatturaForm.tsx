@@ -408,50 +408,9 @@ export function FatturaForm({
             )}
           </div>
 
-          {/* Bonus edilizio: interruttore + percentuale (come nel preventivo) */}
-          <div>
-            <div style={FIELD_LABEL}>Bonus edilizio</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Switch
-                id="bonus-edilizio-toggle-fatt"
-                checked={bonusAttivo}
-                className="data-[state=checked]:bg-[#c9a44c]"
-                onCheckedChange={(on) => {
-                  setBonusAttivo(on)
-                  setVatRateDefault(on ? 10 : null)
-                }}
-              />
-              <label
-                htmlFor="bonus-edilizio-toggle-fatt"
-                style={{ fontSize: 14, cursor: 'pointer', userSelect: 'none' }}
-              >
-                Attiva bonus edilizio
-              </label>
-            </div>
-            {bonusAttivo && (
-              <div style={{ marginTop: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ position: 'relative', width: 118 }}>
-                    <input
-                      type="number"
-                      min={1}
-                      max={110}
-                      value={bonusPerc}
-                      onChange={(e) => setBonusPerc(e.target.value)}
-                      style={{ ...FIELD_BOX, width: 118, padding: '11px 28px 11px 12px' }}
-                    />
-                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--cc-muted)', pointerEvents: 'none' }}>%</span>
-                  </div>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#b08d3e', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <BadgePercent size={16} /> Bonus attivo
-                  </span>
-                </div>
-                <div style={{ ...HELP_TEXT, maxWidth: 320 }}>
-                  Percentuale di detrazione, indicata al cliente solo a titolo informativo (non è obbligatoria).
-                </div>
-              </div>
-            )}
-          </div>
+          {/* ⚠️ Spunta «Bonus edilizio» TOLTA dalla UI (collaudo 17 ago, come
+              nel preventivo). Stato e hidden input restano: i documenti vecchi
+              conservano il valore, i nuovi nascono senza. */}
 
           {/* Template — in fondo, come nel preventivo */}
           <div>

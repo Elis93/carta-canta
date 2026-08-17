@@ -361,8 +361,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       l&rsquo;inversione contabile non esiste. Se il cliente è un privato — anche per lo
       stesso identico lavoro — l&rsquo;IVA va addebitata normalmente.
       <br /><br />
-      La fattura porta la dicitura di legge e, sopra 77,47&nbsp;€, la <b>marca da bollo
-      di 2&nbsp;€</b>: vale per ogni fattura senza imposta.
+      La fattura porta la dicitura di legge. <b>Niente marca da bollo</b>: anche se
+      l&rsquo;IVA non compare, l&rsquo;operazione resta soggetta a IVA (la versa il tuo
+      cliente) e il bollo si applica solo alle operazioni che l&rsquo;IVA non ce
+      l&rsquo;hanno proprio, come quelle dei forfettari.
       <br /><br />
       <b>La spunta la metti tu, non la indovina l&rsquo;app.</b>{' '}La regola dipende da
       cosa hai fatto e per chi, e l&rsquo;elenco ufficiale dei lavori è legato a una

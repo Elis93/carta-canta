@@ -1915,56 +1915,11 @@ export function PreventivoForm({
                 </p>
               )}
             </div>
-            {/* ── Bonus edilizio: toggle + percentuale ── */}
-            <div className="space-y-2">
-              <Label style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Bonus edilizio</Label>
-              <div className="flex items-center gap-3">
-                <Switch
-                  id="bonus-edilizio-toggle"
-                  checked={bonusAttivo}
-                  className="data-[state=checked]:bg-[#c9a44c]"
-                  onCheckedChange={(on) => {
-                    setBonusAttivo(on)
-                    if (on) setVatRateDefault(10)
-                    else setVatRateDefault(null)
-                    markDirty()
-                  }}
-                />
-                <label
-                  htmlFor="bonus-edilizio-toggle"
-                  className="text-sm leading-none cursor-pointer select-none"
-                >
-                  Attiva bonus edilizio
-                </label>
-              </div>
-              {bonusAttivo && (
-                <div className="space-y-1.5">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div className="relative" style={{ width: 118 }}>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={110}
-                        value={bonusPerc}
-                        onChange={(e) => { setBonusPerc(e.target.value); markDirty() }}
-                        className="pr-7"
-                        style={{ width: 118, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 15 }}
-                      />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                        %
-                      </span>
-                    </div>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#b08d3e', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <BadgePercent size={16} /> Bonus attivo
-                    </span>
-                  </div>
-                  <p className="text-[12px]" style={{ color: '#767676', maxWidth: 320 }}>
-                    Percentuale di detrazione, indicata al cliente solo a titolo informativo (non è obbligatoria).
-                    {fiscalRegime === 'ordinario' && ' In regime ordinario le voci usano l\'IVA agevolata 10%.'}
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* ⚠️ La spunta «Bonus edilizio» è stata TOLTA dalla UI (collaudo
+                17 ago: «toglierla come spunta del tutto»). Lo stato e l'hidden
+                input restano: i documenti vecchi che l'avevano conservano il
+                valore (bonusAttivo nasce dal dato esistente e viene rimandato
+                invariato); i nuovi nascono senza. */}
           </div>
 
           {/* Template — in fondo: si sceglie una volta e poi non si tocca più

@@ -12,6 +12,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { startAuthentication } from '@simplewebauthn/browser'
 import { Fingerprint, Loader2, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { unlockWithPasswordAction } from '@/lib/actions/sblocco'
 import { isAppLockEnabled, isBiometricEnabled, getTimeoutMin, markActive, lastActive, setAppLockEnabled, setBiometricEnabled, getBiometricUid } from '@/lib/biometric/local'
 
 export function AppLock({ userEmail }: { userEmail: string }) {
@@ -42,21 +43,35 @@ export function AppLock({ userEmail }: { userEmail: string }) {
   const [showPw, setShowPw] = useState(false)
   const [pwBusy, setPwBusy] = useState(false)
   const hiddenAt = useRef<number>(0)
+  // La cerimonia WebAuthn è fallita su questo dispositivo in questo blocco
+  // (vedi il catch di unlockBiometric): serve a fullLogout per l'anti-lockout.
+  const ceremonyFailed = useRef(false)
 
   // Rileva se l'account ha una password (identità 'email'). Gli account solo-Google
   // non ce l'hanno → l'unico sblocco possibile è l'impronta.
   useEffect(() => {
     let alive = true
-    createClient().auth.getUser().then(({ data }) => {
+    const check = (tentativo: number) => createClient().auth.getUser().then(({ data }) => {
       if (!alive) return
       // GUARDIA SESSIONE (15 ago, collaudo Eli): se l'account non esiste più
       // (es. cancellato), il lucchetto non ha senso e intrappolerebbe l'utente
       // in uno schermo da cui non si sblocca. Puliamo i flag locali del blocco
-      // e andiamo al login. Un `user` null qui = sessione davvero non valida
-      // (offline → la promise viene rifiutata e cade nel .catch, non qui).
+      // e andiamo al login.
+      // ⚠️ MA un `user` null può essere anche TRANSITORIO (audit 17 ago): un
+      // 401 del refresh token in race all'apertura RISOLVE con user null, non
+      // rigetta — lo stesso hiccup documentato per la route options qui sotto.
+      // Agire al primo null disattivava il blocco PER SEMPRE e sloggava per un
+      // blip. Si ritenta UNA volta dopo 1,5s: la race si risolve, l'account
+      // davvero cancellato resta null anche al secondo giro.
       if (!data.user) {
+        if (tentativo === 0) {
+          setTimeout(() => { if (alive) void check(1) }, 1500)
+          return
+        }
         try { setBiometricEnabled(false); setAppLockEnabled(false) } catch { /* storage bloccato */ }
-        try { void createClient().auth.signOut() } catch { /* best effort */ }
+        // scope 'local': la sessione morta è di QUESTO dispositivo — il
+        // default 'global' avrebbe sloggato anche gli altri per un blip.
+        try { void createClient().auth.signOut({ scope: 'local' }) } catch { /* best effort */ }
         window.location.href = '/login'
         return
       }
@@ -86,6 +101,7 @@ export function AppLock({ userEmail }: { userEmail: string }) {
         }
       } catch { /* storage bloccato: se ne occupa la via d'uscita a runtime */ }
     }).catch(() => { /* offline / errore: teniamo il valore memorizzato */ })
+    void check(0)
     return () => { alive = false }
   }, [])
 
@@ -152,10 +168,22 @@ export function AppLock({ userEmail }: { userEmail: string }) {
       }
       if (!isAppLockEnabled()) return
       setHasBio(isBiometricEnabled())
+      // Configurazione 2FA IN CORSO (TwoFactorCard scrive un marker con
+      // timestamp, validità 10 min): per inquadrare il QR e leggere il codice
+      // si DEVE passare all'app Authenticator — quell'assenza non è un'uscita
+      // e non deve far scattare il lucchetto in mezzo alla configurazione
+      // (Eli, 17 ago: «ho fatto la verifica in 2 passaggi ma mi chiede
+      // l'accesso con impronta»). Stessa famiglia delle grazie per la
+      // cerimonia WebAuthn e l'autofill di Chrome.
+      let flusso2fa = false
+      try {
+        const m = Number(sessionStorage.getItem('cc_2fa_flow'))
+        flusso2fa = Number.isFinite(m) && m > 0 && Date.now() - m < 10 * 60_000
+      } catch { /* storage bloccato */ }
       // Decisione presa FUORI dal functional updater così il mirror lockedRef
       // si aggiorna nello stesso tick (niente finestra di lag tra due
       // visibilitychange ravvicinati — cintura, review 22 lug).
-      if (!lockedRef.current) {
+      if (!lockedRef.current && !flusso2fa) {
         const away = Date.now() - (hiddenAt.current || 0)
         const t = getTimeoutMin()
         if (t === 0 ? away > 400 : away >= t * 60_000) {
@@ -237,6 +265,12 @@ export function AppLock({ userEmail }: { userEmail: string }) {
       markActive()
       setLocked(false)
     } catch {
+      // La cerimonia è FALLITA sul dispositivo (passkey cancellata dal gestore
+      // credenziali, o annullata): se l'account è Google e l'utente sceglie
+      // «esci», fullLogout deve poter pulire i flag — senza questo segno, la
+      // passkey viva sul SERVER ma morta QUI creava lo stesso loop del 15 ago
+      // con un innesco diverso (audit 17 ago).
+      ceremonyFailed.current = true
       if (!auto) setError(`Sblocco annullato. Riprova o ${fallback}.`)
     } finally {
       setBusy(false)
@@ -262,11 +296,15 @@ export function AppLock({ userEmail }: { userEmail: string }) {
     setPwBusy(true)
     setError(null)
     try {
-      // Ri-verifica la password dello STESSO utente. Login riuscito = stessa
-      // sessione confermata; il blocco si toglie senza perdere dati.
-      const { error: err } = await createClient().auth.signInWithPassword({ email: userEmail, password })
-      if (err) {
-        setError('Password non corretta.')
+      // ⚠️ La verifica va sul SERVER (unlockWithPasswordAction, 17 ago). La
+      // vecchia chiamata client `signInWithPassword` sostituiva i cookie con
+      // una sessione NUOVA nata aal1: un account con 2FA veniva rimandato a
+      // /mfa subito dopo lo sblocco. L'azione verifica su un client
+      // usa-e-getta (la sessione e il suo AAL2 non si toccano), col rate
+      // limit e il registro di sicurezza che alla lock screen mancavano.
+      const res = await unlockWithPasswordAction(password)
+      if (res.error) {
+        setError(res.error)
         setPwBusy(false)
         return
       }
@@ -301,14 +339,18 @@ export function AppLock({ userEmail }: { userEmail: string }) {
 
   async function fullLogout() {
     // Rete di sicurezza anti-lockout: se questo account non ha modo di sbloccare
-    // — nessuna password E nessuna impronta valida (nessuna registrata, o quella
-    // di questo dispositivo è stantia) — disattiviamo il blocco all'uscita così
-    // che al ri-login non resti intrappolato nello stesso schermo (loop). Non
-    // riduce la sicurezza: per rientrare serve comunque autenticarsi al login.
-    if (!hasPassword && (deadPasskey || !isBiometricEnabled())) {
+    // — nessuna password E nessuna impronta FUNZIONANTE (nessuna registrata,
+    // stantia sul server, o con la cerimonia fallita su QUESTO dispositivo) —
+    // disattiviamo il blocco all'uscita così che al ri-login non resti
+    // intrappolato nello stesso schermo (loop). Non riduce la sicurezza: per
+    // rientrare serve comunque autenticarsi al login.
+    if (!hasPassword && (deadPasskey || ceremonyFailed.current || !isBiometricEnabled())) {
       try { setBiometricEnabled(false); setAppLockEnabled(false) } catch { /* storage bloccato */ }
     }
-    try { await createClient().auth.signOut() } catch { /* best effort */ }
+    // scope 'local': «esci» dal lucchetto è un gesto di QUESTO dispositivo —
+    // il default 'global' sloggava anche il computer/tablet (audit 17 ago,
+    // decisione già presa il 12 ago per il bottone gemello del login).
+    try { await createClient().auth.signOut({ scope: 'local' }) } catch { /* best effort */ }
     window.location.href = '/login'
   }
 
