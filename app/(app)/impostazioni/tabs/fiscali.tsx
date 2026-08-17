@@ -332,10 +332,15 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
                     Interscambio (SdI)</b>: è questo passaggio che la rende ufficialmente
                     emessa.
                     <span style={{ display: 'block', marginTop: 6 }}>
+                      {/* «(o la segni come pagata)»: la conferma fiscale scatta a
+                          OGNI primo passaggio fuori bozza (conferma-fiscale.ts), non
+                          solo all'invio al cliente — senza l'inciso, chi incassa in
+                          contanti senza mai inviarla non saprebbe del pilota. */}
                       <b>Spunta accesa (consigliato):</b>{' '}quando invii la fattura al
-                      cliente, il giorno dopo l&rsquo;app la trasmette in automatico
-                      all&rsquo;Agenzia. Hai 24 ore per ripensarci: fino a quel momento puoi
-                      fermare la trasmissione con un tocco dentro alla fattura stessa.
+                      cliente (o la segni come pagata), il giorno dopo l&rsquo;app la
+                      trasmette in automatico all&rsquo;Agenzia. Hai 24 ore per ripensarci:
+                      fino a quel momento puoi fermare la trasmissione con un tocco dentro
+                      alla fattura stessa.
                     </span>
                     <span style={{ display: 'block', marginTop: 6 }}>
                       <b>Spunta spenta:</b>{' '}la trasmissione all&rsquo;Agenzia delle

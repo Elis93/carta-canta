@@ -139,11 +139,14 @@ export function MarketplaceProfileForm({
 
         {isPro ? (
           <p style={{ fontSize: 12, color: '#b0863e', fontWeight: 600, margin: '10px 0 0' }}>
-            ★ Col piano Pro il tuo profilo compare <u>in cima ai risultati</u> ("In evidenza").
+            ★ Col piano Pro il tuo profilo è <u>In evidenza</u> e compare in cima ai risultati consigliati.
           </p>
         ) : (
           <p style={{ fontSize: 12, color: '#767676', margin: '10px 0 0' }}>
-            I profili Pro compaiono in cima ai risultati.{' '}
+            {/* «consigliati» non è un vezzo: il Pro-first vale nell'ordine
+                predefinito, non con «Vicino a me» o altri ordinamenti
+                (professionisti/page.tsx) — un claim assoluto sarebbe falso. */}
+            I profili Pro compaiono in cima ai risultati consigliati.{' '}
             <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Passa a Pro →</Link>
           </p>
         )}

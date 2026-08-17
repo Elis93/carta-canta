@@ -423,12 +423,27 @@ export default async function FatturePage({ searchParams }: Props) {
       </div>
 
       {/* ── BANNER PIANO FREE (limite 8 fatture inviate, 083) ── */}
+      {isFree && freeInvoiceStatus?.blocked && freeInvoiceStatus.reason === 'trial_expired' && (
+        <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656] mb-4">
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <p>
+            <strong>Il periodo di prova è terminato.</strong>{' '}
+            Non puoi inviare nuove fatture ai clienti.{' '}
+            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>{' '}
+            per fatture illimitate.
+          </p>
+        </div>
+      )}
       {isFree && freeInvoiceStatus?.blocked && freeInvoiceStatus.reason === 'doc_limit' && (
         <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656] mb-4">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" />
           <p>
+            {/* ⚠️ Niente promesse sullo SdI qui: la trasmissione non dipende da
+                QUESTO limite, ma su Free ha un suo contatore (8 e-fatture,
+                lib/sdi/quota.ts) che a questo punto è spesso esaurito anche
+                lui — prometterla «possibile» sarebbe falso (finding revisore). */}
             <strong>Hai raggiunto il limite di {FREE_INVOICE_LIMIT} fatture gratuite.</strong>{' '}
-            Non puoi inviarne altre al cliente (creare bozze e trasmettere allo SdI restano possibili).{' '}
+            Non puoi inviarne altre al cliente; creare bozze resta possibile.{' '}
             <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>{' '}
             per fatture illimitate.
           </p>
@@ -443,7 +458,7 @@ export default async function FatturePage({ searchParams }: Props) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 16, color: '#c9a44c' }}>♛</span>
             <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>
-              <strong style={{ color: 'var(--cc-text)', fontWeight: 600 }}>{freeInvoiceStatus.docsUsed}/{FREE_INVOICE_LIMIT}</strong> fatture gratuite
+              <strong style={{ color: 'var(--cc-text)', fontWeight: 600 }}>{freeInvoiceStatus.docsUsed}/{FREE_INVOICE_LIMIT}</strong>{' '}fatture gratuite
             </span>
           </div>
           <Link href="/abbonamento" style={{ fontSize: 13, fontWeight: 600, color: '#c9a44c', textDecoration: 'none', whiteSpace: 'nowrap' }}>

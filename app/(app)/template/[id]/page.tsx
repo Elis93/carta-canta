@@ -82,7 +82,7 @@ export default async function EditTemplatePage({ params }: Props) {
         <div>
           <p className="text-sm font-medium">Elimina template</p>
           <p className="text-xs text-muted-foreground">
-            I preventivi che lo usano non verranno modificati.
+            I documenti già inviati non cambiano aspetto; le bozze passeranno al template predefinito.
           </p>
         </div>
         <DeleteTemplateButton templateId={id} templateName={template.name} />

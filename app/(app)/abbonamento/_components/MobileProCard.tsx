@@ -16,7 +16,7 @@ const FEATURES = [
   'AI Import (foto → preventivo)',
   'Bilancio entrate/uscite mese per mese',
   'Preventivi con più proposte (Base/Premium)',
-  'Profilo in cima ai risultati del marketplace',
+  'Profilo «In evidenza» nel marketplace',
 ]
 
 export function MobileProCard({

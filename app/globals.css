@@ -677,7 +677,11 @@ html.cc-large .driver-popover {
 html.cc-large .cc-tour-popover .driver-popover-title { font-size: 18px; }
 html.cc-large .cc-tour-popover .driver-popover-description { font-size: 15.5px; }
 html.cc-large .cc-tour-popover .cc-tour-progress { font-size: 13px; }
-html.cc-large .cc-tour-popover .driver-popover-footer button.driver-popover-next-btn { font-size: 15.5px; }
+/* Anche «Indietro» (solo guide di sezione, il tour principale non lo mostra):
+   senza, in Testo grande restava al font di default di driver.js accanto a un
+   «Avanti» ingrandito — proprio nella modalità per chi fatica a leggere. */
+html.cc-large .cc-tour-popover .driver-popover-footer button.driver-popover-next-btn,
+html.cc-large .cc-tour-popover .driver-popover-footer button.driver-popover-prev-btn { font-size: 15.5px; }
 html.cc-large .cc-tour-popover .driver-popover-close-btn { width: 32px; height: 32px; }
 html.cc-large .cc-tour-popover #cc-tour-textlarge { font-size: 14.5px !important; }
 html.cc-large .cc-tour-popover .cc-tour-mobile,

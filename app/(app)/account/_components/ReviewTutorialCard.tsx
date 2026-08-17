@@ -34,7 +34,17 @@ const cardStyle: React.CSSProperties = {
 // navigazioni in-tab (5 minuti, sessionStorage → l'app chiusa davvero resta
 // bloccata come prima). Si può scrivere solo da qui, cioè da app già sbloccata.
 function conGraziaLucchetto(vai: () => void) {
-  try { sessionStorage.setItem('cc_lock_nav', String(Date.now())) } catch { /* noop */ }
+  // ⚠️ La grazia NON si scrive mai col lucchetto a schermo (finding revisore,
+  // 17 ago): AppLock non ha un focus trap, quindi con una tastiera fisica un
+  // Tab+Invio «alla cieca» potrebbe premere questo bottone sotto il blocco —
+  // scrivere la grazia qui aprirebbe il documento nuovo SENZA lucchetto.
+  // Bloccata: la navigazione parte comunque e il blocco ricompare, com'era
+  // prima del fix. La grazia resta solo per chi usa l'app già sbloccata.
+  try {
+    if (!document.querySelector('[aria-label="App bloccata"]')) {
+      sessionStorage.setItem('cc_lock_nav', String(Date.now()))
+    }
+  } catch { /* noop */ }
   vai()
 }
 

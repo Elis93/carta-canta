@@ -220,12 +220,20 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
 
     // ── Fase A — Home: Benvenuto + bottone [+] ──
     if (pathname === '/dashboard' && (!step || restart)) {
-      setStore(RESTART_KEY, null)
-      const t = setTimeout(() => {
+      let fermo = false
+      const tick = () => {
+        if (fermo) return
         // Non partire SOPRA il blocco app (15 ago, foto di Eli): il lucchetto
-        // copre /dashboard ma la rotta sotto è /dashboard, quindi il tour
-        // partiva sopra il lucchetto. Se è a schermo, non si parte.
-        if (typeof document !== 'undefined' && document.querySelector('[aria-label="App bloccata"]')) return
+        // copre /dashboard ma la rotta sotto è /dashboard. Col lucchetto a
+        // schermo si ASPETTA lo sblocco invece di rinunciare (17 ago, stessa
+        // classe del fix della guida di sezione: la richiesta era già stata
+        // consumata e il tour non partiva più). La richiesta di riavvio si
+        // consuma solo quando il tour parte DAVVERO.
+        if (typeof document !== 'undefined' && document.querySelector('[aria-label="App bloccata"]')) {
+          setTimeout(tick, 400)
+          return
+        }
+        setStore(RESTART_KEY, null)
         startPhase(
         [
           {
@@ -263,8 +271,9 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
         undefined,
         28, // evidenziazione più larga: copre il + che sporge ~22px dalla barra E la scritta «Crea»
         )
-      }, 400)
-      return () => clearTimeout(t)
+      }
+      const t = setTimeout(tick, 400)
+      return () => { fermo = true; clearTimeout(t) }
     }
 
     // ── Fase B — Nuovo preventivo: cliente/voci · invio · stato · fine ──

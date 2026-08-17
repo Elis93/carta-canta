@@ -129,7 +129,15 @@ export function SectionTourController() {
           if (marcata) return
           marcata = true
           try { localStorage.setItem(seenKey(key), '1') } catch { /* noop */ }
-          try { sessionStorage.removeItem(SECTION_TOUR_REQUEST) } catch { /* noop */ }
+          // ⚠️ Si consuma SOLO la richiesta di QUESTA guida: la chiave è una
+          // sola per tutte, e una guida partita da prima-visita (es. Bilancio)
+          // non deve bruciare la richiesta pendente di un'altra (es. Altro,
+          // rimasta in attesa dopo un redirect a /login) — finding revisore.
+          try {
+            if (sessionStorage.getItem(SECTION_TOUR_REQUEST) === key) {
+              sessionStorage.removeItem(SECTION_TOUR_REQUEST)
+            }
+          } catch { /* noop */ }
         },
         onDestroyed: () => { driverRef.current = null },
       })

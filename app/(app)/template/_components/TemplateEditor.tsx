@@ -330,8 +330,10 @@ export function TemplateEditor({
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={ROW_LABEL}>Font: {fontShort}</span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#b08d3e' }}>
-                  <Lock size={12} /> Pro
+                {/* Stessa pillola della riga Colore (Eli, 16 ago: la dicitura
+                    11px oro tenue «si legge poco») — un solo stile per il Pro. */}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: '#b0863e', border: '1px solid #e8d6ad', background: '#fbf7ee', padding: '4px 11px', borderRadius: 999, letterSpacing: '.02em' }}>
+                  <Lock size={13} /> Solo con Pro
                 </span>
               </div>
             )}
@@ -356,7 +358,9 @@ export function TemplateEditor({
                   {logoPosition === 'left' ? 'Sinistra' : 'Destra'} <ChevronRight size={15} />
                 </button>
               ) : (
-                <Lock size={15} style={{ color: 'var(--cc-muted)' }} />
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: '#b0863e', border: '1px solid #e8d6ad', background: '#fbf7ee', padding: '4px 11px', borderRadius: 999, letterSpacing: '.02em' }}>
+                  <Lock size={13} /> Solo con Pro
+                </span>
               )}
             </div>
           </div>

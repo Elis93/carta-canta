@@ -41,9 +41,16 @@ export function DeleteTemplateButton({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Elimina template</DialogTitle>
+          {/* ⚠️ Copy verificata sul codice (17 ago): la garanzia assoluta «non
+              verranno modificati» era FALSA per le bozze — updateDocumentAction
+              e saveDraftAction ri-risolvono lo snapshot a ogni salvataggio, e
+              su un template_id cancellato resolveTemplateSnapshot ricade sul
+              Classico. Vero solo per i documenti già inviati (snapshot
+              congelato). */}
           <DialogDescription>
             Stai per eliminare <strong>{templateName}</strong>.
-            I documenti che lo usano — preventivi e fatture — non verranno modificati.
+            I documenti già inviati — preventivi e fatture — non cambiano aspetto;
+            le bozze che lo usavano passeranno al template predefinito.
             Questa azione non è reversibile.
           </DialogDescription>
         </DialogHeader>
