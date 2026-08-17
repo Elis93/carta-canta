@@ -184,10 +184,17 @@ export default async function AltroPage() {
             href="/account"
             icon={UserRound}
             label="Account e abbonamento"
-            desc="Accesso, sicurezza, i tuoi dati, commercialista, piano e inviti"
+            // Ordine delle parole MISURATO in Chromium (17 ago): con l'ordine
+            // precedente la prima riga si fermava al 70% della colonna a 390px
+            // («le scritte non arrivano in fondo a destra», Eli). Così riempie
+            // il 96% a 390px e il 97% a 360px — come le altre righe.
+            desc="Accesso, sicurezza, commercialista, i tuoi dati, piano e inviti"
             descAlways
             hintBelow={isFree ? (
-              <span style={{ display: 'inline-block', border: '1px solid var(--cc-navy)', color: 'var(--cc-navy)', fontSize: 11, fontWeight: 600, padding: '2px 9px', borderRadius: 999, letterSpacing: '.02em' }}>Passa a Pro</span>
+              // Stessa veste della pillola PRO di Bilancio (Eli, 17 ago: «non
+              // mi piace che ci sono due modi diversi di mostrare Pro»): in
+              // questa pagina il Pro ha UNA sola faccia, la pillola oro.
+              <span style={{ display: 'inline-block', border: '1px solid #e8d6ad', color: '#b0863e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em' }}>Passa a Pro</span>
             ) : undefined}
           />
           <MenuRow href="/altro/aiuto-novita" icon={HelpCircle} label="Aiuto e novità" desc="Domande frequenti, tutorial e novità" descAlways last />

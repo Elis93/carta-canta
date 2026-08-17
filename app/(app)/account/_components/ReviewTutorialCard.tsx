@@ -24,12 +24,26 @@ const cardStyle: React.CSSProperties = {
   padding: '14px 15px',
 }
 
+// ⚠️ Queste navigazioni sono a PAGINA INTERA (window.location.href, serve uno
+// stato pulito per driver.js). Ma una navigazione dura non fa girare i cleanup
+// di React: la grazia `cc_lock_nav` — che AppLock scrive allo smontaggio — non
+// veniva mai scritta, e sul documento nuovo il blocco app chiedeva l'IMPRONTA
+// a chi stava già usando l'app sbloccata (Eli, 17 ago: «mi chiede l'accesso
+// con impronta ma poi non parte il tutorial. Non deve richiedermi l'accesso!»).
+// La si scrive QUI, prima di navigare: è lo stesso meccanismo pensato per le
+// navigazioni in-tab (5 minuti, sessionStorage → l'app chiusa davvero resta
+// bloccata come prima). Si può scrivere solo da qui, cioè da app già sbloccata.
+function conGraziaLucchetto(vai: () => void) {
+  try { sessionStorage.setItem('cc_lock_nav', String(Date.now())) } catch { /* noop */ }
+  vai()
+}
+
 export function ReviewTutorialCard() {
   function apriGuida(key: string, path: string) {
     try {
       sessionStorage.setItem(SECTION_TOUR_REQUEST, key)
     } catch { /* senza storage la guida non parte: si apre comunque la pagina */ }
-    window.location.href = path
+    conGraziaLucchetto(() => { window.location.href = path })
   }
 
   return (
@@ -47,7 +61,7 @@ export function ReviewTutorialCard() {
               sessionStorage.setItem('cc_tour_restart', '1')
               sessionStorage.removeItem('cc_tour_step')
             } catch { /* noop */ }
-            window.location.href = '/dashboard'
+            conGraziaLucchetto(() => { window.location.href = '/dashboard' })
           }}
           style={{ flexShrink: 0, border: '1px solid #e7e7ea', borderRadius: 10, background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600, padding: '9px 14px', cursor: 'pointer' }}
         >

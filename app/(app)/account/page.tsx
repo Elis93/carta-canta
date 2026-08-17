@@ -38,7 +38,9 @@ export default async function AccountPage({
         desc="Il tuo piano e la fatturazione"
         descAlways
         hintBelow={isFree ? (
-          <span style={{ display: 'inline-block', border: '1px solid var(--cc-navy)', color: 'var(--cc-navy)', fontSize: 11, fontWeight: 600, padding: '2px 9px', borderRadius: 999, letterSpacing: '.02em' }}>Passa a Pro</span>
+          // Pillola oro, identica a quelle PRO di «Altro»: un solo modo di
+          // mostrare il Pro in tutta la famiglia di pagine (Eli, 17 ago).
+          <span style={{ display: 'inline-block', border: '1px solid #e8d6ad', color: '#b0863e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em' }}>Passa a Pro</span>
         ) : undefined}
       />
       <MenuRow href="/referral" icon={Gift} label="Porta un amico" desc="Invita altri artigiani e ottieni premi sull’abbonamento" descAlways last />

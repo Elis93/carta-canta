@@ -64,7 +64,7 @@ export function SectionTourController() {
     // Mai sopra il tour principale o un'altra guida già aperta.
     if (document.body.classList.contains('driver-active')) return
 
-    const t0 = Date.now()
+    let t0 = Date.now()
     let stopped = false
 
     // Il blocco app (impronta) copre la pagina SENZA cambiare rotta: come il
@@ -79,10 +79,20 @@ export function SectionTourController() {
       // sulla schermata di accesso (Eli, 16 ago: «il tutorial Altro è partito
       // quando ero ancora nella schermata di login»).
       if (!window.location.pathname.startsWith(tour.path)) return
-      // Aspetta che il primo elemento ci sia E che il lucchetto non sia a
-      // schermo: fino a 8s, poi rinuncia in silenzio (il segno «già vista» NON
-      // è ancora stato messo → alla prossima visita ci riprova).
-      if (appLocked() || !visibleEl(tour.steps[0].selector)) {
+      // Lucchetto a schermo: si ASPETTA lo sblocco senza consumare il budget
+      // degli 8 secondi (t0 riparte) — mettere l'impronta può richiedere più
+      // di 8s, e la guida deve partire DOPO lo sblocco, non rinunciare (Eli,
+      // 17 ago: «mi chiede l'accesso con impronta ma poi non parte il
+      // tutorial»). Il polling si ferma da sé all'unmount (stopped).
+      if (appLocked()) {
+        t0 = Date.now()
+        setTimeout(tick, 400)
+        return
+      }
+      // Aspetta che il primo elemento ci sia: fino a 8s, poi rinuncia in
+      // silenzio (il segno «già vista» NON è ancora stato messo → alla
+      // prossima visita ci riprova).
+      if (!visibleEl(tour.steps[0].selector)) {
         if (Date.now() - t0 < 8000) setTimeout(tick, 200)
         return
       }
