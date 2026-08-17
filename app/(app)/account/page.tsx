@@ -37,9 +37,9 @@ export default async function AccountPage({
         label="Abbonamento"
         desc="Il tuo piano e la fatturazione"
         descAlways
-        hint={isFree ? (
-          // Pillola oro identica a quelle PRO di «Altro», accanto alla voce
-          // (Eli, 17 ago: «affianco e non sotto»).
+        hintTitle={isFree ? (
+          // Pillola oro identica a quelle PRO di «Altro», sulla RIGA DEL TITOLO:
+          // comprime al massimo il titolo, mai la descrizione (Eli, 17 ago sera).
           <span style={{ display: 'inline-block', border: '1px solid #e8d6ad', color: '#b0863e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em', whiteSpace: 'nowrap' }}>Passa a Pro</span>
         ) : undefined}
       />

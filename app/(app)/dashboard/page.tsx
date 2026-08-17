@@ -656,7 +656,8 @@ export default async function DashboardPage() {
         <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.15 }}>Ciao, {fullName}</div>
+              {/* «Ciao Elisa,» — vocativo senza virgola prima del nome (Eli, 17 ago) */}
+              <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.15 }}>Ciao {fullName},</div>
               <div style={{ fontSize: 13, color: '#55534b' }}>{workspaceName}</div>
             </div>
           </div>
@@ -934,7 +935,7 @@ export default async function DashboardPage() {
         {/* Intestazione + campanella (anche su desktop, come su mobile) */}
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold">Ciao, {fullName} 👋</h1>
+            <h1 className="text-2xl font-semibold">Ciao {fullName} 👋</h1>
             <p className="text-muted-foreground text-sm mt-0.5">{workspaceName}</p>
           </div>
           <Link

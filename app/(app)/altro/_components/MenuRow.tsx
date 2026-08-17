@@ -11,7 +11,7 @@ export function MenuRow({
   desc,
   descAlways = false,
   hint,
-  hintBelow,
+  hintTitle,
   iconColor,
   last = false,
 }: {
@@ -22,10 +22,12 @@ export function MenuRow({
       "Testo grande e leggibile" (classe cc-desc); con descAlways è sempre visibile. */
   desc?: string
   descAlways?: boolean
-  /** Badge/pillola a DESTRA (stato: conteggi, PRO). */
+  /** Badge/pillola a DESTRA (stato: conteggi, PRO). Occupa tutta l'altezza della
+      riga: comprime titolo E descrizione — va bene solo per pillole corte. */
   hint?: React.ReactNode
-  /** CTA/pillola SOTTO la descrizione (Eli 16 ago: «Passa a Pro» non a destra). */
-  hintBelow?: React.ReactNode
+  /** Pillola sulla RIGA DEL TITOLO (Eli 17 ago: «Passa a Pro» deve schiacciare
+      al massimo il titolo, mai la descrizione, che resta a tutta larghezza). */
+  hintTitle?: React.ReactNode
   iconColor?: string
   last?: boolean
 }) {
@@ -49,16 +51,27 @@ export function MenuRow({
         aria-hidden
       />
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontSize: 15, color: '#161616' }}>{label}</span>
+        {hintTitle ? (
+          // Il titolo può andare A CAPO quando lo spazio manca (Testo grande):
+          // troncarlo con i puntini nasconderebbe informazione proprio nella
+          // modalità pensata per leggere meglio. La pillola non si restringe mai.
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <span style={{ fontSize: 15, color: '#161616', minWidth: 0 }}>{label}</span>
+            <span style={{ flexShrink: 0 }}>{hintTitle}</span>
+          </span>
+        ) : (
+          <span style={{ display: 'block', fontSize: 15, color: '#161616' }}>{label}</span>
+        )}
         {desc && (
           <span
             className={descAlways ? undefined : 'cc-desc'}
+            // ⚠️ Niente `display` inline: sovrascriverebbe `.cc-desc { display:none }`
+            // (le descrizioni facoltative comparirebbero sempre).
             style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.45 }}
           >
             {desc}
           </span>
         )}
-        {hintBelow && <span style={{ display: 'block', marginTop: 7 }}>{hintBelow}</span>}
       </span>
       {hint && <span style={{ flexShrink: 0, marginRight: 8 }}>{hint}</span>}
       <ChevronRight

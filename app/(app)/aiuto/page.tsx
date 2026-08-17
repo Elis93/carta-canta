@@ -596,8 +596,12 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     a: <>In <VaiA a="sicurezza" />{' '}tocca <b>Attiva</b>{' '}sotto «Verifica in due passaggi»: inquadra
       il codice QR con un&rsquo;app Authenticator (Google Authenticator, Authy…), scrivi il codice a
       6 cifre e <b>salva i codici di recupero</b>{' '}che compaiono (si vedono una sola volta). Da lì
-      in poi, all&rsquo;accesso ti verrà chiesto il codice dell&rsquo;app oltre alla password: così,
-      anche se qualcuno scoprisse la password, non entrerebbe. <b>Se perdi il telefono</b>{' '}usa uno dei
+      in poi, al <b>login</b>{' '}ti verrà chiesto il codice dell&rsquo;app oltre alla password: così,
+      anche se qualcuno scoprisse la password, non entrerebbe. Il codice viene chiesto solo quando
+      fai il login — dopo «Esci», o su un telefono nuovo — <b>non a ogni apertura dell&rsquo;app</b>:
+      chiudere e riaprire l&rsquo;app riprende la tua sessione, come nelle altre app. Per proteggere
+      ogni apertura c&rsquo;è il <b>blocco con impronta</b>, nella stessa pagina.
+      {' '}<b>Se perdi il telefono</b>{' '}usa uno dei
       codici di recupero: ti fa rientrare e disattiva la verifica, che poi riattivi con un telefono
       nuovo. Se hai finito i codici e non hai il telefono, scrivici da Aiuto.</>,
   },

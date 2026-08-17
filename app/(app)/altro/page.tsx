@@ -190,10 +190,11 @@ export default async function AltroPage() {
             // il 96% a 390px e il 97% a 360px — come le altre righe.
             desc="Accesso, sicurezza, commercialista, i tuoi dati, piano e inviti"
             descAlways
-            hint={isFree ? (
+            hintTitle={isFree ? (
               // Stessa veste della pillola PRO di Bilancio (Eli, 17 ago: «non
-              // mi piace che ci sono due modi diversi di mostrare Pro»), e
-              // ACCANTO alla voce, non sotto (Eli, 17 ago pomeriggio).
+              // mi piace che ci sono due modi diversi di mostrare Pro»), sulla
+              // RIGA DEL TITOLO: comprime al massimo il titolo, mai la
+              // descrizione (Eli, 17 ago sera: «meno invasivo»).
               <span style={{ display: 'inline-block', border: '1px solid #e8d6ad', color: '#b0863e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em', whiteSpace: 'nowrap' }}>Passa a Pro</span>
             ) : undefined}
           />

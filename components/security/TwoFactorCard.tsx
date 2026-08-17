@@ -205,7 +205,11 @@ export function TwoFactorCard() {
       {phase === 'on' && (
         <>
           <p style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.5, margin: '2px 0 0' }}>
-            Al prossimo <b>login</b> ti verrà chiesto il codice dell&rsquo;app (non a ogni
+            {/* ⚠️ {' '} esplicito dopo </b>: Turbopack ha mangiato lo spazio
+                («loginti verrà» sul telefono di Eli, 17 ago) — regola §B.2.
+                Lo scan del build guarda solo i chunk SSR: i componenti client
+                come questo non li copre, quindi qui serve la cintura. */}
+            Al prossimo <b>login</b>{' '}ti verrà chiesto il codice dell&rsquo;app (non a ogni
             apertura). Ti restano <b style={{ color: '#55534b' }}>{remaining} codici di recupero</b>.
           </p>
           <button type="button" onClick={rigenera} disabled={busy} style={btnGhost}>
