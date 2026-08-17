@@ -66,28 +66,42 @@ export function TwoFactorCard() {
     return () => { try { sessionStorage.removeItem('cc_2fa_flow') } catch { /* noop */ } }
   }, [phase])
 
+  // ⚠️ CINTURA su ogni chiamata al server (bug Eli 17 ago sera: «Ho salvato i
+  // codici» non faceva NULLA). Una server action può anche LANCIARE, non solo
+  // tornare {error} — per esempio quando la pagina è rimasta aperta attraverso
+  // un deploy e gli id delle action sono ruotati. Senza catch la promise
+  // rifiutata moriva in silenzio: nessun errore, nessun cambio di schermata.
+  const ERRORE_RETE = 'Connessione al server non riuscita: riprova. Se non cambia, ricarica la pagina.'
+
   async function attiva() {
     setBusy(true); setError(null)
-    const res = await startTotpEnroll()
-    setBusy(false)
-    if (res.error || !res.qrCode) { setError(res.error ?? 'Non riesco ad avviare l’attivazione.'); return }
-    setFactorId(res.factorId!); setQr(res.qrCode); setSecret(res.secret ?? null); setCode('')
-    setPhase('enrolling')
+    try {
+      const res = await startTotpEnroll()
+      if (res.error || !res.qrCode) { setError(res.error ?? 'Non riesco ad avviare l’attivazione.'); return }
+      setFactorId(res.factorId!); setQr(res.qrCode); setSecret(res.secret ?? null); setCode('')
+      setPhase('enrolling')
+    } catch { setError(ERRORE_RETE) } finally { setBusy(false) }
   }
 
   async function conferma() {
     if (!factorId) return
     setBusy(true); setError(null)
-    const res = await confirmTotpEnroll(factorId, code)
-    setBusy(false)
-    if (res.error || !res.recoveryCodes) { setError(res.error ?? 'Codice non valido.'); return }
-    setOrigineCodici('attiva')
-    setCodes(res.recoveryCodes); setPhase('codes')
+    try {
+      const res = await confirmTotpEnroll(factorId, code)
+      if (res.error || !res.recoveryCodes) { setError(res.error ?? 'Codice non valido.'); return }
+      setOrigineCodici('attiva')
+      setCodes(res.recoveryCodes); setPhase('codes')
+    } catch { setError(ERRORE_RETE) } finally { setBusy(false) }
   }
 
-  async function fatto() {
-    const s = await getMfaStatus()
-    setRemaining(s.remainingCodes); setCodes([]); setPhase(s.enabled ? 'on' : 'off')
+  function fatto() {
+    // NIENTE giro dal server: lo stato lo conosciamo già — si arriva qui solo
+    // dopo un'attivazione o una rigenerazione riuscite (il 2FA è attivo e i
+    // codici a schermo sono il conteggio fresco). Il vecchio `await
+    // getMfaStatus()` era l'anello fragile: se la chiamata falliva, il tasto
+    // sembrava morto. Ora chiude SEMPRE, all'istante — e chiudendo la fase
+    // «codes» si spegne anche la grazia cc_2fa_flow del blocco impronta.
+    setRemaining(codes.length); setCodes([]); setPhase('on')
     // Dopo «Rigenera» il 2FA era GIÀ attivo: dire «attiva» lì era un messaggio
     // sbagliato (audit 17 ago).
     toast.success(
@@ -98,21 +112,23 @@ export function TwoFactorCard() {
 
   async function rigenera() {
     setBusy(true); setError(null)
-    const res = await regenerateRecoveryCodes()
-    setBusy(false)
-    if (res.error || !res.recoveryCodes) { setError(res.error ?? 'Non riesco a rigenerare i codici.'); return }
-    setOrigineCodici('rigenera')
-    setCodes(res.recoveryCodes); setPhase('codes')
+    try {
+      const res = await regenerateRecoveryCodes()
+      if (res.error || !res.recoveryCodes) { setError(res.error ?? 'Non riesco a rigenerare i codici.'); return }
+      setOrigineCodici('rigenera')
+      setCodes(res.recoveryCodes); setPhase('codes')
+    } catch { setError(ERRORE_RETE) } finally { setBusy(false) }
   }
 
   async function disattiva() {
     if (!confirm('Vuoi disattivare la verifica in due passaggi? Il tuo account tornerà a un solo passaggio.')) return
     setBusy(true); setError(null)
-    const res = await disableTotp()
-    setBusy(false)
-    if (res.error) { setError(res.error); return }
-    setPhase('off'); setRemaining(0)
-    toast.success('Verifica in due passaggi disattivata', { closeButton: true })
+    try {
+      const res = await disableTotp()
+      if (res.error) { setError(res.error); return }
+      setPhase('off'); setRemaining(0)
+      toast.success('Verifica in due passaggi disattivata', { closeButton: true })
+    } catch { setError(ERRORE_RETE) } finally { setBusy(false) }
   }
 
   function copiaCodici() {
