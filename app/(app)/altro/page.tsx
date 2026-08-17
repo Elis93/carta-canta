@@ -190,11 +190,11 @@ export default async function AltroPage() {
             // il 96% a 390px e il 97% a 360px — come le altre righe.
             desc="Accesso, sicurezza, commercialista, i tuoi dati, piano e inviti"
             descAlways
-            hintBelow={isFree ? (
+            hint={isFree ? (
               // Stessa veste della pillola PRO di Bilancio (Eli, 17 ago: «non
-              // mi piace che ci sono due modi diversi di mostrare Pro»): in
-              // questa pagina il Pro ha UNA sola faccia, la pillola oro.
-              <span style={{ display: 'inline-block', border: '1px solid #e8d6ad', color: '#b0863e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em' }}>Passa a Pro</span>
+              // mi piace che ci sono due modi diversi di mostrare Pro»), e
+              // ACCANTO alla voce, non sotto (Eli, 17 ago pomeriggio).
+              <span style={{ display: 'inline-block', border: '1px solid #e8d6ad', color: '#b0863e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em', whiteSpace: 'nowrap' }}>Passa a Pro</span>
             ) : undefined}
           />
           <MenuRow href="/altro/aiuto-novita" icon={HelpCircle} label="Aiuto e novità" desc="Domande frequenti, tutorial e novità" descAlways last />

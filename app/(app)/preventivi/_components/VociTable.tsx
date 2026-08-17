@@ -697,13 +697,13 @@ export function VociTable({
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
                     </div>
                   </div>
-                </div>
-                {/* ⚠️ UNA riga sola per Sconto · IVA · Costo (Eli, 12 ago:
-                    «un'unica riga di sconto, IVA e costo, così non abbiamo tante
-                    righe per voce»). Ordinario = 3 colonne; forfettario (niente
-                    IVA) = 2 (Sconto · Costo). Il margine resta sotto, come riga
-                    di sola lettura. */}
-                <div className="cc-voce-nums grid gap-1.5 items-start grid-cols-[96px_1fr_1fr]">
+                  {/* ⚠️ UNA riga sola per Sconto · IVA · Costo (Eli, 12 ago) — e
+                      dal 17 ago le SEI celle vivono in un UNICO contenitore
+                      griglia: a 3 colonne il disegno è identico a prima (due
+                      righe: Unità·Q.tà·Prezzo / Sconto·IVA·Costo), ma in «Testo
+                      grande» (cc-large, 2 colonne) il flusso accoppia da sé
+                      Prezzo e Sconto sulla stessa riga invece di lasciarli
+                      orfani uno sopra l'altro (foto di Eli). */}
                   <div className="space-y-1">
                     <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
                     <div className="relative">
@@ -758,7 +758,10 @@ export function VociTable({
                   ) : (
                     // Forfettario: nessuna IVA → colonna di mezzo vuota, così il
                     // Costo resta allineato sotto il Prezzo (Eli, 12 ago).
-                    <div aria-hidden />
+                    // In «Testo grande» (2 colonne) il segnaposto SPARISCE via
+                    // CSS: senza, il Costo finirebbe nella colonna destra dopo
+                    // una cella vuota.
+                    <div aria-hidden className="cc-voce-spacer" />
                   )}
                   {/* Costo d'acquisto (🔒 solo per te) — terza colonna, inline
                       con Sconto e IVA. Su mobile sostituisce la riga a sé di

@@ -736,11 +736,16 @@ html.cc-large .cc-zoom-neutral { zoom: 0.869565; }
 /* In Testo grande, sui telefoni, i campi numerici della voce non entrano più
    sulla loro riga (input a 16px × zoom 1.15): due per riga, tutti interi e
    leggibili. Sopra i 640px torna il layout normale.
-   ⚠️ Dal 12 ago le righe sono DUE (Unità/Q.tà/Prezzo · Sconto/IVA): la
-   seconda ha già due colonne e non va toccata — la regola vale per la prima,
-   che in Testo grande passa da tre colonne a due. */
+   ⚠️ Dal 17 ago le SEI celle (Unità·Q.tà·Prezzo·Sconto·IVA·Costo) vivono in
+   UNA griglia sola: a 3 colonne il disegno normale è identico a prima (due
+   righe), e qui — a 2 colonne — il flusso accoppia (Unità·Q.tà)
+   (Prezzo·Sconto) (IVA·Costo): prima Prezzo e Sconto restavano orfani, uno
+   sopra l'altro, e la card si allungava (foto di Eli). */
 @media (max-width: 639px) {
   html.cc-large .cc-voce-nums { grid-template-columns: 1fr 1.4fr; }
+  /* Forfettario: il segnaposto della colonna IVA sparisce, così il Costo
+     resta a sinistra invece di finire dopo una cella vuota. */
+  html.cc-large .cc-voce-spacer { display: none; }
 }
 
 /* 2) Testi secondari più scuri: da #8a887f (≈3,5:1) a #55534b (≈6:1).

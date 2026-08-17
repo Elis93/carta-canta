@@ -269,7 +269,10 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
           router.push('/preventivi/nuovo')
         },
         undefined,
-        28, // evidenziazione più larga: copre il + che sporge ~22px dalla barra E la scritta «Crea»
+        // Il box di [data-tour="fab"] ora INCLUDE il cerchio che sporge (il
+        // -22 sta sul bottone, fix 17 ago): basta un filo d'aria. Il 28 di
+        // prima compensava un box che tagliava il + — non serve più.
+        8,
         )
       }
       const t = setTimeout(tick, 400)

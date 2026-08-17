@@ -1,51 +1,40 @@
 'use client'
 
 // ============================================================
-// "Rivedi il tutorial" — spostata da Impostazioni › Generale alla
-// pagina Account e dati (richiesta Eli 14 lug: più facile da trovare;
-// best practice: il rilancio volontario del tour va reso evidente).
+// Scheda «Tutorial» di /aiuto — RIDOTTA AL MINIMO (Eli, 17 ago: «è
+// confusionaria e ci sono troppe informazioni, lasciamole al minimo.
+// I tutorial stessi, come sono ora, vanno bene»).
 //
-// Dal 7 ago la card contiene DUE cose (richiesta Eli: "questo tutorial poi
-// lo può rivedere insieme all'altro tutorial che abbiamo già"):
-//  · il giro guidato del primo accesso — creare e mandare un preventivo;
-//  · le GUIDE DI SEZIONE, che spiegano le funzioni di una singola pagina e
-//    si aprono da sole la prima volta che ci entri.
-// Stanno insieme perché chi cerca aiuto cerca "il tutorial", non sa che ce
-// n'è più d'uno: due card separate lo costringerebbero a indovinare quale.
+// Tre righe toccabili, stesse forme delle voci di menu: il giro guidato
+// del primo preventivo + le guide di sezione. Niente paragrafi introduttivi:
+// il titolo di ogni riga dice già tutto.
 // ============================================================
 
-import { GraduationCap, Compass, ArrowRight } from 'lucide-react'
+import { GraduationCap, Compass, ChevronRight } from 'lucide-react'
 import { SECTION_TOURS, SECTION_TOUR_REQUEST } from '@/components/tour/section-tours'
-
-const cardStyle: React.CSSProperties = {
-  background: '#fff',
-  borderRadius: 14,
-  boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)',
-  padding: '14px 15px',
-}
 
 // ⚠️ Queste navigazioni sono a PAGINA INTERA (window.location.href, serve uno
 // stato pulito per driver.js). Ma una navigazione dura non fa girare i cleanup
 // di React: la grazia `cc_lock_nav` — che AppLock scrive allo smontaggio — non
 // veniva mai scritta, e sul documento nuovo il blocco app chiedeva l'IMPRONTA
-// a chi stava già usando l'app sbloccata (Eli, 17 ago: «mi chiede l'accesso
-// con impronta ma poi non parte il tutorial. Non deve richiedermi l'accesso!»).
-// La si scrive QUI, prima di navigare: è lo stesso meccanismo pensato per le
-// navigazioni in-tab (5 minuti, sessionStorage → l'app chiusa davvero resta
-// bloccata come prima). Si può scrivere solo da qui, cioè da app già sbloccata.
+// a chi stava già usando l'app sbloccata (Eli, 17 ago). La si scrive QUI,
+// prima di navigare — MAI col lucchetto a schermo (AppLock non ha focus trap:
+// un Invio «alla cieca» da tastiera fisica non deve aprire il documento nuovo
+// senza blocco). A scheda chiusa sessionStorage muore: la vera riapertura
+// resta bloccata come prima.
 function conGraziaLucchetto(vai: () => void) {
-  // ⚠️ La grazia NON si scrive mai col lucchetto a schermo (finding revisore,
-  // 17 ago): AppLock non ha un focus trap, quindi con una tastiera fisica un
-  // Tab+Invio «alla cieca» potrebbe premere questo bottone sotto il blocco —
-  // scrivere la grazia qui aprirebbe il documento nuovo SENZA lucchetto.
-  // Bloccata: la navigazione parte comunque e il blocco ricompare, com'era
-  // prima del fix. La grazia resta solo per chi usa l'app già sbloccata.
   try {
     if (!document.querySelector('[aria-label="App bloccata"]')) {
       sessionStorage.setItem('cc_lock_nav', String(Date.now()))
     }
   } catch { /* noop */ }
   vai()
+}
+
+const rowStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
+  background: 'none', border: 'none', padding: '14px 0', cursor: 'pointer',
+  fontFamily: 'inherit',
 }
 
 export function ReviewTutorialCard() {
@@ -56,58 +45,33 @@ export function ReviewTutorialCard() {
     conGraziaLucchetto(() => { window.location.href = path })
   }
 
+  function apriTourPrincipale() {
+    try {
+      sessionStorage.setItem('cc_tour_restart', '1')
+      sessionStorage.removeItem('cc_tour_step')
+    } catch { /* noop */ }
+    conGraziaLucchetto(() => { window.location.href = '/dashboard' })
+  }
+
   return (
-    <div style={cardStyle}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <GraduationCap size={20} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} aria-hidden />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Rivedi il tutorial</div>
-          <div style={{ fontSize: 12, color: '#767676', marginTop: 1 }}>Il giro guidato dei 5 passi per creare e inviare un preventivo.</div>
-        </div>
+    <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05), 0 8px 24px -10px rgba(20,20,40,.15)', padding: '2px 15px' }}>
+      <button type="button" onClick={apriTourPrincipale} style={{ ...rowStyle, borderBottom: '0.5px solid #eee' }}>
+        <GraduationCap size={20} strokeWidth={1.75} style={{ flexShrink: 0, color: '#1a1a2e' }} aria-hidden />
+        <span style={{ flex: 1, fontSize: 15, color: '#161616' }}>Il primo preventivo · 5 passi</span>
+        <ChevronRight size={18} strokeWidth={1.5} style={{ flexShrink: 0, color: 'var(--cc-muted)' }} aria-hidden />
+      </button>
+      {Object.entries(SECTION_TOURS).map(([key, tour], i, arr) => (
         <button
+          key={key}
           type="button"
-          onClick={() => {
-            try {
-              sessionStorage.setItem('cc_tour_restart', '1')
-              sessionStorage.removeItem('cc_tour_step')
-            } catch { /* noop */ }
-            conGraziaLucchetto(() => { window.location.href = '/dashboard' })
-          }}
-          style={{ flexShrink: 0, border: '1px solid #e7e7ea', borderRadius: 10, background: '#fff', color: '#1a1a2e', fontSize: 13, fontWeight: 600, padding: '9px 14px', cursor: 'pointer' }}
+          onClick={() => apriGuida(key, tour.path)}
+          style={{ ...rowStyle, borderBottom: i < arr.length - 1 ? '0.5px solid #eee' : 'none' }}
         >
-          Rivedi
+          <Compass size={20} strokeWidth={1.75} style={{ flexShrink: 0, color: '#1a1a2e' }} aria-hidden />
+          <span style={{ flex: 1, fontSize: 15, color: '#161616' }}>{tour.label}</span>
+          <ChevronRight size={18} strokeWidth={1.5} style={{ flexShrink: 0, color: 'var(--cc-muted)' }} aria-hidden />
         </button>
-      </div>
-
-      <div style={{ height: 1, background: '#eee', margin: '13px -15px' }} />
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-        <Compass size={16} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} aria-hidden />
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#161616' }}>Guide delle sezioni</span>
-      </div>
-      <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginBottom: 10 }}>
-        Si aprono da sole la prima volta che entri in una sezione. Da qui le rivedi quando vuoi.
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {Object.entries(SECTION_TOURS).map(([key, tour]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => apriGuida(key, tour.path)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
-              border: '1px solid #e7e7ea', borderRadius: 11, background: '#fff',
-              padding: '10px 12px', cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, color: '#1a1a2e' }}>{tour.label}</span>
-              <span style={{ display: 'block', fontSize: 12, color: '#767676', marginTop: 1 }}>{tour.sub}</span>
-            </span>
-            <ArrowRight size={15} style={{ color: 'var(--cc-muted)', flexShrink: 0 }} aria-hidden />
-          </button>
-        ))}
-      </div>
+      ))}
     </div>
   )
 }

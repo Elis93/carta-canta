@@ -104,7 +104,16 @@ export function TwoFactorCard() {
   )
 
   if (phase === 'loading') {
-    return <div style={card}>{title}<Loader2 size={16} className="animate-spin" style={{ color: 'var(--cc-muted)', marginTop: 8 }} /></div>
+    // Rotella CENTRATA (Eli, 17 ago: «ha lo spinner a sinistra» — nuda
+    // sotto il titolo sembrava un elemento fuori posto, non un caricamento).
+    return (
+      <div style={card}>
+        {title}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 6px' }}>
+          <Loader2 size={18} className="animate-spin" style={{ color: 'var(--cc-muted)' }} />
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -756,14 +756,22 @@ export default async function AiutoPage({
       </div>
 
       <div style={{ padding: '0 15px' }}>
-        <div className="cc-tabs cc-filter-scroll cc-tabs-equal" style={{ marginTop: 14 }}>
+        {/* Linguette GRANDI, identiche a «Il mio catalogo | Listini fornitori»
+            (Eli, 17 ago: «grandi come quelle di Listino e Catalogo — tutte le
+            pillole della zona Altro con la stessa dimensione»). */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
           {SEZIONI.map(({ value, label }) => (
             <Link
               key={value}
               replace
               href={value === 'aiuto' ? '/aiuto' : `/aiuto?sez=${value}`}
-              className={attiva === value ? 'cc-tab-active' : 'cc-tab'}
-              style={{ textDecoration: 'none', display: 'block' }}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '15px 8px', borderRadius: 12, fontSize: 14, fontWeight: 600, textDecoration: 'none',
+                background: attiva === value ? '#1a1a2e' : '#fff',
+                color: attiva === value ? '#fff' : '#55534b',
+                border: attiva === value ? 'none' : '1px solid #e3e3e6',
+              }}
             >
               {label}
             </Link>

@@ -65,12 +65,16 @@ export function FabCreateMenu() {
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
           background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
           fontFamily: 'inherit',
+          marginTop: -22,
+          // ⚠️ Il -22 sta sul BOTTONE, non sul cerchio (17 ago): così il
+          // rettangolo del bottone INCLUDE il cerchio che sporge, e il
+          // ritaglio del tutorial (driver.js misura il bounding box) copre
+          // sempre tutto il «+» — prima il cerchio sporgeva FUORI dal box e
+          // il ritaglio lo tagliava (foto di Eli, due volte). La geometria
+          // visiva è IDENTICA: cerchio e scritta «Crea» non si spostano di
+          // un pixel (margine del box = altezza layout invariata, 43px).
         }}
       >
-        {/* Solo il CERCHIO sporge (marginTop negativo qui, non sull'intero
-            bottone): così l'etichetta «Crea» resta in basso, allineata con le
-            altre della barra (Eli 15 ago: «stessa distanza col + al centro»
-            — le scritte devono stare tutte sulla stessa riga). */}
         <div
           style={{
             width: 50, height: 50, borderRadius: '50%',
@@ -79,7 +83,6 @@ export function FabCreateMenu() {
             boxShadow: 'var(--cc-shadow-fab)',
             transition: 'transform .18s ease',
             transform: open ? 'rotate(45deg)' : 'none',
-            marginTop: -22,
           }}
         >
           <Plus size={24} strokeWidth={2} />
