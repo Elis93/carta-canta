@@ -28,6 +28,18 @@ type CatalogItem = Database['public']['Tables']['catalog_items']['Row']
 const UNITS = ['pz', 'ore', 'mq', 'ml', 'kg', 'gg', 'mc', 'lt']
 const VAT_RATES = [22, 10, 5, 4, 0]
 
+// Stile dei campi della creazione rapida — lo STESSO dei campi della voce
+// (etichetta piccola grigia sopra, campo h-44 col bordo di sempre), così il
+// pop-up non stona col form in cui si apre (Eli, 17 ago).
+const campoLabel: React.CSSProperties = {
+  display: 'block', fontSize: 11.5, color: 'var(--cc-muted)', marginBottom: 5,
+  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+}
+const campoInput: React.CSSProperties = {
+  border: '1px solid #e3e3e6', borderRadius: 10, height: 44,
+  boxSizing: 'border-box', fontSize: 15, padding: '0 12px', width: '100%',
+}
+
 interface CatalogPickerProps {
   onSelect: (item: {
     description: string
@@ -572,7 +584,13 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
               </div>
             </DialogHeader>
 
-            <div className="px-4 py-3 space-y-3 border-t">
+            {/* Campi nello STESSO stile della card della voce (Eli, 17 ago:
+                «si vede male la vista di una nuova voce aggiunta tramite
+                pop-up»): etichette piccole grigie sopra, campi h-44 con lo
+                stesso bordo, prezzo in formato italiano («0,00», virgola),
+                Categoria a riga intera — a mezza colonna il segnaposto
+                «es. Manodopera» usciva tagliato. */}
+            <div className="px-4 py-3 border-t" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {createError && (
                 <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
                   {createError}
@@ -580,8 +598,8 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
               )}
 
               {/* Nome */}
-              <div className="space-y-1.5">
-                <Label htmlFor="qcc-name">
+              <div>
+                <Label htmlFor="qcc-name" style={campoLabel}>
                   Nome <span style={{ color: '#b08d3e' }}>*</span>
                 </Label>
                 <Input
@@ -592,34 +610,34 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                   placeholder="es. Posa piastrelle"
                   autoFocus
                   disabled={createPending}
+                  style={campoInput}
                 />
               </div>
 
-              {/* Prezzo + Unità */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="qcc-price">
+              {/* Prezzo · Unità · IVA — come la riga dei campi della voce */}
+              <div className="grid gap-1.5" style={{ gridTemplateColumns: '1fr 88px 88px' }}>
+                <div>
+                  <Label htmlFor="qcc-price" style={campoLabel}>
                     Prezzo unit. <span style={{ color: '#b08d3e' }}>*</span>
                   </Label>
                   <div className="relative">
                     <Input
                       id="qcc-price"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0,00"
                       value={createPrice}
-                      onChange={(e) => setCreatePrice(e.target.value)}
-                      className="pr-6"
+                      onChange={(e) => setCreatePrice(e.target.value.replace(/[^\d.,]/g, ''))}
                       disabled={createPending}
+                      style={{ ...campoInput, paddingRight: 22 }}
                     />
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">€</span>
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">€</span>
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="qcc-unit">Unità</Label>
+                <div>
+                  <Label htmlFor="qcc-unit" style={campoLabel}>Unità</Label>
                   <Select value={createUnit} onValueChange={setCreateUnit} disabled={createPending}>
-                    <SelectTrigger id="qcc-unit">
+                    <SelectTrigger id="qcc-unit" className="w-full truncate" style={campoInput}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -629,14 +647,10 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              {/* IVA + Categoria */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="qcc-vat">IVA %</Label>
+                <div>
+                  <Label htmlFor="qcc-vat" style={campoLabel}>IVA</Label>
                   <Select value={createVat} onValueChange={setCreateVat} disabled={createPending}>
-                    <SelectTrigger id="qcc-vat">
+                    <SelectTrigger id="qcc-vat" className="w-full truncate" style={campoInput}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -646,16 +660,19 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="qcc-cat">Categoria</Label>
-                  <Input
-                    id="qcc-cat"
-                    value={createCategory}
-                    onChange={(e) => setCreateCategory(e.target.value)}
-                    placeholder="es. Manodopera"
-                    disabled={createPending}
-                  />
-                </div>
+              </div>
+
+              {/* Categoria — riga intera */}
+              <div>
+                <Label htmlFor="qcc-cat" style={campoLabel}>Categoria <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(facoltativa)</span></Label>
+                <Input
+                  id="qcc-cat"
+                  value={createCategory}
+                  onChange={(e) => setCreateCategory(e.target.value)}
+                  placeholder="es. Manodopera"
+                  disabled={createPending}
+                  style={campoInput}
+                />
               </div>
             </div>
 

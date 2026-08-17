@@ -449,10 +449,8 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           >
             <Ruler size={14} /> Calcola una misura
           </button>
-          <p style={{ fontSize: 12, color: '#767676', marginTop: 7, lineHeight: 1.45 }}>
-            Le misure salvate restano qui col loro calcolo: toccale per
-            rimodificarle. Passano nelle Note interne del preventivo.
-          </p>
+          {/* Niente riga esplicativa sotto (Eli, 17 ago: eliminata). Il
+              comportamento resta: le misure passano nelle Note interne. */}
         </div>
       </Sezione>
 
@@ -583,9 +581,8 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
         {pending && pendingAction === 'save' ? <Loader2 size={16} className="animate-spin" style={{ display: 'inline-block', verticalAlign: '-3px', marginRight: 8 }} /> : null}Salva bozza
       </button>
 
-      <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', lineHeight: 1.5, padding: '0 6px' }}>
-        Gli appunti vengono copiati nelle <b style={{ color: '#161616' }}>Note interne</b> del preventivo (non visibili al cliente).
-      </p>
+      {/* Niente riga sotto i tasti (Eli, 17 ago: eliminata). Il comportamento
+          resta: appunti e misure vanno nelle Note interne del preventivo. */}
     </div>
   )
 }

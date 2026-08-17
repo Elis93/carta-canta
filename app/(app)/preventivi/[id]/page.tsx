@@ -1098,19 +1098,25 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           />
         </div>
 
-        {/* Acconto + Foto lavoro — anche su DESKTOP: prima esistevano solo
-            nella vista mobile (registrare un acconto dal PC era impossibile) */}
-        <div className="hidden lg:block space-y-4">
-          {accontoInfo && (
+        {/* Acconto — anche su DESKTOP: prima esisteva solo nella vista mobile
+            (registrare un acconto dal PC era impossibile) */}
+        {accontoInfo && (
+          <div className="hidden lg:block">
             <AccontoCard
               documentId={id}
               acconto={accontoInfo.acconto}
               saldo={accontoInfo.saldo}
               received={accontoInfo.received}
             />
-          )}
-          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
-        </div>
+          </div>
+        )}
+        {/* Foto lavoro — visibile ANCHE su mobile in modifica (Eli, 17 ago:
+            «creo un preventivo dal sopralluogo e le foto mancano» — le foto
+            erano collegate davvero, ma l'atterraggio del sopralluogo è
+            ?edit=1 e questa card stava in un blocco solo-desktop: sembravano
+            perse). Su mobile in lettura resta la copia della vista read
+            (questo contenitore lì non è renderizzato). */}
+        <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
 
         {/* Messaggi col cliente — desktop */}
         {conversation.length > 0 && (
