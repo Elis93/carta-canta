@@ -377,7 +377,7 @@ function Step3({ onComplete }: { onComplete: () => void }) {
       <div>
         <h2 className="text-xl font-semibold">Tutto pronto!</h2>
         <p className="text-muted-foreground mt-1.5 text-sm">
-          Il tuo workspace è configurato. Crea il tuo primo preventivo in meno di 60 secondi.
+          Il tuo workspace è configurato. Crea il tuo primo preventivo in pochi minuti.
         </p>
       </div>
       <Button size="lg" className="w-full" onClick={onComplete}>

@@ -244,7 +244,7 @@ export function TourController({ tourDone }: { tourDone: boolean }) {
             popover: {
               title: 'Benvenuto in Carta Canta! 👋',
               description: desc(
-                'Ti mostro come fare il tuo <b>primo preventivo in 60 secondi</b>. Sono solo 5 passaggi veloci.'
+                'Ti mostro come fare il tuo <b>primo preventivo in pochi minuti</b>. Sono solo 5 passaggi veloci.'
                 + '<div style="margin-top:10px"><button type="button" id="cc-tour-textlarge" '
                 + 'style="border:1px solid #e8d6ad;background:#fdf9ef;color:#8a5208;border-radius:999px;'
                 + 'padding:7px 12px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer"></button></div>'

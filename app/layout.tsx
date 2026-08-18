@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     default: 'Carta Canta',
     template: '%s | Carta Canta',
   },
-  description: 'Preventivi professionali in 60 secondi. Senza Excel, senza carta.',
+  description: 'Preventivi professionali in pochi minuti. Senza Excel, senza carta.',
   metadataBase: new URL('https://cartacanta.app'),
   // PWA: apple-touch-icon per iOS (Safari non legge sempre il manifest per l'icona Home)
   icons: {

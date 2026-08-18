@@ -253,7 +253,7 @@ export function ReferralPageClient({
           {/* Condivisione diretta WhatsApp — il canale n.1 per gli artigiani */}
           <a
             href={`https://wa.me/?text=${encodeURIComponent(
-              `Ciao! Per preventivi e fatture dal telefono uso Carta Canta: il preventivo è fatto in un minuto e il cliente lo firma da un link. Provala gratis: ${shareUrl}`
+              `Ciao! Per preventivi e fatture dal telefono uso Carta Canta: il preventivo è fatto in pochi minuti e il cliente lo firma da un link. Provala gratis: ${shareUrl}`
             )}`}
             target="_blank"
             rel="noopener noreferrer"

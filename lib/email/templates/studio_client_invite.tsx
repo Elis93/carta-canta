@@ -25,7 +25,7 @@ export function StudioClientInviteEmail({ studioEmail, signupUrl }: StudioClient
             <Heading style={h1}>Il tuo commercialista ti consiglia Carta Canta</Heading>
             <Text style={paragraph}>
               Il tuo studio (<strong>{studioEmail}</strong>) usa Carta Canta con i suoi clienti
-              e ti invita a provarla: preventivi professionali dal telefono in un minuto,
+              e ti invita a provarla: preventivi professionali dal telefono in pochi minuti,
               fatture, incassi e spese sempre in ordine.
             </Text>
             <Text style={paragraph}>

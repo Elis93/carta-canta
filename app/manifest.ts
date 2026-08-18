@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Carta Canta — Preventivi e Fatture',
     short_name: 'Carta Canta',
-    description: 'Preventivi e fatture professionali in 60 secondi.',
+    description: 'Preventivi e fatture professionali in pochi minuti.',
     // /avvio: pagina statica precacheata dal SW → primo frame ISTANTANEO
     // (lo splash di sistema sparisce subito), poi naviga da sola a /dashboard.
     start_url: '/avvio',

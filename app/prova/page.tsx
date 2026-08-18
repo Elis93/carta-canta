@@ -7,7 +7,7 @@ import { Check, Mic, PenLine, Wallet, ShieldCheck, MapPin, Clock } from 'lucide-
 // e allegate alla registrazione. Pagina PUBBLICA (in PUBLIC_PATHS).
 
 export const metadata: Metadata = {
-  title: 'Prova Carta Canta gratis — preventivi in 60 secondi',
+  title: 'Prova Carta Canta gratis — preventivi in pochi minuti',
   description: 'L\'app degli artigiani italiani: preventivo fatto dal telefono, firmato dal cliente con un tocco. Gratis durante la beta.',
 }
 
@@ -15,7 +15,7 @@ const NAVY = '#1a1a2e'
 const GOLD = '#c9a44c'
 
 const STEPS = [
-  { Icon: Mic, title: 'Detta le voci', text: 'In cantiere, col microfono o dal tuo catalogo. Il preventivo è pronto in 60 secondi.' },
+  { Icon: Mic, title: 'Detta le voci', text: 'In cantiere, col microfono o dal tuo catalogo. Il preventivo è pronto in pochi minuti.' },
   { Icon: PenLine, title: 'Il cliente firma dal telefono', text: 'Gli mandi un link su WhatsApp: lui guarda e tocca "Accetto". Firma registrata, con valore di prova.' },
   { Icon: Wallet, title: 'Incassi e tieni tutto sotto controllo', text: 'Acconti, QR di pagamento, lavori, spese e margine: l\'ufficio è in tasca.' },
 ]
@@ -69,7 +69,7 @@ export default function ProvaPage() {
         </h1>
         <p style={{ fontSize: 15, color: '#55534b', lineHeight: 1.55, textAlign: 'center', margin: '12px 0 0' }}>
           Detta le voci, invia il link, il cliente firma dal telefono.
-          Professionale in 60 secondi — senza Excel, senza carta.
+          Professionale in pochi minuti — senza Excel, senza carta.
         </p>
         <div style={{ marginTop: 18 }}>
           <Cta />

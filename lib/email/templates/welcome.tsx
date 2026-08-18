@@ -19,7 +19,7 @@ export function WelcomeEmail({
   return (
     <Html lang="it">
       <Head />
-      <Preview>Il tuo spazio {workspaceName} è pronto: crea il primo preventivo in 60 secondi.</Preview>
+      <Preview>Il tuo spazio {workspaceName} è pronto: crea il primo preventivo in pochi minuti.</Preview>
       <Body style={body}>
         <Container style={container}>
 
