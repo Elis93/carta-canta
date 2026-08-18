@@ -55,8 +55,9 @@ export function TwoFactorCard() {
   // Grazia per il blocco impronta durante la configurazione (audit 17 ago):
   // per inquadrare il QR e leggere il codice si DEVE passare all'app
   // Authenticator — AppLock legge questo marker e non fa scattare il lucchetto
-  // in mezzo alla configurazione. Validità 10 min, si toglie appena si esce
-  // dalle fasi di enroll (e all'unmount).
+  // in mezzo alla configurazione. Finestra STRETTA (2 min lato AppLock: dopo
+  // aver finito la config il blocco deve tornare a scattare), si toglie appena
+  // si esce dalle fasi di enroll (e all'unmount).
   useEffect(() => {
     const attivo = phase === 'enrolling' || phase === 'codes'
     try {

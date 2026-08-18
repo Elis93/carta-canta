@@ -169,16 +169,19 @@ export function AppLock({ userEmail }: { userEmail: string }) {
       if (!isAppLockEnabled()) return
       setHasBio(isBiometricEnabled())
       // Configurazione 2FA IN CORSO (TwoFactorCard scrive un marker con
-      // timestamp, validità 10 min): per inquadrare il QR e leggere il codice
-      // si DEVE passare all'app Authenticator — quell'assenza non è un'uscita
-      // e non deve far scattare il lucchetto in mezzo alla configurazione
-      // (Eli, 17 ago: «ho fatto la verifica in 2 passaggi ma mi chiede
-      // l'accesso con impronta»). Stessa famiglia delle grazie per la
-      // cerimonia WebAuthn e l'autofill di Chrome.
+      // timestamp): per inquadrare il QR e leggere il codice si DEVE passare
+      // all'app Authenticator — quell'assenza non è un'uscita e non deve far
+      // scattare il lucchetto in mezzo alla configurazione (Eli, 17 ago: «ho
+      // fatto la verifica in 2 passaggi ma mi chiede l'accesso con impronta»).
+      // ⚠️ FINESTRA STRETTA — 2 min, non 10 (Eli, 17 ago sera: dopo aver
+      // configurato il 2FA l'app entrava in home senza chiedere l'impronta):
+      // 10 minuti lasciavano un buco troppo largo in cui il blocco non
+      // scattava. 2 min bastano per il giro all'Authenticator; a config
+      // finita TwoFactorCard rimuove comunque il marker (fase 'on').
       let flusso2fa = false
       try {
         const m = Number(sessionStorage.getItem('cc_2fa_flow'))
-        flusso2fa = Number.isFinite(m) && m > 0 && Date.now() - m < 10 * 60_000
+        flusso2fa = Number.isFinite(m) && m > 0 && Date.now() - m < 2 * 60_000
       } catch { /* storage bloccato */ }
       // Decisione presa FUORI dal functional updater così il mirror lockedRef
       // si aggiorna nello stesso tick (niente finestra di lag tra due
