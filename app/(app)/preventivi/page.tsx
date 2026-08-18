@@ -15,6 +15,7 @@ import { ListPager } from '../_components/ListPager'
 import { ArchivioToggle } from '../_components/ArchivioToggle'
 import { CestinoToggle } from '../_components/CestinoToggle'
 import { CestinoInline } from '../_components/CestinoInline'
+import { BackButton } from '@/components/shared/BackButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
 import { freeOpenSentIds } from '@/lib/plan/free-lock'
 import { formatDocNumber } from '@/lib/utils'
@@ -80,17 +81,18 @@ export default async function PreventiviPage({ searchParams }: Props) {
   // query normale: si esce subito, altrimenti `.eq('status','cestino')`
   // fallirebbe sull'enum. Non dipende dalla migration archivio.
   if (status === 'cestino') {
+    // Il cestino è una vista A SÉ (Eli, 17 ago): «dovrei vedere solo la
+    // pagina del cestino e ci deve essere un tasto indietro». Niente più
+    // Archivio qui — la freccia riporta alla lista.
     return (
       <div className="p-4 lg:p-6 max-w-5xl mx-auto">
-        <div className="lg:hidden -mx-4 -mt-4 mb-4 cc-title-band" style={{ padding: '15px 15px 13px' }}>
-          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Preventivi</h1>
+        <div className="lg:hidden -mx-4 -mt-4 mb-4 cc-title-band" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '15px 15px 13px' }}>
+          <BackButton fallback="/preventivi" ariaLabel="Torna ai preventivi" />
+          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Cestino</h1>
         </div>
         <div className="hidden lg:flex items-center gap-3 mb-4">
-          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Preventivi</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2" style={{ marginBottom: 14 }}>
-          {archivioOk && <ArchivioToggle base="/preventivi" attivo={false} />}
-          <CestinoToggle base="/preventivi" attivo />
+          <BackButton fallback="/preventivi" ariaLabel="Torna ai preventivi" />
+          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Cestino preventivi</h1>
         </div>
         <CestinoInline scope="preventivo" />
       </div>

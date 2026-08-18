@@ -37,6 +37,12 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 - ⚠️ **Trappola nota (annotata, non ancora un problema segnalato)**: in cc-large l'overlay/ritaglio del tour è contro-zoomato (net 1.0) mentre gli elementi di pagina sono a 1.15 → i ritagli potrebbero disallinearsi col «Testo grande» attivo. Da verificare se emerge.
 - tsc+build verdi · Chromium sul testo del popover e sulla geometria del FAB.
 
+### ✅ 17 ago (9) — Il Cestino è una vista a sé: via l'Archivio, dentro una freccia indietro
+Eli: «quando entro in Cestino vedo anche Archivio; dovrei vedere solo la pagina del cestino e ci deve essere un tasto indietro per tornare al menu precedente».
+- **Vista cestino di Preventivi/Fatture/Sopralluoghi ripulita**: tolti la pillola **Archivio** e la pillola **Cestino** attiva (ridondante, era solo un'etichetta). Al loro posto un'intestazione con **freccia indietro** (`BackButton`, fallback alla lista: `/preventivi`·`/fatture`·`/sopralluoghi`) + titolo **«Cestino»** (mobile) / «Cestino preventivi»·«Cestino fatture» (desktop). Il tasto Cestino di INGRESSO resta accanto all'Archivio nella lista — cambia solo la vista una volta dentro (FAQ e /novita restano vere: descrivono l'accesso).
+- ⚠️ Modello: la stessa forma della pagina `/cestino` standalone (BackButton + titolo, niente toggle). `BackButton` torna alla lista via `router.back()` (arrivi dal tasto Cestino) o al fallback su link diretto.
+- Verificato in Chromium (band a 390px): freccia + titolo, zero sbordi. tsc+build+**733** test verdi · scan 0.
+
 ### ✅ 17 ago (8) — Gli SCONTI in chiaro nel Riepilogo (voci + totale + complessivo)
 Eli: «visualizzare in modo chiaro sia gli sconti applicati alle singole voci che quelli totali finali». Prima gli sconti di voce erano INVISIBILI nel riepilogo (mangiati dentro i totali di riga) e lo sconto documento aveva una riga anonima «Sconto». Tutto in `FiscalSummary` (condiviso preventivo+fattura), **SOLO display — regola F, `calcoli.ts` intatto**: i numeri derivano dagli output del motore.
 - **Riga voce**: la % di sconto della singola voce compare accanto al totale di riga (verde, **fuori dallo span troncabile** — dentro, con una descrizione lunga l'ellissi si mangiava proprio la percentuale: trovato in Chromium al primo giro).

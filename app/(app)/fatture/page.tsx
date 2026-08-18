@@ -18,6 +18,7 @@ import { ListPager } from '../_components/ListPager'
 import { ArchivioToggle } from '../_components/ArchivioToggle'
 import { CestinoToggle } from '../_components/CestinoToggle'
 import { CestinoInline } from '../_components/CestinoInline'
+import { BackButton } from '@/components/shared/BackButton'
 import { DraftSavedBanner } from '../preventivi/_components/DraftSavedBanner'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
@@ -101,17 +102,17 @@ export default async function FatturePage({ searchParams }: Props) {
   // subito, senza passare dalla query normale. Non dipende dalla migration
   // archivio.
   if (status === 'cestino') {
+    // Vista a sé (Eli, 17 ago): solo il cestino + una freccia per tornare
+    // alla lista. Niente più Archivio qui.
     return (
       <div className="p-4 lg:p-6 max-w-4xl mx-auto">
-        <div className="lg:hidden -mx-4 -mt-4 mb-4 cc-title-band" style={{ padding: '15px 15px 13px' }}>
-          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Fatture</h1>
+        <div className="lg:hidden -mx-4 -mt-4 mb-4 cc-title-band" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '15px 15px 13px' }}>
+          <BackButton fallback="/fatture" ariaLabel="Torna alle fatture" />
+          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Cestino</h1>
         </div>
         <div className="hidden lg:flex items-center gap-3 mb-4">
-          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Fatture</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2" style={{ marginBottom: 14 }}>
-          {archivioOk && <ArchivioToggle base="/fatture" attivo={false} />}
-          <CestinoToggle base="/fatture" attivo />
+          <BackButton fallback="/fatture" ariaLabel="Torna alle fatture" />
+          <h1 className="cc-page-title" style={{ fontSize: 22 }}>Cestino fatture</h1>
         </div>
         <CestinoInline scope="fattura" />
       </div>

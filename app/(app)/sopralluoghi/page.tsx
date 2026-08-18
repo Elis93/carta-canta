@@ -66,17 +66,16 @@ export default async function SopralluoghiPage({
   // con ripristino ed eliminazione definitiva. Vista a sé (client component),
   // come nelle liste Preventivi/Fatture.
   if (status === 'cestino') {
+    // Vista a sé (Eli, 17 ago): solo il cestino, la freccia riporta alla
+    // lista. Niente più il tasto «Cestino» ridondante qui.
     return (
       <div className="max-w-3xl mx-auto">
         <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
-          <BackButton fallback="/altro" />
-          <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Sopralluoghi</span>
+          <BackButton fallback="/sopralluoghi" ariaLabel="Torna ai sopralluoghi" />
+          <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Cestino</span>
           <span style={{ width: 24 }} />
         </div>
         <div style={{ padding: '14px 15px 90px' }}>
-          <div className="flex flex-wrap items-center gap-2" style={{ marginBottom: 14 }}>
-            <CestinoToggle base="/sopralluoghi" attivo />
-          </div>
           <CestinoInline scope="sopralluogo" />
         </div>
       </div>
