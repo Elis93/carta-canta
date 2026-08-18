@@ -114,7 +114,7 @@ export default async function FatturePage({ searchParams }: Props) {
           <BackButton fallback="/fatture" ariaLabel="Torna alle fatture" />
           <h1 className="cc-page-title" style={{ fontSize: 22 }}>Cestino fatture</h1>
         </div>
-        <CestinoInline scope="fattura" />
+        <CestinoInline scope="fattura" workspaceId={workspace.id} />
       </div>
     )
   }

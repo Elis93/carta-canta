@@ -76,7 +76,7 @@ export default async function SopralluoghiPage({
           <span style={{ width: 24 }} />
         </div>
         <div style={{ padding: '14px 15px 90px' }}>
-          <CestinoInline scope="sopralluogo" />
+          <CestinoInline scope="sopralluogo" workspaceId={workspace.id} />
         </div>
       </div>
     )

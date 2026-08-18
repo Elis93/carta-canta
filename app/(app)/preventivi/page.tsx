@@ -94,7 +94,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
           <BackButton fallback="/preventivi" ariaLabel="Torna ai preventivi" />
           <h1 className="cc-page-title" style={{ fontSize: 22 }}>Cestino preventivi</h1>
         </div>
-        <CestinoInline scope="preventivo" />
+        <CestinoInline scope="preventivo" workspaceId={workspace.id} />
       </div>
     )
   }

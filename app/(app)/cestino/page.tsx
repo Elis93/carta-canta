@@ -1,4 +1,6 @@
+import { redirect } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
+import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
 import { CestinoInline } from '../_components/CestinoInline'
 
@@ -8,7 +10,12 @@ export const metadata = { title: 'Cestino' }
 // ripristino e l'eliminazione definitiva vivono in <CestinoInline/>, la stessa
 // che i tab «Cestino» dentro Preventivi e Fatture usano filtrata per tipo:
 // una sola logica, nessuna divergenza.
-export default function CestinoPage() {
+export default async function CestinoPage() {
+  // ⚡ Il workspace già dal server → CestinoInline salta getUser + le due
+  // query di risoluzione (Eli, 17 ago: cestino lento).
+  const { user, workspace } = await getSessionWorkspace()
+  if (!user) redirect('/login')
+  if (!workspace) redirect('/onboarding')
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header — mobile */}
@@ -36,7 +43,7 @@ export default function CestinoPage() {
       </div>
 
       <div style={{ padding: '14px 15px 32px' }} className="lg:px-6">
-        <CestinoInline />
+        <CestinoInline workspaceId={workspace.id} />
       </div>
     </div>
   )

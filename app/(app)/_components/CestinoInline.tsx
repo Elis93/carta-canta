@@ -57,7 +57,7 @@ interface DeletedItem {
 
 const DOC_TYPES_FATTURA = ['fattura', 'nota_credito', 'nota_debito']
 
-export function CestinoInline({ scope = 'all' }: { scope?: CestinoScope }) {
+export function CestinoInline({ scope = 'all', workspaceId: workspaceIdProp }: { scope?: CestinoScope; workspaceId?: string | null }) {
   const [items, setItems] = useState<DeletedItem[]>([])
   const [loading, setLoading] = useState(true)
   const [isPending, startTransition] = useTransition()
@@ -68,19 +68,25 @@ export function CestinoInline({ scope = 'all' }: { scope?: CestinoScope }) {
     let alive = true
     async function load() {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { if (alive) setLoading(false); return }
 
-      // Workspace dell'utente (owner o collaboratore accettato)
-      let workspaceId: string | null = null
-      const { data: ws } = await supabase
-        .from('workspaces').select('id').eq('owner_id', user.id).maybeSingle()
-      workspaceId = ws?.id ?? null
+      // ⚡ Il workspace ARRIVA GIÀ dal server (Eli, 17 ago: cestino lento). Le
+      // pagine che montano il cestino hanno già fatto getSessionWorkspace →
+      // passandolo qui si saltano getUser + le due query di risoluzione
+      // workspace: da 3-4 richieste in fila a UNA sola (i documenti). Solo se
+      // manca (compatibilità) si ricade sul vecchio percorso.
+      let workspaceId: string | null = workspaceIdProp ?? null
       if (!workspaceId) {
-        const { data: membership } = await supabase
-          .from('workspace_members').select('workspace_id')
-          .eq('user_id', user.id).not('accepted_at', 'is', null).limit(1).maybeSingle()
-        workspaceId = membership?.workspace_id ?? null
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { if (alive) setLoading(false); return }
+        const { data: ws } = await supabase
+          .from('workspaces').select('id').eq('owner_id', user.id).maybeSingle()
+        workspaceId = ws?.id ?? null
+        if (!workspaceId) {
+          const { data: membership } = await supabase
+            .from('workspace_members').select('workspace_id')
+            .eq('user_id', user.id).not('accepted_at', 'is', null).limit(1).maybeSingle()
+          workspaceId = membership?.workspace_id ?? null
+        }
       }
       if (!workspaceId) { if (alive) setLoading(false); return }
 
@@ -150,7 +156,7 @@ export function CestinoInline({ scope = 'all' }: { scope?: CestinoScope }) {
     }
     load()
     return () => { alive = false }
-  }, [scope])
+  }, [scope, workspaceIdProp])
 
   function daysLeft(deletedAt: string): number {
     const elapsed = Date.now() - new Date(deletedAt).getTime()
