@@ -37,6 +37,12 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 - ⚠️ **Trappola nota (annotata, non ancora un problema segnalato)**: in cc-large l'overlay/ritaglio del tour è contro-zoomato (net 1.0) mentre gli elementi di pagina sono a 1.15 → i ritagli potrebbero disallinearsi col «Testo grande» attivo. Da verificare se emerge.
 - tsc+build verdi · Chromium sul testo del popover e sulla geometria del FAB.
 
+### ✅ 17 ago (10) — Segnaposto più chiari (non sembrano compilati) + Filigrana con la pillola «Pro»
+Due punti di Eli.
+- **[UI] I SEGNAPOSTO sembravano già compilati** («es. Posa piastrelle», «es. Manodopera»…): usavano `--cc-muted` (#6f6d64, scurito il 15 ago per l'audit WCAG sul testo VERO) → troppo scuri per un hint. Nuova variabile **`--cc-placeholder` (#a29f96)**, più chiara del testo secondario: un campo vuoto ora si distingue a colpo d'occhio da uno compilato. La regola globale `::placeholder` ha ora `!important` per battere ANCHE il `placeholder:text-muted-foreground` dei campi shadcn (Input/Textarea) → tutti i segnaposto allo stesso grigio. In cc-large il segnaposto è `#77746c` (leggibile ma più chiaro del testo #55534b). ⚠️ Il placeholder NON è contenuto essenziale (sparisce appena scrivi) → può stare sotto la soglia AA; l'audit del 15 ago riguardava il testo reale, non i segnaposto. Verificato in Chromium (normale + Testo grande): hint chiaro vs valore scuro.
+- **[UI] Template › Filigrana**: per un Free diceva «Sempre attiva 🔒» — ma toglierla È una funzione Pro (`isPro ? Switch : …`). Ora la stessa pillola **«🔒 Solo con Pro»** delle righe Colore/Font/Logo (Eli: «se si può disattivare con Pro, lasciamo la scritta Pro come le altre»).
+- tsc+build+**733** test verdi · scan 0.
+
 ### ✅ 17 ago (9) — Il Cestino è una vista a sé: via l'Archivio, dentro una freccia indietro
 Eli: «quando entro in Cestino vedo anche Archivio; dovrei vedere solo la pagina del cestino e ci deve essere un tasto indietro per tornare al menu precedente».
 - **Vista cestino di Preventivi/Fatture/Sopralluoghi ripulita**: tolti la pillola **Archivio** e la pillola **Cestino** attiva (ridondante, era solo un'etichetta). Al loro posto un'intestazione con **freccia indietro** (`BackButton`, fallback alla lista: `/preventivi`·`/fatture`·`/sopralluoghi`) + titolo **«Cestino»** (mobile) / «Cestino preventivi»·«Cestino fatture» (desktop). Il tasto Cestino di INGRESSO resta accanto all'Archivio nella lista — cambia solo la vista una volta dentro (FAQ e /novita restano vere: descrivono l'accesso).

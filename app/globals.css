@@ -160,6 +160,11 @@
      di 4,5:1 — trovato dall'audit axe) a #6f6d64 (~5,2:1). La modalità "Testo
      grande" (classe cc-large) lo scurisce ancora a #55534b per gli occhi over-50. */
   --cc-muted: #6f6d64;
+  /* Testo dei SEGNAPOSTO (placeholder «es. …»): più chiaro del testo secondario,
+     così un campo vuoto si distingue a colpo d'occhio da uno già compilato
+     (Eli, 17 ago: «i suggerimenti sembrano già compilati»). Non è contenuto
+     essenziale — sparisce appena scrivi — quindi può stare sotto la soglia AA. */
+  --cc-placeholder: #a29f96;
   /* bordi */
   --cc-border-color: #e8e6df;
   --cc-border-strong: #d7d4cb;
@@ -241,8 +246,12 @@
   input, textarea, select {
     font-family: inherit;
   }
+  /* ⚠️ `!important` per battere ANCHE il `placeholder:text-muted-foreground`
+     dei campi shadcn (Input/Textarea): senza, quei campi userebbero
+     --muted-foreground (più scuro) e i loro segnaposto sembrerebbero già
+     compilati. Così TUTTI i segnaposto hanno lo stesso grigio chiaro. */
   input::placeholder, textarea::placeholder {
-    color: var(--cc-muted);
+    color: var(--cc-placeholder) !important;
     opacity: 1;
   }
   /* DECISIONE ELI (13 lug 2026): niente zoom automatico su iPhone.
@@ -748,6 +757,9 @@ html.cc-large .cc-zoom-neutral { zoom: 0.869565; }
 /* 2) Testi secondari più scuri: da #8a887f (≈3,5:1) a #55534b (≈6:1).
       Tutti i punti che usavano il grigio letterale ora leggono --cc-muted. */
 html.cc-large { --cc-muted: #55534b; }
+/* In «Testo grande» il segnaposto si scurisce per leggibilità, ma resta più
+   chiaro del testo del campo (#55534b) → un campo vuoto si riconosce ancora. */
+html.cc-large { --cc-placeholder: #77746c; }
 
 /* 3) Descrizioni sotto le voci di menu non ovvie: nascoste di default,
       visibili solo in modalità leggibile ("con descrizioni" — scelta Eli). */

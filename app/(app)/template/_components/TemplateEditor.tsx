@@ -366,15 +366,17 @@ export function TemplateEditor({
           </div>
           )}
 
-          {/* Filigrana Carta Canta — Pro può toglierla */}
+          {/* Filigrana Carta Canta — toglierla è una funzione Pro (Eli, 17 ago:
+              «SEMPRE ATTIVA» faceva pensare che non si potesse togliere; ora
+              la stessa pillola «Solo con Pro» delle righe Colore/Font/Logo). */}
           {openPanel === 'filigrana' && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={ROW_LABEL}>Filigrana Carta Canta</span>
             {isPro ? (
               <Switch checked={showWatermark} onCheckedChange={setShowWatermark} className="data-[state=checked]:bg-[#1a1a2e]" />
             ) : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--cc-muted)' }}>
-                Sempre attiva <Lock size={14} />
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: '#b0863e', border: '1px solid #e8d6ad', background: '#fbf7ee', padding: '4px 11px', borderRadius: 999, letterSpacing: '.02em' }}>
+                <Lock size={13} /> Solo con Pro
               </span>
             )}
           </div>
