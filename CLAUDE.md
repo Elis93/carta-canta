@@ -37,6 +37,15 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 - ⚠️ **Trappola nota (annotata, non ancora un problema segnalato)**: in cc-large l'overlay/ritaglio del tour è contro-zoomato (net 1.0) mentre gli elementi di pagina sono a 1.15 → i ritagli potrebbero disallinearsi col «Testo grande» attivo. Da verificare se emerge.
 - tsc+build verdi · Chromium sul testo del popover e sulla geometria del FAB.
 
+### ✅ 17 ago (8) — Gli SCONTI in chiaro nel Riepilogo (voci + totale + complessivo)
+Eli: «visualizzare in modo chiaro sia gli sconti applicati alle singole voci che quelli totali finali». Prima gli sconti di voce erano INVISIBILI nel riepilogo (mangiati dentro i totali di riga) e lo sconto documento aveva una riga anonima «Sconto». Tutto in `FiscalSummary` (condiviso preventivo+fattura), **SOLO display — regola F, `calcoli.ts` intatto**: i numeri derivano dagli output del motore.
+- **Riga voce**: la % di sconto della singola voce compare accanto al totale di riga (verde, **fuori dallo span troncabile** — dentro, con una descrizione lunga l'ellissi si mangiava proprio la percentuale: trovato in Chromium al primo giro).
+- **Sopra il Subtotale**, solo se c'è almeno uno sconto di voce: «**Totale senza sconti**» (prezzo pieno, arrotondato per riga come fa il motore) e «**Sconti sulle voci** −X». Senza sconti di voce le due righe non esistono e il riepilogo è identico a prima.
+- La riga dello sconto documento diventa «**Sconto sul totale**» (per distinguerla dagli sconti di voce).
+- **«Sconto complessivo** −X · Y%» sotto il Totale — SOLO quando ci sono entrambi i tipi (con uno solo sarebbe un doppione); % sul prezzo pieno.
+- **Verificato in Chromium sul componente VERO a 390px, 3 casi**: entrambi gli sconti (2.400→−200→2.200→−110→2.090, complessivo −310 · 12,9%) · solo sconti voce (niente complessivo né «Sconto sul totale») · nessuno sconto (riepilogo identico a prima). Zero sbordi. Voce in /novita; FAQ rilette, nessuna descrive il riepilogo.
+- tsc+build+**733** test verdi · scan 0.
+
 ### ✅ 17 ago (7) — Sopralluogo: 2 frasi via · le foto «mancanti» nel preventivo · pop-up Nuova voce ripulito
 Quattro punti serali di Eli (1 foto). Il quarto è una risposta, non codice.
 - **[COPY] Tolte le 2 frasi del sopralluogo** («Gli appunti vengono copiati nelle Note interne…» sotto i tasti; «Le misure salvate restano qui col loro calcolo… Passano nelle Note interne» sotto Calcola una misura). ⚠️ Solo il testo: il comportamento resta (appunti+misure → Note interne), e la FAQ del righello che lo spiega resta vera.

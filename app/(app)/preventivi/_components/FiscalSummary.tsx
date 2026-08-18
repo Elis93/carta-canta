@@ -46,6 +46,19 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
   const isForfettario = fiscalOpts.fiscal_regime === 'forfettario'
   const hasDiscount = fiscal.subtotal !== fiscal.afterDiscount
 
+  // ── Sconti in chiaro (Eli, 17 ago: «visualizzare in modo chiaro sia gli
+  // sconti applicati alle singole voci che quelli totali finali») ──────────
+  // SOLO visualizzazione: i numeri vengono dagli stessi output del motore
+  // (regola F — calcoli.ts non si tocca). Il «prezzo pieno» è la somma delle
+  // voci SENZA lo sconto di voce, arrotondata per riga come fa il motore.
+  const round2 = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100
+  const prezzoPieno = round2(itemsForCalc.reduce(
+    (s, it) => s + round2(it.quantity * it.unit_price), 0
+  ))
+  const scontoVoci = round2(prezzoPieno - fiscal.subtotal)
+  const scontoDoc = round2(fiscal.subtotal - fiscal.afterDiscount)
+  const scontoTotale = round2(scontoVoci + scontoDoc)
+
   const fmt = (v: number) =>
     v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
@@ -85,6 +98,16 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
                     </span>
                   )}
                 </span>
+                {/* Sconto della SINGOLA voce, in chiaro (Eli, 17 ago): il
+                    totale di riga è già scontato, ma senza questa nota lo
+                    sconto dato sulla voce non si vedeva da nessuna parte.
+                    FUORI dallo span troncabile: dentro, con una descrizione
+                    lunga, l'ellissi si mangiava proprio la percentuale. */}
+                {(v.discount_pct ?? 0) > 0 && (
+                  <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#2f8a63', whiteSpace: 'nowrap' }}>
+                    −{(v.discount_pct as number).toLocaleString('it-IT')}%
+                  </span>
+                )}
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#161616', whiteSpace: 'nowrap' }}>{curr(tot)}</span>
               </div>
             ))}
@@ -93,6 +116,23 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
       })()}
 
       <div className="space-y-2 text-sm">
+
+          {/* Con sconti sulle voci: prima il conto INTERO, poi quanto è stato
+              scontato voce per voce, poi il Subtotale — così i tre numeri si
+              seguono senza fare i conti a mente (Eli, 17 ago). Senza sconti
+              di voce le due righe non compaiono e resta il solo Subtotale. */}
+          {scontoVoci > 0 && (
+            <>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Totale senza sconti</span>
+                <span>{curr(prezzoPieno)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Sconti sulle voci</span>
+                <span className="text-[#2f8a63]">−{curr(scontoVoci)}</span>
+              </div>
+            </>
+          )}
 
           {/* Subtotale */}
           <div className="flex justify-between">
@@ -107,10 +147,11 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
             <div style={{ padding: '2px 0' }}>{discountSlot}</div>
           )}
 
-          {/* Sconto */}
+          {/* Sconto sul documento — «sul totale» per distinguerlo dagli
+              sconti delle singole voci qui sopra */}
           {hasDiscount && (
             <div className="flex justify-between text-muted-foreground">
-              <span>Sconto</span>
+              <span>Sconto sul totale</span>
               <span className="text-[#2f8a63]">
                 −{curr(fiscal.subtotal - fiscal.afterDiscount)}
               </span>
@@ -169,6 +210,18 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
             </span>
             <span>{curr(fiscal.total)}</span>
           </div>
+
+          {/* Sconto COMPLESSIVO (voci + totale) — solo quando ci sono
+              entrambi: con un solo tipo di sconto la sua riga dice già tutto
+              e questa sarebbe un doppione. La % è sul prezzo pieno. */}
+          {scontoVoci > 0 && scontoDoc > 0 && prezzoPieno > 0 && (
+            <div className="flex justify-between" style={{ fontSize: 12.5, color: '#2f8a63' }}>
+              <span>Sconto complessivo</span>
+              <span style={{ fontWeight: 600 }}>
+                −{curr(scontoTotale)} · {(scontoTotale / prezzoPieno * 100).toLocaleString('it-IT', { maximumFractionDigits: 1 })}%
+              </span>
+            </div>
+          )}
 
           {/* L'altra proposta, senza dover cambiare linguetta: con due totali
               a confronto si vede subito quanto costa la scelta. */}

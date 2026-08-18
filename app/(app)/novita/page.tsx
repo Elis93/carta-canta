@@ -20,6 +20,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       '«Fatti trovare dai clienti» ora si chiama «Vetrina»: lo stesso posto dove pubblichi il tuo profilo e raccogli richieste e recensioni, con un nome più chiaro.',
       'Le voci nuove si salvano da sole nel Catalogo: quando scrivi in un preventivo una voce che non c’era, l’app la aggiunge al tuo catalogo (senza doppioni). La volta dopo la ritrovi fra i suggerimenti.',
       'La card della voce è più semplice: il campo «Costo» non sta più in mezzo a Prezzo e Sconto. Il costo arriva da solo dal catalogo e dai listini, e lo vedi e lo correggi aprendo il riquadro «Margine · solo tu lo vedi» — una riga per voce, sempre invisibile al cliente.',
+      'Gli sconti si leggono in chiaro nel Riepilogo: accanto a ogni voce scontata compare la sua percentuale, e sopra il Subtotale trovi «Totale senza sconti» e «Sconti sulle voci». Lo sconto sul documento si chiama «Sconto sul totale», e quando ci sono entrambi una riga dice lo sconto complessivo, in euro e in percentuale.',
     ],
   },
   {
