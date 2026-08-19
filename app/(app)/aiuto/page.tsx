@@ -663,8 +663,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Come funzionano appuntamenti e agenda?',
     parole: ['calendario', 'sopralluogo', 'appuntamento'],
-    a: <>In un <b>sopralluogo</b>, nella card <b>Cantiere</b>, apri
-      {' '}<b>Appuntamento</b> e imposta data e ora: lo ritrovi nell&rsquo;<b>Agenda</b> (in Altro)
+    a: <>In un <b>sopralluogo</b>, apri la card <b>Appuntamento</b> e imposta data e ora:
+      {' '}lo ritrovi nell&rsquo;<b>Agenda</b> (in Altro)
       e, il giorno stesso, anche nella Home sotto <b>Oggi in agenda</b>, col bottone per avviare
       la navigazione verso il cantiere.</>,
   },

@@ -344,7 +344,8 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
         <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
       </div>
 
-      {/* CANTIERE — l'indirizzo del cantiere (dove si va) e l'appuntamento.
+      {/* CANTIERE — solo l'indirizzo del cantiere (dove si va). L'appuntamento
+          è una card a sé, sotto.
           ⚠️ NON è l'indirizzo del cliente: il lavoro può essere altrove. Se il
           cliente ha un indirizzo in rubrica, lo si può copiare con un tocco. */}
       <div style={cardStyle}>
@@ -385,37 +386,38 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           </a>
         )}
 
-        {/* Appuntamento (Agenda) — chiuso di default: è il blocco che «prende
-            molto spazio». Chiuso mostra la data scelta o «Nessuno». */}
-        <div style={{ borderTop: '0.5px solid #eee', marginTop: 12, paddingTop: 12 }}>
-          <button
-            type="button"
-            // Non si chiude finché l'ora manca: il picker deve restare visibile.
-            onClick={() => { if (openAppt && apptIncomplete) return; setOpenAppt((v) => !v) }}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}
-            aria-expanded={openAppt}
-          >
-            <CalendarClock size={15} style={{ color: '#8a887f', flexShrink: 0 }} />
-            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', flexShrink: 0 }}>Appuntamento</span>
-            {!openAppt && (
-              <span style={{ ...secSummary, fontSize: 12 }}>
-                {scheduledAt ? fmtAppuntamento(scheduledAt) : 'Nessuno'}
-              </span>
-            )}
-            <ChevronDown size={16} style={{ marginLeft: 'auto', flexShrink: 0, color: '#8a887f', transform: openAppt ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
-          </button>
-          {openAppt && (
-            <div style={{ marginTop: 10 }}>
-              <AppointmentPicker
-                value={scheduledAt}
-                onChange={setScheduledAt}
-                onIncompleteChange={setApptIncomplete}
-                excludeKind="sopralluogo"
-                excludeId={sopId}
-              />
-            </div>
+      </div>
+
+      {/* APPUNTAMENTO — card a sé (Eli, 19 ago: separato dal Cantiere). Chiuso
+          di default (blocco che «prende spazio»); resta aperto se ne esiste già
+          uno, e non si chiude finché manca l'ora (il picker deve restare visibile). */}
+      <div style={cardStyle}>
+        <button
+          type="button"
+          onClick={() => { if (openAppt && apptIncomplete) return; setOpenAppt((v) => !v) }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+          aria-expanded={openAppt}
+        >
+          <CalendarClock size={16} style={{ color: '#8a887f', flexShrink: 0 }} />
+          <span style={{ ...secLabel, marginBottom: 0, flexShrink: 0 }}>Appuntamento</span>
+          {!openAppt && (
+            <span style={secSummary}>
+              {scheduledAt ? fmtAppuntamento(scheduledAt) : 'Nessuno'}
+            </span>
           )}
-        </div>
+          <ChevronDown size={18} style={{ marginLeft: 'auto', flexShrink: 0, color: '#8a887f', transform: openAppt ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+        </button>
+        {openAppt && (
+          <div style={{ marginTop: 12 }}>
+            <AppointmentPicker
+              value={scheduledAt}
+              onChange={setScheduledAt}
+              onIncompleteChange={setApptIncomplete}
+              excludeKind="sopralluogo"
+              excludeId={sopId}
+            />
+          </div>
+        )}
       </div>
 
       {/* SEZIONE 2 — Appunti e misure */}
