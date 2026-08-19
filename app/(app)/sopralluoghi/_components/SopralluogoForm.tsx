@@ -24,6 +24,7 @@ import {
   deleteWorkPhotoAction,
   createPreventivoFromSopralluogoAction,
 } from '@/lib/actions/sopralluoghi'
+import { getClientAddressAction } from '@/lib/actions/clients'
 import { uploadWorkPhoto } from '@/lib/photos/upload-client'
 import { useSignedPhotos } from '@/lib/photos/use-signed-photos'
 
@@ -141,6 +142,9 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   const [apptIncomplete, setApptIncomplete] = useState(false)
   const [notes, setNotes] = useState(defaults?.notes ?? '')
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
+  // Indirizzo del cliente (residenza/sede) per offrire il tocco «usa questo»:
+  // NON è l'indirizzo del cantiere, è solo un punto di partenza (vedi sotto).
+  const [clienteAddress, setClienteAddress] = useState<string | null>(null)
   const [photos, setPhotos] = useState<SopralluogoPhoto[]>(defaults?.photos ?? [])
   // Archivio privato: gli indirizzi delle miniature si chiedono e scadono.
   const photoUrls = useSignedPhotos(photos.map((p) => p.storage_path), defaults?.photoSignedUrls)
@@ -160,18 +164,29 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   const [pendingAction, setPendingAction] = useState<'transform' | 'save' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Sezioni collassabili (Eli #1): Cliente e Appunti aperte (il cuore del
-  // sopralluogo); Foto chiusa e Appuntamento chiuso — sono i due blocchi che
-  // «prendono molto spazio». L'appuntamento resta aperto se ne esiste già uno.
-  const [openCliente, setOpenCliente] = useState(true)
+  // Titolo e Cliente ora sono card sempre visibili «come Nuovo Preventivo»
+  // (Eli, 19 ago). Restano collassabili solo i blocchi che «prendono molto
+  // spazio»: Appunti (aperto, è il cuore), Foto (chiuso), Appuntamento (chiuso,
+  // ma aperto se ne esiste già uno).
   const [openAppunti, setOpenAppunti] = useState(true)
   const [openFoto, setOpenFoto] = useState(false)
   const [openAppt, setOpenAppt] = useState(Boolean(defaults?.scheduledAt))
   // Giorno scelto senza ora: il picker deve restare visibile per correggere
-  // (finding M4). Serve aprire ANCHE la sezione madre «Cliente e cantiere»,
-  // altrimenti collassandola il picker sparirebbe pur restando il blocco al
-  // salvataggio. I toggle sono anche guardati sotto (non si chiude finché manca l'ora).
-  useEffect(() => { if (apptIncomplete) { setOpenCliente(true); setOpenAppt(true) } }, [apptIncomplete])
+  // (finding M4) → si riapre il blocco Appuntamento. Il toggle è anche guardato
+  // sotto (non si chiude finché manca l'ora).
+  useEffect(() => { if (apptIncomplete) setOpenAppt(true) }, [apptIncomplete])
+
+  // Indirizzo del cliente selezionato: si chiede quando cambia il cliente,
+  // per poterlo offrire con un tocco nel campo «Indirizzo del cantiere».
+  // Mai riempimento automatico: solo il suggerimento (vedi il chip sotto).
+  useEffect(() => {
+    let annullato = false
+    if (!client?.id) { setClienteAddress(null); return }
+    getClientAddressAction(client.id)
+      .then((r) => { if (!annullato) setClienteAddress(r.address) })
+      .catch(() => { if (!annullato) setClienteAddress(null) })
+    return () => { annullato = true }
+  }, [client?.id])
 
   function buildFormData(): FormData {
     const fd = new FormData()
@@ -300,7 +315,6 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   }
 
   // Riepiloghi mostrati quando la sezione è chiusa
-  const clienteSummary = client?.name?.trim() || title.trim() || 'Da compilare'
   const appuntiSummary = (() => {
     const line = notes.split('\n').map((s) => s.trim()).find(Boolean)
     if (line) return line.length > 42 ? line.slice(0, 42) + '…' : line
@@ -312,24 +326,54 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   return (
     <div style={{ padding: '14px 15px 16px', display: 'flex', flexDirection: 'column', gap: 13 }}>
 
-      {/* SEZIONE 1 — Cliente e cantiere (con l'appuntamento annidato). Non si
-          chiude finché manca l'ora dell'appuntamento: il picker è qui dentro. */}
-      <Sezione icon={HardHat} title="Cliente e cantiere" summary={clienteSummary} open={openCliente} onToggle={() => { if (openCliente && apptIncomplete) return; setOpenCliente((v) => !v) }}>
-        <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
+      {/* TITOLO — come Nuovo Preventivo: campo leggero, sempre visibile,
+          niente etichetta sopra (Eli, 19 ago). */}
+      <div style={{ ...cardStyle, padding: '6px 15px' }}>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titolo lavoro (es. Bagno piano primo)"
+          placeholder="Metti il titolo (es. Bagno piano primo)"
           maxLength={120}
-          style={{ ...fieldStyle, marginTop: 10 }}
+          style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, fontWeight: title.trim() ? 600 : 400, color: '#161616', fontFamily: 'inherit' }}
         />
+      </div>
+
+      {/* CLIENTE — come Nuovo Preventivo: card sempre visibile con l'etichetta. */}
+      <div style={cardStyle}>
+        <div style={{ ...secLabel, marginBottom: 12 }}>Cliente</div>
+        <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
+      </div>
+
+      {/* CANTIERE — l'indirizzo del cantiere (dove si va) e l'appuntamento.
+          ⚠️ NON è l'indirizzo del cliente: il lavoro può essere altrove. Se il
+          cliente ha un indirizzo in rubrica, lo si può copiare con un tocco. */}
+      <div style={cardStyle}>
+        <div style={{ ...secLabel, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <HardHat size={15} style={{ color: '#8a887f' }} /> Cantiere
+        </div>
         <input
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="Indirizzo cantiere (facoltativo)"
+          placeholder="Indirizzo del cantiere"
           maxLength={200}
-          style={{ ...fieldStyle, marginTop: 10 }}
+          style={fieldStyle}
         />
+        {/* Tocco per PARTIRE dall'indirizzo del cliente — solo quando il campo
+            è vuoto e il cliente ne ha uno in rubrica. Mai automatico: così il
+            campo mostra sempre esattamente ciò che verrà usato, e non nascono
+            due indirizzi diversi senza che l'artigiano se ne accorga. */}
+        {clienteAddress && !address.trim() && (
+          <button
+            type="button"
+            onClick={() => setAddress(clienteAddress)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, border: '1px solid #e0c98f', borderRadius: 999, background: '#fff', padding: '6px 12px', fontSize: 12.5, fontWeight: 600, color: '#b0863e', cursor: 'pointer', fontFamily: 'inherit', maxWidth: '100%' }}
+          >
+            <Navigation size={13} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              Usa l’indirizzo di {client?.name?.trim() || 'del cliente'}: {clienteAddress}
+            </span>
+          </button>
+        )}
         {address.trim() && (
           <a
             href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address.trim())}`}
@@ -355,7 +399,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', flexShrink: 0 }}>Appuntamento</span>
             {!openAppt && (
               <span style={{ ...secSummary, fontSize: 12 }}>
-                {scheduledAt ? fmtAppuntamento(scheduledAt) : 'Nessuno · facoltativo'}
+                {scheduledAt ? fmtAppuntamento(scheduledAt) : 'Nessuno'}
               </span>
             )}
             <ChevronDown size={16} style={{ marginLeft: 'auto', flexShrink: 0, color: '#8a887f', transform: openAppt ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
@@ -372,7 +416,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
             </div>
           )}
         </div>
-      </Sezione>
+      </div>
 
       {/* SEZIONE 2 — Appunti e misure */}
       <Sezione icon={FileText} title="Appunti e misure" summary={appuntiSummary} open={openAppunti} onToggle={() => setOpenAppunti((v) => !v)}>

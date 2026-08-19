@@ -520,3 +520,36 @@ export async function searchClientsAction(query: string) {
 
   return data ?? []
 }
+
+// ── Indirizzo del cliente (per il sopralluogo) ─────────────────
+// L'indirizzo del cliente (residenza/sede) NON è l'indirizzo del cantiere:
+// il lavoro può essere altrove (un appartamento in affitto, una seconda
+// casa, un'altra unità). Il sopralluogo tiene il suo «Indirizzo del
+// cantiere» come fonte di verità; questa funzione serve solo a offrire un
+// tocco per PARTIRE dall'indirizzo del cliente, mai un riempimento silenzioso
+// (eviterebbe una divergenza nascosta fra i due indirizzi).
+export async function getClientAddressAction(
+  clientId: string,
+): Promise<{ address: string | null }> {
+  if (!clientId) return { address: null }
+  const supabase = await createClient()
+  const workspaceId = await getWorkspaceId()
+  if (!workspaceId) return { address: null }
+
+  const { data } = await supabase
+    .from('clients')
+    .select('indirizzo, cap, citta, provincia')
+    .eq('id', clientId)
+    .eq('workspace_id', workspaceId)
+    .maybeSingle()
+  if (!data) return { address: null }
+
+  const parts: string[] = []
+  if (data.indirizzo?.trim()) parts.push(data.indirizzo.trim())
+  const cityLine = [data.cap, data.citta].map((v) => (v ?? '').trim()).filter(Boolean).join(' ')
+  const cityProv = data.provincia?.trim() ? `${cityLine} (${data.provincia.trim()})`.trim() : cityLine
+  if (cityProv) parts.push(cityProv)
+
+  const address = parts.join(', ').trim()
+  return { address: address || null }
+}
