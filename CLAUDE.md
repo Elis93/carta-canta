@@ -29,6 +29,13 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 20 ago (10) — Card «In scadenza» variante B (scelta Eli): due righe + tasti in linea
+Scelta sul mockup `scadenze-compatte`: **B**, con la modifica chiesta («Scaduto/Scade tra 4 giorni SOTTO a Prev./Fatt. xx»).
+- **`ScadenzeHomeCard` rifatta**: sotto cliente+importo c'è UNA riga divisa in due — a sinistra colonnina di 2 righe (sopra «Prev./Fatt. 002/2026» con l'eventuale «Mod.» + ⓘ in coda; sotto la scadenza colorata), a destra i **tre tasti quadrati 38×34**: campanella = Sollecita (rotella → spunta verde conservate), WhatsApp, Chiama. Via la riga-tasti a tutta larghezza e la riga dedicata a «Modificato». Pannello ⓘ a tutta larghezza sotto la riga.
+- **`scadenzaLabel`**: via la data secca — «fra 4 giorni · 23 ago» → «Scade tra 4 giorni» (usata SOLO dalla Home; la data esatta resta in /scadenze).
+- ⚠️ Verifica geometria su replica fedele: 0 sbordi a 336px e a **292px** (= equivalente «Testo grande»); il primo test dava 50px di overflow a zoom 1.15 ma era la replica col body a larghezza FISSA zoomato (artefatto del banco, non del layout) — rifatto con viewport ridotto. L'harness del componente VERO non è stato usato (entry fuori repo non risolve react; geometria coperta dalla replica 1:1 del mockup approvato).
+- tsc+build+**733** test+smoke 28/28 verdi · scan 0.
+
 ### ✅ 20 ago (9) — La bozza condivisa dice che la validità riparte + ⓘ SdI in tre passi
 Due punti di Eli (sera).
 - **[«Riporto in bozza, copio il link: non mi chiede se segnarlo Inviato né se la scadenza riparte»]** Verificato il server: `registerManualSendAction` su una bozza (anche riportata) segna Inviato E fa già ripartire `expires_at = oggi + validità` — non chiede **per progetto** (12 ago: prendere il link È l'invio; chiedere prima produceva link morti) e i toast ci sono dal giro (5). Quello che mancava era DIRLO: i toast della bozza hanno ora la riga «La validità riparte da oggi: scade tra N giorni» (fattura: «Termine di pagamento: entro N giorni da oggi»). ⚠️ Se Eli non vede nemmeno il toast base è la PWA su build vecchia (chiudere e riaprire 2 volte).
