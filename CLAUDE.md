@@ -29,6 +29,17 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 20 ago (4) — Audit della pagina Abbonamento: claim Free/Pro contro i gate VERI (2 falsi corretti)
+Eli: «è corretto quello che c'è scritto in abbonamento con quello che offriamo?». Audit voce per voce (B.0), ogni claim confrontato col codice.
+- **[FALSO] «Con Pro sono illimitate» sulle FOTO** (toast PreventivoForm + errore sopralluoghi.ts): il tetto Pro è **40** (`isProPlan ? 40 : 6`) → «Con Pro fino a 40».
+- **[FALSO] «Accesso prioritario alle nuove funzionalità»** (PLAN_PRICING.pro, desktop): nessun meccanismo esiste → sostituito con **«Bilancio entrate/uscite e listini fornitori»** (verificati davvero Pro: pagina Bilancio col lucchetto su Free, listini Pro).
+- **[FUORVIANTE] Periodo di prova 30 giorni**: `FREE_TRIAL_ENFORCED=false` in beta — il countdown compariva ma allo scadere non succede NULLA (fino a «Periodo di prova terminato» senza conseguenze). Ora le righe (mobile+desktop) sono gated su `FREE_TRIAL_ENFORCED`: al lancio, col flag a true, riappaiono da sole. FAQ e landing non citano i 30 giorni (verificato).
+- **[INCOERENTE] AI Import su mobile**: MobileProCard e card «Il tuo piano» Pro lo elencavano SENZA il suffisso «(in arrivo)» che il desktop ha via `aiImportLabel()` → allineate (flag `NEXT_PUBLIC` leggibile anche client-side).
+- **[ALLINEAMENTI]** desktop «Preventivi illimitati» → «Preventivi e fatture illimitati» (dal limite 083); pillola «Watermark» → «Filigrana»; banner lista preventivi «AI import e watermark rimovibile» → «template personalizzati e niente filigrana»; MobileProCard guadagna «Listini fornitori con ricarico».
+- **[BONIFICA residua Free→Gratuito]** 10 «piano Free» nei messaggi SERVER sfuggiti al giro (2): voice/transcribe, send-email ×3, templates, documents ×2, `DOC_LOCKED_MESSAGE` (free-lock), quota SdI ×2 → «piano gratuito». I test asseriscono solo `/Pro/`, nessuno rotto.
+- **Verificati VERI (nessun cambio)**: contatori 8+8 e spiegazione del conteggio (primo invio scala, bozze no, SdI no, delete non recupera — combacia con registerManualSendAction/send-email/incrementaQuotaFree) · Bilancio Pro · multi-proposta Pro · «Profilo In evidenza» · niente filigrana su Pro / forzata su Free · template 1 vs illimitati · Team nascosto · «Nessun contratto. Cancella quando vuoi».
+- tsc+build+**733** test+smoke 28/28 verdi · scan 0.
+
 ### ✅ 20 ago (3) — Template documento più belli: due vesti nei preset esistenti (no migration)
 Eli: «rendere il template default più bello ed elegante». Due mockup a pagina intera (artifact `documento-elegante`), entrambi approvati. Decisione via AskUserQuestion: **rivestire Classico ed Elegante** (non aggiungere preset nuovi → zero migration, selettore invariato, documenti già inviati intatti grazie a `template_snapshot`).
 - **`classico`** (resta il default) → veste **«Contemporanea»**: sans (Inter), fascia dati sotto la testata (Data · Scadenza/Valido · Regime), Emittente + Cliente in card, **TOTALE a riquadro pieno nel colore scelto** (bg `color`, testo `onColor`).
