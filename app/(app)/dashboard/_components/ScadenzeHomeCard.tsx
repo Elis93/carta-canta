@@ -158,8 +158,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
                 sui numeri vecchi.
               </p>
               <p style={{ margin: '6px 0 0' }}>
-                Se la modifica conta, <b>rimandaglielo</b>: apri il documento e usa
-                &laquo;Invia al cliente&raquo;. L&rsquo;avviso sparisce da solo dopo il nuovo invio.
+                Se la modifica conta, <b>rimandaglielo</b>.
               </p>
             </div>
           )}

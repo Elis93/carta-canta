@@ -533,7 +533,7 @@ export function FatturaForm({
             setPendingIntent('send')
           }}
           style={{
-            flex: 1.2, height: 50, boxSizing: 'border-box', borderRadius: 12,
+            flex: 1, height: 50, boxSizing: 'border-box', borderRadius: 12,
             background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600,
             boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
           }}

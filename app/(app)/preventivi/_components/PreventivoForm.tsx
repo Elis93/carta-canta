@@ -2113,7 +2113,7 @@ export function PreventivoForm({
                 disabled={saving || draftSaved}
                 onClick={doSendFromDraft}
                 style={{
-                  flex: 1.2,
+                  flex: 1,
                   background: '#1a1a2e',
                   color: '#fff',
                   borderRadius: 12,
@@ -2157,7 +2157,7 @@ export function PreventivoForm({
                   disabled={saving}
                   onClick={doSendFromDraft}
                   style={{
-                    flex: 1.2,
+                    flex: 1,
                     background: '#1a1a2e',
                     color: '#fff',
                     borderRadius: 12,
@@ -2202,7 +2202,7 @@ export function PreventivoForm({
                   if (err) setDocNumberError(err)
                 }}
                 style={{
-                  flex: 1.2,
+                  flex: 1,
                   background: '#1a1a2e',
                   color: '#fff',
                   borderRadius: 12,
