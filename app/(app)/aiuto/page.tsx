@@ -665,8 +665,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     parole: ['calendario', 'sopralluogo', 'appuntamento'],
     a: <>In un <b>sopralluogo</b>, apri la card <b>Appuntamento</b> e imposta data e ora:
       {' '}lo ritrovi nell&rsquo;<b>Agenda</b> (in Altro)
-      e, il giorno stesso, anche nella Home sotto <b>Appuntamenti di oggi</b>, col tasto per
-      avviare la navigazione verso il cantiere e la matita per aprirlo.</>,
+      e, il giorno stesso, anche nella Home sotto <b>Appuntamenti di oggi</b>, con i tasti per
+      avviare la navigazione verso il cantiere, chiamare il cliente e la matita per aprirlo.</>,
   },
   {
     q: 'Come calcolo metri quadri, piastrelle o vernice?',

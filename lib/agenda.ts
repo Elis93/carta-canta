@@ -15,7 +15,8 @@ export interface AgendaEvent {
   scheduled_at: string
   /** Indirizzo del cantiere: alimenta il tasto «Naviga» della Home (19 ago) */
   address: string | null
-  clients: { name: string | null; surname: string | null } | null
+  /** Telefono del cliente: alimenta il tasto «Chiama» della Home (20 ago) */
+  clients: { name: string | null; surname: string | null; phone: string | null } | null
 }
 
 /** Chiave giorno (YYYY-MM-DD) nel fuso di Roma. */
@@ -43,7 +44,7 @@ export async function getTodayEvents(
   const from = new Date(Date.now() - 36 * 3_600_000).toISOString()
   const to = new Date(Date.now() + 36 * 3_600_000).toISOString()
 
-  const select = 'id, title, scheduled_at, address, clients ( name, surname )'
+  const select = 'id, title, scheduled_at, address, clients ( name, surname, phone )'
   // Conta QUALSIASI appuntamento (anche passato): la CTA "primo appuntamento"
   // deve comparire solo a chi non ne ha mai messo uno.
   const countUpcoming = (table: string) =>

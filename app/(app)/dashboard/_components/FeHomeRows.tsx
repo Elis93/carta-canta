@@ -6,8 +6,9 @@ import Link from 'next/link'
 // (elenco col conto alla rovescia dei 12 giorni e il tasto di invio);
 // riga 2 → la stessa pagina filtrata sulle scartate (motivo dello scarto +
 // correzione). Niente «Vedi tutte» in testata: le righe SONO i collegamenti.
-// Il vuoto si dice, non si nasconde (regola 8 ago): a zero le righe restano,
-// con «Tutto trasmesso» / «Nessuno scarto».
+// A zero le righe restano (il vuoto è un'informazione): il conteggio «0» lo
+// dice già, quindi la sottodicitura sparisce (Eli, 20 ago) invece di ripetere
+// «Tutto trasmesso» / «Nessuno scarto».
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -50,14 +51,14 @@ export function FeHomeRows({ daTrasmettereCount, termineLabel, scartateCount, st
           href="/fatture/da-trasmettere"
           dotColor={daTrasmettereCount > 0 ? '#3f6fb0' : '#c9c7c0'}
           label="Da trasmettere"
-          sub={daTrasmettereCount > 0 ? (termineLabel ?? 'allo SdI') : 'Tutto trasmesso'}
+          sub={daTrasmettereCount > 0 ? (termineLabel ?? 'allo SdI') : ''}
           count={daTrasmettereCount}
         />
         <FeRow
           href="/fatture/da-trasmettere?solo=scartate"
           dotColor={scartateCount > 0 ? '#b05656' : '#c9c7c0'}
           label="Scartate"
-          sub={scartateCount > 0 ? 'da correggere' : 'Nessuno scarto'}
+          sub={scartateCount > 0 ? 'da correggere' : ''}
           subColor={scartateCount > 0 ? '#b05656' : undefined}
           count={scartateCount}
         />

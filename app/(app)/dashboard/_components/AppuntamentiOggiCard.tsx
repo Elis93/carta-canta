@@ -1,12 +1,13 @@
 import Link from 'next/link'
-import { ChevronRight, Navigation, PenLine, Plus } from 'lucide-react'
+import { ChevronRight, Navigation, PenLine, Phone, Plus } from 'lucide-react'
 import { romeTime, type TodayAgenda } from '@/lib/agenda'
 
 // ── «Appuntamenti di oggi» (Home mobile, redesign 19-20 ago) ────────────────
-// Una RIGA per appuntamento: ora (serif) · cliente · due tasti quadrati —
-// Naviga (navigatore con l'indirizzo del cantiere già inserito, solo se c'è)
-// e la matita (apre il sopralluogo/lavoro per scrivere). Il corpo della riga
-// apre l'agenda su oggi (decisione Eli: via il link «Agenda →» in testata).
+// Una RIGA per appuntamento, organizzata come la card «Lavoro in corso»: ora
+// (serif) · cliente · TRE tasti quadrati a lato — Naviga (navigatore con
+// l'indirizzo del cantiere, solo se c'è), Chiama (telefono del cliente, solo
+// se c'è) e la matita (apre il sopralluogo/lavoro per scrivere). Il corpo
+// della riga apre l'agenda su oggi (decisione Eli: via il link «Agenda →»).
 // Nome lungo → puntini: scelta Eli («appuntamenti a una riga»).
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
@@ -30,7 +31,7 @@ export function AppuntamentiOggiCard({ agenda, style }: { agenda: TodayAgenda; s
         <div style={{ background: '#fff', borderRadius: 13, boxShadow: SH, padding: '4px 15px' }}>
           {!hasUpcoming ? (
             <Link
-              href="/sopralluoghi/nuovo"
+              href="/calendario"
               style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 0', textDecoration: 'none', color: 'inherit' }}
             >
               <span style={{ width: 26, height: 26, borderRadius: '50%', background: '#f3ede0', color: '#b0863e', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -59,6 +60,7 @@ export function AppuntamentiOggiCard({ agenda, style }: { agenda: TodayAgenda; s
             const clientName = [ev.clients?.name, ev.clients?.surname].filter(Boolean).join(' ')
             const detailHref = ev.kind === 'lavoro' ? `/lavori/${ev.id}` : `/sopralluoghi/${ev.id}`
             const address = ev.address?.trim() || null
+            const phone = ev.clients?.phone?.trim() || null
             return (
               <div
                 key={`${ev.kind}-${ev.id}`}
@@ -87,6 +89,15 @@ export function AppuntamentiOggiCard({ agenda, style }: { agenda: TodayAgenda; s
                     style={{ ...sqStyle, border: '1px solid #e0c98a', color: '#b0863e' }}
                   >
                     <Navigation size={17} aria-hidden />
+                  </a>
+                )}
+                {phone && (
+                  <a
+                    href={`tel:${phone.replace(/\s+/g, '')}`}
+                    aria-label={clientName ? `Chiama ${clientName}` : 'Chiama il cliente'}
+                    style={sqStyle}
+                  >
+                    <Phone size={17} aria-hidden />
                   </a>
                 )}
                 <Link
