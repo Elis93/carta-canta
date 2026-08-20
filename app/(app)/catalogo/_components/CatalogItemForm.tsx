@@ -58,6 +58,11 @@ function buildUnitOptions(savedUnit: string | undefined): { value: string; label
   return UNITS
 }
 
+// Le QUATTRO aliquote IVA italiane + lo 0 (esenti/non imponibili) — le stesse
+// della tendina del preventivo. Il campo libero permetteva aliquote
+// inesistenti (es. 60%), che si sarebbero scoperte solo allo scarto SdI.
+const VAT_OPTIONS = ['22', '10', '5', '4', '0']
+
 export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = useTransition()
@@ -82,6 +87,9 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
 
   async function handleSubmit(formData: FormData) {
     formData.set('unit', unit)
+    // La tendina IVA non è un campo di form nativo: il valore va messo a mano
+    // ('' = predefinita → il server salva null)
+    formData.set('vat_rate', vatRate)
 
     startTransition(async () => {
       const result = item
@@ -195,29 +203,30 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
             required
           />
         </div>
-        <div style={{ width: 70 }}>
-          <Label htmlFor="ci-vat" style={labelStyle}>IVA %</Label>
-          <Input
-            id="ci-vat"
-            name="vat_rate"
-            type="text"
-            inputMode="decimal"
-            value={vatRate}
-            style={fieldStyle}
-            onChange={(e) => {
-              let raw = e.target.value
-              if (vatRate === '0' && raw.length > 1 && raw.startsWith('0') && !raw.startsWith('0.')) {
-                raw = raw.slice(1)
-              }
-              setVatRate(raw)
-            }}
-            onBlur={() => {
-              if (vatRate.trim() === '') { setVatRate(''); return }
-              const num = parseFloat(vatRate.replace(',', '.'))
-              setVatRate(isNaN(num) ? '' : String(num))
-            }}
-            placeholder="22"
-          />
+        <div style={{ width: 96 }}>
+          <Label htmlFor="ci-vat" style={labelStyle}>IVA</Label>
+          {/* Tendina con le SOLE aliquote italiane vere (22/10/5/4/0), come
+              nel preventivo — il campo libero permetteva di scrivere
+              un'aliquota inesistente (Eli, 20 ago: «ho potuto mettere IVA al
+              60%»). Un valore storico fuori elenco resta visibile finché non
+              lo si corregge (stesso schema FIX-20 delle unità). */}
+          <Select
+            value={vatRate === '' ? '__none__' : vatRate}
+            onValueChange={(v) => setVatRate(v === '__none__' ? '' : v)}
+          >
+            <SelectTrigger id="ci-vat" className="w-full" style={fieldStyle}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">Predefinita</SelectItem>
+              {VAT_OPTIONS.map((r) => (
+                <SelectItem key={r} value={r}>{r}%</SelectItem>
+              ))}
+              {vatRate !== '' && !VAT_OPTIONS.includes(vatRate) && (
+                <SelectItem value={vatRate}>{vatRate}% (da correggere)</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

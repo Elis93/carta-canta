@@ -352,6 +352,11 @@ export function ShareButton({
           return
         }
         router.refresh()
+        // Stessa conferma di «Copia» (Eli, 20 ago): senza, condividendo via
+        // WhatsApp/Altre app il documento veniva segnato Inviato in silenzio.
+        toast.success(docType === 'preventivo'
+          ? 'Preventivo segnato come Inviato'
+          : `${docLabel.charAt(0).toUpperCase()}${docLabel.slice(1)} segnata come Inviata`)
         avvisoDodiciGiorni()
       }
 
@@ -363,6 +368,10 @@ export function ShareButton({
           return
         }
         router.refresh()
+        // Stessa conferma che dà «Copia» dopo il rinvio (Eli, 20 ago)
+        toast.success(isFatturaLike
+          ? `Nuovo termine di pagamento: fra ${validityDays} giorni.`
+          : `La validità riparte: scade tra ${validityDays} giorni.`)
       }
 
       // ⚠️ Documento già inviato e poi MODIFICATO: il pop-up RESTA APERTO, così

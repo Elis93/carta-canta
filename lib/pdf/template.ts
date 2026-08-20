@@ -770,8 +770,6 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       const tint = rgba(color, 0.08)
       const tintLine = rgba(color, 0.14)
       const strongLabel = `font-size:15px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:${safeAccentColor};white-space:nowrap;`
-      const regimeLabel = workspace.fiscal_regime === 'ordinario' ? 'Ordinario'
-        : workspace.fiscal_regime === 'minimi' ? 'Minimi' : 'Forfettario'
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #eef0f1;">
@@ -814,8 +812,8 @@ export function buildPdfHtml(data: PdfDocumentData): string {
             <div style="font-size:16px;color:#1a2731;font-weight:600;margin-top:2px;white-space:nowrap;">${expiresDateShort ?? '—'}</div>
           </div>
           <div style="flex:1;padding:9px 16px;">
-            <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:${safeAccentColor};font-weight:700;">Regime</div>
-            <div style="font-size:16px;color:#1a2731;font-weight:600;margin-top:2px;white-space:nowrap;">${regimeLabel}</div>
+            <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:${safeAccentColor};font-weight:700;">${multiTier ? `Tot. ${TIER_LABELS_PDF[refTier ?? 'base']}` : 'Totale'}</div>
+            <div style="font-size:16px;color:#1a2731;font-weight:600;margin-top:2px;white-space:nowrap;">${fmt(total)}&nbsp;€</div>
           </div>
         </div>
 

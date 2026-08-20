@@ -245,8 +245,8 @@ export function TemplatePreview({
             <div style={{ fontSize: 11, color: '#1a2731', fontWeight: 600, marginTop: 1 }}>{expiry}</div>
           </div>
           <div style={{ flex: 1, padding: '6px 12px' }}>
-            <div style={KCELL}>Regime</div>
-            <div style={{ fontSize: 11, color: '#1a2731', fontWeight: 600, marginTop: 1 }}>Ordinario</div>
+            <div style={KCELL}>Totale</div>
+            <div style={{ fontSize: 11, color: '#1a2731', fontWeight: 600, marginTop: 1 }}>{fmt(total)}&nbsp;€</div>
           </div>
         </div>
 

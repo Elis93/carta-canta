@@ -897,7 +897,7 @@ export async function updateDocumentAction(
   // determinare se impostare updated_after_send_at (come saveDraftAction).
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms, bonus_edilizio, total, reverse_charge')
+    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms, bonus_edilizio, total, reverse_charge, sent_at')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -994,13 +994,23 @@ export async function updateDocumentAction(
 
   const validityDays = parsed.data.validity_days ?? 30
 
-  // expires_at: ricalcolato solo per le bozze.
-  // Per documenti già inviati (sent/viewed) la scadenza NON cambia al salvataggio:
-  // riparte solo quando il documento viene reinviato al cliente.
+  // expires_at: per le bozze si ricalcola sempre (da oggi). Per i documenti
+  // già inviati (sent/viewed) un semplice salvataggio NON tocca la scadenza —
+  // l'auto-save la sposterebbe in avanti da solo a ogni apertura (decisione
+  // sess. 23). MA se l'artigiano CAMBIA la validità nel form, la scelta va
+  // applicata (Eli, 20 ago: «cambio la validità ma la scadenza non si
+  // aggiorna»): si ricalcola dall'ANCORA dell'invio (sent_at), così il
+  // documento «vale N giorni da quando l'ho inviato» — mai da oggi, che
+  // regalerebbe giorni in più a ogni modifica.
   const isSentOrViewed = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
-  const expiresAt = isSentOrViewed
-    ? null  // non aggiornare (usiamo il valore attuale nel DB)
-    : (() => { const d = new Date(); d.setDate(d.getDate() + validityDays); return d })()
+  const validityChanged = validityDays !== (existingDoc.validity_days ?? 30)
+  const addDays = (base: Date, days: number) => { const d = new Date(base); d.setDate(d.getDate() + days); return d }
+  const sentAnchor = (existingDoc as { sent_at?: string | null }).sent_at
+  const expiresAt = !isSentOrViewed
+    ? addDays(new Date(), validityDays)
+    : validityChanged
+      ? addDays(sentAnchor ? new Date(sentAnchor) : new Date(), validityDays)
+      : null  // non aggiornare (usiamo il valore attuale nel DB)
 
   // Numero: usa quello dal form (eventuale modifica manuale) oppure mantieni l'esistente
   const docNumberNew = parsed.data.doc_number?.trim() || existingDoc.doc_number
@@ -1191,7 +1201,7 @@ export async function saveDraftAction(
 
   const { data: existingDoc } = await supabase
     .from('documents')
-    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms, bonus_edilizio, client_id, total, reverse_charge')
+    .select('id, status, doc_number, doc_type, document_log, sent_snapshot, title, notes, internal_notes, discount_pct, discount_fixed, vat_rate_default, validity_days, payment_terms, bonus_edilizio, client_id, total, reverse_charge, sent_at')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -1327,10 +1337,16 @@ export async function saveDraftAction(
   }
 
   const validityDays = parsed.data.validity_days ?? 30
-  // expires_at riparte SOLO al (re)invio (decisione bloccata): per i doc già
-  // inviati il salvataggio NON tocca la scadenza.
+  // expires_at: il salvataggio di un doc già inviato NON tocca la scadenza
+  // (l'auto-save la sposterebbe da solo). Eccezione (Eli, 20 ago): se la
+  // VALIDITÀ è stata cambiata nel form, si ricalcola dall'ancora dell'invio
+  // (sent_at) — stessa regola di updateDocumentAction.
   const draftIsSentOrViewed = existingDoc.status === 'sent' || existingDoc.status === 'viewed'
-  const expiresAt = new Date()
+  const draftValidityChanged = validityDays !== (existingDoc.validity_days ?? 30)
+  const draftSentAnchor = (existingDoc as { sent_at?: string | null }).sent_at
+  const expiresAt = draftIsSentOrViewed && draftValidityChanged && draftSentAnchor
+    ? new Date(draftSentAnchor)
+    : new Date()
   expiresAt.setDate(expiresAt.getDate() + validityDays)
 
   // Se il numero viene esplicitamente cancellato (stringa vuota):
@@ -1383,7 +1399,7 @@ export async function saveDraftAction(
             total: docTotals.total,
           }
         : {}),
-      ...(draftIsSentOrViewed ? {} : { expires_at: expiresAt.toISOString() }),
+      ...(draftIsSentOrViewed && !draftValidityChanged ? {} : { expires_at: expiresAt.toISOString() }),
       // NON aggiorniamo updated_at nell'auto-save: evita che il documento
       // salga in cima alla lista ogni 30 secondi anche senza modifiche reali.
       // updated_at viene aggiornato solo da updateDocumentAction (salvataggio esplicito).
