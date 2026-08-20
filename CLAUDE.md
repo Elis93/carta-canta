@@ -29,6 +29,17 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 20 ago (3) — Template documento più belli: due vesti nei preset esistenti (no migration)
+Eli: «rendere il template default più bello ed elegante». Due mockup a pagina intera (artifact `documento-elegante`), entrambi approvati. Decisione via AskUserQuestion: **rivestire Classico ed Elegante** (non aggiungere preset nuovi → zero migration, selettore invariato, documenti già inviati intatti grazie a `template_snapshot`).
+- **`classico`** (resta il default) → veste **«Contemporanea»**: sans (Inter), fascia dati sotto la testata (Data · Scadenza/Valido · Regime), Emittente + Cliente in card, **TOTALE a riquadro pieno nel colore scelto** (bg `color`, testo `onColor`).
+- **`elegante`** → veste **«Sartoriale»**: serif (Georgia/Lora self-hosted, già presente), testata a due livelli, blocchi **Da/Per**, tabella a filetti con accento sotto la testata, totale serif sotto un filetto `safeAccentColor`.
+- **Bold e Tecnico invariati.** L'accento ora usa il **colore scelto dall'artigiano** (non più un valore fisso del mockup). Restano TUTTI i casi fiscali: IVA ordinaria, bollo, ritenuta, reverse charge, sconto, acconto, multi-proposta (`withTierHeaders`+`depositHtml`), filigrana bozza/annullata, note legali (`legalHtml`), logo dx/sx.
+- **`lib/pdf/template.ts`**: riscritti i `case 'classico'` e `case 'elegante'` riusando gli helper condivisi (rows, depositHtml, paymentHtml, legalHtml, vatRowsEl, totali). **Verificati con render REALE di `buildPdfHtml`** (esbuild+Chromium) su forfettario/preventivo con acconto e ordinario/fattura con IVA — screenshot fedeli ai mockup, zero overflow.
+- **`TemplatePreview.tsx`**: anteprima in-app allineata (port 1:1 delle due vesti; non ri-screenshot per costo harness — validata da tsc/build e speculare al PDF verificato).
+- **`PresetSelector.tsx`**: descrizioni riscritte + `defaultColor` allineato (classico petrolio `#1f5460`, elegante ottone `#9c7c46`); label «Classico»/«Elegante» invariate.
+- ⚠️ Il numero `1.675,00` senza separatore migliaia nei render locali è solo ICU ridotto di Node in ambiente; su Vercel (ICU pieno) `fmt`/`toLocaleString` raggruppa come sempre — stesso `fmt` dei preset esistenti.
+- tsc+build+**733** test+smoke 28/28 verdi · scan 0 · voce in /novita.
+
 ### ✅ 20 ago (2) — Rifiniture Home + suggerimenti indirizzo cantiere (INTERNI, no Google)
 Quattro punti di Eli dopo la Home vera.
 - **[HOME] Fatture elettroniche a zero**: via «Tutto trasmesso»/«Nessuno scarto» (`FeHomeRows` → `sub=''` quando il conteggio è 0; il pallino diventa grigio e lo «0» dice già tutto).
