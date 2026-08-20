@@ -30,6 +30,8 @@ import { DocumentTimeline } from '../_components/DocumentTimeline'
 import { MessaggiCard } from '../_components/MessaggiCard'
 import { conversationFromLog } from '@/lib/documents/messaggi'
 import { hasPiuProposte, totaliPerProposta, tierOf, TIER_LABEL, TIER_ORDER, type TierKey, type VoceConTier } from '@/lib/documents/proposte'
+import { riepilogoIva } from '@/lib/fiscal/calcoli'
+import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
@@ -184,8 +186,27 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const taxAmount = Number((doc as any).tax_amount ?? 0)
   const bolloAmount = Number((doc as any).bollo_amount ?? 0)
   const totalAmount = Number((doc as any).total ?? 0)
-  const vatRates = Array.from(new Set(docItems.map((i) => Number(i.vat_rate)).filter((r) => !Number.isNaN(r))))
-  const ivaLabel = vatRates.length === 1 ? `IVA ${vatRates[0]}%` : 'IVA'
+  // Righe «IVA x%» PER ALIQUOTA, dal motore (riepilogoIva) sulle voci espanse
+  // dei beni significativi — stessa fonte del PDF, così non possono divergere.
+  // ⚠️ Prima l'etichetta faceva Number(vat_rate): su una voce con IVA
+  // «predefinita» (null) usciva «IVA 0%» accanto all'imposta calcolata al
+  // default (Eli, 20 ago, foto); e con aliquote diverse una sola riga «IVA»
+  // sommava tutto. Ora: una riga per aliquota, col numero giusto.
+  const ivaOpts = {
+    fiscal_regime: 'ordinario' as const,
+    discount_pct: Number((doc as any).discount_pct ?? 0),
+    discount_fixed: Number((doc as any).discount_fixed ?? 0),
+    vat_rate_default: ((doc as any).vat_rate_default ?? 22) as number,
+  }
+  const righeIvaDi = (items: typeof docItems) => riepilogoIva(
+    (espandiBeniSignificativi(
+      items as unknown as VoceSplittabile[],
+      workspace.fiscal_regime,
+      (doc as any).vat_rate_default ?? null,
+    ) as unknown as typeof docItems).map((i) => ({ total: Number(i.total ?? 0), vat_rate: i.vat_rate == null ? null : Number(i.vat_rate) })),
+    ivaOpts,
+  ).filter((r) => r.rate > 0)
+  const ivaRighe = righeIvaDi(docItems)
 
   // Preventivo con più proposte: un calcolo PER PROPOSTA (null se ce n'è una
   // sola, e allora restano i totali salvati sul documento).
@@ -601,12 +622,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                         <span>Subtotale</span>
                         <span style={{ fontWeight: 500 }}>{euro(p.subtotal)}</span>
                       </div>
-                      {p.taxAmount > 0 && (
-                        <div style={riepilogoRow}>
-                          <span>{ivaLabel}</span>
-                          <span style={{ fontWeight: 500 }}>{euro(p.taxAmount)}</span>
+                      {p.taxAmount > 0 && righeIvaDi(docItems.filter((i) => tierOf(i as unknown as VoceConTier) === p.tier)).map((r) => (
+                        <div key={r.rate} style={riepilogoRow}>
+                          <span>IVA {r.rate}%</span>
+                          <span style={{ fontWeight: 500 }}>{euro(r.imposta)}</span>
                         </div>
-                      )}
+                      ))}
                       {p.bollo > 0 && (
                         <div style={riepilogoRow}>
                           <span>Marca da bollo</span>
@@ -648,12 +669,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                   <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
                   <span style={{ color: '#161616', fontWeight: 500 }}>{euro(subtotal)}</span>
                 </div>
-                {taxAmount > 0 && (
-                  <div style={sumRow}>
-                    <span style={{ color: '#161616', fontWeight: 400 }}>{ivaLabel}</span>
-                    <span style={{ color: '#161616', fontWeight: 500 }}>{euro(taxAmount)}</span>
+                {taxAmount > 0 && ivaRighe.map((r) => (
+                  <div key={r.rate} style={sumRow}>
+                    <span style={{ color: '#161616', fontWeight: 400 }}>IVA {r.rate}%</span>
+                    <span style={{ color: '#161616', fontWeight: 500 }}>{euro(r.imposta)}</span>
                   </div>
-                )}
+                ))}
                 {bolloAmount > 0 && (
                   <div style={sumRow}>
                     <span style={{ color: '#161616', fontWeight: 400 }}>Marca da bollo</span>

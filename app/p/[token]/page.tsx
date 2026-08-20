@@ -532,7 +532,20 @@ export default async function PublicDocumentPage({ params }: Props) {
           }
           subtotal={doc.subtotal}
           taxAmount={doc.tax_amount}
-          vatRateDefault={doc.vat_rate_default}
+          // ⚠️ Aliquota UNICA RISOLTA sulle voci espanse, non il default del
+          // documento: una voce al 10% con default 22 mostrava «IVA 22%»
+          // accanto a un'imposta calcolata al 10 (gemello del bug del
+          // riepilogo interno, Eli 20 ago).
+          vatRateDefault={(() => {
+            const rates = new Set(
+              espandiBeniSignificativi(
+                (doc.document_items ?? []) as unknown as VoceSplittabile[],
+                workspace.fiscal_regime,
+                doc.vat_rate_default,
+              ).map((i) => i.vat_rate ?? doc.vat_rate_default ?? 22)
+            )
+            return rates.size === 1 ? [...rates][0] : doc.vat_rate_default
+          })()}
           // ⚠️ multiVat sulle voci ESPANSE: con un bene splittato le voci
           // grezze sono tutte al 10% ma l'importo include il 22% —
           // l'etichetta «IVA 10%» accanto a quel numero era falsa.

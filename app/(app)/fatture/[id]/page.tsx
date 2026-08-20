@@ -39,6 +39,8 @@ import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
 import { docNumberSlug } from '@/lib/documents/numero'
+import { riepilogoIva } from '@/lib/fiscal/calcoli'
+import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 import { residuoStornabile, sommaNoteAttive, baseStornabile, importoRitenuta, TOLLERANZA_STORNO } from '@/lib/documents/storno'
 import { isDocFreeLocked } from '@/lib/plan/free-lock'
 import { PRO_LOCK_HREF } from '@/lib/plan/gate'
@@ -484,9 +486,24 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     cursor: 'pointer', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
   }
 
-  // Etichetta IVA: mostra la percentuale se uniforme su tutte le voci, altrimenti generica
-  const vatRates = Array.from(new Set(docItems.map(it => Number(it.vat_rate ?? 0))))
-  const ivaLabel = vatRates.length === 1 ? `IVA ${vatRates[0]}%` : 'IVA'
+  // Righe «IVA x%» PER ALIQUOTA, dal motore (riepilogoIva) sulle voci espanse
+  // dei beni significativi — stessa fonte del PDF (gemello di preventivi/[id]).
+  // ⚠️ Prima Number(vat_rate ?? 0) su una voce con IVA «predefinita» (null)
+  // mostrava «IVA 0%» accanto all'imposta calcolata al default (Eli, 20 ago);
+  // con aliquote diverse una sola riga sommava tutto.
+  const ivaRighe = riepilogoIva(
+    (espandiBeniSignificativi(
+      docItems as unknown as VoceSplittabile[],
+      workspace.fiscal_regime,
+      (doc as any).vat_rate_default ?? null,
+    ) as unknown as typeof docItems).map((i) => ({ total: Number(i.total ?? 0), vat_rate: i.vat_rate == null ? null : Number(i.vat_rate) })),
+    {
+      fiscal_regime: 'ordinario',
+      discount_pct: Number((doc as any).discount_pct ?? 0),
+      discount_fixed: Number((doc as any).discount_fixed ?? 0),
+      vat_rate_default: ((doc as any).vat_rate_default ?? 22) as number,
+    },
+  ).filter((r) => r.rate > 0)
 
   // Modalità MODIFICA vera: solo negli stati dove il form può comparire.
   // Con ?edit=1 stantio in URL (back del browser dopo Annulla/Segna pagata)
@@ -842,14 +859,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 </span>
               </div>
             )}
-            {Number((doc as any).tax_amount ?? 0) > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
-                <span style={{ color: '#161616', fontWeight: 400 }}>{ivaLabel}</span>
+            {Number((doc as any).tax_amount ?? 0) > 0 && ivaRighe.map((r) => (
+              <div key={r.rate} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
+                <span style={{ color: '#161616', fontWeight: 400 }}>IVA {r.rate}%</span>
                 <span style={{ color: '#161616', fontWeight: 500 }}>
-                  {`€\u00A0${Number((doc as any).tax_amount).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
+                  {`€\u00A0${r.imposta.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 </span>
               </div>
-            )}
+            ))}
             <div style={{ height: '1px', background: '#e3e3e6', margin: '0 -15px' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 16 }}>
               <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
