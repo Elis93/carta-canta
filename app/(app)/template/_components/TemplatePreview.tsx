@@ -207,116 +207,125 @@ export function TemplatePreview({
   // CLASSICO
   // ══════════════════════════════════════════════════════════════════════════
   if (presetKey === 'classico') {
+    // «Contemporanea» (Eli 20 ago): sans, fascia dati, cliente in card e
+    // TOTALE a riquadro pieno nel colore scelto. Anteprima allineata al PDF.
+    const tint = colorAlpha(color, 0.08)
+    const tintLine = colorAlpha(color, 0.14)
+    const STRONG: React.CSSProperties = { fontSize: 10, fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: safeAccentColor, marginBottom: 4 }
+    const KCELL: React.CSSProperties = { fontSize: 8, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: safeAccentColor }
+    const bizBlock = (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexDirection: isLogoRight ? 'row-reverse' : 'row', minWidth: 0 }}>
+        <LogoBox size={36} />
+        <div style={{ textAlign: isLogoRight ? 'right' : 'left', minWidth: 0 }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#16202b', lineHeight: 1.1, letterSpacing: '-0.01em' }}>{workspaceName}</div>
+          <div style={{ fontSize: 10, color: '#8a929b', marginTop: 2 }}>P.IVA 12345678901</div>
+        </div>
+      </div>
+    )
+    const idBlock = (
+      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.20em', textTransform: 'uppercase', color: safeAccentColor }}>PREVENTIVO</div>
+        <div style={{ fontSize: 19, fontWeight: 800, color: '#16202b', lineHeight: 1.05, marginTop: 2, whiteSpace: 'nowrap' }}>N°&nbsp;014/2026</div>
+      </div>
+    )
     return (
-      <div style={{ fontFamily: fontStack, fontSize: 14,color: '#111', background: '#fff', position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+      <div style={{ fontFamily: fontStack, fontSize: 14, color: '#111', background: '#fff', position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
         <Badge /><Watermark />
 
-        {/* Header: bianco, split */}
-        <div style={{ padding: '20px 22px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', borderBottom: '1px solid #e0e0e0' }}>
-          {isLogoRight ? (
-            <>
-              <div style={{ textAlign: 'left', flexShrink: 0 }}>
-                <div style={{ fontSize: 20,fontWeight: 800, color: '#111', letterSpacing: '0.02em', lineHeight: 1 }}>PREVENTIVO</div>
-                <div style={{ fontSize: 12,color: '#888', marginTop: 4 }}>#2026/047</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexDirection: 'row-reverse' }}>
-                <LogoBox size={36} />
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 16,fontWeight: 700, color: '#111', lineHeight: 1.2 }}>{workspaceName}</div>
-                  <div style={{ fontSize: 11,color: '#888', marginTop: 2 }}>Via Garibaldi 42 · Milano · P.IVA 12345678901</div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <LogoBox size={36} />
-                <div>
-                  <div style={{ fontSize: 16,fontWeight: 700, color: '#111', lineHeight: 1.2 }}>{workspaceName}</div>
-                  <div style={{ fontSize: 11,color: '#888', marginTop: 2 }}>Via Garibaldi 42 · Milano · P.IVA 12345678901</div>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: 20,fontWeight: 800, color: '#111', letterSpacing: '0.02em', lineHeight: 1 }}>PREVENTIVO</div>
-                <div style={{ fontSize: 12,color: '#888', marginTop: 4 }}>#2026/047</div>
-              </div>
-            </>
-          )}
+        {/* Header */}
+        <div style={{ padding: '18px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
+          {isLogoRight ? <>{idBlock}{bizBlock}</> : <>{bizBlock}{idBlock}</>}
+        </div>
+        <div style={{ height: 3, background: color, borderRadius: 2, margin: '12px 20px 0' }} />
+
+        {/* Fascia dati */}
+        <div style={{ display: 'flex', background: tint, borderRadius: 8, margin: '12px 20px 0', overflow: 'hidden' }}>
+          <div style={{ flex: 1, padding: '6px 12px', borderRight: `1px solid ${tintLine}` }}>
+            <div style={KCELL}>Data</div>
+            <div style={{ fontSize: 11, color: '#1a2731', fontWeight: 600, marginTop: 1 }}>{today}</div>
+          </div>
+          <div style={{ flex: 1, padding: '6px 12px', borderRight: `1px solid ${tintLine}` }}>
+            <div style={KCELL}>Valido fino al</div>
+            <div style={{ fontSize: 11, color: '#1a2731', fontWeight: 600, marginTop: 1 }}>{expiry}</div>
+          </div>
+          <div style={{ flex: 1, padding: '6px 12px' }}>
+            <div style={KCELL}>Regime</div>
+            <div style={{ fontSize: 11, color: '#1a2731', fontWeight: 600, marginTop: 1 }}>Ordinario</div>
+          </div>
         </div>
 
         {/* Body */}
-        <div style={{ padding: '16px 22px' }}>
+        <div style={{ padding: '14px 20px' }}>
 
-          {/* Destinatario + data */}
+          {/* Emittente + Cliente */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 16 }}>
-            <div>
-              <div style={LABEL_ACCENT}>Destinatario</div>
-              <div style={{ fontSize: 13,fontWeight: 700, color: '#111' }}>Condominio Via Dante 12</div>
-              <div style={{ fontSize: 11,color: '#666' }}>Via Dante 12, 20121 Milano (MI)</div>
-              <div style={{ fontSize: 11,color: '#666' }}>C.F. CNDVDT12M20F205X</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={STRONG}>Emittente</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#16202b' }}>{workspaceName}</div>
+              <div style={{ fontSize: 10, color: '#6c727a', marginTop: 1 }}>Via Garibaldi 42, Milano (MI)</div>
             </div>
-            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={LABEL_ACCENT}>Data emissione</div>
-              <div style={{ fontSize: 13,fontWeight: 700, color: '#111', whiteSpace: 'nowrap' }}>{today}</div>
-              <div style={{ fontSize: 11,color: '#888', marginTop: 2, whiteSpace: 'nowrap' }}>Valido fino al {expiry}</div>
+            <div style={{ flexShrink: 0, minWidth: 130, background: '#f7f9fa', border: '1px solid #e4e8eb', borderRadius: 8, padding: '9px 11px' }}>
+              <div style={STRONG}>Cliente</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#16202b' }}>Condominio Via Dante 12</div>
+              <div style={{ fontSize: 10, color: '#6c727a', marginTop: 1 }}>Via Dante 12, 20121 Milano (MI)</div>
             </div>
           </div>
 
           {/* Tabella */}
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 14 }}>
             <thead>
-              <tr style={{ background: color }}>
+              <tr style={{ background: tint }}>
                 {['Descrizione', 'Q.tà', 'Prezzo', 'Totale'].map((h, i) => (
                   <th key={h} style={{
-                    padding: '6px 7px', textAlign: i === 0 ? 'left' : 'right',
-                    fontSize: 10,fontWeight: 700, color: onColor,
-                    textTransform: 'uppercase', letterSpacing: '0.07em',
+                    padding: '7px 7px', textAlign: i === 0 ? 'left' : 'right',
+                    fontSize: 9, fontWeight: 700, color: safeAccentColor,
+                    textTransform: 'uppercase', letterSpacing: '0.08em',
                     width: i === 0 ? undefined : i === 1 ? 34 : 64,
+                    borderTopLeftRadius: i === 0 ? 6 : 0, borderBottomLeftRadius: i === 0 ? 6 : 0,
+                    borderTopRightRadius: i === 3 ? 6 : 0, borderBottomRightRadius: i === 3 ? 6 : 0,
                   }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {ITEMS.map((item, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #f2f2f2' }}>
-                  <td style={{ padding: '6px 7px', fontSize: 10 }}>{item.description}</td>
-                  <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', color: '#888' }}>{item.qty}</td>
-                  <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', color: '#888' }}>{fmt(item.price)}&nbsp;€</td>
-                  <td style={{ padding: '6px 7px', fontSize: 12,textAlign: 'right', fontWeight: 700 }}>{fmt(item.qty * item.price)}&nbsp;€</td>
+                <tr key={i} style={{ borderBottom: '1px solid #eef0f1' }}>
+                  <td style={{ padding: '7px 7px', fontSize: 10, color: '#1e2830' }}>{item.description}</td>
+                  <td style={{ padding: '7px 7px', fontSize: 12, textAlign: 'right', color: '#6c727a' }}>{item.qty}</td>
+                  <td style={{ padding: '7px 7px', fontSize: 12, textAlign: 'right', color: '#6c727a' }}>{fmt(item.price)}&nbsp;€</td>
+                  <td style={{ padding: '7px 7px', fontSize: 12, textAlign: 'right', fontWeight: 700, color: '#16202b' }}>{fmt(item.qty * item.price)}&nbsp;€</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          {/* Totali */}
+          {/* Totale a riquadro pieno */}
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <div style={{ minWidth: 160 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 2 }}>
-                <span style={{ fontSize: 11,color: '#888' }}>Subtotale</span>
-                <span style={{ fontSize: 11,color: '#888' }}>{fmt(subtotal)}&nbsp;€</span>
+            <div style={{ minWidth: 180, background: color, borderRadius: 9, padding: '11px 14px', color: onColor }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, marginBottom: 2, fontSize: 11, opacity: 0.82 }}>
+                <span>Subtotale</span><span>{fmt(subtotal)}&nbsp;€</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 2 }}>
-                <span style={{ fontSize: 11,color: '#888' }}>IVA {VAT}%</span>
-                <span style={{ fontSize: 11,color: '#888' }}>{fmt(vatAmount)}&nbsp;€</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, fontSize: 11, opacity: 0.82 }}>
+                <span>IVA {VAT}%</span><span>{fmt(vatAmount)}&nbsp;€</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 24, borderTop: `2px solid ${safeAccentColor}`, paddingTop: 7, marginTop: 5 }}>
-                <span style={{ fontSize: 11,fontWeight: 800, letterSpacing: '0.08em', color: '#111' }}>TOTALE</span>
-                <span style={{ fontSize: 17,fontWeight: 800, color: '#111', whiteSpace: 'nowrap' }}>{fmt(total)}&nbsp;€</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 20, borderTop: `1px solid ${colorAlpha(onColor, 0.28)}`, paddingTop: 7, marginTop: 6 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.92 }}>Totale</span>
+                <span style={{ fontSize: 17, fontWeight: 800, whiteSpace: 'nowrap' }}>{fmt(total)}&nbsp;€</span>
               </div>
             </div>
           </div>
 
           {legalNotice && (
-            <p style={{ fontSize: 10,color: '#b3b1ab', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 10, color: '#b3b1ab', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
               {legalNotice}
             </p>
           )}
         </div>
 
         {/* Footer */}
-        <div style={{ borderTop: '1px solid #ebebeb', padding: '6px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ borderTop: '1px solid #ebebeb', padding: '6px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <BrandingText />
-          <span style={{ fontSize: 10,color: '#bbb' }}>Preventivo valido fino al {expiry}</span>
+          <span style={{ fontSize: 10, color: '#bbb' }}>Preventivo valido fino al {expiry}</span>
         </div>
       </div>
     )
@@ -575,85 +584,85 @@ export function TemplatePreview({
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // ELEGANTE
+  // ELEGANTE — «Sartoriale» (Eli 20 ago): serif, testata a due livelli,
+  // blocchi Da/Per, tabella a filetti, totale serif sotto un filetto colorato.
+  // (default per preset sconosciuto). L'accento colora numero, filetti e labels.
   // ══════════════════════════════════════════════════════════════════════════
-  // (default per preset sconosciuto)
-  // 18 lug (Eli: "cambio colore, si vede pochissimo"): l'accento brand ora
-  // colora anche le etichette (Preventivo/Destinatario/Data) e il totale,
-  // non solo la riga separatrice. Il numero documento resta navy (decisione
-  // storica: safeAccentColor solo dove il testo resta leggibile).
   const LABEL_E: React.CSSProperties = {
-    fontSize: 10,fontWeight: 600, textTransform: 'uppercase',
-    letterSpacing: '0.13em', color: safeAccentColor, marginBottom: 4,
+    fontSize: 9, fontWeight: 600, textTransform: 'uppercase',
+    letterSpacing: '0.18em', color: safeAccentColor, marginBottom: 5,
   }
+  const DATE_K: React.CSSProperties = {
+    fontSize: 8, fontWeight: 600, textTransform: 'uppercase',
+    letterSpacing: '0.15em', color: '#9aa0a6', marginBottom: 2,
+  }
+  const bizBlockE = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexDirection: isLogoRight ? 'row-reverse' : 'row', minWidth: 0 }}>
+      <LogoBox size={44} bordered />
+      <div style={{ textAlign: isLogoRight ? 'right' : 'left', minWidth: 0 }}>
+        <div style={{ fontSize: 20, fontWeight: 600, color: '#22303c', lineHeight: 1.15 }}>{workspaceName}</div>
+        <div style={{ fontSize: 10, color: '#8a8f96', marginTop: 2 }}>Via Garibaldi 42 · Milano · P.IVA 12345678901</div>
+      </div>
+    </div>
+  )
+  const idBlockE = (
+    <div style={{ textAlign: 'right', flexShrink: 0, paddingTop: 4 }}>
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: safeAccentColor }}>Preventivo</div>
+    </div>
+  )
 
   return (
-    <div style={{ fontFamily: fontStack, fontSize: 14,color: '#111', background: '#fff', position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+    <div style={{ fontFamily: fontStack, fontSize: 14, color: '#111', background: '#fff', position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
       <Badge /><Watermark />
 
-      {/* Header: bianco, serif, logo bordato */}
-      <div style={{ padding: '24px 26px 20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        {isLogoRight ? (
-          <>
-            <div style={{ textAlign: 'left', flexShrink: 0, paddingTop: 4 }}>
-              <div style={{ fontSize: 11,fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: safeAccentColor, marginBottom: 5 }}>Preventivo</div>
-              <div style={{ fontSize: 22,fontWeight: 700, color: '#1a1a2e', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexDirection: 'row-reverse' as const }}>
-              <LogoBox size={48} bordered />
-              <div style={{ paddingTop: 4, textAlign: 'right' }}>
-                <div style={{ fontSize: 18,fontWeight: 700, fontStyle: 'italic', color: '#111', letterSpacing: '0.01em', lineHeight: 1.15 }}>{workspaceName}</div>
-                <div style={{ fontSize: 10,letterSpacing: '0.20em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' as const }}>STUDIO · MILANO</div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-              <LogoBox size={48} bordered />
-              <div style={{ paddingTop: 4 }}>
-                <div style={{ fontSize: 18,fontWeight: 700, fontStyle: 'italic', color: '#111', letterSpacing: '0.01em', lineHeight: 1.15 }}>{workspaceName}</div>
-                <div style={{ fontSize: 10,letterSpacing: '0.20em', color: '#bbb', marginTop: 4, textTransform: 'uppercase' as const }}>STUDIO · MILANO</div>
-              </div>
-            </div>
-            <div style={{ textAlign: 'right', flexShrink: 0, paddingTop: 4 }}>
-              <div style={{ fontSize: 11,fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' as const, color: safeAccentColor, marginBottom: 5 }}>Preventivo</div>
-              <div style={{ fontSize: 22,fontWeight: 700, color: '#1a1a2e', fontStyle: 'italic' as const, lineHeight: 1 }}>#2026/047</div>
-            </div>
-          </>
-        )}
+      {/* Header a due livelli */}
+      <div style={{ padding: '22px 26px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
+        {isLogoRight ? <>{idBlockE}{bizBlockE}</> : <>{bizBlockE}{idBlockE}</>}
       </div>
-
-      {/* Separatore con accento brand */}
-      <div style={{ borderBottom: `1px solid ${color}`, margin: '0 26px' }} />
+      <div style={{ height: 1, background: '#e7e5df', margin: '14px 26px 0' }} />
 
       {/* Body */}
-      <div style={{ padding: '18px 26px' }}>
+      <div style={{ padding: '16px 26px' }}>
 
-        {/* Destinatario + data */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 18 }}>
-          <div>
-            <div style={LABEL_E}>Destinatario</div>
-            <div style={{ fontSize: 13,fontWeight: 700, color: '#111', marginBottom: 2 }}>Condominio Via Dante 12</div>
-            <div style={{ fontSize: 11,color: '#888' }}>Via Dante 12, 20121 Milano (MI)</div>
-          </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={LABEL_E}>Data</div>
-            <div style={{ fontSize: 13,color: '#333', marginBottom: 2 }}>{today}</div>
-            <div style={{ fontSize: 11,color: '#bbb', whiteSpace: 'nowrap' }}>Valido fino al {expiry}</div>
+        {/* Titolo documento + date */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 22, fontWeight: 600, color: '#22303c', lineHeight: 1, whiteSpace: 'nowrap' }}>N°&nbsp;<span style={{ color: safeAccentColor }}>014/2026</span></div>
+          <div style={{ display: 'flex', gap: 20 }}>
+            <div>
+              <div style={DATE_K}>Data</div>
+              <div style={{ fontSize: 12, color: '#2a333c', fontWeight: 600, whiteSpace: 'nowrap' }}>{today}</div>
+            </div>
+            <div>
+              <div style={DATE_K}>Valido fino al</div>
+              <div style={{ fontSize: 12, color: '#2a333c', fontWeight: 600, whiteSpace: 'nowrap' }}>{expiry}</div>
+            </div>
           </div>
         </div>
 
-        {/* Tabella: no fill header */}
+        {/* Da / Per */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24, marginBottom: 18 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={LABEL_E}>Da</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#22303c' }}>{workspaceName}</div>
+            <div style={{ fontSize: 10, color: '#6c727a', marginTop: 1 }}>Via Garibaldi 42, Milano (MI)</div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={LABEL_E}>Per</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#22303c' }}>Condominio Via Dante 12</div>
+            <div style={{ fontSize: 10, color: '#6c727a', marginTop: 1 }}>Via Dante 12, 20121 Milano (MI)</div>
+          </div>
+        </div>
+
+        {/* Tabella: filetti, accento sotto la testata */}
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 16 }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid #c8c8c8' }}>
+            <tr style={{ borderBottom: `2px solid ${safeAccentColor}` }}>
               {['Descrizione', 'Q.tà', 'Prezzo', 'Totale'].map((h, i) => (
                 <th key={h} style={{
-                  padding: '5px 0', paddingLeft: i > 0 ? 8 : 0,
+                  padding: '4px 0 7px', paddingLeft: i > 0 ? 8 : 0,
                   textAlign: i === 0 ? 'left' : 'right',
-                  fontSize: 7.5, fontWeight: 600, color: '#bbb',
-                  textTransform: 'uppercase', letterSpacing: '0.13em',
+                  fontSize: 8, fontWeight: 600, color: '#8a9098',
+                  textTransform: 'uppercase', letterSpacing: '0.12em',
                   width: i === 0 ? undefined : i === 1 ? 30 : 60,
                 }}>{h}</th>
               ))}
@@ -661,45 +670,45 @@ export function TemplatePreview({
           </thead>
           <tbody>
             {ITEMS.map((item, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid #e8e8e8' }}>
-                <td style={{ padding: '7px 0', fontSize: 12,color: '#333' }}>{item.description}</td>
-                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 12,textAlign: 'right', color: '#bbb' }}>{item.qty}</td>
-                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 12,textAlign: 'right', color: '#bbb' }}>{fmt(item.price)}&nbsp;€</td>
-                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 12,textAlign: 'right', color: '#555' }}>{fmt(item.qty * item.price)}&nbsp;€</td>
+              <tr key={i} style={{ borderBottom: '1px solid #efeee9' }}>
+                <td style={{ padding: '7px 0', fontSize: 12, color: '#2a333c' }}>{item.description}</td>
+                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 12, textAlign: 'right', color: '#8a8f96' }}>{item.qty}</td>
+                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 12, textAlign: 'right', color: '#8a8f96' }}>{fmt(item.price)}&nbsp;€</td>
+                <td style={{ padding: '7px 0', paddingLeft: 8, fontSize: 12, textAlign: 'right', fontWeight: 600, color: '#22303c' }}>{fmt(item.qty * item.price)}&nbsp;€</td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* Totali */}
+        {/* Totali serif */}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <div style={{ minWidth: 160 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginBottom: 3 }}>
-              <span style={{ fontSize: 11,color: '#bbb' }}>Subtotale</span>
-              <span style={{ fontSize: 11,color: '#bbb' }}>{fmt(subtotal)}&nbsp;€</span>
+              <span style={{ fontSize: 11, color: '#8a8f96' }}>Subtotale</span>
+              <span style={{ fontSize: 11, color: '#6c727a' }}>{fmt(subtotal)}&nbsp;€</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24 }}>
-              <span style={{ fontSize: 11,color: '#bbb' }}>IVA {VAT}%</span>
-              <span style={{ fontSize: 11,color: '#bbb' }}>{fmt(vatAmount)}&nbsp;€</span>
+              <span style={{ fontSize: 11, color: '#8a8f96' }}>IVA {VAT}%</span>
+              <span style={{ fontSize: 11, color: '#6c727a' }}>{fmt(vatAmount)}&nbsp;€</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, borderTop: '1px solid #c8c8c8', paddingTop: 8, marginTop: 8 }}>
-              <span style={{ fontSize: 12,fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.10em', color: '#444' }}>Totale</span>
-              <span style={{ fontSize: 19,fontWeight: 700, fontStyle: 'italic', color: safeAccentColor }}>{fmt(total)}&nbsp;€</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 24, borderTop: `2px solid ${safeAccentColor}`, paddingTop: 8, marginTop: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#22303c' }}>Totale</span>
+              <span style={{ fontSize: 19, fontWeight: 600, color: '#22303c' }}>{fmt(total)}&nbsp;€</span>
             </div>
           </div>
         </div>
 
         {legalNotice && (
-          <p style={{ fontSize: 10,color: '#b3b1ab', borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 10, color: '#b3b1ab', borderTop: '1px solid #efeee9', paddingTop: 8, marginTop: 10, lineHeight: 1.5 }}>
             {legalNotice}
           </p>
         )}
       </div>
 
       {/* Footer */}
-      <div style={{ borderTop: '1px solid #e5e5e5', padding: '7px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <BrandingText color="#ccc" />
-        <span style={{ fontSize: 10,color: '#ccc' }}>Valido fino al {expiry}</span>
+      <div style={{ borderTop: '1px solid #efeee9', padding: '7px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <BrandingText color="#adb0b6" />
+        <span style={{ fontSize: 10, color: '#adb0b6' }}>Valido fino al {expiry}</span>
       </div>
     </div>
   )

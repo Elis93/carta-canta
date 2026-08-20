@@ -762,116 +762,111 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     // ──────────────────────────────────────────────────────────────────
     case 'classico':
     default: {
-      // Etichette piccole nel colore scelto dall'artigiano (mockup B "Aria",
-      // scelta Eli 28 lug) — mai a capo.
-      const LABEL = `font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${safeAccentColor};margin-bottom:5px;white-space:nowrap;`
+      // CLASSICO ridisegnato — «Contemporanea» (Eli 20 ago): sans pulito,
+      // fascia dati sotto la testata, cliente in evidenza e TOTALE in un
+      // riquadro nel colore scelto dall'artigiano. Restano TUTTI i casi
+      // fiscali (IVA ordinaria, bollo, ritenuta, reverse, sconto, acconto,
+      // multi-proposta): cambiano solo testata, tabella e riepilogo.
+      const tint = rgba(color, 0.08)
+      const tintLine = rgba(color, 0.14)
+      const strongLabel = `font-size:15px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:${safeAccentColor};white-space:nowrap;`
+      const regimeLabel = workspace.fiscal_regime === 'ordinario' ? 'Ordinario'
+        : workspace.fiscal_regime === 'minimi' ? 'Minimi' : 'Forfettario'
 
       const rows = withTierHeaders(item => `
-        <tr style="border-bottom:1px solid #f0efec;">
-          <td style="padding:11px 10px;font-size:19px;color:#111;">${esc(item.description)}</td>
-          <td style="padding:11px 8px;font-size:19px;text-align:right;color:#888;white-space:nowrap;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:11px 8px;font-size:19px;text-align:right;color:#888;white-space:nowrap;">${fmt(Number(item.unit_price))}&nbsp;€</td>
-          <td style="padding:11px 10px;font-size:19px;text-align:right;font-weight:700;white-space:nowrap;">${fmt(Number(item.total))}&nbsp;€</td>
+        <tr style="border-bottom:1px solid #eef0f1;">
+          <td style="padding:12px 10px;font-size:19px;color:#1e2830;">${esc(item.description)}</td>
+          <td style="padding:12px 8px;font-size:19px;text-align:right;color:#6c727a;white-space:nowrap;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
+          <td style="padding:12px 8px;font-size:19px;text-align:right;color:#6c727a;white-space:nowrap;">${fmt(Number(item.unit_price))}&nbsp;€</td>
+          <td style="padding:12px 10px;font-size:19px;text-align:right;font-weight:700;color:#16202b;white-space:nowrap;">${fmt(Number(item.total))}&nbsp;€</td>
         </tr>`, 4)
+
+      const idBlock = `<div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:14px;font-weight:700;letter-spacing:0.20em;text-transform:uppercase;color:${safeAccentColor};">${docTypeLabel}</div>
+        <div style="font-size:27px;font-weight:800;color:#16202b;line-height:1.05;margin-top:2px;white-space:nowrap;">${docNumberClean ? `N&deg;&nbsp;${esc(docNumberClean)}` : 'BOZZA'}</div>
+       </div>`
+      const bizBlock = `<div style="display:flex;align-items:center;gap:14px;${isLogoRight ? 'flex-direction:row-reverse;' : ''}">
+        ${logoEl(44, tint, safeAccentColor)}
+        <div style="${isLogoRight ? 'text-align:right;' : ''}min-width:0;">
+          <div style="font-size:23px;font-weight:800;color:#16202b;line-height:1.1;letter-spacing:-0.01em;">${wsName}</div>
+          <div style="font-size:14px;color:#8a929b;margin-top:3px;">${joinDots([wsPiva])}</div>
+        </div>
+       </div>`
 
       return wrap(font, `
         ${wmHtml}
         ${statusWmHtml}
 
-        <!-- HEADER: bianco, split orizzontale -->
-        <div style="padding:28px 32px 22px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #e0e0e0;position:relative;z-index:1;">
-          ${isLogoRight
-            ? `<div style="text-align:left;flex-shrink:0;">
-                <div style="font-size:28px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
-                <div style="font-size:17px;color:#888;margin-top:5px;">${docNumberClean ? `#${esc(docNumberClean)}` : 'BOZZA'}</div>
-               </div>
-               <div style="display:flex;align-items:center;gap:14px;flex-direction:row-reverse;">
-                ${logoEl(44, color, onColor)}
-                <div style="text-align:right;">
-                  <div style="font-size:21px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:15px;color:#888;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
-                </div>
-               </div>`
-            : `<div style="display:flex;align-items:center;gap:14px;">
-                ${logoEl(44, color, onColor)}
-                <div>
-                  <div style="font-size:21px;font-weight:700;color:#111;line-height:1.2;">${wsName}</div>
-                  <div style="font-size:15px;color:#888;margin-top:3px;">${joinDots([wsAddr, wsPiva])}</div>
-                </div>
-               </div>
-               <div style="text-align:right;flex-shrink:0;">
-                <div style="font-size:28px;font-weight:800;letter-spacing:0.02em;color:#111;line-height:1;">${docTypeLabel}</div>
-                <div style="font-size:17px;color:#888;margin-top:5px;">${docNumberClean ? `#${esc(docNumberClean)}` : 'BOZZA'}</div>
-               </div>`
-          }
+        <!-- HEADER -->
+        <div style="padding:28px 34px 0;display:flex;align-items:center;justify-content:space-between;gap:20px;position:relative;z-index:1;">
+          ${isLogoRight ? idBlock + bizBlock : bizBlock + idBlock}
+        </div>
+        <div style="height:3px;background:${color};margin:16px 34px 0;border-radius:2px;position:relative;z-index:1;"></div>
+
+        <!-- FASCIA DATI -->
+        <div style="display:flex;background:${tint};border-radius:10px;margin:16px 34px 0;overflow:hidden;position:relative;z-index:1;">
+          <div style="flex:1;padding:9px 16px;border-right:1px solid ${tintLine};">
+            <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:${safeAccentColor};font-weight:700;">Data</div>
+            <div style="font-size:16px;color:#1a2731;font-weight:600;margin-top:2px;white-space:nowrap;">${docDateShort}</div>
+          </div>
+          <div style="flex:1;padding:9px 16px;border-right:1px solid ${tintLine};">
+            <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:${safeAccentColor};font-weight:700;">${isFattura ? 'Scadenza' : 'Valido fino al'}</div>
+            <div style="font-size:16px;color:#1a2731;font-weight:600;margin-top:2px;white-space:nowrap;">${expiresDateShort ?? '—'}</div>
+          </div>
+          <div style="flex:1;padding:9px 16px;">
+            <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:${safeAccentColor};font-weight:700;">Regime</div>
+            <div style="font-size:16px;color:#1a2731;font-weight:600;margin-top:2px;white-space:nowrap;">${regimeLabel}</div>
+          </div>
         </div>
 
         <!-- BODY -->
-        <div style="padding:22px 32px;position:relative;z-index:1;">
+        <div style="padding:22px 34px;position:relative;z-index:1;">
 
-          <!-- Destinatario + data -->
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:22px;">
-            <div>
-              <div style="${LABEL}">Destinatario</div>
-              ${clientEl('15px', '12px')}
+          <!-- Emittente + Cliente -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:22px;margin-bottom:22px;">
+            <div style="min-width:0;">
+              <div style="${strongLabel}margin-bottom:6px;">Emittente</div>
+              <div style="font-size:15px;font-weight:700;color:#16202b;">${wsName}</div>
+              ${wsAddrCompact ? `<div style="font-size:13px;color:#6c727a;margin-top:1px;">${wsAddrCompact}</div>` : ''}
+              ${wsPiva ? `<div style="font-size:13px;color:#6c727a;margin-top:1px;">${wsPiva}</div>` : ''}
             </div>
-            <div style="text-align:right;flex-shrink:0;">
-              <div style="${LABEL}">Data emissione</div>
-              <div style="font-size:19px;font-weight:700;color:#111;white-space:nowrap;">${docDate}</div>
-              ${!isFattura ? (expiresDate
-                ? `<div style="font-size:15px;color:#888;margin-top:2px;white-space:nowrap;">Valido fino al ${expiresDate}</div>`
-                : `<div style="font-size:15px;color:#888;margin-top:2px;white-space:nowrap;">Valido 30 giorni</div>`) : ''}
+            <div style="flex-shrink:0;min-width:200px;max-width:52%;background:#f7f9fa;border:1px solid #e4e8eb;border-radius:10px;padding:12px 14px;">
+              <div style="${strongLabel}margin-bottom:6px;">Cliente</div>
+              ${clientEl('15px', '12px')}
             </div>
           </div>
 
-          ${doc.title ? `<div style="font-size:21px;font-weight:700;color:#111;margin-bottom:14px;">${esc(doc.title)}</div>` : ''}
+          ${doc.title ? `<div style="font-size:17px;color:#3f4750;margin-bottom:12px;">Oggetto: <b style="color:#16202b;">${esc(doc.title)}</b></div>` : ''}
           ${doc.notes ? `<div style="font-size:17px;color:#666;margin-bottom:14px;line-height:1.5;">${nl2br(doc.notes)}</div>` : ''}
 
-          <!-- Tabella voci: 4 colonne, header scuro -->
+          <!-- Tabella voci -->
           <table style="margin-bottom:20px;">
             <thead>
-              <tr style="background:${color};">
-                <th style="padding:8px 10px;text-align:left;font-size:15px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;">Descrizione</th>
-                <th style="padding:8px 8px;text-align:right;font-size:15px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:52px;white-space:nowrap;">Q.tà</th>
-                <th style="padding:8px 8px;text-align:right;font-size:15px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:90px;white-space:nowrap;">Prezzo</th>
-                <th style="padding:8px 10px;text-align:right;font-size:15px;font-weight:700;color:${onColor};text-transform:uppercase;letter-spacing:0.07em;width:80px;white-space:nowrap;">Totale</th>
+              <tr style="background:${tint};">
+                <th style="padding:9px 10px;text-align:left;font-size:14px;font-weight:700;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;border-radius:7px 0 0 7px;">Descrizione</th>
+                <th style="padding:9px 8px;text-align:right;font-size:14px;font-weight:700;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:52px;white-space:nowrap;">Q.tà</th>
+                <th style="padding:9px 8px;text-align:right;font-size:14px;font-weight:700;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:90px;white-space:nowrap;">Prezzo</th>
+                <th style="padding:9px 10px;text-align:right;font-size:14px;font-weight:700;color:${safeAccentColor};text-transform:uppercase;letter-spacing:0.08em;width:90px;white-space:nowrap;border-radius:0 7px 7px 0;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
           </table>
 
-          <!-- Riepilogo: allineato a destra (con più proposte lo sostituisce
-               il box di confronto in depositHtml: i conti stanno nei blocchi) -->
+          <!-- Riepilogo: TOTALE a riquadro pieno nel colore scelto (con più
+               proposte lo sostituisce il box di confronto in depositHtml) -->
           ${multiTier ? '' : `
           <div style="display:flex;justify-content:flex-end;">
-            <div style="min-width:250px;">
-              <table style="width:100%;">
-                <tbody>
-                  <tr>
-                    <td style="padding:3px 0;font-size:17px;color:#888;">Subtotale</td>
-                    <td style="padding:3px 0;font-size:17px;color:#888;text-align:right;">${fmt(subtotal)}&nbsp;€</td>
-                  </tr>
-                  ${hasDiscount ? `
-                  <tr>
-                    <td style="padding:3px 0;font-size:17px;color:#888;">Sconto</td>
-                    <td style="padding:3px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))}&nbsp;€</td>
-                  </tr>` : ''}
-                  ${vatRowsEl('3px 0', '17px')}
-                  ${bolloAmount > 0 ? `
-                  <tr>
-                    <td style="padding:3px 0;font-size:17px;color:#888;">Marca da bollo</td>
-                    <td style="padding:3px 0;font-size:17px;color:#888;text-align:right;">${fmt(bolloAmount)}&nbsp;€</td>
-                  </tr>` : ''}
-                  ${ritenutaAmount > 0 ? `
-                  <tr>
-                    <td style="padding:3px 0;font-size:17px;color:#888;">Ritenuta d'acconto ${fmt(ritenutaPct)}%</td>
-                    <td style="padding:3px 0;font-size:17px;color:#888;text-align:right;">−${fmt(ritenutaAmount)}&nbsp;€</td>
-                  </tr>` : ''}
-                </tbody>
-              </table>
-              <div style="border-top:2px solid ${safeAccentColor};margin-top:9px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;gap:18px;">
-                <span style="font-size:15px;font-weight:800;letter-spacing:0.08em;color:#111;">TOTALE</span>
-                <span style="font-size:24px;font-weight:800;color:#111;white-space:nowrap;">${fmt(total)}&nbsp;€</span>
+            <div style="min-width:300px;max-width:62%;background:${color};border-radius:11px;padding:14px 18px;color:${onColor};">
+              <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:16px;opacity:0.82;">
+                <span>Subtotale</span><span style="white-space:nowrap;">${fmt(subtotal)}&nbsp;€</span>
+              </div>
+              ${hasDiscount ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:16px;opacity:0.82;"><span>Sconto</span><span style="white-space:nowrap;">−${fmt(Math.abs(discount))}&nbsp;€</span></div>` : ''}
+              ${!isForf ? Object.entries(vatGroups).map(([rate, amt]) => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:16px;opacity:0.82;"><span>IVA ${rate}%</span><span style="white-space:nowrap;">${fmt(amt)}&nbsp;€</span></div>`).join('') : ''}
+              ${bolloAmount > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:16px;opacity:0.82;"><span>Marca da bollo</span><span style="white-space:nowrap;">${fmt(bolloAmount)}&nbsp;€</span></div>` : ''}
+              ${ritenutaAmount > 0 ? `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:16px;opacity:0.82;"><span>Ritenuta ${fmt(ritenutaPct)}%</span><span style="white-space:nowrap;">−${fmt(ritenutaAmount)}&nbsp;€</span></div>` : ''}
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:9px;padding-top:10px;border-top:1px solid ${rgba(onColor, 0.28)};">
+                <span style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;opacity:0.92;">Totale</span>
+                <span style="font-size:25px;font-weight:800;white-space:nowrap;">${fmt(total)}&nbsp;€</span>
               </div>
             </div>
           </div>`}
@@ -882,7 +877,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         </div>
 
         <!-- FOOTER -->
-        <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #ebebeb;padding:8px 32px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
+        <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #ebebeb;padding:8px 34px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
           ${brandingSpan('#bbb')}
           <span style="font-size:17px;color:#bbb;">${!isFattura && expiresDate ? `Preventivo valido fino al ${expiresDate}` : ''}</span>
         </div>
@@ -1182,122 +1177,121 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     // ELEGANTE — serif, header bianco, logo bordato, no fill tabella
     // ──────────────────────────────────────────────────────────────────
     case 'elegante': {
-      // 18 lug (Eli: "cambio colore, si vede pochissimo"): l'accento brand
-      // colora anche etichette e totale, non solo la riga separatrice —
-      // identico a TemplatePreview. Numero documento resta navy.
-      const LABEL = `font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:0.13em;color:${safeAccentColor};margin-bottom:5px;white-space:nowrap;`
+      // ELEGANTE ridisegnato — «Sartoriale» (Eli 20 ago): serif (Georgia/Lora
+      // self-hosted) per tutto, testata a due livelli, blocchi Da/Per, tabella
+      // a filetti sottili e TOTALE serif sotto un filetto nel colore scelto.
+      // Restano TUTTI i casi fiscali; l'accento colora numero, filetti e labels.
+      const LABEL = `font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${safeAccentColor};margin-bottom:6px;white-space:nowrap;`
+      const dateK = 'font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#9aa0a6;font-weight:600;'
 
       const rows = withTierHeaders(item => `
-        <tr style="border-bottom:1px solid #e8e8e8;">
-          <td style="padding:10px 0;font-size:19px;color:#333;">${esc(item.description)}</td>
-          <td style="padding:10px 10px;font-size:19px;text-align:right;color:#aaa;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
-          <td style="padding:10px 10px;font-size:19px;text-align:right;color:#aaa;">${fmt(Number(item.unit_price))}&nbsp;€</td>
-          <td style="padding:10px 0;font-size:19px;text-align:right;color:#555;">${fmt(Number(item.total))}&nbsp;€</td>
+        <tr style="border-bottom:1px solid #efeee9;">
+          <td style="padding:11px 0;font-size:19px;color:#2a333c;">${esc(item.description)}</td>
+          <td style="padding:11px 10px;font-size:19px;text-align:right;color:#8a8f96;white-space:nowrap;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
+          <td style="padding:11px 10px;font-size:19px;text-align:right;color:#8a8f96;white-space:nowrap;">${fmt(Number(item.unit_price))}&nbsp;€</td>
+          <td style="padding:11px 0;font-size:19px;text-align:right;font-weight:600;color:#22303c;white-space:nowrap;">${fmt(Number(item.total))}&nbsp;€</td>
         </tr>`, 4)
 
-      const cityUpper = wsCitta ? wsCitta.toUpperCase() : ''
+      const idBlock = `<div style="text-align:right;flex-shrink:0;padding-top:6px;">
+        <div style="font-size:13px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:${safeAccentColor};">${docTypeTitleCase}</div>
+       </div>`
+      const bizBlock = `<div style="display:flex;align-items:center;gap:14px;${isLogoRight ? 'flex-direction:row-reverse;' : ''}">
+        ${logoEl(48, '#f7f5f0', safeAccentColor, true)}
+        <div style="${isLogoRight ? 'text-align:right;' : ''}min-width:0;">
+          <div style="font-size:26px;font-weight:600;color:#22303c;line-height:1.15;">${wsName}</div>
+          <div style="font-size:13px;color:#8a8f96;margin-top:2px;">${joinDots([wsAddr, wsPiva])}</div>
+        </div>
+       </div>`
 
       return wrap(font, `
         ${wmHtml}
         ${statusWmHtml}
 
-        <!-- HEADER: bianco, serif, logo bordato -->
-        <div style="padding:32px 36px 26px;display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:1;">
-          ${isLogoRight
-            ? `<div style="text-align:left;flex-shrink:0;padding-top:4px;">
-                <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${safeAccentColor};margin-bottom:7px;">${docTypeTitleCase}</div>
-                <div style="font-size:28px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
-               </div>
-               <div style="display:flex;align-items:flex-start;gap:16px;flex-direction:row-reverse;">
-                ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
-                <div style="padding-top:4px;text-align:right;">
-                  <div style="font-size:31px;font-weight:700;font-style:italic;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
-                  ${cityUpper ? `<div style="font-size:17px;letter-spacing:0.20em;color:#bbb;margin-top:5px;text-transform:uppercase;">${cityUpper}</div>` : ''}
-                </div>
-               </div>`
-            : `<div style="display:flex;align-items:flex-start;gap:16px;">
-                ${logoEl(56, '#f5f5f5', '#c0c0c0', true)}
-                <div style="padding-top:4px;">
-                  <div style="font-size:31px;font-weight:700;font-style:italic;color:#111;letter-spacing:0.01em;line-height:1.15;">${wsName}</div>
-                  ${cityUpper ? `<div style="font-size:17px;letter-spacing:0.20em;color:#bbb;margin-top:5px;text-transform:uppercase;">${cityUpper}</div>` : ''}
-                </div>
-               </div>
-               <div style="text-align:right;flex-shrink:0;padding-top:4px;">
-                <div style="font-size:17px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${safeAccentColor};margin-bottom:7px;">${docTypeTitleCase}</div>
-                <div style="font-size:28px;font-weight:700;color:#1a1a2e;font-style:italic;line-height:1;">${docNumberClean ? `#${esc(docNumberClean)}` : 'Bozza'}</div>
-               </div>`
-          }
+        <!-- HEADER -->
+        <div style="padding:34px 40px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;position:relative;z-index:1;">
+          ${isLogoRight ? idBlock + bizBlock : bizBlock + idBlock}
         </div>
-
-        <!-- SEPARATORE con accento brand -->
-        <div style="border-bottom:1px solid ${color};margin:0 36px;"></div>
+        <div style="height:1px;background:#e7e5df;margin:20px 40px 0;position:relative;z-index:1;"></div>
 
         <!-- BODY -->
-        <div style="padding:26px 36px;position:relative;z-index:1;">
+        <div style="padding:22px 40px;position:relative;z-index:1;">
 
-          <!-- Destinatario + data -->
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:26px;">
-            <div>
-              <div style="${LABEL}">Destinatario</div>
-              ${clientEl('15px', '12px')}
-            </div>
-            <div style="text-align:right;flex-shrink:0;">
-              <div style="${LABEL}">Data</div>
-              <div style="font-size:19px;color:#333;margin-bottom:3px;white-space:nowrap;">${docDate}</div>
-              ${!isFattura ? (expiresDate
-                ? `<div style="font-size:17px;color:#bbb;white-space:nowrap;">Valido fino al ${expiresDate}</div>`
-                : `<div style="font-size:17px;color:#bbb;white-space:nowrap;">Valido 30 giorni</div>`) : ''}
+          <!-- Titolo documento + date -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:24px;flex-wrap:wrap;">
+            <div style="font-size:29px;font-weight:600;color:#22303c;line-height:1;white-space:nowrap;">N&deg;&nbsp;<span style="color:${safeAccentColor};">${docNumberClean ? esc(docNumberClean) : 'Bozza'}</span></div>
+            <div style="display:flex;gap:26px;">
+              <div>
+                <div style="${dateK}">Data</div>
+                <div style="font-size:15px;color:#2a333c;font-weight:600;white-space:nowrap;margin-top:2px;">${docDate}</div>
+              </div>
+              ${!isFattura
+                ? `<div><div style="${dateK}">Valido fino al</div><div style="font-size:15px;color:#2a333c;font-weight:600;white-space:nowrap;margin-top:2px;">${expiresDate ?? 'Valido 30 giorni'}</div></div>`
+                : (expiresDate ? `<div><div style="${dateK}">Scadenza</div><div style="font-size:15px;color:#2a333c;font-weight:600;white-space:nowrap;margin-top:2px;">${expiresDate}</div></div>` : '')}
             </div>
           </div>
 
-          ${doc.title ? `<div style="font-size:17px;font-weight:600;color:#111;font-style:italic;margin-bottom:14px;">${esc(doc.title)}</div>` : ''}
+          <!-- Da / Per -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:34px;margin-bottom:22px;">
+            <div style="min-width:0;">
+              <div style="${LABEL}">Da</div>
+              <div style="font-size:14px;font-weight:600;color:#22303c;">${wsName}</div>
+              ${wsAddrCompact ? `<div style="font-size:12px;color:#6c727a;margin-top:1px;">${wsAddrCompact}</div>` : ''}
+              ${wsPiva ? `<div style="font-size:12px;color:#6c727a;margin-top:1px;">${wsPiva}</div>` : ''}
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="${LABEL}">Per</div>
+              ${clientEl('15px', '12px')}
+            </div>
+          </div>
+
+          ${doc.title ? `<div style="font-size:14px;color:#4a525c;margin-bottom:14px;">Oggetto: <b style="font-style:italic;font-weight:500;color:#22303c;font-size:15.5px;">${esc(doc.title)}</b></div>` : ''}
           ${doc.notes ? `<div style="font-size:17px;color:#888;margin-bottom:16px;line-height:1.6;">${nl2br(doc.notes)}</div>` : ''}
 
-          <!-- Tabella: no fill header, solo linee -->
+          <!-- Tabella: filetti, accento sotto la testata -->
           <table style="margin-bottom:20px;">
             <thead>
-              <tr style="border-bottom:1px solid #c8c8c8;">
-                <th style="padding:6px 0;text-align:left;font-size:13px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;">Descrizione</th>
-                <th style="padding:6px 10px;text-align:right;font-size:13px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:40px;white-space:nowrap;">Q.tà</th>
-                <th style="padding:6px 10px;text-align:right;font-size:13px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;white-space:nowrap;">Prezzo</th>
-                <th style="padding:6px 0;text-align:right;font-size:13px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:0.13em;width:80px;white-space:nowrap;">Totale</th>
+              <tr style="border-bottom:2px solid ${safeAccentColor};">
+                <th style="padding:6px 0 8px;text-align:left;font-size:12px;font-weight:600;color:#8a9098;text-transform:uppercase;letter-spacing:0.12em;">Descrizione</th>
+                <th style="padding:6px 10px 8px;text-align:right;font-size:12px;font-weight:600;color:#8a9098;text-transform:uppercase;letter-spacing:0.12em;width:52px;white-space:nowrap;">Q.tà</th>
+                <th style="padding:6px 10px 8px;text-align:right;font-size:12px;font-weight:600;color:#8a9098;text-transform:uppercase;letter-spacing:0.12em;width:90px;white-space:nowrap;">Prezzo</th>
+                <th style="padding:6px 0 8px;text-align:right;font-size:12px;font-weight:600;color:#8a9098;text-transform:uppercase;letter-spacing:0.12em;width:90px;white-space:nowrap;">Totale</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
           </table>
 
-          <!-- Riepilogo: allineato a destra, serif (con più proposte lo
-               sostituisce il box di confronto in depositHtml) -->
+          <!-- Riepilogo serif (con più proposte lo sostituisce il box di
+               confronto in depositHtml) -->
           ${multiTier ? '' : `
           <div style="display:flex;justify-content:flex-end;">
-            <div style="min-width:220px;">
+            <div style="min-width:250px;">
               <table style="width:100%;">
                 <tbody>
                   <tr>
-                    <td style="padding:4px 0;font-size:17px;color:#bbb;">Subtotale</td>
-                    <td style="padding:4px 0;font-size:17px;color:#bbb;text-align:right;">${fmt(subtotal)}&nbsp;€</td>
+                    <td style="padding:4px 0;font-size:17px;color:#8a8f96;">Subtotale</td>
+                    <td style="padding:4px 0;font-size:17px;color:#6c727a;text-align:right;">${fmt(subtotal)}&nbsp;€</td>
                   </tr>
                   ${hasDiscount ? `
                   <tr>
-                    <td style="padding:4px 0;font-size:17px;color:#bbb;">Sconto</td>
+                    <td style="padding:4px 0;font-size:17px;color:#8a8f96;">Sconto</td>
                     <td style="padding:4px 0;font-size:17px;color:#16a34a;text-align:right;">−${fmt(Math.abs(discount))}&nbsp;€</td>
                   </tr>` : ''}
-                  ${vatRowsEl('4px 0', '17px', '#bbb')}
+                  ${vatRowsEl('4px 0', '17px', '#8a8f96')}
                   ${bolloAmount > 0 ? `
                   <tr>
-                    <td style="padding:4px 0;font-size:17px;color:#bbb;">Marca da bollo</td>
-                    <td style="padding:4px 0;font-size:17px;color:#bbb;text-align:right;">${fmt(bolloAmount)}&nbsp;€</td>
+                    <td style="padding:4px 0;font-size:17px;color:#8a8f96;">Marca da bollo</td>
+                    <td style="padding:4px 0;font-size:17px;color:#6c727a;text-align:right;">${fmt(bolloAmount)}&nbsp;€</td>
                   </tr>` : ''}
                   ${ritenutaAmount > 0 ? `
                   <tr>
-                    <td style="padding:4px 0;font-size:17px;color:#bbb;">Ritenuta d'acconto ${fmt(ritenutaPct)}%</td>
-                    <td style="padding:4px 0;font-size:17px;color:#bbb;text-align:right;">−${fmt(ritenutaAmount)}&nbsp;€</td>
+                    <td style="padding:4px 0;font-size:17px;color:#8a8f96;">Ritenuta d'acconto ${fmt(ritenutaPct)}%</td>
+                    <td style="padding:4px 0;font-size:17px;color:#6c727a;text-align:right;">−${fmt(ritenutaAmount)}&nbsp;€</td>
                   </tr>` : ''}
                 </tbody>
               </table>
-              <div style="border-top:1px solid #c8c8c8;margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;">
-                <span style="font-size:19px;font-weight:600;text-transform:uppercase;letter-spacing:0.10em;color:#444;">Totale</span>
-                <span style="font-size:24px;font-weight:700;font-style:italic;color:${safeAccentColor};white-space:nowrap;">${fmt(total)}&nbsp;€</span>
+              <div style="border-top:2px solid ${safeAccentColor};margin-top:9px;padding-top:11px;display:flex;justify-content:space-between;align-items:baseline;gap:18px;">
+                <span style="font-size:12px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#22303c;">Totale</span>
+                <span style="font-size:26px;font-weight:600;color:#22303c;white-space:nowrap;">${fmt(total)}&nbsp;€</span>
               </div>
             </div>
           </div>`}
@@ -1308,9 +1302,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         </div>
 
         <!-- FOOTER -->
-        <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #e5e5e5;padding:9px 36px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
-          ${brandingSpan('#ccc')}
-          <span style="font-size:17px;color:#ccc;">${!isFattura && expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
+        <div style="position:absolute;bottom:0;left:0;right:0;border-top:1px solid #efeee9;padding:9px 40px;display:flex;justify-content:space-between;align-items:center;z-index:1;">
+          ${brandingSpan('#adb0b6')}
+          <span style="font-size:17px;color:#adb0b6;">${!isFattura && expiresDate ? `Valido fino al ${expiresDate}` : ''}</span>
         </div>
       `, fontName, pageTitle)
     }

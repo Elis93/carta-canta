@@ -11,6 +11,15 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 // Aggiungere una voce qui a ogni rilascio rilevante per l'utente.
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
+    data: 'Fine agosto 2026',
+    titolo: 'Preventivi e fatture più belli: i template rinnovati',
+    punti: [
+      'Il template «Classico» (il predefinito) ha una veste nuova, più moderna e ordinata: una fascia con Data, scadenza e regime sotto la testata, il cliente in un riquadro dedicato e il Totale in un blocco pieno nel tuo colore. Resta pulito, ma con più carattere.',
+      'Il template «Elegante» diventa più sartoriale: un carattere serif raffinato per il nome, il numero e il totale, filetti sottili e molta più aria. Adatto a chi vuole un documento con un tocco di classe.',
+      'In entrambi il tuo colore e il tuo logo restano quelli che scegli tu dalle Impostazioni: cambia solo il disegno di base. I documenti già inviati non cambiano — mantengono l’aspetto che avevano quando li hai mandati.',
+    ],
+  },
+  {
     data: 'Metà agosto 2026',
     titolo: 'Menu più semplice, creazione più veloce, cestino a portata di mano',
     punti: [

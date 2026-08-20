@@ -21,8 +21,8 @@ export const PRESET_LIST: PresetInfo[] = [
   {
     key:          'classico',
     label:        'Classico',
-    description:  'Pulito e professionale, adatto a ogni settore.',
-    defaultColor: '#374151',
+    description:  'Moderno e pulito: fascia dati e totale a riquadro nel tuo colore.',
+    defaultColor: '#1f5460',
     defaultFont:  'Inter',
   },
   {
@@ -42,8 +42,8 @@ export const PRESET_LIST: PresetInfo[] = [
   {
     key:          'elegante',
     label:        'Elegante',
-    description:  'Intestazione centrata, atmosfera editoriale e raffinata.',
-    defaultColor: '#7c3aed',
+    description:  'Serif raffinato, filetti sottili e molta aria: aria sartoriale.',
+    defaultColor: '#9c7c46',
     defaultFont:  'Georgia',
   },
 ]
