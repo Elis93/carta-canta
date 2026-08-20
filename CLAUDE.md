@@ -29,6 +29,14 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 20 ago (5) — 4 feedback: fascia Classico, IVA catalogo, conferme WhatsApp, validità modificabile
+Quattro punti di Eli dal collaudo (con Pro sbloccato a mano via SQL).
+- **[TEMPLATE] Fascia del Classico: via «Regime» → «Totale»** («non ha senso che ci sia scritto che il regime è ordinario»): al cliente il regime non dice nulla su un preventivo; il totale sì. Con più proposte l'etichetta diventa «Tot. Proposta Base» (stesso schema del Tecnico). PDF + TemplatePreview + /novita allineati; 16/16 asserzioni edge-case ancora verdi.
+- **[CATALOGO] IVA a TENDINA** («ho potuto mettere IVA al 60%»): `CatalogItemForm` passa dal campo decimale libero alla Select con Predefinita/22/10/5/4/0 (le stesse del preventivo; `VAT_OPTIONS`). Un valore storico fuori elenco resta visibile come «N% (da correggere)» — schema FIX-20 delle unità. ⚠️ La Select non è un campo nativo: `formData.set('vat_rate', …)` nel submit. Il popup «Nuova voce» del CatalogPicker aveva GIÀ la tendina.
+- **[SHARE] WhatsApp/«Altre app» con le stesse conferme di «Copia»**: su bozza il toast «Preventivo segnato come Inviato», sullo scaduto «La validità riparte: scade tra N giorni». Prima registravano l'invio in SILENZIO (il toast c'era solo su Copia) — è ciò che Eli percepiva come «non esce il pop-up».
+- **[VALIDITÀ] Cambiarla su un documento GIÀ inviato ora aggiorna la scadenza.** La regola sess. 23 («expires_at riparte SOLO al reinvio») nasceva per l'auto-save, ma mangiava anche il cambio ESPLICITO: il campo si salvava e la data non si muoveva mai. Ora: `validityChanged` (form ≠ DB) → `expires_at = sent_at + N giorni` (ancora dell'invio, MAI da oggi: niente giorni regalati a ogni modifica); validità invariata → scadenza intoccata come prima. In `updateDocumentAction` E `saveDraftAction` (select allargate a `sent_at`). §B.2/B.5 nota: la decisione «solo al reinvio» è ora «al reinvio O al cambio esplicito della validità».
+- tsc+build+**733** test+smoke 28/28 verdi · scan 0.
+
 ### ✅ 20 ago (4) — Audit della pagina Abbonamento: claim Free/Pro contro i gate VERI (2 falsi corretti)
 Eli: «è corretto quello che c'è scritto in abbonamento con quello che offriamo?». Audit voce per voce (B.0), ogni claim confrontato col codice.
 - **[FALSO] «Con Pro sono illimitate» sulle FOTO** (toast PreventivoForm + errore sopralluoghi.ts): il tetto Pro è **40** (`isProPlan ? 40 : 6`) → «Con Pro fino a 40».
