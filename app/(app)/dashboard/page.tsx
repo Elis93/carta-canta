@@ -209,7 +209,7 @@ export default async function DashboardPage() {
       .is('deleted_at', null),
     supabase
       .from('documents')
-      .select('id, doc_number, title, total, sent_at, expires_at, last_reminder_at, updated_after_send_at, public_token, client_id, clients(name, email, phone)')
+      .select('id, doc_number, title, total, sent_at, expires_at, last_reminder_at, updated_after_send_at, public_token, client_id, clients(name, surname, email, phone)')
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'preventivo')
       .in('status', ['sent', 'viewed'])
@@ -221,7 +221,7 @@ export default async function DashboardPage() {
     // 'expired' incluso — una fattura oltre scadenza resta da incassare
     supabase
       .from('documents')
-      .select('id, doc_number, title, total, sent_at, expires_at, public_token, client_id, clients(name, email, phone)')
+      .select('id, doc_number, title, total, sent_at, expires_at, public_token, client_id, clients(name, surname, email, phone)')
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'fattura')
       .in('status', ['sent', 'viewed', 'expired'])
@@ -460,9 +460,11 @@ export default async function DashboardPage() {
   if (oldestPendingRaw) {
     // Cliente JOINato nella query principale (niente round trip extra)
     const pendingClient = (oldestPendingRaw as unknown as {
-      clients: { name: string | null; email: string | null; phone: string | null } | null
+      clients: { name: string | null; surname: string | null; email: string | null; phone: string | null } | null
     }).clients
-    const clientName  = pendingClient?.name ?? null
+    // Nome COMPLETO (Eli 20 ago: «ora non c'è il cognome»): nome + cognome,
+    // o la sola ragione sociale quando il cognome non c'è.
+    const clientName  = [pendingClient?.name, pendingClient?.surname].filter(Boolean).join(' ') || null
     const clientEmail = pendingClient?.email ?? null
     const clientPhone = pendingClient?.phone ?? null
 
@@ -553,14 +555,14 @@ export default async function DashboardPage() {
   } | null = null
   if (pendingFatturaRaw) {
     const fc = (pendingFatturaRaw as unknown as {
-      clients: { name: string | null; email: string | null; phone: string | null } | null
+      clients: { name: string | null; surname: string | null; email: string | null; phone: string | null } | null
     }).clients
     pendingFattura = {
       documentId:  pendingFatturaRaw.id,
       // ⚠️ Numero SENZA il marcatore «Fatt.» (B.3): la card lo mostra dentro
       // «Fattura {numero}» — col marcatore uscirebbe «Fattura Fatt. 034/2026».
       numberLabel: pendingFatturaRaw.doc_number ? formatDocNumber(pendingFatturaRaw.doc_number) : null,
-      clientName:  fc?.name ?? null,
+      clientName:  [fc?.name, fc?.surname].filter(Boolean).join(' ') || null,
       clientEmail: fc?.email ?? null,
       clientPhone: fc?.phone ?? null,
       total:       pendingFatturaRaw.total,

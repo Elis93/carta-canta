@@ -2662,11 +2662,12 @@ export async function sendReminderAction(
 
   const { data: client } = await supabase
     .from('clients')
-    .select('name, email')
+    .select('name, surname, email')
     .eq('id', doc.client_id)
     .maybeSingle()
 
   if (!client?.email) return { error: "Il cliente non ha un'email — aggiornalo prima di sollecitare" }
+  const clientFullName = [client.name, (client as { surname?: string | null }).surname].filter(Boolean).join(' ')
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
   const publicUrl = doc.public_token
@@ -2680,7 +2681,7 @@ export async function sendReminderAction(
       ? `Promemoria: fattura${numClean ? ` #${numClean}` : ''} in attesa di pagamento`
       : `Promemoria: preventivo${numClean ? ` #${numClean}` : ''} in attesa di risposta`,
     react: createElement(SollecitoClienteEmail, {
-      clientName: client.name,
+      clientName: clientFullName || client.name,
       documentTitle: doc.title ?? '',
       documentNumber: numClean || undefined,
       workspaceName: workspace.ragione_sociale ?? workspace.name,
@@ -2691,6 +2692,11 @@ export async function sendReminderAction(
   })
 
   if (!result.success) return { error: result.error ?? 'Errore invio email' }
+  // Traccia nei log (SENZA dati personali): l'id del messaggio permette di
+  // ritrovare l'email nel pannello Resend quando «la mail non arriva»
+  // (Eli 20 ago) — se qui c'è l'id, Resend l'ha accettata: il problema è a
+  // valle (spam, indirizzo soppresso), non nell'app.
+  console.log(`[sollecito] doc=${documentId} resendId=${result.messageId ?? 'n/d'}`)
 
   await supabase
     .from('documents')

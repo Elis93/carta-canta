@@ -13,7 +13,7 @@
 import { useState } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
-import { Bell, Phone, Loader2, CheckCircle2, Info } from 'lucide-react'
+import { Mail, Phone, Loader2, CheckCircle2, Info } from 'lucide-react'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
@@ -103,11 +103,14 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
       tabIndex={0}
       onClick={() => router.push(href)}
       onKeyDown={(e) => { if (e.key === 'Enter') router.push(href) }}
-      style={{ cursor: 'pointer', position: 'relative', paddingLeft: 11 }}
+      style={{ cursor: 'pointer' }}
     >
-      <span aria-hidden style={{ position: 'absolute', left: 0, top: 3, bottom: 3, width: 3, borderRadius: 3, background: urgColor }} />
+      {/* Filetto d'urgenza al FILO del bordo sinistro della card (la card è
+          position:relative): stessa colonna del filetto di «Lavoro in corso»
+          (Eli 20 ago: «devono essere tutte nella stessa identica posizione»). */}
+      <span aria-hidden style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 3, borderRadius: 3, background: urgColor }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: '#161616', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#161616', minWidth: 0, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {mainLabel}
         </span>
         <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 16, fontWeight: 600, color: '#161616', whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -116,7 +119,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
       </div>
       {/* Riga 2 — variante B (scelta Eli 20 ago): a SINISTRA due righe di
           testo — identificativo del documento sopra, scadenza sotto — a
-          DESTRA i tre tasti quadrati piccoli (campanella = Sollecita,
+          DESTRA i tre tasti quadrati piccoli (busta = Sollecita,
           WhatsApp, Chiama). Via la riga dei tasti a tutta larghezza e la
           riga dedicata a «Modificato», che ora sta in coda al documento. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
@@ -164,7 +167,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
                 cursor: sending || sent ? 'default' : 'pointer', opacity: sending ? 0.8 : 1, flexShrink: 0,
               }}
             >
-              {sending ? <Loader2 size={15} className="animate-spin" /> : sent ? <CheckCircle2 size={16} /> : <Bell size={16} aria-hidden="true" />}
+              {sending ? <Loader2 size={15} className="animate-spin" /> : sent ? <CheckCircle2 size={16} /> : <Mail size={16} aria-hidden="true" />}
             </button>
           )}
           {doc.clientPhone && (
@@ -257,12 +260,12 @@ export function ScadenzeHomeCard({ preventivo, fattura, workspaceName }: {
       <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
         In scadenza
       </div>
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px' }}>
+      <div style={{ position: 'relative', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px' }}>
         {preventivo
           ? <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />
           : <VuotoBlock kind="preventivo" />}
       </div>
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px', marginTop: 10 }}>
+      <div style={{ position: 'relative', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px', marginTop: 10 }}>
         {fattura
           ? <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />
           : <VuotoBlock kind="fattura" />}
