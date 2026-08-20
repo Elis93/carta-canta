@@ -168,10 +168,6 @@ export function TemplatePreview({
     )
   }
 
-  const LABEL_ACCENT: React.CSSProperties = {
-    fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-    letterSpacing: '0.12em', color: safeAccentColor, marginBottom: 3, whiteSpace: 'nowrap',
-  }
   const LABEL_COMMON: React.CSSProperties = {
     fontSize: 12,fontWeight: 700, textTransform: 'uppercase',
     letterSpacing: '0.09em', color: '#999', marginBottom: 3,
