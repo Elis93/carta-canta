@@ -14,6 +14,7 @@ import { CatalogPicker } from './CatalogPicker'
 import { useFontiVoci, SuggerimentiVociDropdown } from './VoceSuggerimenti'
 import { suggerisciVoci, normalizzaTesto, type FonteVoce } from '@/lib/documents/suggerimenti-voce'
 import { VoiceInput } from '@/components/shared/VoiceInput'
+import { toast } from 'sonner'
 import { CalcQuantitaButton } from '@/components/calc/CalcQuantitaButton'
 
 // ── NumericInput ──────────────────────────────────────────────────────────────
@@ -296,16 +297,50 @@ export function VociTable({
     requestAnimationFrame(() => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' })
   }
 
+  // Ultima lista nota: la legge l'«Annulla» dell'eliminazione, che può
+  // scattare qualche secondo dopo il tocco.
+  const vociRef = useRef(voci)
+  useEffect(() => { vociRef.current = voci }, [voci])
+
   function removeVoce(key: string) {
+    const idx = voci.findIndex((v) => v._key === key)
+    if (idx < 0) return
+    const rimossa = voci[idx]
     const filtered = voci.filter((v) => v._key !== key)
-    if (filtered.length === 0) {
-      const nv = newVoce(0)
-      setOpenKey(nv._key)
-      onChange([nv])
-      return
+
+    // Eliminando l'ULTIMA voce la lista non resta vuota: nasce una riga nuova
+    // al suo posto (un documento senza righe non si compila).
+    const sostituta = filtered.length === 0 ? newVoce(0) : null
+    if (sostituta) {
+      setOpenKey(sostituta._key)
+      onChange([sostituta])
+    } else {
+      if (key === openKey) setOpenKey(null)
+      onChange(filtered.map((v, i) => ({ ...v, sort_order: i })))
     }
-    if (key === openKey) setOpenKey(null)
-    onChange(filtered.map((v, i) => ({ ...v, sort_order: i })))
+
+    // Rete di sicurezza (Eli, 20 ago): un tocco per sbaglio non deve costare
+    // la voce. Niente banner per una riga ancora VUOTA — lì non c'è nulla da
+    // recuperare e sarebbe solo rumore a ogni «aggiungi e ripensaci».
+    const haContenuto = rimossa.description.trim() !== '' || (rimossa.unit_price ?? 0) > 0
+    if (!haContenuto) return
+    toast('Voce eliminata', {
+      action: {
+        label: 'Annulla',
+        onClick: () => {
+          // ⚠️ Si ripristina sulla lista AGGIORNATA (vociRef), non su quella
+          // catturata all'eliminazione: fra il tocco e l'annulla l'artigiano
+          // può aver modificato altre voci, e rimetterle indietro le perderebbe.
+          const corrente = sostituta
+            ? vociRef.current.filter((v) => v._key !== sostituta._key)
+            : vociRef.current
+          const ripristinato = [...corrente]
+          ripristinato.splice(Math.min(idx, ripristinato.length), 0, rimossa)
+          onChange(ripristinato.map((v, i) => ({ ...v, sort_order: i })))
+          setOpenKey(rimossa._key)
+        },
+      },
+    })
   }
 
   function addVoce() {
@@ -535,18 +570,12 @@ export function VociTable({
                   >
                     VOCE {idx + 1} <ChevronUp size={14} />
                   </button>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ fontSize: 13, color: 'var(--cc-muted)' }}>
-                      Tot. <b style={{ color: '#161616', fontSize: 14 }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeVoce(voce._key)}
-                      aria-label={`Elimina voce ${idx + 1}`}
-                      style={{ color: '#b3b1ab', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px 0' }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                  {/* ⚠️ Niente cestino qui (Eli, 20 ago): questa testata è la
+                      barra che si tocca per CHIUDERE la voce, e un tocco di
+                      striscio cancellava la riga senza rimedio. «Elimina voce»
+                      è ora in fondo alla card. */}
+                  <span style={{ fontSize: 13, color: 'var(--cc-muted)' }}>
+                    Tot. <b style={{ color: '#161616', fontSize: 14 }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
                   </span>
                 </div>
 
@@ -721,6 +750,22 @@ export function VociTable({
                     <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
                   </div>
                 )}
+
+              {/* ELIMINA VOCE — ultima cosa della card aperta: ci si arriva
+                  solo dopo aver scorso tutti i campi, cioè quando lo si vuole
+                  davvero (schema delle azioni distruttive in fondo al modulo).
+                  Su desktop resta il cestino nella colonna azioni: lì il
+                  puntatore è preciso e non c'è il rischio del pollice. */}
+              {voce._key === openKey && (
+                <button
+                  type="button"
+                  onClick={() => removeVoce(voce._key)}
+                  className="lg:hidden"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', marginTop: 6, background: 'none', border: 'none', borderTop: '1px solid #f0efec', padding: '11px 0 2px', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 500, color: '#a5564e' }}
+                >
+                  <Trash2 size={15} /> Elimina voce
+                </button>
+              )}
 
             </div>
           )
