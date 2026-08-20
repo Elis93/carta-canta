@@ -7,10 +7,10 @@
 // dettaglio server, sotto questo form).
 // ============================================================
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
-import { Loader2, Navigation, Save } from 'lucide-react'
+import { ChevronDown, Loader2, Navigation, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
 import type { ClientHit } from '@/components/shared/QuickCreateClientDialog'
@@ -25,6 +25,14 @@ const secLabel: React.CSSProperties = { fontSize: 13, fontWeight: 600, letterSpa
 const fieldStyle: React.CSSProperties = {
   width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px',
   fontSize: 14, fontFamily: 'inherit', color: '#161616', background: '#fff', boxSizing: 'border-box', outline: 'none',
+}
+
+/** "YYYY-MM-DDTHH:MM" (ora italiana) → "GG/MM · HH:MM" per il riepilogo chiuso. */
+function fmtAppuntamento(v: string): string {
+  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/)
+  if (!m) return v
+  const [, , mm, dd, hh, min] = m
+  return `${dd}/${mm} · ${hh}:${min}`
 }
 
 export interface LavoroDefaults {
@@ -47,6 +55,11 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
   const [scheduledAt, setScheduledAt] = useState(defaults?.scheduledAt ?? '')
   // Giorno scelto senza ora nel picker: blocca il salvataggio (finding M4)
   const [apptIncomplete, setApptIncomplete] = useState(false)
+  // «Prossimo intervento» apribile/chiudibile con la freccia (Eli, 20 ago):
+  // chiuso di default, aperto se un appuntamento esiste già. Non si chiude
+  // finché manca l'ora — il picker deve restare visibile per correggere.
+  const [openAppt, setOpenAppt] = useState(Boolean(defaults?.scheduledAt))
+  useEffect(() => { if (apptIncomplete) setOpenAppt(true) }, [apptIncomplete])
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
   const [status, setStatus] = useState<LavoroStatus>(defaults?.status ?? 'da_iniziare')
   const [pending, startTransition] = useTransition()
@@ -184,17 +197,38 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
         )}
       </div>
 
-      {/* PROSSIMO INTERVENTO — card a sé, separata dal Cantiere (Eli, 19 ago).
-          Tolta la parola «facoltativo». */}
+      {/* PROSSIMO INTERVENTO — card a sé, separata dal Cantiere (Eli, 19 ago;
+          senza «facoltativo»). Apribile/chiudibile con la freccia (20 ago):
+          chiusa mostra la data scelta o «Nessuno». */}
       <div style={cardStyle}>
-        <div style={secLabel}>Prossimo intervento</div>
-        <AppointmentPicker
-          value={scheduledAt}
-          onChange={setScheduledAt}
-          onIncompleteChange={setApptIncomplete}
-          excludeKind="lavoro"
-          excludeId={lavId}
-        />
+        <button
+          type="button"
+          onClick={() => { if (openAppt && apptIncomplete) return; setOpenAppt((v) => !v) }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+          aria-expanded={openAppt}
+        >
+          <span style={{ ...secLabel, marginBottom: 0, flexShrink: 0 }}>Prossimo intervento</span>
+          {!openAppt && (
+            <span style={{ flex: 1, minWidth: 0, textAlign: 'right', fontSize: 13, fontWeight: 500, color: 'var(--cc-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {scheduledAt ? fmtAppuntamento(scheduledAt) : 'Nessuno'}
+            </span>
+          )}
+          <ChevronDown
+            size={18}
+            style={{ marginLeft: 'auto', flexShrink: 0, color: '#8a887f', transform: openAppt ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}
+          />
+        </button>
+        {openAppt && (
+          <div style={{ marginTop: 12 }}>
+            <AppointmentPicker
+              value={scheduledAt}
+              onChange={setScheduledAt}
+              onIncompleteChange={setApptIncomplete}
+              excludeKind="lavoro"
+              excludeId={lavId}
+            />
+          </div>
+        )}
       </div>
 
       {/* Note di cantiere */}
