@@ -29,6 +29,15 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 20 ago (7) — Il cestino della voce esce dalla testata: «Elimina voce» in fondo + Annulla
+Eli: «il cestino in alto a destra a ogni voce, dove si clicca anche per aprire le voci, potrebbe essere cliccato per sbaglio». Vero e peggio del previsto: `removeVoce` cancellava **all'istante, senza conferma e senza modo di tornare indietro**. Scelta via AskUserQuestion: **in fondo + Annulla** (due difese invece di una).
+- **Il cestino esce dalla testata** della voce aperta (resta il solo «Tot. € …»): quella barra è ciò che si tocca per CHIUDERE la voce, quindi il pollice ci passa sopra. Ora c'è una riga **«Elimina voce»** (rosso tenue, filetto sopra) come ULTIMA cosa della card aperta — schema delle azioni distruttive in fondo al modulo: ci si arriva solo dopo aver scorso tutti i campi.
+- **Desktop invariato**: il cestino resta nella colonna azioni (puntatore preciso, nessun rischio-pollice).
+- **Annulla**: dopo l'eliminazione compare «Voce eliminata · Annulla» che rimette la riga **al suo posto esatto**. Niente banner su una riga ancora VUOTA (non c'è nulla da recuperare, sarebbe rumore a ogni «aggiungi e ripensaci»).
+- ⚠️ **L'annulla ripristina su `vociRef.current`, non sulla lista catturata al tocco**: fra l'eliminazione e l'annulla si possono modificare altre voci, e ripristinare sulla lista vecchia le perderebbe. Verificato con replica in node sui casi limite: eliminazione della prima/di mezzo/dell'ultima (torna sempre alla posizione giusta), voce UNICA (la riga vuota creata al suo posto viene rimossa), e modifiche ad altre voci conservate.
+- Vale su preventivi **e** fatture (`VociTable` è condiviso). Nessuna FAQ descriveva il cestino della singola voce (quelle sul «cestino» parlano dei documenti) → nessuna da correggere.
+- tsc+build+**733** test+smoke 28/28 verdi · scan 0.
+
 ### ✅ 20 ago (6) — [BUG] «IVA 0%» nel riepilogo: righe IVA per aliquota dal motore (3 superfici)
 Eli, foto: voce da catalogo, IVA cambiata, riepilogo con «IVA 0% — € 22,00». **Causa**: l'etichetta faceva `Number(vat_rate)` e su una voce con IVA «predefinita» (`vat_rate NULL` — è ciò che scrive la PRIMA opzione della tendina IVA, etichettata col default «22%») `Number(null)` fa **0**; l'imposta invece era calcolata al default → etichetta e numero raccontavano due cose diverse.
 - **preventivi/[id] + fatture/[id]** (riepilogo read-only): via `ivaLabel`; le righe IVA vengono da **`riepilogoIva` sulle voci espanse dei beni significativi** — stessa fonte del PDF, una riga PER aliquota, null risolto al default. Nel multi-proposta righe per-proposta (`righeIvaDi(tier)`). Richiesta esplicita di Eli: mai una sola % con aliquote miste.
