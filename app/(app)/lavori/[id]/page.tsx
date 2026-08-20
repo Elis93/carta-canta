@@ -315,7 +315,7 @@ export default async function LavoroDetailPage({
 
       {/* Ore di lavoro — timer + manuale (052; compare solo a migration applicata) */}
       {ore && (
-        <div style={{ padding: '0 15px 13px' }}>
+        <div id="ore" style={{ padding: '0 15px 13px', scrollMarginTop: 80 }}>
           <OreLavoroCard lavoroId={id} minutes={ore.minutes} timerStartedAt={ore.startedAt} hourlyCost={hourlyCost} />
         </div>
       )}
@@ -336,7 +336,7 @@ export default async function LavoroDetailPage({
 
       {/* Foto del lavoro (vivono sul preventivo di origine) */}
       {documentId && (
-        <div style={{ padding: '0 15px 16px' }}>
+        <div id="foto" style={{ padding: '0 15px 16px', scrollMarginTop: 80 }}>
           <WorkPhotosCard documentId={documentId} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
         </div>
       )}

@@ -10,6 +10,9 @@ import { RevenueChartLazy } from '@/components/dashboard/RevenueChartLazy'
 import type { TrendPoint } from '@/components/dashboard/RevenueChart'
 import { PendingDocCard } from './_components/PendingDocCard'
 import { ScadenzeHomeCard } from './_components/ScadenzeHomeCard'
+import { AppuntamentiOggiCard } from './_components/AppuntamentiOggiCard'
+import { LavoroInCorsoCard } from './_components/LavoroInCorsoCard'
+import { FeHomeRows } from './_components/FeHomeRows'
 import { SdiHomeCard, type SdiHomeDaTrasmettere, type SdiHomeScartata } from './_components/SdiHomeCard'
 import { riferimentoTrasmissione, termineTrasmissione, scadenzaLabel as sdiScadenzaLabel } from '@/lib/sdi/termini'
 import { CompleteProfileCard, type ProfileItem } from './_components/CompleteProfileCard'
@@ -29,11 +32,10 @@ import {
   Timer,
   PenLine,
   Eye,
-  Crown,
   Bell,
   Hammer,
 } from 'lucide-react'
-import { FREE_DOC_LIMIT, checkFreeBlock } from '@/lib/free-trial'
+import { FREE_DOC_LIMIT, FREE_INVOICE_LIMIT, checkFreeBlock } from '@/lib/free-trial'
 import { getAppNotifications } from '@/lib/notifications'
 import { getTodayEvents } from '@/lib/agenda'
 import { documentiSenzaPromemoria } from '@/lib/documents/archivio'
@@ -173,7 +175,7 @@ export default async function DashboardPage() {
   // e checklist+notifiche non aspettano i documenti. La query documenti è
   // LIMITATA alla finestra del trend (prima scaricava l'intero storico:
   // con anni di dati la Home sarebbe rallentata ad ogni apertura).
-  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: pendingPrevRaw }, { data: pendingFattRaw }, { count: fattureScadenzaCount }, { count: catalogCount }, appNotifications, todayEvents, posticipati, archiviatiRecenti, recentLavori, sdiHomeRows] = await Promise.all([
+  const [{ data: recentDocs }, { data: pendingPreventivi }, { count: draftPrevCount }, { count: draftFattCount }, { data: pendingPrevRaw }, { data: pendingFattRaw }, { data: fattureDaIncassareRows }, { count: catalogCount }, appNotifications, todayEvents, posticipati, archiviatiRecenti, recentLavori, sdiHomeRows, lavoroInCorsoRow] = await Promise.all([
     supabase
       .from('documents')
       .select('id, title, doc_number, status, doc_type, total, created_at, updated_at, sent_at, accepted_at, expires_at, updated_after_send_at, clients(name, surname)')
@@ -227,11 +229,12 @@ export default async function DashboardPage() {
       .order('expires_at', { ascending: true, nullsFirst: false })
       .order('sent_at', { ascending: true, nullsFirst: false })
       .limit(10),
-    // Conteggio fatture da incassare entro 7 giorni (badge del tasto "Fatture" —
-    // stessa semantica del vecchio badge Scadenze di Altro)
+    // TUTTE le fatture ancora da incassare (id + totale): alimentano il
+    // riquadro «Fatture da incassare» della testata — conteggio E somma in
+    // euro (redesign 19-20 ago). Righe leggere, senza join.
     supabase
       .from('documents')
-      .select('id', { count: 'exact', head: true })
+      .select('id, total')
       .eq('workspace_id', workspace.id)
       .eq('doc_type', 'fattura')
       .in('status', ['sent', 'viewed', 'expired'])
@@ -290,32 +293,50 @@ export default async function DashboardPage() {
     // ⚠️ A CASCATA: doc_date e sdi_auto_at nascono con la 080 — se mancano,
     // la stessa query riparte senza quelle colonne invece di far sparire i
     // blocchi (deploy-prima-della-migration è l'ordine reale).
-    SDI_ENABLED
-      ? (async () => {
-          const querySdi = (extraCols: string) =>
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044/080 non nei types generati
-            (supabase as any)
-              .from('documents')
-              .select('id, doc_number, doc_type, status, sdi_status, paid_at, created_at' + extraCols)
-              .eq('workspace_id', workspace.id)
-              .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
-              .is('deleted_at', null)
-              .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired))')
-              // I più vecchi per primi: senza un order esplicito le 50 righe
-              // sarebbero un campione arbitrario, e i «più urgenti in cima»
-              // verrebbero scelti dentro il campione sbagliato. Oltre le 50
-              // i contatori si fermano lì: accettato e annotato.
-              .order('created_at', { ascending: true })
-              .limit(50)
-          const ricca = await querySdi(', doc_date, sdi_auto_at')
-          if (!ricca.error) return (ricca.data ?? []) as SdiHomeRow[]
-          const base = await querySdi('').then(
-            (r: { data: unknown[] | null }) => (r.data ?? []) as SdiHomeRow[],
-            () => [] as SdiHomeRow[],
-          )
-          return base
-        })()
-      : Promise.resolve([] as SdiHomeRow[]),
+    // ⚠️ Dal 20 ago la query gira SEMPRE (Eli: «voglio vederla in Home per
+    // testare l'estetica»): la sezione mobile «Fatture elettroniche» compare
+    // anche con lo SdI spento — i collegamenti ricadono su /fatture finché il
+    // flag resta off (la pagina da-trasmettere reindirizza da sola).
+    (async () => {
+      const querySdi = (extraCols: string) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044/080 non nei types generati
+        (supabase as any)
+          .from('documents')
+          .select('id, doc_number, doc_type, status, sdi_status, paid_at, created_at' + extraCols)
+          .eq('workspace_id', workspace.id)
+          .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+          .is('deleted_at', null)
+          .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired))')
+          // I più vecchi per primi: senza un order esplicito le 50 righe
+          // sarebbero un campione arbitrario, e i «più urgenti in cima»
+          // verrebbero scelti dentro il campione sbagliato. Oltre le 50
+          // i contatori si fermano lì: accettato e annotato.
+          .order('created_at', { ascending: true })
+          .limit(50)
+      const ricca = await querySdi(', doc_date, sdi_auto_at')
+      if (!ricca.error) return (ricca.data ?? []) as SdiHomeRow[]
+      const base = await querySdi('').then(
+        (r: { data: unknown[] | null }) => (r.data ?? []) as SdiHomeRow[],
+        () => [] as SdiHomeRow[],
+      )
+      return base
+    })(),
+    // Lavoro IN CORSO più recente (redesign 19-20 ago): card «Lavoro in
+    // corso» con Timer/Foto/Modifica. Tollerante pre-migration (048/049).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 049 non ancora in types/database.ts
+    (supabase as any)
+      .from('lavori')
+      .select('id, title')
+      .eq('workspace_id', workspace.id)
+      .eq('status', 'in_corso')
+      .is('deleted_at', null)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(
+        (r: { data: { id: string; title: string | null } | null }) => r.data,
+        () => null,
+      ) as Promise<{ id: string; title: string | null } | null>,
   ])
 
   const docs: DocRow[] = (recentDocs ?? []) as DocRow[]
@@ -540,7 +561,9 @@ export default async function DashboardPage() {
     }).clients
     pendingFattura = {
       documentId:  pendingFatturaRaw.id,
-      numberLabel: pendingFatturaRaw.doc_number ? formatDocNumber(pendingFatturaRaw.doc_number, 'fattura') : null,
+      // ⚠️ Numero SENZA il marcatore «Fatt.» (B.3): la card lo mostra dentro
+      // «Fattura {numero}» — col marcatore uscirebbe «Fattura Fatt. 034/2026».
+      numberLabel: pendingFatturaRaw.doc_number ? formatDocNumber(pendingFatturaRaw.doc_number) : null,
       clientName:  fc?.name ?? null,
       clientEmail: fc?.email ?? null,
       clientPhone: fc?.phone ?? null,
@@ -572,12 +595,20 @@ export default async function DashboardPage() {
   // (o niente) e la pagina mostrarne uno. Un numero accanto a un collegamento
   // promette quante cose ci sono dietro: se non torna, non serve a nulla.
   const prevScadenzaCount = pending.filter((d) => !idRinviati.has(d.id)).length
-  // Il conteggio delle fatture arriva dal database e non conosce rinvii né
-  // archivio: si sottraggono quelle fuori dai promemoria. ⚠️ La query di
-  // esclusione guarda gli stessi stati del conteggio (sent/viewed/expired),
-  // altrimenti si sottrarrebbero righe che nel conteggio non c'erano.
-  const fattRinviate = rinviati.filter((d) => d.doc_type === 'fattura').length
-  const fattureInScadenza = Math.max(0, (fattureScadenzaCount ?? 0) - fattRinviate)
+  // Fatture da incassare: righe vere (id + totale) → conteggio E somma in
+  // euro per il riquadro della testata. Quelle fuori dai promemoria
+  // (rinviate/archiviate) si tolgono qui, con gli stessi stati della query.
+  const fattureAperte = ((fattureDaIncassareRows ?? []) as Array<{ id: string; total: number | null }>)
+    .filter((d) => !idRinviati.has(d.id))
+  const daIncassareTotale = fattureAperte.reduce((s, d) => s + (d.total ?? 0), 0)
+
+  // Testata navy (redesign 19-20 ago): mese in occhiello + data nel saluto
+  const meseLabel = now.toLocaleDateString('it-IT', { month: 'long', timeZone: 'Europe/Rome' })
+  const dataLabel = now.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Rome' })
+  // Striscia del piano gratuito: entrambi i contatori (preventivi E fatture)
+  const freeInvoiceStatus = isFree ? checkFreeBlock(workspace, 'fattura') : null
+  const euroCorto = (v: number) =>
+    `€ ${v.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 
   // ── Blocchi SdI della Home (Eli, 11 ago) ──────────────────────────────────
   // «Da trasmettere» ordinato per urgenza (chi ha meno giorni per primo);
@@ -630,56 +661,86 @@ export default async function DashboardPage() {
       {/* ══════════════════ MOBILE ══════════════════════════════════════════════ */}
       <div className="lg:hidden">
 
-        {/* 1. Brand strip — variante B "scena navy" (scelta Eli 2 ago dal
-            mockup): il marchio grande sulla fascia blu notte come splash e
-            login — si vede davvero, e le due fasce di prima diventano una
-            testata coerente (via il nastrino bianco "né carne né pesce"). */}
-        <div style={{ background: '#1a1a2e', padding: '14px 15px 13px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <svg viewBox="0 0 512 512" style={{ width: 46, height: 46, flexShrink: 0 }} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <rect x="7" y="7" width="498" height="498" rx="110" fill="rgba(255,255,255,.07)" stroke="#c9a44c" strokeWidth="14"/>
-              <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="38" strokeLinecap="round"/>
-              <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round"/>
-            </svg>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 24, fontWeight: 600, color: '#f5efdf', lineHeight: 1.1 }}>
-                Carta <span style={{ color: '#c9a44c' }}>Canta</span>
-              </div>
-              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 13, fontStyle: 'italic', color: '#cbb47a', marginTop: 1 }}>
-                il tuo ufficio in tasca
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* 1. TESTATA NAVY (redesign 19-20 ago, mockup «Sartoriale» approvato
+            da Eli): bagliore d'oro + monogramma in filigrana; marchio,
+            campanella e avatar sulla prima riga; saluto compatto (nome a
+            sinistra, attività e data a destra — «non voglio si allunghi
+            troppo la prima parte»); occhiello col MESE e i tre numeri del
+            momento. Le etichette sono GRIGIE, i numeri d'oro/crema; i due
+            riquadri delle scadenze aprono le rispettive pagine. */}
+        <div style={{ position: 'relative', overflow: 'hidden', background: 'radial-gradient(130% 120% at 82% -12%, #2a2942, #1a1a2e 62%)', padding: '14px 15px 16px' }}>
+          <div aria-hidden style={{ position: 'absolute', top: -34, right: -24, width: 190, height: 190, borderRadius: '50%', background: 'radial-gradient(circle, rgba(203,164,76,.32), transparent 66%)', pointerEvents: 'none' }} />
+          <svg aria-hidden viewBox="0 0 512 512" style={{ position: 'absolute', right: -40, bottom: -58, width: 190, height: 190, opacity: 0.09, pointerEvents: 'none' }} xmlns="http://www.w3.org/2000/svg">
+            <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="30" strokeLinecap="round"/>
+            <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="24" strokeLinecap="round"/>
+          </svg>
 
-        {/* 2. Home header: saluto + avatar — riga oro che stacca la testata dal contenuto */}
-        <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-            <div>
-              {/* «Ciao Elisa,» — vocativo senza virgola prima del nome (Eli, 17 ago) */}
-              <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.15 }}>Ciao {fullName},</div>
-              <div style={{ fontSize: 13, color: '#55534b' }}>{workspaceName}</div>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
+              <svg viewBox="0 0 512 512" style={{ width: 30, height: 30, flexShrink: 0 }} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="7" y="7" width="498" height="498" rx="110" fill="rgba(255,255,255,.06)" stroke="#c9a44c" strokeWidth="16"/>
+                <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="40" strokeLinecap="round"/>
+                <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="32" strokeLinecap="round"/>
+              </svg>
+              <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 15, fontWeight: 600, color: '#f5efdf', whiteSpace: 'nowrap' }}>
+                Carta <span style={{ color: '#c9a44c' }}>Canta</span>
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
+              <Link
+                href="/notifiche"
+                aria-label={unreadNotifications > 0 ? `Notifiche: ${unreadNotifications} non lette` : 'Notifiche'}
+                style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(203,164,76,.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e6cf94' }}
+              >
+                <Bell size={16} strokeWidth={1.9} />
+                {unreadNotifications > 0 && (
+                  <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 999, background: '#b05656', color: '#fff', fontSize: 9.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </span>
+                )}
+              </Link>
+              <MobileAvatarMenu
+                hero
+                initials={initials}
+                userEmail={user.email ?? ''}
+                plan={workspace.plan}
+              />
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* Campanella notifiche (mockup notifiche 1) — anche per i Free */}
-            <Link
-              href="/notifiche"
-              aria-label={unreadNotifications > 0 ? `Notifiche: ${unreadNotifications} non lette` : 'Notifiche'}
-              style={{ position: 'relative', width: 36, height: 36, borderRadius: '50%', background: '#fff', border: '1px solid #e7e7ea', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 2px rgba(20,20,40,.05)', color: '#55534b' }}
-            >
-              <Bell size={17} strokeWidth={1.9} />
-              {unreadNotifications > 0 && (
-                <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, borderRadius: 999, background: '#b05656', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
-                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                </span>
-              )}
+
+          {/* Saluto compatto: nome + (attività / data) sulla STESSA riga */}
+          <div style={{ position: 'relative', marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 23, fontWeight: 600, color: '#f7f1e4', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              Ciao {fullName}
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#efe6cf', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{workspaceName}</div>
+              <div style={{ fontSize: 10.5, color: 'rgba(228,226,232,.55)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dataLabel}</div>
+            </div>
+          </div>
+
+          <div style={{ position: 'relative', margin: '15px 2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(228,226,232,.5)' }}>
+            {meseLabel}:
+          </div>
+          <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9 }}>
+            <Link href="/fatture?status=accepted" style={{ background: 'rgba(255,255,255,.055)', border: '1px solid rgba(203,164,76,.2)', borderRadius: 13, padding: '10px 10px', minWidth: 0, textDecoration: 'none', display: 'block' }}>
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 17, fontWeight: 600, color: '#e6cf94', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                {euroCorto(paidFattureThisMonthValue)}
+              </div>
+              <div style={{ fontSize: 10.5, fontWeight: 600, color: 'rgba(228,226,232,.62)', marginTop: 5, lineHeight: 1.25 }}>Fatturato</div>
             </Link>
-            <MobileAvatarMenu
-              initials={initials}
-              userEmail={user.email ?? ''}
-              plan={workspace.plan}
-            />
+            <Link href="/preventivi/scadenze" style={{ background: 'rgba(255,255,255,.055)', border: '1px solid rgba(203,164,76,.2)', borderRadius: 13, padding: '10px 10px', minWidth: 0, textDecoration: 'none', display: 'block' }}>
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 17, fontWeight: 600, color: '#f2ecdd', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                {prevScadenzaCount}
+              </div>
+              <div style={{ fontSize: 10.5, fontWeight: 600, color: 'rgba(228,226,232,.62)', marginTop: 5, lineHeight: 1.25 }}>Preventivi in scadenza</div>
+            </Link>
+            <Link href="/fatture/scadenze" style={{ background: 'rgba(255,255,255,.055)', border: '1px solid rgba(203,164,76,.2)', borderRadius: 13, padding: '10px 10px', minWidth: 0, textDecoration: 'none', display: 'block' }}>
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 17, fontWeight: 600, color: '#e6cf94', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                {euroCorto(daIncassareTotale)}
+              </div>
+              <div style={{ fontSize: 10.5, fontWeight: 600, color: 'rgba(228,226,232,.62)', marginTop: 5, lineHeight: 1.25 }}>Fatture da incassare</div>
+            </Link>
           </div>
         </div>
 
@@ -702,15 +763,19 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* 4. Quota banner (gold — solo se non bloccato) */}
+        {/* 4. Striscia del piano gratuito (redesign 19-20 ago): ENTRAMBI i
+            contatori — preventivi e fatture — su una riga sola. */}
         {isFree && freeTrialStatus && !freeTrialStatus.blocked && (
-          <div style={{ margin: '18px 15px 0', background: '#fff', borderRadius: 11, boxShadow: SH, borderLeft: '3px solid #c9a44c', padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 9 }}>
-            <Crown size={18} style={{ color: '#b08d3e', flexShrink: 0 }} aria-hidden="true" />
-            <span style={{ flex: 1, fontSize: 13, color: '#55534b' }}>
-              {freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT} preventivi gratuiti
+          <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 13, boxShadow: SH, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 9 }}>
+            <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#b0863e', flexShrink: 0 }}>
+              Gratuito
             </span>
-            <Link href="/abbonamento" style={{ fontSize: 13, fontWeight: 600, color: '#b08d3e', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-              Passa a Pro →
+            <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: 'var(--cc-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <b style={{ fontWeight: 600, color: '#161616' }}>{freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT}</b> preventivi ·{' '}
+              <b style={{ fontWeight: 600, color: '#161616' }}>{freeInvoiceStatus?.docsUsed ?? 0}/{FREE_INVOICE_LIMIT}</b> fatture
+            </span>
+            <Link href="/abbonamento" style={{ fontSize: 12.5, fontWeight: 600, color: '#b0863e', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              Pro →
             </Link>
           </div>
         )}
@@ -718,9 +783,16 @@ export default async function DashboardPage() {
         {/* 4b. Completa il tuo profilo (solo se manca qualcosa; ✕ = nascosta 3gg) */}
         {profileIncomplete && <CompleteProfileCard items={profileItems} />}
 
-        {/* 4c. Oggi in agenda — sempre visibile (CTA se l'agenda è vuota).
-            Bordo oro leggero su un lato: separa le card della Home (Eli 18 lug). */}
-        <TodayAgendaCard agenda={todayEvents} style={{ margin: '18px 15px 0' }} />
+        {/* 4c. Appuntamenti di oggi — una riga per appuntamento coi tasti
+            quadrati Naviga/matita (redesign 19-20 ago). Il corpo della riga
+            apre l'agenda su oggi. */}
+        <AppuntamentiOggiCard agenda={todayEvents} style={{ margin: '18px 15px 0' }} />
+
+        {/* 4d. Lavoro in corso — solo se un lavoro è davvero in corso:
+            titolo (max 2 righe) + Timer / Foto / Modifica. */}
+        {lavoroInCorsoRow && (
+          <LavoroInCorsoCard id={lavoroInCorsoRow.id} title={lavoroInCorsoRow.title} style={{ margin: '18px 15px 0' }} />
+        )}
 
         {/* 5. Card unica "In scadenza": preventivo da sollecitare + fattura da
             incassare + i due tasti che sostituiscono la voce Scadenze di Altro
@@ -739,45 +811,20 @@ export default async function DashboardPage() {
             isModified:  !!scadenzaPreventivo.updatedAfterSendAt,
           } : null}
           fattura={scadenzaFattura}
-          prevCount={prevScadenzaCount}
-          fattCount={fattureInScadenza}
           workspaceName={workspaceName}
         />
 
-        {/* 6. Blocchi SdI affiancati (Eli, 11 ago): da trasmettere col
-            countdown dei 12 giorni + scartate da correggere. Solo con lo
-            SdI acceso; quando c'è, c'è SEMPRE (il vuoto dice «tutto ok»). */}
-        {SDI_ENABLED && (
-          <SdiHomeCard
-            daTrasmettere={sdiDaTrasmettereAll.slice(0, 3)}
-            daTrasmettereCount={sdiDaTrasmettereAll.length}
-            scartate={sdiScartateAll.slice(0, 3)}
-            scartateCount={sdiScartateAll.length}
-            style={{ margin: '24px 15px 0' }}
-          />
-        )}
-
-        {/* 7. KPI grid — tappabili: aprono le liste filtrate (come le KPI desktop).
-            ⚠️ Titoletto proprio (7 ago): era l'UNICA sezione della Home senza,
-            e senza nome si leggeva come la coda di "In scadenza". Il mese sta
-            qui una volta sola invece che ripetuto dentro tutt'e due le card. */}
-        <div className="cc-section-label" style={{ margin: '24px 17px 8px' }}>
-          Questo mese
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '0 15px' }}>
-          <Link href="/preventivi?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
-            <div style={{ fontSize: 12, color: '#55534b' }}>Preventivi accettati</div>
-            <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>{acceptedThisMonthCount}</div>
-          </Link>
-          <Link href="/fatture?status=accepted" style={{ background: '#fff', borderRadius: 12, boxShadow: SH, padding: '14px 12px', textAlign: 'center', display: 'block', textDecoration: 'none', color: 'inherit' }}>
-            <div style={{ fontSize: 12, color: '#55534b' }}>Fatturato</div>
-            <div style={{ fontSize: 24, fontWeight: 600, marginTop: 5 }}>
-              {paidFattureThisMonthValue === 0
-                ? '€ 0'
-                : `€\u00A0${paidFattureThisMonthValue.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0  })}`}
-            </div>
-          </Link>
-        </div>
+        {/* 6. Fatture elettroniche — due righe compatte, SEMPRE visibili
+            (Eli, 20 ago: «voglio vederla in Home per testare l'estetica»).
+            Con lo SdI spento i collegamenti ricadono su /fatture (redirect
+            della pagina da-trasmettere). La vecchia sezione «Questo mese» è
+            SPARITA: Fatturato e scadenze vivono ora nella testata navy. */}
+        <FeHomeRows
+          daTrasmettereCount={sdiDaTrasmettereAll.length}
+          termineLabel={sdiDaTrasmettereAll[0]?.termineLabel ?? null}
+          scartateCount={sdiScartateAll.length}
+          style={{ margin: '18px 15px 0' }}
+        />
 
         {/* 8. Activity card — titoletto FUORI dalla card (stile Altro, Eli 2 ago sera) */}
         <div style={{ margin: '23px 15px 18px' }}>
@@ -786,9 +833,11 @@ export default async function DashboardPage() {
           </div>
           <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '2px 15px 8px' }}>
 
+          {/* Massimo TRE voci su mobile (Eli, 19 ago): la Home è un colpo
+              d'occhio, la storia intera vive nelle liste. */}
           {feed.length > 0 ? (
-            feed.map((item, idx) => {
-              const isLast = idx === feed.length - 1
+            feed.slice(0, 3).map((item, idx, arr) => {
+              const isLast = idx === arr.length - 1
               if (item.kind === 'lavoro') {
                 const lav = item.lavoro
                 const meta = LAVORO_STATUS_META[lav.status as LavoroStatus] ?? LAVORO_STATUS_META.da_iniziare
@@ -855,8 +904,10 @@ export default async function DashboardPage() {
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* CLIENTE prima del numero (Eli, 19 ago: il nome si deve
+                        leggere in chiaro) */}
                     <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {displayLabel}{clientName ? ` · ${clientName}` : ''}
+                      {clientName ? `${clientName} · ` : ''}{displayLabel}
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2 }}>
                       {formatCurrency(doc.total ?? 0)}

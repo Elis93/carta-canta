@@ -17,18 +17,21 @@ interface Props {
   initials: string
   userEmail: string
   plan: string
+  /** Variante per la testata navy della Home: tondo oro (il navy sparirebbe) */
+  hero?: boolean
 }
 
-export function MobileAvatarMenu({ initials, userEmail, plan }: Props) {
+export function MobileAvatarMenu({ initials, userEmail, plan, hero }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           style={{
-            width: 38, height: 38, borderRadius: '50%',
-            background: '#1a1a2e', color: '#fff',
+            width: hero ? 34 : 38, height: hero ? 34 : 38, borderRadius: '50%',
+            background: hero ? 'linear-gradient(150deg,#c9a44c,#a97f2f)' : '#1a1a2e',
+            color: hero ? '#241c08' : '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, fontWeight: 500,
+            fontSize: hero ? 12 : 13, fontWeight: hero ? 800 : 500,
             border: 'none', cursor: 'pointer', flexShrink: 0,
           }}
           aria-label="Menu account"

@@ -14,7 +14,6 @@ import { useState } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { Bell, Phone, Loader2, CheckCircle2, AlertTriangle, Info } from 'lucide-react'
-import { HomeCardFootLink } from './HomeSectionLink'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
@@ -55,7 +54,6 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
   const [infoOpen, setInfoOpen] = useState(false)
 
   const href = kind === 'fattura' ? `/fatture/${doc.documentId}` : `/preventivi/${doc.documentId}`
-  const rowLabel = [doc.numberLabel, doc.clientName].filter(Boolean).join(' · ')
 
   async function handleSollecita(e: React.MouseEvent) {
     e.stopPropagation()
@@ -90,45 +88,34 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
     }
   }
 
+  // Redesign 19-20 ago (mockup approvato): il CLIENTE è la riga grande; il
+  // documento («Preventivo 023/2026») scende sotto, piccolo, con la scadenza
+  // colorata. Un filetto verticale a sinistra dà l'urgenza a colpo d'occhio.
+  const scaduto = /^scadut/i.test(doc.expiresLabel)
+  const urgColor = scaduto ? '#a5564e' : '#a5793a'
+  const docLabel = `${kind === 'fattura' ? 'Fattura' : 'Preventivo'} ${doc.numberLabel ?? '—'}`
+  const mainLabel = doc.clientName?.trim() || docLabel
+
   return (
     <div
       role="link"
       tabIndex={0}
       onClick={() => router.push(href)}
       onKeyDown={(e) => { if (e.key === 'Enter') router.push(href) }}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', position: 'relative', paddingLeft: 11 }}
     >
-      {/* Testata: COSA a sinistra, QUANDO a destra — sulla stessa riga.
-          Prima erano due righe distinte e la scadenza (l'informazione per cui
-          la card esiste) finiva terza, sotto l'importo. Così si legge subito
-          e la card perde una riga. */}
-      {/* ⚠️ `flexWrap` + `marginLeft: auto` sulla scadenza: quando titoletto ed
-          etichetta ci stanno, restano sulla stessa riga (è il caso di
-          «Scaduta»); quando l'etichetta è lunga — «fra 13 giorni · 20 ago» —
-          scende su una riga propria, allineata a destra, INVECE di spezzare a
-          metà il titoletto. Prima avevo accorciato il titoletto per farceli
-          stare tutti e due: Eli lo rivuole per esteso, e questo lo permette
-          senza rompere nulla a nessuna larghezza. */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '2px 10px', marginBottom: 6 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', flexShrink: 0 }}>
-          {kind === 'fattura' ? 'Fatture da incassare' : 'Preventivo'}
+      <span aria-hidden style={{ position: 'absolute', left: 0, top: 3, bottom: 3, width: 3, borderRadius: 3, background: urgColor }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#161616', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {mainLabel}
         </span>
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: '#b08d3e', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 'auto' }}>
-          {doc.expiresLabel}
-        </span>
-      </div>
-      {/* ⚠️ Numero e cliente in `var(--cc-muted)`, più chiaro dell'importo
-          (Eli 7 ago: "facciamoli meno vistosi"): sono l'etichetta di CHI, non
-          il dato per cui la card esiste — quelli sono la scadenza e l'importo.
-          La variabile, non il letterale: in "Testo grande" si scurisce da sola
-          per tenere il contrasto leggibile. */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-muted)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {rowLabel || '—'}
-        </span>
-        <span style={{ fontSize: 14, fontWeight: 700, color: '#6f6d64', whiteSpace: 'nowrap' }}>
+        <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 16, fontWeight: 600, color: '#161616', whiteSpace: 'nowrap', flexShrink: 0 }}>
           {formatCurrency(doc.total ?? 0)}
         </span>
+      </div>
+      <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {doc.clientName?.trim() ? <>{docLabel} · </> : null}
+        <span style={{ fontWeight: 600, color: urgColor }}>{doc.expiresLabel}</span>
       </div>
 
       {/* Avviso "modificato": una RIGA, non un blocco pieno. Il riquadro viola
@@ -179,31 +166,31 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
         </div>
       )}
 
+      {/* Tasti FINI, di solo contorno (Eli 19 ago: «non mi piacciono i bottoni
+          pieni di colore»): il principale si distingue per il bordo dorato e
+          l'etichetta scritta, gli altri sono quadrati con la sola icona. */}
       <div style={{ display: 'flex', gap: 8, marginTop: 11 }} onClick={(e) => e.stopPropagation()}>
-        {/* Sollecita: morbido, non navy pieno (Eli 3 ago sera: "molto
-            appariscente") — bianco bordato come i gemelli WhatsApp/Chiama;
-            l'importanza la danno l'icona, la larghezza piena e il peso. */}
         {doc.clientEmail && (
           <button
             onClick={handleSollecita}
             disabled={sending || sent}
             style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              flex: 1, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
               background: '#fff',
-              color: sent ? '#2f8a63' : '#1a1a2e', borderRadius: 10, padding: '12px',
-              fontSize: 14, fontWeight: 600,
-              border: sent ? '0.5px solid #bce3d2' : '1px solid #e0c98a', cursor: sending || sent ? 'default' : 'pointer',
+              color: sent ? '#2f8a63' : '#b0863e', borderRadius: 10,
+              fontSize: 13.5, fontWeight: 600,
+              border: sent ? '1px solid #bce3d2' : '1px solid #e0c98a', cursor: sending || sent ? 'default' : 'pointer',
               opacity: sending ? 0.8 : 1,
             }}
           >
             {sending ? (
-              <Loader2 size={17} className="animate-spin" />
+              <Loader2 size={16} className="animate-spin" />
             ) : sent ? (
-              <CheckCircle2 size={17} />
+              <CheckCircle2 size={16} />
             ) : (
-              <Bell size={17} aria-hidden="true" />
+              <Bell size={16} aria-hidden="true" />
             )}
-            {sent ? 'Sollecito inviato ✓' : 'Sollecita per mail'}
+            {sent ? 'Sollecito inviato ✓' : 'Sollecita'}
           </button>
         )}
         {doc.clientPhone && (
@@ -216,8 +203,8 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
                 onClick={(e) => e.stopPropagation()}
                 aria-label="WhatsApp"
                 style={{
-                  width: 56, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '0.5px solid #dcdbd7', borderRadius: 10, padding: '12px 0',
+                  width: 44, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid #d9d7d0', borderRadius: 10,
                   color: '#1a1a2e', textDecoration: 'none', flexShrink: 0,
                 }}
               >
@@ -229,12 +216,12 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
               onClick={(e) => e.stopPropagation()}
               aria-label="Chiama"
               style={{
-                width: 56, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '0.5px solid #dcdbd7', borderRadius: 10, padding: '12px 0',
+                width: 44, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '1px solid #d9d7d0', borderRadius: 10,
                 color: '#1a1a2e', textDecoration: 'none', flexShrink: 0,
               }}
             >
-              <Phone size={19} aria-hidden="true" />
+              <Phone size={18} aria-hidden="true" />
             </a>
           </>
         )}
@@ -252,71 +239,41 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
 /** Nessun documento dentro la finestra di preavviso: si dice, non si nasconde. */
 function VuotoBlock({ kind }: { kind: 'preventivo' | 'fattura' }) {
   return (
-    <div>
-      <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 6 }}>
-        {kind === 'fattura' ? 'Fatture da incassare' : 'Preventivi'}
-      </div>
-      <div style={{ fontSize: 14, color: 'var(--cc-muted)' }}>
-        {kind === 'fattura'
-          ? 'Non ci sono fatture in imminente scadenza.'
-          : 'Non ci sono preventivi in imminente scadenza.'}
-      </div>
+    <div style={{ fontSize: 13.5, color: 'var(--cc-muted)' }}>
+      {kind === 'fattura'
+        ? 'Nessuna fattura in imminente scadenza.'
+        : 'Nessun preventivo in imminente scadenza.'}
     </div>
   )
 }
 
-export function ScadenzeHomeCard({ preventivo, fattura, prevCount, fattCount, workspaceName }: {
+export function ScadenzeHomeCard({ preventivo, fattura, workspaceName }: {
   preventivo: ScadenzaDocInfo | null
   fattura: ScadenzaDocInfo | null
-  prevCount: number
-  fattCount: number
   workspaceName?: string | null
 }) {
   // ⚠️ La sezione c'è SEMPRE, anche quando non c'è niente in scadenza (Eli,
   // 8 ago: *"deve comparire sempre e se non ci sono documenti, dire che non ci
-  // sono"*). Prima spariva del tutto quando entrambi i tipi erano vuoti — e
-  // una sezione che sparisce non si legge come "nessuna scadenza", si legge
-  // come "dov'è finita?", soprattutto ora che archiviare o spegnere i
-  // solleciti può svuotarla da un momento all'altro. Dirlo è più tranquillo
-  // che non dire niente.
-
+  // sono"*): una sezione che sparisce non si legge come "nessuna scadenza",
+  // si legge come "dov'è finita?".
+  // Redesign 19-20 ago: UN solo titolo «In scadenza», prima il preventivo poi
+  // la fattura (il tipo lo dice la riga «Preventivo 023/2026»); i «vedi
+  // tutti» coi conteggi vivono ora nei riquadri della TESTATA navy
+  // (Preventivi in scadenza / Fatture da incassare), non più qui in piede.
   return (
     <div style={{ margin: '18px 15px 0' }}>
-      {/* Titoletto FUORI dalla card, stile Altro */}
       <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
         In scadenza
       </div>
-      {/* ⚠️ Una card PER DOCUMENTO, non una card sola con i divisori dentro.
-          Prima erano quattro zone impilate separate da linee: i due blocchi
-          hanno per forza forma diversa (chi non ha l'email del cliente non ha
-          il bottone Sollecita) e dentro un unico riquadro quella differenza
-          sembrava un errore. Separati, sono semplicemente due cose distinte. */}
-      {/* ⚠️ Il collegamento sta DENTRO la sua card, come piede col filetto
-          (mockup approvato da Eli, 7 ago — proposta A). Prima galleggiava fuori,
-          fra una card e l'altra: contandolo, le due card della STESSA sezione
-          distavano ~43px, più di quanto disti una sezione dalla successiva, e
-          si leggevano come due cose separate. Dentro la card appartiene
-          visibilmente al documento a cui si riferisce, e le due card possono
-          stare vicine (10px) come si conviene a chi fa parte dello stesso
-          gruppo. ⚠️ Il piede è FRATELLO di ScadenzaBlock, non un suo figlio:
-          il blocco è cliccabile (apre il documento) e un collegamento dentro
-          farebbe partire due navigazioni. */}
-      {/* ⚠️ La card resta anche QUANDO NON C'È NULLA in scadenza (Eli, 7 ago):
-          senza, la sezione mostrava solo le fatture e sembrava che i preventivi
-          fossero spariti. Dire "non ce ne sono" è un'informazione, il vuoto no.
-          Il collegamento alla lista resta comunque, perché è la via per andare
-          a controllare. */}
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px' }}>
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px' }}>
         {preventivo
           ? <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />
           : <VuotoBlock kind="preventivo" />}
-        <HomeCardFootLink href="/preventivi/scadenze" label="Preventivi in scadenza" count={prevCount} />
       </div>
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 16px', marginTop: 10 }}>
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px', marginTop: 10 }}>
         {fattura
           ? <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />
           : <VuotoBlock kind="fattura" />}
-        <HomeCardFootLink href="/fatture/scadenze" label="Fatture in scadenza" count={fattCount} />
       </div>
     </div>
   )
