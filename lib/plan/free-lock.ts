@@ -80,4 +80,4 @@ export async function isDocFreeLocked(
 
 /** Messaggio unico per i documenti bloccati (sola lettura su Free). */
 export const DOC_LOCKED_MESSAGE =
-  'Documento bloccato: è oltre gli 8 del piano Free. Torna a Pro per modificarlo o inviarlo.'
+  'Documento bloccato: è oltre gli 8 del piano gratuito. Torna a Pro per modificarlo o inviarlo.'

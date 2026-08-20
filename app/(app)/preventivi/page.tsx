@@ -447,7 +447,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
             <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</strong>{' '}
             Non puoi creare o inviare altri preventivi.{' '}
             <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>{' '}
-            per preventivi illimitati, AI import e watermark rimovibile.
+            per preventivi illimitati, template personalizzati e niente filigrana.
           </p>
         </div>
       )}

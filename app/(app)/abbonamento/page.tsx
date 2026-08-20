@@ -9,9 +9,9 @@ import { PricingSection } from './_components/PricingSection'
 import { SuccessBanner } from './_components/SuccessBanner'
 import { SwitchBillingButton } from './_components/SwitchBillingButton'
 import { MobileProCard } from './_components/MobileProCard'
-import { PLAN_FEATURES, AI_IMPORT_ENABLED, type PlanType } from '@/lib/stripe/plans'
+import { PLAN_FEATURES, AI_IMPORT_ENABLED, aiImportLabel, type PlanType } from '@/lib/stripe/plans'
 import { createPortalSessionAction } from '@/lib/actions/subscription'
-import { FREE_DOC_LIMIT, FREE_INVOICE_LIMIT, FREE_TRIAL_DAYS, checkFreeBlock } from '@/lib/free-trial'
+import { FREE_DOC_LIMIT, FREE_INVOICE_LIMIT, FREE_TRIAL_DAYS, FREE_TRIAL_ENFORCED, checkFreeBlock } from '@/lib/free-trial'
 import { BackButton } from '@/components/shared/BackButton'
 import { TwoFactorNudge } from '@/components/security/TwoFactorNudge'
 
@@ -136,8 +136,11 @@ export default async function AbbonamentoPage() {
               </>
             )}
 
-            {/* Periodo di prova (giorni) */}
-            {daysRemaining !== null && (
+            {/* Periodo di prova (giorni) — SOLO quando la scadenza è davvero
+                applicata: durante la beta FREE_TRIAL_ENFORCED è false e un
+                conto alla rovescia senza conseguenze sarebbe una promessa
+                (o una minaccia) falsa. Al lancio, col flag a true, riappare. */}
+            {FREE_TRIAL_ENFORCED && daysRemaining !== null && (
               <div style={{ fontSize: 13, color: daysRemaining <= 0 ? '#a32d2d' : 'var(--cc-muted)', marginTop: 10, fontWeight: daysRemaining <= 0 ? 600 : 400 }}>
                 {daysRemaining > 0
                   ? `Periodo di prova: ${daysRemaining} ${daysRemaining === 1 ? 'giorno' : 'giorni'} rimanenti`
@@ -203,7 +206,7 @@ export default async function AbbonamentoPage() {
                 'Preventivi e fatture illimitati',
                 'Template illimitati e personalizzabili',
                 'Nessuna filigrana sul PDF',
-                'AI Import (foto → preventivo)',
+                aiImportLabel('AI Import (foto → preventivo)'),
               ].map((f) => (
                 <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '5px 0', fontSize: 14, color: '#161616' }}>
                   <CheckCircle2 size={17} style={{ color: '#2f8a63', flex: '0 0 auto' }} />
@@ -338,7 +341,8 @@ export default async function AbbonamentoPage() {
                 )}
               </>
             )}
-            {daysRemaining !== null && (
+            {/* Come sul mobile: countdown visibile solo con l'enforcement acceso */}
+            {FREE_TRIAL_ENFORCED && daysRemaining !== null && (
               <p className="text-xs text-muted-foreground">
                 {daysRemaining > 0
                   ? <>Periodo di prova: <strong className="text-foreground">{daysRemaining} {daysRemaining === 1 ? 'giorno' : 'giorni'}</strong> rimanenti</>
@@ -390,7 +394,7 @@ export default async function AbbonamentoPage() {
             active={features.aiImport && AI_IMPORT_ENABLED}
           />
           <FeaturePill
-            label="Watermark"
+            label="Filigrana"
             value={features.watermark ? 'Presente' : 'Rimovibile'}
             active={!features.watermark}
           />

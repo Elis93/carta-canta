@@ -92,11 +92,11 @@ export const PLAN_PRICING: Record<Exclude<PlanType, 'free' | 'lifetime'>, PlanPr
     stripeMode: 'subscription',
     popular: true,
     features: [
-      'Preventivi illimitati',
+      'Preventivi e fatture illimitati',
       'Template illimitati',
       aiImportLabel('AI Import da foto/PDF'),
-      'Watermark rimovibile',
-      'Accesso prioritario alle nuove funzionalità',
+      'Filigrana rimovibile dal PDF',
+      'Bilancio entrate/uscite e listini fornitori',
     ],
   },
   team: {

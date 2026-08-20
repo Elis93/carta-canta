@@ -46,7 +46,8 @@ async function getWorkspace(): Promise<{ id: string; plan: string } | null> {
   return mw
 }
 
-// Limite foto per documento sul piano Free (decisione Eli — illimitate su Pro).
+// Limite foto per documento sul piano gratuito (decisione Eli). Su Pro il
+// form si ferma a 40 (PreventivoForm): qui non c'è tetto server per i Pro.
 // NB: niente export — un file 'use server' può esportare solo funzioni async.
 const FREE_PHOTO_LIMIT = 6
 
@@ -331,7 +332,7 @@ export async function addWorkPhotoAction(input: {
       .select('id', { count: 'exact', head: true })
       .eq('document_id', input.documentId)
     if ((count ?? 0) >= FREE_PHOTO_LIMIT) {
-      return { error: `Con il piano Free puoi allegare fino a ${FREE_PHOTO_LIMIT} foto per documento. Con Pro sono illimitate.` }
+      return { error: `Con il piano gratuito puoi allegare fino a ${FREE_PHOTO_LIMIT} foto per documento. Con Pro fino a 40.` }
     }
   }
 

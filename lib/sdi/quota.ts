@@ -105,9 +105,9 @@ export async function recordSdiUse(workspaceId: string, plan: string, documentId
 export function sdiQuotaMessage(reason: 'free_used' | 'budget_paused' | 'pro_cap' | 'unavailable'): string {
   switch (reason) {
     case 'free_used':
-      return `Hai usato le ${SDI_FREE_LIFETIME} e-fatture di prova incluse nel piano Free. Con Pro le e-fatture sono illimitate.`
+      return `Hai usato le ${SDI_FREE_LIFETIME} e-fatture di prova incluse nel piano gratuito. Con Pro le e-fatture sono illimitate.`
     case 'budget_paused':
-      return 'Le e-fatture di prova del piano Free riprendono il mese prossimo. Con Pro invii senza attese.'
+      return 'Le e-fatture di prova del piano gratuito riprendono il mese prossimo. Con Pro invii senza attese.'
     case 'pro_cap':
       return 'Per proteggerti da invii ripetuti per errore o da accessi non autorizzati, il tuo account ha un tetto di sicurezza mensile sugli invii, e questo mese è stato raggiunto. Non hai fatto niente di sbagliato: scrivici da Aiuto (supporto@cartacanta.app) e lo alziamo subito.'
     default:

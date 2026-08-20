@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       error: isPaid
         ? `Hai esaurito i 60 minuti vocali del piano ${plan === 'team' ? 'Team' : 'Pro'} questo mese. Si ripristinano il 1° del mese prossimo.`
-        : `Hai esaurito i 5 minuti vocali del piano Free questo mese. Passa a Pro per 60 minuti/mese.`,
+        : `Hai esaurito i 5 minuti vocali del piano gratuito questo mese. Passa a Pro per 60 minuti/mese.`,
       code: 'QUOTA_EXCEEDED',
       isPaid,
     }, { status: 429 })

@@ -180,7 +180,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // Free più sotto): isDocFreeLocked ritorna false per le bozze.
   if (await isDocFreeLocked(supabase, { plan: workspace.plan, id: workspace.id }, doc)) {
     return NextResponse.json(
-      { error: 'Documento bloccato: è oltre gli 8 del piano Free. Torna a Pro per inviarlo.' },
+      { error: 'Documento bloccato: è oltre gli 8 del piano gratuito. Torna a Pro per inviarlo.' },
       { status: 403 }
     )
   }
@@ -408,10 +408,10 @@ export async function POST(request: NextRequest, { params }: Params) {
         {
           error: 'trial_blocked',
           message: doc.doc_type === 'fattura'
-            ? 'Hai inviato le 8 fatture del piano Free. Torna a Pro per inviarne altre.'
+            ? 'Hai inviato le 8 fatture del piano gratuito. Torna a Pro per inviarne altre.'
             : trial.reason === 'trial_expired'
               ? 'Il periodo di prova Free è terminato. Passa a Pro per continuare.'
-              : `Hai raggiunto il limite di ${trial.docsUsed} preventivi del piano Free. Passa a Pro per preventivi illimitati.`,
+              : `Hai raggiunto il limite di ${trial.docsUsed} preventivi del piano gratuito. Passa a Pro per preventivi illimitati.`,
         },
         { status: 403 }
       )

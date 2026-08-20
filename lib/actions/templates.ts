@@ -58,7 +58,7 @@ export async function createTemplateAction(
   const workspace = await getWorkspaceWithPlan()
   if (!workspace) return { error: 'Non autenticato.' }
 
-  // Controllo limite piano Free
+  // Controllo limite piano gratuito
   if (workspace.plan === 'free') {
     const { count } = await supabase
       .from('templates')
@@ -66,7 +66,7 @@ export async function createTemplateAction(
       .eq('workspace_id', workspace.id)
     if ((count ?? 0) >= FREE_TEMPLATE_LIMIT) {
       return {
-        error: `Il piano Free include ${FREE_TEMPLATE_LIMIT} template. Passa a Pro per template illimitati.`,
+        error: `Il piano gratuito include ${FREE_TEMPLATE_LIMIT} template. Passa a Pro per template illimitati.`,
       }
     }
   }

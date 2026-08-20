@@ -285,7 +285,7 @@ const VoceDraftSchema = VoceSchema.extend({
 const OPTION_TIERS = ['base', 'consigliata', 'premium'] as const
 type OptionTier = (typeof OPTION_TIERS)[number]
 // isPro: gate server-side — le opzioni a livelli sono una funzione Pro,
-// un POST manipolato da un piano Free non deve poterle attivare.
+// un POST manipolato da un piano gratuito non deve poterle attivare.
 function parseOptionsFields(
   data: { options_enabled?: string; recommended_tier?: string },
   isPro: boolean
@@ -789,7 +789,7 @@ export async function createDocumentAction(
     if (typeof rawPaths === 'string' && rawPaths.trim()) {
       const parsedPaths: unknown = JSON.parse(rawPaths)
       if (Array.isArray(parsedPaths)) {
-        // Stesso tetto del caricamento diretto sul piano Free (6 per documento)
+        // Stesso tetto del caricamento diretto sul piano gratuito (6 per documento)
         const maxPhotos = workspace.plan === 'free' ? 6 : 40
         const paths = parsedPaths
           .filter((p): p is string => typeof p === 'string' && p.trim() !== '' && !p.includes('..'))
@@ -1892,7 +1892,7 @@ export async function sendDocumentAction(
     if (trial.blocked) {
       return {
         error: doc.doc_type === 'fattura'
-          ? 'Hai inviato le 8 fatture del piano Free. Torna a Pro per inviarne altre.'
+          ? 'Hai inviato le 8 fatture del piano gratuito. Torna a Pro per inviarne altre.'
           : 'Piano Free terminato. Passa a Pro per inviare preventivi illimitati.',
       }
     }
@@ -2035,7 +2035,7 @@ export async function registerManualSendAction(
     if (trial.blocked) {
       return {
         error: tipoDoc === 'fattura'
-          ? 'Hai inviato le 8 fatture del piano Free. Torna a Pro per inviarne altre.'
+          ? 'Hai inviato le 8 fatture del piano gratuito. Torna a Pro per inviarne altre.'
           : 'Piano Free terminato. Passa a Pro per registrare preventivi illimitati.',
       }
     }

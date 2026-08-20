@@ -7,14 +7,17 @@
 
 import { useState, useTransition } from 'react'
 import { createCheckoutSessionAction } from '@/lib/actions/subscription'
+import { aiImportLabel } from '@/lib/stripe/plans'
 import { Check, Crown, Loader2 } from 'lucide-react'
 
 const FEATURES = [
   'Preventivi e fatture illimitati',
   'Template illimitati e personalizzabili',
   'Nessuna filigrana sul PDF',
-  'AI Import (foto → preventivo)',
+  // «(in arrivo)» finché il flag AI è spento — stessa regola del desktop
+  aiImportLabel('AI Import (foto → preventivo)'),
   'Bilancio entrate/uscite mese per mese',
+  'Listini fornitori con ricarico',
   'Preventivi con più proposte (Base/Premium)',
   'Profilo «In evidenza» nel marketplace',
 ]
