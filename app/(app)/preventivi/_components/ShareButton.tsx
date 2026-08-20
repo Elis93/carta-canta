@@ -251,9 +251,18 @@ export function ShareButton({
         }
         router.refresh()
         setOpen(false)
+        // La registrazione fa RIPARTIRE la scadenza da oggi (expires_at =
+        // oggi + validità, registerManualSendAction): va detto — «non mi
+        // chiede se la scadenza riparte da lì» (Eli, 20 ago sera).
         toast.success(docType === 'preventivo'
           ? 'Link copiato: preventivo segnato come Inviato'
-          : `Link copiato: ${docLabel} segnata come Inviata`)
+          : `Link copiato: ${docLabel} segnata come Inviata`, {
+          description: docType === 'preventivo'
+            ? `La validità riparte da oggi: scade tra ${validityDays} giorni.`
+            : docType === 'fattura'
+              ? `Termine di pagamento: entro ${validityDays} giorni da oggi.`
+              : undefined,
+        })
         avvisoDodiciGiorni()
       } finally {
         setMarkingSent(false)
@@ -356,7 +365,13 @@ export function ShareButton({
         // WhatsApp/Altre app il documento veniva segnato Inviato in silenzio.
         toast.success(docType === 'preventivo'
           ? 'Preventivo segnato come Inviato'
-          : `${docLabel.charAt(0).toUpperCase()}${docLabel.slice(1)} segnata come Inviata`)
+          : `${docLabel.charAt(0).toUpperCase()}${docLabel.slice(1)} segnata come Inviata`, {
+          description: docType === 'preventivo'
+            ? `La validità riparte da oggi: scade tra ${validityDays} giorni.`
+            : docType === 'fattura'
+              ? `Termine di pagamento: entro ${validityDays} giorni da oggi.`
+              : undefined,
+        })
         avvisoDodiciGiorni()
       }
 

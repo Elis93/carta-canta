@@ -240,9 +240,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Quando una fattura è davvero «emessa»? Cosa sono i 12 giorni?',
     parole: ['emessa', 'emissione', '12 giorni', 'termine', 'tardiva', 'trasmissione', 'bozza', 'copia di cortesia', 'data fattura'],
-    a: <>Una <b>bozza non è emessa</b>. E non lo è nemmeno quando la mandi al cliente: quel
-      documento è una <b>copia di cortesia</b>. Per la legge la fattura è emessa{' '}
-      <b>solo quando viene trasmessa allo SdI</b>.
+    a: <>Per l&rsquo;Agenzia delle Entrate la fattura è emessa{' '}
+      <b>solo quando viene trasmessa allo SdI</b>{' '}(art. 21 DPR 633/1972). Il PDF o il
+      link che mandi al cliente sono una <b>copia di cortesia</b>: gli servono per leggerla
+      e pagarla, ma non valgono come emissione.
       <br /><br />
       La <b>data della fattura</b>{' '}nasce quando la bozza viene <b>confermata</b>{' '}
       (il primo invio al cliente o «Segna pagata»): finché resta bozza puoi lavorarci con

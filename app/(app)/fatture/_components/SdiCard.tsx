@@ -466,22 +466,24 @@ export function SdiCard({
           </div>
           {termineInfoOpen && (
             <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '11px 13px', marginBottom: 11, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
-              <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Quando {isNotaCredito ? 'la nota' : 'una fattura'} &egrave; davvero &laquo;emessa&raquo;?</p>
+              <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Come funziona l&rsquo;emissione, in tre passi</p>
               <p style={{ margin: '6px 0 0' }}>
-                Una <b>bozza non &egrave; emessa</b>. E non lo &egrave; nemmeno quando la mandi
-                al cliente: quel documento &egrave; una <b>copia di cortesia</b>. Per la legge{' '}
-                {isNotaCredito ? 'la nota' : 'la fattura'} &egrave; emessa <b>solo quando viene
-                trasmessa allo SdI</b>.
+                <b>1.</b>{' '}Quando mandi {isNotaCredito ? 'la nota' : 'la fattura'} al cliente,
+                per l&rsquo;Agenzia delle Entrate <b>non &egrave; ancora emessa</b>: il PDF e il
+                link sono una copia di cortesia. Quel giorno per&ograve; conta, perch&eacute;
+                diventa la <b>data del documento</b>.
               </p>
               <p style={{ margin: '6px 0 0' }}>
-                La trasmissione va fatta <b>entro 12 giorni</b>{' '}dalla data del documento
-                (o dal primo incasso, se arriva prima): &egrave; da l&igrave; che parte il
-                conto alla rovescia qui sopra.
+                <b>2.</b>{' '}Da quella data — o dal giorno del <b>primo incasso</b>, se il
+                cliente paga prima — hai <b>12 giorni</b>{' '}per trasmetterla allo
+                SdI. Il conto alla rovescia qui sopra conta proprio questi giorni.
               </p>
               <p style={{ margin: '6px 0 0' }}>
-                Oltre il termine il documento <b>vale comunque</b>, ma &egrave;
-                un&rsquo;emissione tardiva sanzionabile: trasmettilo lo stesso e parlane col
-                commercialista — col ravvedimento operoso la sanzione si riduce.
+                <b>3.</b>{' '}Solo con la <b>trasmissione allo SdI</b>{' '}
+                {isNotaCredito ? 'la nota' : 'la fattura'} &egrave; emessa davvero (art. 21
+                DPR 633/1972). Oltre il termine vale comunque, ma &egrave; un&rsquo;emissione
+                tardiva sanzionabile: trasmettila lo stesso e parlane col commercialista —
+                col ravvedimento operoso la sanzione si riduce.
               </p>
             </div>
           )}
