@@ -29,6 +29,16 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 20 ago (8) — Sconto %/€ che sposta il valore + altezze pari + tasti uguali + copy ⓘ + mockup scadenze
+Lotto serale di Eli (foto). Fix su preventivi E fatture (componenti condivisi).
+- **[BUG] Switch %↔€ dello sconto**: cambiava solo QUALE campo modifichi — il 10% restava vivo in stato (e applicato dal motore, che somma entrambi) mentre il campo mostrava il fisso vuoto → «i valori non si aggiornano nel riepilogo e margine». Ora `switchMode` **SPOSTA il valore nel modo nuovo e svuota l'altro** (oltre 100 passando a % si ferma a 100): il campo mostra sempre esattamente lo sconto applicato. Il motore resta intatto (applica ancora pct E fixed: i documenti storici con entrambi non cambiano).
+- **[UI] Altezze pari**: interruttore %/€ e campo importo entrambi a 40px (l'interruttore era visibilmente più basso).
+- **[UI] Toolbar**: «Salva e invia»/«Invia» avevano `flex: 1.2` (enfasi voluta) contro l'1 del gemello → **tutti flex 1** (PreventivoForm ×3: edit/bozza/create + FatturaForm).
+- **[COPY] ⓘ Modificato (ScadenzeHomeCard)**: → «Se la modifica conta, rimandaglielo.» (testo di Eli).
+- **[MOCKUP] Card «In scadenza» più corta**: artifact `scadenze-compatte` — oggi (4 righe) vs **A** (3 righe: «Prev./Fatt.» abbreviati, via la data secca, «Modificato» in riga col documento, Sollecita a larghezza contenuta) vs **B** (2 righe: tasti quadrati piccoli in coda alla riga del documento, campanella=Sollecita). Consigliata la A (Sollecita tiene l'etichetta, tasti grandi). ⏸️ In attesa della scelta.
+- **[INDAGINE] «Sollecita in Home: mail non inviata»**: `sendReminderAction` verificata pulita — errore mostrato sotto i tasti, successo SOLO se Resend accetta, poi `last_reminder_at`. Se il tasto è diventato «Sollecito inviato ✓» l'email È partita **all'indirizzo del cliente in rubrica** (non all'artigiano; replyTo = artigiano): probabile spam o indirizzo di prova. Chiesto a Eli cosa ha visto (✓ verde o errore).
+- tsc+build+**733** test+smoke 28/28 verdi · scan 0.
+
 ### ✅ 20 ago (7) — Il cestino della voce esce dalla testata: «Elimina voce» in fondo + Annulla
 Eli: «il cestino in alto a destra a ogni voce, dove si clicca anche per aprire le voci, potrebbe essere cliccato per sbaglio». Vero e peggio del previsto: `removeVoce` cancellava **all'istante, senza conferma e senza modo di tornare indietro**. Scelta via AskUserQuestion: **in fondo + Annulla** (due difese invece di una).
 - **Il cestino esce dalla testata** della voce aperta (resta il solo «Tot. € …»): quella barra è ciò che si tocca per CHIUDERE la voce, quindi il pollice ci passa sopra. Ora c'è una riga **«Elimina voce»** (rosso tenue, filetto sopra) come ULTIMA cosa della card aperta — schema delle azioni distruttive in fondo al modulo: ci si arriva solo dopo aver scorso tutti i campi.
