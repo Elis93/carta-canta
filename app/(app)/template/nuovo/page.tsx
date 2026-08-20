@@ -9,7 +9,7 @@ export default async function NuovoTemplatePage() {
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
 
-  // Blocca piano Free se ha già 1 template
+  // Blocca piano gratuito se ha già 1 template
   if (workspace.plan === 'free') {
     const { count } = await supabase
       .from('templates')

@@ -23,7 +23,7 @@ import { CercaFunzione } from './_components/CercaFunzione'
 import { MenuRow } from './_components/MenuRow'
 
 const PLAN_LABELS: Record<string, string> = {
-  free:     'Piano Free',
+  free:     'Piano gratuito',
   pro:      'Piano Pro',
   team:     'Piano Team',
   lifetime: 'Piano Lifetime',

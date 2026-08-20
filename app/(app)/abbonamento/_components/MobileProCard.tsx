@@ -1,6 +1,6 @@
 'use client'
 
-// Card "Passa a Pro" (mobile, piano Free) con scelta Mensile/Annuale.
+// Card "Passa a Pro" (mobile, piano gratuito) con scelta Mensile/Annuale.
 // FIX bug prezzo (5 lug): la card precedente mostrava "€ 182/anno" ma il
 // bottone avviava il checkout col price MENSILE — prezzo promesso ≠ addebitato.
 // Ora l'utente sceglie l'intervallo e il bottone dice e addebita esattamente quello.

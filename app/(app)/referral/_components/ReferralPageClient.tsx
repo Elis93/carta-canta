@@ -118,7 +118,7 @@ const SYNOPTIC_RULES: {
   rows:  { condition: string; benefit: string }[]
 }[] = [
   {
-    plan: 'Free',
+    plan: 'Gratuito',
     rows: [{ condition: 'almeno 3 inviti con qualsiasi piano', benefit: '→ 1 mese Piano Pro gratuito' }],
   },
   {

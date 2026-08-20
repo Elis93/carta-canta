@@ -380,7 +380,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#8a5a00]">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <div>
-              <b>Preventivo bloccato</b> — è oltre gli 8 del piano Free. Puoi aprirlo e consultarlo, ma non modificarlo, inviarlo, scaricarlo o duplicarlo.{' '}
+              <b>Preventivo bloccato</b> — è oltre gli 8 del piano gratuito. Puoi aprirlo e consultarlo, ma non modificarlo, inviarlo, scaricarlo o duplicarlo.{' '}
               <Link href={PRO_LOCK_HREF} style={{ fontWeight: 600, textDecoration: 'underline' }}>
                 Torna a Pro per sbloccarlo
               </Link>
@@ -513,7 +513,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <p>
                 {freeTrialStatus.reason === 'trial_expired'
                   ? <><strong>Il periodo di prova è terminato.</strong>{' '}Non puoi inviare questo preventivo.{' '}</>
-                  : <><strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano Free.</strong>{' '}</>}
+                  : <><strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano gratuito.</strong>{' '}</>}
                 <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>
               </p>
             </div>
@@ -966,7 +966,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 </>
               ) : (
                 <>
-                  <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano Free.</strong>{' '}
+                  <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano gratuito.</strong>{' '}
                   Non puoi scaricare o inviare altri preventivi.{' '}
                 </>
               )}

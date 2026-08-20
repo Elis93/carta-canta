@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
-import { Camera, Images, Loader2, X, FileText, Navigation, Ruler, Pencil, ChevronDown, CalendarClock, HardHat } from 'lucide-react'
+import { Camera, Images, Loader2, X, FileText, Navigation, Ruler, Pencil, ChevronDown, CalendarClock } from 'lucide-react'
 import { toast } from 'sonner'
 import { usePhotoLightbox, ZoomHotspot } from '@/components/shared/PhotoLightbox'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
@@ -338,26 +338,21 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
         />
       </div>
 
-      {/* CLIENTE — come Nuovo Preventivo: card sempre visibile con l'etichetta. */}
+      {/* CLIENTE E CANTIERE — card unita: Cliente, poi l'indirizzo del cantiere
+          (Eli, 19 ago — stessa struttura di Nuovo Lavoro). L'appuntamento è una
+          card a sé, sotto.
+          ⚠️ L'indirizzo del cantiere NON è quello del cliente: il lavoro può
+          essere altrove. Se il cliente ha un indirizzo in rubrica, lo si copia
+          con un tocco. */}
       <div style={cardStyle}>
-        <div style={{ ...secLabel, marginBottom: 12 }}>Cliente</div>
+        <div style={{ ...secLabel, marginBottom: 12 }}>Cliente e cantiere</div>
         <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
-      </div>
-
-      {/* CANTIERE — solo l'indirizzo del cantiere (dove si va). L'appuntamento
-          è una card a sé, sotto.
-          ⚠️ NON è l'indirizzo del cliente: il lavoro può essere altrove. Se il
-          cliente ha un indirizzo in rubrica, lo si può copiare con un tocco. */}
-      <div style={cardStyle}>
-        <div style={{ ...secLabel, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <HardHat size={15} style={{ color: '#8a887f' }} /> Cantiere
-        </div>
         <input
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           placeholder="Indirizzo del cantiere"
           maxLength={200}
-          style={fieldStyle}
+          style={{ ...fieldStyle, marginTop: 10 }}
         />
         {/* Tocco per PARTIRE dall'indirizzo del cliente — solo quando il campo
             è vuoto e il cliente ne ha uno in rubrica. Mai automatico: così il

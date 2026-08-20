@@ -611,17 +611,17 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Quanti preventivi e fatture posso fare col piano gratuito?',
     parole: ['free', 'gratis', 'limite', 'abbonamento', 'pro', 'prezzo', 'fatture'],
-    a: <>Il piano Free include <b>8 preventivi</b> e <b>8 fatture</b> inviati, con due contatori separati e
+    a: <>Il piano gratuito include <b>8 preventivi</b> e <b>8 fatture</b> inviati, con due contatori separati e
       tutte le funzioni principali. Conta il primo invio al cliente (email, WhatsApp o link copiato): salvare
       una bozza non consuma nulla, e la trasmissione della fattura allo SdI resta sempre possibile.
       Con <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 600 }}>Pro</Link> diventano
       illimitati, con template personalizzati e altro.</>,
   },
   {
-    q: 'Sono tornato da Pro a Free: cosa succede ai documenti in più?',
+    q: 'Sono tornato da Pro a Gratuito: cosa succede ai documenti in più?',
     parole: ['downgrade', 'torno a free', 'bloccato', 'bloccati', 'sola lettura', 'oltre gli 8', 'disdetta'],
     a: <>Nulla viene cancellato. I primi <b>8 preventivi</b> e le prime <b>8 fatture</b> inviati
-      restano usabili come sul piano Free; quelli in più diventano di <b>sola lettura</b> — li apri
+      restano usabili come sul piano gratuito; quelli in più diventano di <b>sola lettura</b> — li apri
       e li consulti, ma non puoi modificarli, inviarli, scaricarli in PDF o duplicarli (li riconosci
       dal badge <b>🔒 Bloccato</b>{' '}nella lista). Anche i template personalizzati e i listini fornitori
       restano visibili ma bloccati. Tutto torna com&rsquo;era{' '}
@@ -732,7 +732,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   },
   {
     q: 'L\u2019assistenza è solo per chi paga?',
-    a: <>No: l&rsquo;assistenza è per tutti, anche col piano Free, e ti risponde{' '}
+    a: <>No: l&rsquo;assistenza è per tutti, anche col piano gratuito, e ti risponde{' '}
       <b>una persona</b>, non un risponditore automatico. Scrivici dal modulo qui sotto o a
       supporto@cartacanta.app.</>,
   },

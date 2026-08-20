@@ -822,7 +822,7 @@ export function PreventivoForm({
         if (count >= max) {
           toast.info(isProPlan
             ? `Puoi allegare fino a ${max} foto.`
-            : `Con il piano Free puoi allegare fino a ${max} foto per documento. Con Pro sono illimitate.`)
+            : `Con il piano gratuito puoi allegare fino a ${max} foto per documento. Con Pro sono illimitate.`)
           break
         }
         const uploaded = await uploadWorkPhoto(file)

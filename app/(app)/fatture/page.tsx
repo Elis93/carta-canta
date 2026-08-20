@@ -408,7 +408,7 @@ export default async function FatturePage({ searchParams }: Props) {
     avvisoSdiWs = acceso && quotaOk ? 'auto' : 'manuale'
   }
 
-  // Piano Free: contatore delle 8 FATTURE inviate (083), gemello del banner
+  // Piano gratuito: contatore delle 8 FATTURE inviate (083), gemello del banner
   // preventivi. ⚠️ Il limite morde sull'INVIO, non sulla creazione — quindi
   // l'avviso dice «inviare» e NON disabilita «Nuova fattura».
   const isFree = workspace.plan === 'free'

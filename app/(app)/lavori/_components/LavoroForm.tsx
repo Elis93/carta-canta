@@ -99,6 +99,17 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
   return (
     <div style={{ padding: '14px 15px 16px', display: 'flex', flexDirection: 'column', gap: 13 }}>
 
+      {/* TITOLO — card a sé in cima, come Nuovo Preventivo (Eli, 19 ago). */}
+      <div style={{ ...cardStyle, padding: '6px 15px' }}>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Metti il titolo (es. Rifacimento bagno)"
+          maxLength={120}
+          style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, fontWeight: title.trim() ? 600 : 400, color: '#161616', fontFamily: 'inherit' }}
+        />
+      </div>
+
       {/* Stato — stepper a chip (solo su lavoro esistente) */}
       {lavId && (
         <div style={cardStyle}>
@@ -149,21 +160,15 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
         </div>
       )}
 
-      {/* Cliente / Cantiere */}
+      {/* CLIENTE E CANTIERE — card unita: Cliente, poi l'indirizzo del cantiere
+          (Eli, 19 ago). L'appuntamento è una card a sé, sotto. */}
       <div style={cardStyle}>
-        <div style={secLabel}>Cliente / Cantiere</div>
+        <div style={secLabel}>Cliente e cantiere</div>
         <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titolo lavoro (es. Rifacimento bagno)"
-          maxLength={120}
-          style={{ ...fieldStyle, marginTop: 10 }}
-        />
         <input
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="Indirizzo cantiere (facoltativo)"
+          placeholder="Indirizzo del cantiere"
           maxLength={200}
           style={{ ...fieldStyle, marginTop: 10 }}
         />
@@ -177,18 +182,19 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
             <Navigation size={14} /> Naviga con Google Maps
           </a>
         )}
-        <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
-            Prossimo intervento <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>(facoltativo)</span>
-          </div>
-          <AppointmentPicker
-            value={scheduledAt}
-            onChange={setScheduledAt}
-            onIncompleteChange={setApptIncomplete}
-            excludeKind="lavoro"
-            excludeId={lavId}
-          />
-        </div>
+      </div>
+
+      {/* PROSSIMO INTERVENTO — card a sé, separata dal Cantiere (Eli, 19 ago).
+          Tolta la parola «facoltativo». */}
+      <div style={cardStyle}>
+        <div style={secLabel}>Prossimo intervento</div>
+        <AppointmentPicker
+          value={scheduledAt}
+          onChange={setScheduledAt}
+          onIncompleteChange={setApptIncomplete}
+          excludeKind="lavoro"
+          excludeId={lavId}
+        />
       </div>
 
       {/* Note di cantiere */}

@@ -33,7 +33,7 @@ export interface MobileTemplateItem {
   /** href editor per i template custom (il Default usa una server action find-or-create) */
   editHref: string
   kind: 'default' | 'custom'
-  /** true = stile Pro (Bold/Tecnico/Elegante) su piano Free */
+  /** true = stile Pro (Bold/Tecnico/Elegante) su piano gratuito */
   locked: boolean
 }
 

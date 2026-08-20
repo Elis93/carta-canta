@@ -550,7 +550,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#8a5a00]">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <div>
-              <b>Fattura bloccata</b> — è oltre le 8 del piano Free. Puoi aprirla e consultarla, ma non modificarla, inviarla, scaricarla o duplicarla.{' '}
+              <b>Fattura bloccata</b> — è oltre le 8 del piano gratuito. Puoi aprirla e consultarla, ma non modificarla, inviarla, scaricarla o duplicarla.{' '}
               <Link href={PRO_LOCK_HREF} style={{ fontWeight: 600, textDecoration: 'underline' }}>
                 Torna a Pro per sbloccarla
               </Link>

@@ -17,7 +17,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
   if (!user) redirect('/login')
   if (!workspace) redirect('/login')
 
-  // Piano Free: controlla blocco trial (scadenza o quota)
+  // Piano gratuito: controlla blocco trial (scadenza o quota)
   const freeTrialStatus = workspace.plan === 'free'
     ? checkFreeBlock(workspace)
     : null
@@ -171,8 +171,8 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
             </p>
             <p className="mb-3">
               {freeTrialStatus.reason === 'trial_expired'
-                ? 'Il tuo periodo di prova Free è scaduto. Non puoi creare nuovi preventivi.'
-                : `Hai già inviato ${freeTrialStatus.docsUsed} preventivi con il piano Free. Non puoi crearne altri.`}
+                ? 'Il tuo periodo di prova gratuito è scaduto. Non puoi creare nuovi preventivi.'
+                : `Hai già inviato ${freeTrialStatus.docsUsed} preventivi con il piano gratuito. Non puoi crearne altri.`}
             </p>
             <Link
               href="/abbonamento"

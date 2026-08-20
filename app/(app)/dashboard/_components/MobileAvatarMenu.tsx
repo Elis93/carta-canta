@@ -10,7 +10,7 @@ import { Settings, CreditCard } from 'lucide-react'
 import { LogoutButton } from '@/app/(app)/_components/LogoutButton'
 
 const PLAN_LABELS: Record<string, string> = {
-  free: 'Free', pro: 'Pro', team: 'Team', lifetime: 'Lifetime',
+  free: 'Gratuito', pro: 'Pro', team: 'Team', lifetime: 'Lifetime',
 }
 
 interface Props {

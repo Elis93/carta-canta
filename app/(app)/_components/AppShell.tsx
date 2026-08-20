@@ -30,7 +30,7 @@ import { RoutePrefetcher } from '@/components/shared/RoutePrefetcher'
 
 // FIX-30: etichette piano leggibili (no capitalize CSS che lascia "lifetime" minuscolo)
 const PLAN_LABELS: Record<string, string> = {
-  free:     'Free',
+  free:     'Gratuito',
   pro:      'Pro',
   team:     'Team',
   lifetime: 'Lifetime',

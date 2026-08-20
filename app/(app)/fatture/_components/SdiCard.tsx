@@ -527,13 +527,13 @@ export function SdiCard({
             {quotaReason === 'unavailable'
               ? 'Non riesco a verificare le e-fatture disponibili in questo momento: riprova tra qualche minuto.'
               : quotaReason === 'budget_paused'
-                ? 'Le e-fatture di prova del piano Free sono momentaneamente in pausa: riprendono il mese prossimo. Con Pro sono sempre disponibili.'
+                ? 'Le e-fatture di prova del piano gratuito sono momentaneamente in pausa: riprendono il mese prossimo. Con Pro sono sempre disponibili.'
                 : 'Per protezione, il tuo account ha un tetto di sicurezza mensile sugli invii e questo mese è stato raggiunto. Non hai fatto niente di sbagliato: scrivici da Aiuto (supporto@cartacanta.app) e lo alziamo subito.'}
           </p>
         ) : quotaExhausted ? (
           <>
             <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '0 0 11px' }}>
-              Hai usato le {freeTotal} e-fatture di prova del piano Free. <b>Con Pro le e-fatture sono illimitate</b>, con conservazione a norma inclusa.
+              Hai usato le {freeTotal} e-fatture di prova del piano gratuito. <b>Con Pro le e-fatture sono illimitate</b>, con conservazione a norma inclusa.
             </p>
             <Link
               href="/abbonamento"

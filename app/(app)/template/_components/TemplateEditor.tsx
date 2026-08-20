@@ -417,7 +417,7 @@ export function TemplateEditor({
         {/* Micro-upsell Free (testo del mockup) */}
         {!isPro && (
           <div style={{ margin: '14px 15px 0', fontSize: 12, color: '#767676', lineHeight: 1.45, textAlign: 'center' }}>
-            Con Free: stile Classico, logo e note legali in calce. Stili Bold/Tecnico/Elegante, colore, font e filigrana sono{' '}
+            Con il piano gratuito: stile Classico, logo e note legali in calce. Stili Bold/Tecnico/Elegante, colore, font e filigrana sono{' '}
             <Link href="/abbonamento" style={{ color: '#1a1a2e', fontWeight: 700, textDecoration: 'none' }}>Pro</Link>.
           </div>
         )}

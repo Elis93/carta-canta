@@ -16,7 +16,7 @@ import { BackButton } from '@/components/shared/BackButton'
 import { TwoFactorNudge } from '@/components/security/TwoFactorNudge'
 
 const PLAN_DISPLAY: Record<PlanType, { label: string; color: string }> = {
-  free:     { label: 'Free',     color: 'bg-gray-100 text-gray-700' },
+  free:     { label: 'Gratuito',     color: 'bg-gray-100 text-gray-700' },
   pro:      { label: 'Pro',      color: 'bg-[#d8e8fb] text-[#3f6fb0]' },
   team:     { label: 'Team',     color: 'bg-[#e9e0f7] text-[#7c3aed]' },
   lifetime: { label: 'Lifetime', color: 'bg-[#f5e9d0] text-[#b0863e]' },
@@ -32,7 +32,7 @@ export default async function AbbonamentoPage() {
   const features = PLAN_FEATURES[currentPlan]
   const hasStripeCustomer = !!workspace.stripe_customer_id
 
-  // Preventivi inviati (per mostrare usage nel piano Free)
+  // Preventivi inviati (per mostrare usage nel piano gratuito)
   // Fonte di verità: sent_quota_used — contatore storico, mai decrementato.
   // Coerente con checkFreeBlock() e con la logica mostrata in /preventivi/nuovo.
   let docsUsed: number | null = null
@@ -92,7 +92,7 @@ export default async function AbbonamentoPage() {
               Il tuo piano
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ fontSize: 18, fontWeight: 700, color: '#161616' }}>Piano Free</span>
+              <span style={{ fontSize: 18, fontWeight: 700, color: '#161616' }}>Piano gratuito</span>
               {freeStatus.blocked && (
                 <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 600, color: '#a32d2d', background: '#f7dede', borderRadius: 999, padding: '2px 9px' }}>
                   Scaduto
@@ -301,7 +301,7 @@ export default async function AbbonamentoPage() {
           </div>
         )}
 
-        {/* Usage bar piano Free */}
+        {/* Usage bar piano gratuito */}
         {currentPlan === 'free' && docsUsed !== null && (
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs text-muted-foreground">
@@ -357,7 +357,7 @@ export default async function AbbonamentoPage() {
                 Come vengono conteggiati preventivi e fatture?
               </summary>
               <div className="mt-2 space-y-1.5 text-xs text-muted-foreground rounded-lg border bg-muted/30 px-3 py-2.5">
-                <p>Il piano Free include 8 preventivi e 8 fatture inviati, con due contatori separati.</p>
+                <p>Il piano gratuito include 8 preventivi e 8 fatture inviati, con due contatori separati.</p>
                 <p>Quando viene conteggiato: un documento viene scalato dal suo limite nel momento in cui viene inviato al cliente per la prima volta (email, WhatsApp o link copiato). Il semplice salvataggio come bozza non consuma quota.</p>
                 <p>Cancellazione: eliminare un documento non recupera il contatore. Il conteggio è permanente e riflette tutti i documenti inviati, anche quelli cancellati in seguito.</p>
                 <p>Cestino e ripristino: spostare un documento nel cestino o ripristinarlo non modifica il contatore.</p>

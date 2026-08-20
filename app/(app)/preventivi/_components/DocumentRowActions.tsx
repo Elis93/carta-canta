@@ -150,7 +150,7 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
           </DropdownMenuItem>
           {locked && (
             <p className="px-2 pb-1.5 pt-0.5 text-xs text-muted-foreground" style={{ maxWidth: 230, lineHeight: 1.4 }}>
-              Documento bloccato (oltre gli 8 del piano Free): torna a Pro per duplicarlo.
+              Documento bloccato (oltre gli 8 del piano gratuito): torna a Pro per duplicarlo.
             </p>
           )}
 
