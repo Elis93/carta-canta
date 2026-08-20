@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation'
 import { ChevronDown, Loader2, Navigation, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
+import { AddressAutocomplete } from '@/components/shared/AddressAutocomplete'
 import type { ClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { saveLavoroAction, setLavoroStatusAction } from '@/lib/actions/lavori'
@@ -178,13 +179,16 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
       <div style={cardStyle}>
         <div style={secLabel}>Cliente e cantiere</div>
         <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
-        <input
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="Indirizzo del cantiere"
-          maxLength={200}
-          style={{ ...fieldStyle, marginTop: 10 }}
-        />
+        {/* Suggerimenti INTERNI degli indirizzi già usati (Eli 20 ago). */}
+        <div style={{ marginTop: 10 }}>
+          <AddressAutocomplete
+            value={address}
+            onChange={setAddress}
+            placeholder="Indirizzo del cantiere"
+            maxLength={200}
+            style={fieldStyle}
+          />
+        </div>
         {address.trim() && (
           <a
             href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address.trim())}`}

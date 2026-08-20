@@ -65,6 +65,55 @@ function romeIso(naive: string): string | null {
   return `${naive}:00${offset}`
 }
 
+// ── Indirizzi di cantiere già usati (suggerimenti interni) ─────────────────
+// Decisione Eli (20 ago): niente API esterne (Google Places = dati verso terzi
+// + costi + GDPR). I suggerimenti dell'indirizzo del cantiere sono gli indirizzi
+// che l'artigiano ha GIÀ usato — nei sopralluoghi e nei lavori. Nessun dato esce
+// dall'app; il limite noto è che su un indirizzo mai visto non c'è nulla da
+// suggerire. La tendina si filtra in memoria (schema ClientAutocomplete/FIX-18):
+// si carica la lista una volta al primo focus.
+export async function preloadCantiereAddressesAction(): Promise<string[]> {
+  const workspace = await getWorkspace()
+  if (!workspace) return []
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelle 047/048 non in types/database.ts
+  const db = supabase as any
+
+  const pull = (table: string) =>
+    db
+      .from(table)
+      .select('address, updated_at')
+      .eq('workspace_id', workspace.id)
+      .is('deleted_at', null)
+      .not('address', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(300)
+      .then((r: { data: Array<{ address: string | null; updated_at: string | null }> | null }) => r.data ?? [],
+        () => []) // migration non applicata / colonna assente
+
+  const [sopr, lav] = await Promise.all([pull('sopralluoghi'), pull('lavori')])
+
+  // Uniti e ordinati per data (più recenti prima): un indirizzo usato ieri in un
+  // lavoro deve battere uno di un sopralluogo di mesi fa.
+  const merged = [...sopr, ...lav].sort(
+    (a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''),
+  )
+
+  // Dedup case-insensitive tenendo la prima grafia incontrata (più recente).
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const row of merged) {
+    const a = row.address?.trim()
+    if (!a) continue
+    const key = a.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(a)
+    if (out.length >= 100) break
+  }
+  return out
+}
+
 export async function saveSopralluogoAction(formData: FormData): Promise<ActionResult> {
   const workspace = await getWorkspace()
   if (!workspace) return { error: 'Sessione scaduta. Ricarica la pagina.' }

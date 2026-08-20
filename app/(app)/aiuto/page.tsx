@@ -669,6 +669,14 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       avviare la navigazione verso il cantiere, chiamare il cliente e la matita per aprirlo.</>,
   },
   {
+    q: 'Mentre scrivo l’indirizzo del cantiere compaiono dei suggerimenti: cosa sono?',
+    parole: ['indirizzo', 'cantiere', 'suggerimenti', 'sopralluogo', 'lavoro'],
+    a: <>Sono gli indirizzi che hai <b>già usato</b> in altri sopralluoghi o lavori: appena inizi
+      a scrivere ne compaiono i più simili e ne tocchi uno per inserirlo. Restano dentro l&rsquo;app,
+      non vengono cercati su internet — quindi su un indirizzo mai usato prima non c&rsquo;è nulla da
+      suggerire e lo scrivi a mano.</>,
+  },
+  {
     q: 'Come calcolo metri quadri, piastrelle o vernice?',
     parole: ['mq', 'metri', 'righello', 'quantita', 'calcolo', 'pittura'],
     a: <>Dentro il preventivo, su ogni voce c&rsquo;è <b>Calcola quantità</b>: scrivi le misure e il

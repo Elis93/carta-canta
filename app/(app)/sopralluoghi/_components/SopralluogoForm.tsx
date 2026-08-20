@@ -13,6 +13,7 @@ import { Camera, Images, Loader2, X, FileText, Navigation, Ruler, Pencil, Chevro
 import { toast } from 'sonner'
 import { usePhotoLightbox, ZoomHotspot } from '@/components/shared/PhotoLightbox'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
+import { AddressAutocomplete } from '@/components/shared/AddressAutocomplete'
 import type { ClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { Calcolatrice, type CalcSnapshot } from '@/components/calc/Calcolatrice'
@@ -347,13 +348,18 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
       <div style={cardStyle}>
         <div style={{ ...secLabel, marginBottom: 12 }}>Cliente e cantiere</div>
         <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
-        <input
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="Indirizzo del cantiere"
-          maxLength={200}
-          style={{ ...fieldStyle, marginTop: 10 }}
-        />
+        {/* Suggerimenti INTERNI degli indirizzi già usati (Eli 20 ago) — vedi
+            AddressAutocomplete. Il wrapper porta il marginTop; il campo tiene
+            fieldStyle. */}
+        <div style={{ marginTop: 10 }}>
+          <AddressAutocomplete
+            value={address}
+            onChange={setAddress}
+            placeholder="Indirizzo del cantiere"
+            maxLength={200}
+            style={fieldStyle}
+          />
+        </div>
         {/* Tocco per PARTIRE dall'indirizzo del cliente — solo quando il campo
             è vuoto e il cliente ne ha uno in rubrica. Mai automatico: così il
             campo mostra sempre esattamente ciò che verrà usato, e non nascono
