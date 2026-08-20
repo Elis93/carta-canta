@@ -32,11 +32,11 @@ import {
   Timer,
   PenLine,
   Eye,
-  Bell,
   Hammer,
 } from 'lucide-react'
 import { FREE_DOC_LIMIT, FREE_INVOICE_LIMIT, checkFreeBlock } from '@/lib/free-trial'
 import { getAppNotifications } from '@/lib/notifications'
+import { NotificationBell } from './_components/NotificationBell'
 import { getTodayEvents } from '@/lib/agenda'
 import { documentiSenzaPromemoria } from '@/lib/documents/archivio'
 import { eventoLabel, badgeLabel, isFemminile } from '@/lib/documents/etichette'
@@ -505,7 +505,6 @@ export default async function DashboardPage() {
 
   // Checklist "Completa il tuo profilo" + notifiche: caricate nel Promise.all
   // iniziale (dipendono solo dal workspace, non dai documenti).
-  const unreadNotifications = appNotifications.filter((n) => !n.read).length
 
   const profileItems: ProfileItem[] = [
     { key: 'dati',   label: 'Dati attività (ragione sociale)', done: !!workspace.ragione_sociale,               href: '/impostazioni/generale' },
@@ -684,18 +683,9 @@ export default async function DashboardPage() {
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
-              <Link
-                href="/notifiche"
-                aria-label={unreadNotifications > 0 ? `Notifiche: ${unreadNotifications} non lette` : 'Notifiche'}
-                style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(203,164,76,.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e6cf94' }}
-              >
-                <Bell size={16} strokeWidth={1.9} />
-                {unreadNotifications > 0 && (
-                  <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 999, background: '#b05656', color: '#fff', fontSize: 9.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
-                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                  </span>
-                )}
-              </Link>
+              {/* Campanella a TENDINA (Eli 20 ago): le notifiche si aprono
+                  sul posto, senza cambiare pagina. */}
+              <NotificationBell notifications={appNotifications} hero />
               <MobileAvatarMenu
                 hero
                 initials={initials}
@@ -986,18 +976,7 @@ export default async function DashboardPage() {
             <h1 className="text-2xl font-semibold">Ciao {fullName} 👋</h1>
             <p className="text-muted-foreground text-sm mt-0.5">{workspaceName}</p>
           </div>
-          <Link
-            href="/notifiche"
-            aria-label={unreadNotifications > 0 ? `Notifiche: ${unreadNotifications} non lette` : 'Notifiche'}
-            style={{ position: 'relative', width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1px solid #e7e7ea', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 2px rgba(20,20,40,.05)', color: '#55534b', flexShrink: 0 }}
-          >
-            <Bell size={18} strokeWidth={1.9} />
-            {unreadNotifications > 0 && (
-              <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, borderRadius: 999, background: '#b05656', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
-                {unreadNotifications > 9 ? '9+' : unreadNotifications}
-              </span>
-            )}
-          </Link>
+          <NotificationBell notifications={appNotifications} />
         </div>
 
         {/* Oggi in agenda — sempre visibile (CTA se l'agenda è vuota) */}

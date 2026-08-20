@@ -38,7 +38,19 @@ const TYPE_ICON: Record<AppNotification['type'], { icon: React.ReactNode; border
   listino_scaduto:    { icon: <Tag size={15} />,           border: '#f0d2b8', color: '#c06a2a' },
 }
 
-export function NotificationList({ notifications }: { notifications: AppNotification[] }) {
+export function NotificationList({
+  notifications,
+  compact = false,
+  onUnreadChange,
+}: {
+  notifications: AppNotification[]
+  /** true = dentro il pannello della campanella: niente margini né card propria
+      (la cornice la dà il pannello). false = pagina /notifiche, com'era. */
+  compact?: boolean
+  /** Avvisa il contenitore (la campanella) di quante non-lette restano, così
+      il pallino rosso si aggiorna appena una notifica viene letta. */
+  onUnreadChange?: (n: number) => void
+}) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   // Stato LOCALE: senza revalidate (per non interrompere la navigazione) la
@@ -47,6 +59,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
   // diventa "letta" come le altre all'istante.
   const [items, setItems] = useState(notifications)
   useEffect(() => { setItems(notifications) }, [notifications])
+  useEffect(() => { onUnreadChange?.(items.filter((x) => !x.read).length) }, [items, onUnreadChange])
 
   // La navigazione è affidata a un <Link> NATIVO (naviga sempre, come
   // qualsiasi link); qui si registra solo la lettura, in background e
@@ -116,7 +129,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
 
   if (items.length === 0) {
     return (
-      <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '28px 15px', textAlign: 'center' }}>
+      <div style={{ margin: compact ? 0 : '14px 15px 0', background: '#fff', borderRadius: compact ? 0 : 14, boxShadow: compact ? 'none' : SH, padding: '28px 15px', textAlign: 'center' }}>
         <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>Nessun avviso</p>
         <p style={{ fontSize: 13, color: '#55534b', marginTop: 4 }}>Quando succede qualcosa che merita la tua attenzione, lo trovi qui.</p>
       </div>
@@ -128,7 +141,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
   return (
     <>
       {hasUnread && (
-        <div style={{ margin: '12px 15px 0', textAlign: 'right' }}>
+        <div style={{ margin: compact ? '8px 14px 0' : '12px 15px 0', textAlign: 'right' }}>
           <button
             type="button"
             onClick={markAll}
@@ -139,7 +152,7 @@ export function NotificationList({ notifications }: { notifications: AppNotifica
         </div>
       )}
 
-      <div style={{ margin: `${hasUnread ? 6 : 14}px 15px 0`, background: '#fff', borderRadius: 14, boxShadow: SH, padding: '2px 14px' }}>
+      <div style={{ margin: compact ? 0 : `${hasUnread ? 6 : 14}px 15px 0`, background: '#fff', borderRadius: compact ? 0 : 14, boxShadow: compact ? 'none' : SH, padding: '2px 14px' }}>
         {items.map((n, idx) => {
           const t = TYPE_ICON[n.type]
           return (

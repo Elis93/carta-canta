@@ -20,6 +20,14 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
     ],
   },
   {
+    data: 'Fine agosto 2026',
+    titolo: 'Notifiche a portata di tocco e sopralluoghi più leggibili',
+    punti: [
+      'La campanella in Home ora apre le notifiche in una tendina, senza cambiare pagina: le leggi, tocchi quella che ti interessa e la Home resta lì sotto. In fondo alla tendina, «Vedi tutte le notifiche» apre la pagina completa.',
+      'Nella lista dei sopralluoghi il titolo ha tutta la riga per sé e i dettagli (appuntamento, indirizzo, foto) vanno a capo invece di sparire nei puntini: si legge tutto anche sui titoli lunghi.',
+    ],
+  },
+  {
     data: 'Metà agosto 2026',
     titolo: 'Menu più semplice, creazione più veloce, cestino a portata di mano',
     punti: [

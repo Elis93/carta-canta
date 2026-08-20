@@ -235,23 +235,31 @@ export default async function SopralluoghiPage({
                 <span style={{ width: 36, height: 36, borderRadius: '50%', background: '#f2f2f5', color: '#55534b', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {initials(row)}
                 </span>
+                {/* Il badge NON sta più accanto al testo (Eli 20 ago, foto:
+                    «descrizioni che non si leggono» — la pillola a larghezza
+                    fissa rubava ~120px a titolo e descrizione, che si
+                    troncavano dopo poche lettere). Riga 1 = titolo a tutta
+                    larghezza; riga 2 = pillola + dettagli, che possono andare
+                    a capo (max 2 righe) invece di sparire nei puntini. */}
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {row.title}{clientName ? ` — ${clientName}` : ' — Senza cliente'}
                   </span>
-                  <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {subParts.join(' · ')}
+                  <span style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '3px 8px', marginTop: 3 }}>
+                    {row.document_id ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, border: '1px solid #bce3d2', color: '#2f8a63', borderRadius: 999, padding: '2px 8px', fontSize: 10.5, fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' }}>
+                        <CheckCircle2 size={11} /> Preventivo creato
+                      </span>
+                    ) : (
+                      <span style={{ border: '1px solid #e3e3e6', color: 'var(--cc-muted)', borderRadius: 999, padding: '2px 8px', fontSize: 10.5, fontWeight: 600, flexShrink: 0 }}>
+                        Bozza
+                      </span>
+                    )}
+                    <span style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.4, minWidth: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      {subParts.join(' · ')}
+                    </span>
                   </span>
                 </span>
-                {row.document_id ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, border: '1px solid #bce3d2', color: '#2f8a63', borderRadius: 999, padding: '3px 9px', fontSize: 11, fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' }}>
-                    <CheckCircle2 size={12} /> Preventivo creato
-                  </span>
-                ) : (
-                  <span style={{ border: '1px solid #e3e3e6', color: 'var(--cc-muted)', borderRadius: 999, padding: '3px 9px', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
-                    Bozza
-                  </span>
-                )}
                 <ChevronRight size={16} style={{ color: '#c2c1bd', flexShrink: 0 }} />
               </Link>
             )
