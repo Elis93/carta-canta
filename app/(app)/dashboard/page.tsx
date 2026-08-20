@@ -531,15 +531,12 @@ export default async function DashboardPage() {
     if (exp < todayMid) return kind === 'fattura' ? 'Scaduta' : 'Scaduto'
     if (exp < tomorrowMid) return 'Scade oggi'
     if (exp < dayAfterMid) return 'Scade domani'
-    const d = exp.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', timeZone: 'Europe/Rome' })
-    // Data E giorni mancanti (Eli, 7 ago): la data dice QUANDO, i giorni dicono
-    // QUANTO manca — leggere "20 ago" e doverlo confrontare a mente con oggi è
-    // un conto che deve fare l'app, non l'artigiano.
-    // ⚠️ Prima i giorni, poi la data, e SENZA "Scade il": questa etichetta sta
-    // sulla stessa riga del titoletto («Fattura da incassare»), e con la forma
-    // lunga il titoletto andava a capo su due righe — misurato a 390px.
+    // Solo i giorni mancanti, SENZA la data secca (Eli, 20 ago: «togliendo
+    // 23 agosto, lasciando solo tra 4 giorni»): la riga ora convive coi
+    // tasti della variante B e la data raddoppiava un'informazione che i
+    // giorni dicono già. La data esatta resta nelle pagine /scadenze.
     const giorni = Math.ceil((exp.getTime() - todayMid.getTime()) / 86_400_000)
-    return `fra ${giorni} giorni · ${d}`
+    return `Scade tra ${giorni} giorni`
   }
   const expiresLabel = scadenzaLabel(pendingDoc?.expiresAt, 'preventivo')
 

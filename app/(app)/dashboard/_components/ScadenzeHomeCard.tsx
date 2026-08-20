@@ -13,7 +13,7 @@
 import { useState } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
-import { Bell, Phone, Loader2, CheckCircle2, AlertTriangle, Info } from 'lucide-react'
+import { Bell, Phone, Loader2, CheckCircle2, Info } from 'lucide-react'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
@@ -93,8 +93,9 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
   // colorata. Un filetto verticale a sinistra dà l'urgenza a colpo d'occhio.
   const scaduto = /^scadut/i.test(doc.expiresLabel)
   const urgColor = scaduto ? '#a5564e' : '#a5793a'
-  const docLabel = `${kind === 'fattura' ? 'Fattura' : 'Preventivo'} ${doc.numberLabel ?? '—'}`
-  const mainLabel = doc.clientName?.trim() || docLabel
+  // Abbreviato (variante B, Eli 20 ago): la riga ora convive coi tasti.
+  const docLabel = `${kind === 'fattura' ? 'Fatt.' : 'Prev.'} ${doc.numberLabel ?? '—'}`
+  const mainLabel = doc.clientName?.trim() || `${kind === 'fattura' ? 'Fattura' : 'Preventivo'} ${doc.numberLabel ?? '—'}`
 
   return (
     <div
@@ -113,118 +114,110 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
           {formatCurrency(doc.total ?? 0)}
         </span>
       </div>
-      <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {doc.clientName?.trim() ? <>{docLabel} · </> : null}
-        <span style={{ fontWeight: 600, color: urgColor }}>{doc.expiresLabel}</span>
-      </div>
-
-      {/* Avviso "modificato": una RIGA, non un blocco pieno. Il riquadro viola
-          a tutta larghezza pesava più della scadenza e portava un terzo colore
-          dentro una card che ne ha già due (feedback Eli 7 ago: "confusionario"). */}
-      {/* "Modificato" + punto ⓘ, come sulla card SdI (feedback Eli 7 ago:
-          "cliente non aggiornato" non dice niente a chi apre l'app la prima
-          volta). La parola corta resta in vista, la spiegazione si apre solo
-          a chi la cerca — senza occupare la Home a tutti gli altri. */}
-      {doc.isModified && (
-        <div style={{ marginTop: 6 }} onClick={(e) => e.stopPropagation()}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6a44b5' }}>
-            <AlertTriangle size={14} style={{ flexShrink: 0 }} aria-hidden="true" />
-            Modificato
-            <button
-              type="button"
-              onClick={() => setInfoOpen((o) => !o)}
-              aria-expanded={infoOpen}
-              aria-label="Cosa vuol dire che il documento è modificato"
-              style={{
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: 20, height: 20, borderRadius: '50%', border: '1px solid #d9d7d0',
-                background: infoOpen ? '#f2f2f4' : '#fff', color: '#6f6d64',
-                cursor: 'pointer', padding: 0, flexShrink: 0,
-              }}
-            >
-              <Info size={12} />
-            </button>
-          </span>
-          {infoOpen && (
-            <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '10px 12px', marginTop: 7, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
-              <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Cosa vuol dire &laquo;Modificato&raquo;?</p>
-              <p style={{ margin: '6px 0 0' }}>
-                Hai cambiato qualcosa dopo averlo mandato al cliente: importi, voci o
-                condizioni.
-              </p>
-              <p style={{ margin: '6px 0 0' }}>
-                Chi riapre il link vede <b>già la versione nuova</b> — ma il cliente
-                <b>{' '}non è stato avvisato</b>: se l&rsquo;aveva letto prima, sta ragionando
-                sui numeri vecchi.
-              </p>
-              <p style={{ margin: '6px 0 0' }}>
-                Se la modifica conta, <b>rimandaglielo</b>.
-              </p>
+      {/* Riga 2 — variante B (scelta Eli 20 ago): a SINISTRA due righe di
+          testo — identificativo del documento sopra, scadenza sotto — a
+          DESTRA i tre tasti quadrati piccoli (campanella = Sollecita,
+          WhatsApp, Chiama). Via la riga dei tasti a tutta larghezza e la
+          riga dedicata a «Modificato», che ora sta in coda al documento. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {(doc.clientName?.trim() || doc.isModified) && (
+            <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {doc.clientName?.trim() ? docLabel : null}
+              {doc.isModified && (
+                <>
+                  {doc.clientName?.trim() ? ' · ' : null}
+                  <span style={{ color: '#6a44b5', fontWeight: 600 }}>Mod.</span>{' '}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setInfoOpen((o) => !o) }}
+                    aria-expanded={infoOpen}
+                    aria-label="Cosa vuol dire che il documento è modificato"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      width: 18, height: 18, borderRadius: '50%', border: '1px solid #d9d7d0',
+                      background: infoOpen ? '#f2f2f4' : '#fff', color: '#6f6d64',
+                      cursor: 'pointer', padding: 0, verticalAlign: '-4px',
+                    }}
+                  >
+                    <Info size={11} />
+                  </button>
+                </>
+              )}
             </div>
           )}
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: urgColor, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {doc.expiresLabel}
+          </div>
         </div>
-      )}
-
-      {/* Tasti FINI, di solo contorno (Eli 19 ago: «non mi piacciono i bottoni
-          pieni di colore»): il principale si distingue per il bordo dorato e
-          l'etichetta scritta, gli altri sono quadrati con la sola icona. */}
-      <div style={{ display: 'flex', gap: 8, marginTop: 11 }} onClick={(e) => e.stopPropagation()}>
-        {doc.clientEmail && (
-          <button
-            onClick={handleSollecita}
-            disabled={sending || sent}
-            style={{
-              flex: 1, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-              background: '#fff',
-              color: sent ? '#2f8a63' : '#b0863e', borderRadius: 10,
-              fontSize: 13.5, fontWeight: 600,
-              border: sent ? '1px solid #bce3d2' : '1px solid #e0c98a', cursor: sending || sent ? 'default' : 'pointer',
-              opacity: sending ? 0.8 : 1,
-            }}
-          >
-            {sending ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : sent ? (
-              <CheckCircle2 size={16} />
-            ) : (
-              <Bell size={16} aria-hidden="true" />
-            )}
-            {sent ? 'Sollecito inviato ✓' : 'Sollecita'}
-          </button>
-        )}
-        {doc.clientPhone && (
-          <>
-            {whatsappHref && (
+        {/* Tasti quadrati piccoli — 38×34 come nel mockup approvato */}
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+          {doc.clientEmail && (
+            <button
+              onClick={handleSollecita}
+              disabled={sending || sent}
+              aria-label={sent ? 'Sollecito inviato' : 'Sollecita per email'}
+              style={{
+                width: 38, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#fff', color: sent ? '#2f8a63' : '#b0863e', borderRadius: 9,
+                border: sent ? '1px solid #bce3d2' : '1px solid #e0c98a',
+                cursor: sending || sent ? 'default' : 'pointer', opacity: sending ? 0.8 : 1, flexShrink: 0,
+              }}
+            >
+              {sending ? <Loader2 size={15} className="animate-spin" /> : sent ? <CheckCircle2 size={16} /> : <Bell size={16} aria-hidden="true" />}
+            </button>
+          )}
+          {doc.clientPhone && (
+            <>
+              {whatsappHref && (
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="WhatsApp"
+                  style={{
+                    width: 38, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: '1px solid #d9d7d0', borderRadius: 9,
+                    color: '#1a1a2e', textDecoration: 'none', flexShrink: 0,
+                  }}
+                >
+                  <WhatsAppIcon />
+                </a>
+              )}
               <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                aria-label="WhatsApp"
+                href={phoneHref}
+                aria-label="Chiama"
                 style={{
-                  width: 44, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '1px solid #d9d7d0', borderRadius: 10,
+                  width: 38, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid #d9d7d0', borderRadius: 9,
                   color: '#1a1a2e', textDecoration: 'none', flexShrink: 0,
                 }}
               >
-                <WhatsAppIcon />
+                <Phone size={16} aria-hidden="true" />
               </a>
-            )}
-            <a
-              href={phoneHref}
-              onClick={(e) => e.stopPropagation()}
-              aria-label="Chiama"
-              style={{
-                width: 44, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '1px solid #d9d7d0', borderRadius: 10,
-                color: '#1a1a2e', textDecoration: 'none', flexShrink: 0,
-              }}
-            >
-              <Phone size={18} aria-hidden="true" />
-            </a>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Pannello ⓘ «Modificato» — a tutta larghezza, sotto la riga */}
+      {doc.isModified && infoOpen && (
+        <div onClick={(e) => e.stopPropagation()} style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '10px 12px', marginTop: 7, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
+          <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Cosa vuol dire &laquo;Modificato&raquo;?</p>
+          <p style={{ margin: '6px 0 0' }}>
+            Hai cambiato qualcosa dopo averlo mandato al cliente: importi, voci o
+            condizioni.
+          </p>
+          <p style={{ margin: '6px 0 0' }}>
+            Chi riapre il link vede <b>già la versione nuova</b> — ma il cliente
+            <b>{' '}non è stato avvisato</b>: se l&rsquo;aveva letto prima, sta ragionando
+            sui numeri vecchi.
+          </p>
+          <p style={{ margin: '6px 0 0' }}>
+            Se la modifica conta, <b>rimandaglielo</b>.
+          </p>
+        </div>
+      )}
 
       {error && (
         <div style={{ marginTop: 8, fontSize: 12, color: '#dc2626', background: '#fef2f2', borderRadius: 6, padding: '6px 10px' }}>
