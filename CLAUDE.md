@@ -29,6 +29,14 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 20 ago (6) — [BUG] «IVA 0%» nel riepilogo: righe IVA per aliquota dal motore (3 superfici)
+Eli, foto: voce da catalogo, IVA cambiata, riepilogo con «IVA 0% — € 22,00». **Causa**: l'etichetta faceva `Number(vat_rate)` e su una voce con IVA «predefinita» (`vat_rate NULL` — è ciò che scrive la PRIMA opzione della tendina IVA, etichettata col default «22%») `Number(null)` fa **0**; l'imposta invece era calcolata al default → etichetta e numero raccontavano due cose diverse.
+- **preventivi/[id] + fatture/[id]** (riepilogo read-only): via `ivaLabel`; le righe IVA vengono da **`riepilogoIva` sulle voci espanse dei beni significativi** — stessa fonte del PDF, una riga PER aliquota, null risolto al default. Nel multi-proposta righe per-proposta (`righeIvaDi(tier)`). Richiesta esplicita di Eli: mai una sola % con aliquote miste.
+- **Pagina pubblica /p/[token]**: gemello — con aliquota unica l'etichetta usava il **default del documento** (voce al 10 con default 22 → il CLIENTE leggeva «IVA 22%») → ora aliquota unica risolta sulle voci espanse; miste → «IVA» secco (multiVat, già a posto dal 12 ago).
+- FiscalSummary (form) già corretto («IVA» senza %). Verificato sul motore: null→«IVA 22% 22,00» (il caso della foto), miste→2 righe, 10→«IVA 10%».
+- ⚠️ Nota repro: il «l'ho cambiata a 10 ma calcola 22» di Eli è coerente col tornare sulla PRIMA voce della tendina (etichetta «22%» = predefinita → scrive null): non è stata trovata nessuna perdita di `vat_rate` nella catena form→serialize→Zod→insert (verificata punto per punto).
+- tsc+build+**733** test+smoke 28/28 verdi · scan 0.
+
 ### ✅ 20 ago (5) — 4 feedback: fascia Classico, IVA catalogo, conferme WhatsApp, validità modificabile
 Quattro punti di Eli dal collaudo (con Pro sbloccato a mano via SQL).
 - **[TEMPLATE] Fascia del Classico: via «Regime» → «Totale»** («non ha senso che ci sia scritto che il regime è ordinario»): al cliente il regime non dice nulla su un preventivo; il totale sì. Con più proposte l'etichetta diventa «Tot. Proposta Base» (stesso schema del Tecnico). PDF + TemplatePreview + /novita allineati; 16/16 asserzioni edge-case ancora verdi.
