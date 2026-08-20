@@ -189,10 +189,24 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
     return () => { annullato = true }
   }, [client?.id])
 
+  // Titolo di default «Lavoro 20.08 Giorgio G.» (Eli 20 ago): data + nome
+  // cliente, così il sopralluogo — e il preventivo/fattura che ne nasce — si
+  // riconoscono al volo nelle liste e nella ricerca. Vale SOLO finché il
+  // titolo non viene scritto a mano: un titolo digitato vince sempre.
+  const autoTitle = (() => {
+    const oggi = new Date()
+    const dd = String(oggi.getDate()).padStart(2, '0')
+    const mm = String(oggi.getMonth() + 1).padStart(2, '0')
+    const nome = client
+      ? ` ${[client.name, client.surname ? `${client.surname[0].toUpperCase()}.` : null].filter(Boolean).join(' ')}`
+      : ''
+    return `Lavoro ${dd}.${mm}${nome}`.slice(0, 120)
+  })()
+
   function buildFormData(): FormData {
     const fd = new FormData()
     if (sopId) fd.set('id', sopId)
-    fd.set('title', title)
+    fd.set('title', title.trim() || autoTitle)
     fd.set('address', address)
     fd.set('notes', notes)
     fd.set('client_id', client?.id ?? '')
@@ -247,6 +261,15 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
 
   function handleSaveDraft() {
     if (apptIncomplete) { setError(APPT_INCOMPLETE_MSG); return }
+    // Un sopralluogo senza NIENTE che lo identifichi non si salva (Eli 20
+    // ago): senza cliente né indirizzo poi non si ritrova e non si collega a
+    // nulla. La guardia vale solo sul tasto Salva: il salvataggio implicito
+    // che precede l'upload delle FOTO resta libero (in cantiere si parte
+    // spesso dalle foto, e una foto È già un'informazione).
+    if (!client && !address.trim()) {
+      setError('Metti almeno il cliente o l\u2019indirizzo del cantiere: senza, il sopralluogo poi non si ritrova.')
+      return
+    }
     setError(null)
     setPendingAction('save')
     startTransition(async () => {
@@ -333,7 +356,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Metti il titolo (es. Bagno piano primo)"
+          placeholder={autoTitle}
           maxLength={120}
           style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, fontWeight: title.trim() ? 600 : 400, color: '#161616', fontFamily: 'inherit' }}
         />

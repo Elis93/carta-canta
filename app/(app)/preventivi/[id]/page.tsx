@@ -381,9 +381,17 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           </Link>
           )
         ) : (
-          <Link href={`/preventivi/${id}`} aria-label="Chiudi modifica" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <X size={18} style={{ color: '#55534b' }} />
-          </Link>
+          <>
+            {/* Chip di stato vista (Eli 20 ago: «non è chiaro se sono nella
+                vista riassuntiva o in quella di modifica»): in modifica lo
+                dice una pillola ambra; la ✕ riporta al riepilogo. */}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, borderRadius: 999, background: '#f5e9d0', border: '1px solid #e8d6ad', padding: '6px 11px', fontSize: 12.5, fontWeight: 600, color: '#8a5a00', flexShrink: 0, marginRight: 8 }}>
+              <Pencil size={13} /> In modifica
+            </span>
+            <Link href={`/preventivi/${id}`} aria-label="Chiudi la modifica e torna al riepilogo" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <X size={18} style={{ color: '#55534b' }} />
+            </Link>
+          </>
         )}
       </div>
 

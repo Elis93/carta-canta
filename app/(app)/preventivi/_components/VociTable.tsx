@@ -556,28 +556,25 @@ export function VociTable({
               <div className="lg:hidden space-y-2">
                 {/* Testata: VOCE N · Totale live · cestino (variante A: il
                     totale sale qui, niente riga dedicata) */}
-                <div className="flex items-center justify-between">
-                  {/* Il titolo CHIUDE la voce: il tasto «Chiudi» occupava una
-                      riga intera in fondo alla card (feedback Eli 12 ago:
-                      «troppo grande e disorganizzata»). Qui la chevron sta
-                      accanto al numero della voce, dove si guarda per capire
-                      dove si è. */}
-                  <button
-                    type="button"
-                    onClick={() => setOpenKey(null)}
-                    aria-label={`Chiudi voce ${idx + 1}`}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em' }}
-                  >
+                {/* La testata INTERA chiude la voce (Eli 20 ago: «se clicco
+                    su voce o il prezzo, la voce deve chiudersi»): un solo
+                    bottone con VOCE N a sinistra e il totale a destra.
+                    ⚠️ Niente cestino qui (Eli, 20 ago): un tocco di striscio
+                    sulla barra di chiusura cancellava la riga — il cestino
+                    vive nella cella accanto all'IVA. */}
+                <button
+                  type="button"
+                  onClick={() => setOpenKey(null)}
+                  aria-label={`Chiudi voce ${idx + 1}`}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, width: '100%', background: 'none', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em' }}>
                     VOCE {idx + 1} <ChevronUp size={14} />
-                  </button>
-                  {/* ⚠️ Niente cestino qui (Eli, 20 ago): questa testata è la
-                      barra che si tocca per CHIUDERE la voce, e un tocco di
-                      striscio cancellava la riga senza rimedio. «Elimina voce»
-                      è ora in fondo alla card. */}
+                  </span>
                   <span style={{ fontSize: 13, color: 'var(--cc-muted)' }}>
                     Tot. <b style={{ color: '#161616', fontSize: 14 }}>€ {lineTotal.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
                   </span>
-                </div>
+                </button>
 
                 <VoceBadges voce={voce} />
 
@@ -736,6 +733,25 @@ export function VociTable({
                       </Select>
                     </div>
                   )}
+                  {/* Cestino nella cella LIBERA in coda alla riga Sconto·IVA
+                      (Eli 20 ago: «accanto al riquadro IVA non c'è mai nulla —
+                      mettiamoci il cestino, così non serve una riga dedicata»).
+                      Lontano dalla testata di chiusura (niente tocchi di
+                      striscio) e con l'«Annulla» del toast come rete.
+                      In forfettario (senza IVA) uno spaziatore lo tiene
+                      comunque nell'ultima colonna, sotto il Prezzo. */}
+                  {!showVat && <div aria-hidden />}
+                  <div className="space-y-1" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <span aria-hidden style={{ fontSize: 11, display: 'block', visibility: 'hidden' }}>·</span>
+                    <button
+                      type="button"
+                      onClick={() => removeVoce(voce._key)}
+                      aria-label={`Elimina voce ${idx + 1}`}
+                      style={{ width: 52, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #edd9d6', borderRadius: 10, background: '#fdf8f7', color: '#a5564e', cursor: 'pointer', boxSizing: 'border-box' }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
                 {/* ⚠️ Niente Costo e niente ricarico qui (Eli, 12 e 17 ago):
                     vivono solo nella card Margine più sotto (MargineBox). */}
@@ -750,22 +766,6 @@ export function VociTable({
                     <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
                   </div>
                 )}
-
-              {/* ELIMINA VOCE — ultima cosa della card aperta: ci si arriva
-                  solo dopo aver scorso tutti i campi, cioè quando lo si vuole
-                  davvero (schema delle azioni distruttive in fondo al modulo).
-                  Su desktop resta il cestino nella colonna azioni: lì il
-                  puntatore è preciso e non c'è il rischio del pollice. */}
-              {voce._key === openKey && (
-                <button
-                  type="button"
-                  onClick={() => removeVoce(voce._key)}
-                  className="lg:hidden"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', marginTop: 6, background: 'none', border: 'none', borderTop: '1px solid #f0efec', padding: '11px 0 2px', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 500, color: '#a5564e' }}
-                >
-                  <Trash2 size={15} /> Elimina voce
-                </button>
-              )}
 
             </div>
           )

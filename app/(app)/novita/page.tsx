@@ -21,10 +21,13 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   },
   {
     data: 'Fine agosto 2026',
-    titolo: 'Notifiche a portata di tocco e sopralluoghi più leggibili',
+    titolo: 'Notifiche a portata di tocco, sopralluoghi più chiari, voci più comode',
     punti: [
       'La campanella in Home ora apre le notifiche in una tendina, senza cambiare pagina: le leggi, tocchi quella che ti interessa e la Home resta lì sotto. In fondo alla tendina, «Vedi tutte le notifiche» apre la pagina completa.',
       'Nella lista dei sopralluoghi il titolo ha tutta la riga per sé e i dettagli (appuntamento, indirizzo, foto) vanno a capo invece di sparire nei puntini: si legge tutto anche sui titoli lunghi.',
+      'Il sopralluogo nuovo si chiama da solo «Lavoro 20.08 Giorgio G.» — data e cliente — così poi lo riconosci al volo fra preventivi e fatture. Se scrivi un titolo tuo, vale il tuo. E per salvarlo serve almeno il cliente o l’indirizzo del cantiere: un sopralluogo senza nulla poi non si ritrova.',
+      'Nella voce del preventivo (e della fattura) tocchi la testata — «VOCE 1» o il totale — e la voce si chiude; il cestino sta nella casella accanto all’IVA, con l’«Annulla» se elimini per sbaglio.',
+      'Quando apri la modifica di un preventivo o di una fattura, in alto compare la pillola «In modifica»: capisci al volo se stai guardando il riepilogo o stai cambiando il documento. La ✕ riporta al riepilogo.',
     ],
   },
   {

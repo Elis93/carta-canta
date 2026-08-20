@@ -542,15 +542,21 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             <Pencil size={15} /> Modifica
           </Link>
         )}
-        {/* ✕ per uscire dalla modifica — come sul dettaglio preventivo */}
+        {/* ✕ per uscire dalla modifica — come sul dettaglio preventivo.
+            La pillola «In modifica» dice in che vista sei (Eli 20 ago). */}
         {edit === '1' && (
-          <Link
-            href={`/fatture/${id}`}
-            style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#55534b' }}
-            aria-label="Chiudi modifica"
-          >
-            <X size={18} />
-          </Link>
+          <>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, borderRadius: 999, background: '#f5e9d0', border: '1px solid #e8d6ad', padding: '6px 11px', fontSize: 12.5, fontWeight: 600, color: '#8a5a00', flexShrink: 0, marginRight: 8 }}>
+              <Pencil size={13} /> In modifica
+            </span>
+            <Link
+              href={`/fatture/${id}`}
+              style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#55534b' }}
+              aria-label="Chiudi la modifica e torna al riepilogo"
+            >
+              <X size={18} />
+            </Link>
+          </>
         )}
       </div>
 

@@ -135,8 +135,10 @@ export async function saveSopralluogoAction(formData: FormData): Promise<ActionR
 
   // Photo-first: in cantiere spesso si parte dalle foto, senza scrivere
   // nulla. Un sopralluogo vuoto si salva comunque con un titolo di default
-  // datato — si completa dopo, con calma.
-  const fallbackTitle = `Sopralluogo ${new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long' , timeZone: 'Europe/Rome' })}`
+  // datato — si completa dopo, con calma. Il form manda già «Lavoro 20.08
+  // Giorgio G.» (data + cliente): questo è solo il paracadute server-side.
+  const oggi = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Rome' }))
+  const fallbackTitle = `Lavoro ${String(oggi.getDate()).padStart(2, '0')}.${String(oggi.getMonth() + 1).padStart(2, '0')}`
 
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 041 non ancora in types/database.ts

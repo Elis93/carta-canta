@@ -56,7 +56,9 @@ export function NotificationBell({
   let panel: React.ReactNode = null
   if (open && mounted && rect) {
     const vw = window.innerWidth
-    const width = Math.min(400, vw - 20)
+    // Più stretto (Eli 20 ago): non a tutta pagina — si legge come una
+    // tendina della campanella, non come una pagina sovrapposta.
+    const width = Math.min(340, vw - 48)
     const left = Math.max(10, Math.min(rect.right - width, vw - width - 10))
     const top = rect.bottom + 8
     const maxH = Math.max(240, Math.min(480, window.innerHeight - top - 16))
@@ -103,8 +105,8 @@ export function NotificationBell({
         onClick={() => setOpen((v) => !v)}
         style={
           hero
-            ? { position: 'relative', width: 34, height: 34, borderRadius: '50%', background: open ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.08)', border: '1px solid rgba(203,164,76,.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e6cf94', cursor: 'pointer', padding: 0 }
-            : { position: 'relative', width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1px solid #e7e7ea', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 2px rgba(20,20,40,.05)', color: '#55534b', flexShrink: 0, cursor: 'pointer', padding: 0 }
+            ? { position: 'relative', width: 34, height: 34, borderRadius: '50%', background: open ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.08)', border: open ? '1px solid rgba(255,255,255,.55)' : '1px solid rgba(203,164,76,.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: open ? '#fff' : '#e6cf94', cursor: 'pointer', padding: 0 }
+            : { position: 'relative', width: 38, height: 38, borderRadius: '50%', background: open ? '#1a1a2e' : '#fff', border: open ? '1px solid #1a1a2e' : '1px solid #e7e7ea', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 2px rgba(20,20,40,.05)', color: open ? '#fff' : '#55534b', flexShrink: 0, cursor: 'pointer', padding: 0 }
         }
       >
         <Bell size={hero ? 16 : 18} strokeWidth={1.9} />
