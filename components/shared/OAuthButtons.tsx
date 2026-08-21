@@ -95,6 +95,11 @@ export function OAuthButtons() {
         options: {
           // Supabase redirige qui dopo l'autenticazione Google
           redirectTo: cb.toString(),
+          // Google deve SEMPRE mostrare la scelta dell'account (Eli, 21 ago:
+          // «non posso selezionare con quale account entrare» — senza questo
+          // parametro, con un solo account già autorizzato Google salta la
+          // schermata e rientra dritto con quello).
+          queryParams: { prompt: 'select_account' },
         },
       })
       // signInWithOAuth redirige il browser — non serve gestire il risultato.

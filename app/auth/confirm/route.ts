@@ -85,31 +85,24 @@ export async function GET(request: NextRequest) {
     : '/onboarding'
 
   if (token_hash && type) {
-    const supabase = await createClient()
+    // ⚠️ RECUPERO PASSWORD — il token NON si verifica più qui, su una GET
+    // (collaudo Eli 21 ago: `otp_expired` su un link fresco). Gli scanner
+    // della posta — Gmail compreso — APRONO i link delle email per
+    // controllarli, e un token monouso verificato alla GET arrivava già
+    // bruciato al tocco umano. Il link atterra ora su una pagina-ponte
+    // (/reset-password/verifica) e la verifica parte dal BOTTONE, con una
+    // POST: uno scanner carica la pagina ma non preme mai il tasto.
+    if (type === 'recovery') {
+      const dest = new URL('/reset-password/verifica', origin)
+      dest.searchParams.set('token_hash', token_hash)
+      return NextResponse.redirect(dest)
+    }
 
-    // ⚠️ RECUPERO PASSWORD — l'ordine è: PRIMA si verifica il token, POI (solo
-    // se la verifica fallisce) si chiude la sessione locale. Corretto il
-    // 21 ago, leggendo il sorgente di supabase-js:
-    //  ① il signOut cancella anche il cookie `<storageKey>-code-verifier`
-    //    (GoTrueClient `_removeSession`), cioè il segreto PKCE del recupero:
-    //    farlo prima significa buttare via un pezzo del flusso in corso;
-    //  ② la ragione per cui era stato messo prima (12 ago: «un token di
-    //    recupero verificato mentre c'è un'altra sessione fallisce») era una
-    //    DIAGNOSI, non una prova — e il codice la smentisce: `verifyOtp` è una
-    //    POST a /verify con la sola chiave pubblica, non manda il JWT della
-    //    sessione, quindi la sessione attiva non può farla fallire.
-    // Resta valido il motivo ②bis del 12 ago: se la verifica fallisce, chi
-    // torna al login non deve ritrovarsi DENTRO l'app senza che nulla gli
-    // abbia chiesto una password → il signOut si fa lì, sul ramo di errore.
+    const supabase = await createClient()
     const { error } = await supabase.auth.verifyOtp({ token_hash, type })
 
     if (!error) {
       // Sessione creata — i cookie vengono scritti dal createClient (SSR).
-      // Per il reset password (recovery) andiamo sempre al form cambio password,
-      // ignorando il parametro ?next= per evitare redirect sbagliati.
-      if (type === 'recovery') {
-        return NextResponse.redirect(new URL('/reset-password/confirm', origin))
-      }
       // Primo accesso confermato: schedula la email di benvenuto (parte dopo
       // il redirect via after(), non blocca mai l'onboarding).
       if (type === 'signup') {
@@ -120,21 +113,6 @@ export async function GET(request: NextRequest) {
     }
 
     console.error('[auth/confirm] verifyOtp error:', error.status, error.code, error.message)
-
-    // Per il reset password: rimanda alla pagina di richiesta reset con messaggio
-    // (il link potrebbe essere già stato usato o scaduto)
-    if (type === 'recovery') {
-      // `scope: 'local'` — si chiude solo questo dispositivo: chi recupera la
-      // password non deve perdere la sessione degli altri.
-      const { error: outErr } = await supabase.auth.signOut({ scope: 'local' })
-      if (outErr) console.warn('[auth/confirm] signOut post-fallimento:', outErr.message)
-      // Il codice d'errore di Supabase viaggia nell'indirizzo (nessun dato
-      // personale): senza accesso ai log è l'unico modo perché una schermata
-      // fotografata dica DAVVERO cos'è successo.
-      const dest = new URL('/reset-password?error=link_scaduto', origin)
-      if (error.code) dest.searchParams.set('m', error.code)
-      return NextResponse.redirect(dest)
-    }
   }
 
   // Token mancante, tipo errato, o link scaduto (per altri tipi)

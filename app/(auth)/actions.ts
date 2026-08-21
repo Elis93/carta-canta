@@ -470,6 +470,33 @@ export async function resetPasswordAction(
 }
 
 // ============================================================
+// RESET PASSWORD — verifica del link dalla pagina-ponte
+// ============================================================
+// Il link dell'email NON verifica più il token alla GET (gli scanner di
+// posta aprono i link e bruciavano il token monouso — collaudo Eli 21 ago,
+// codice otp_expired su link fresco): atterra su /reset-password/verifica,
+// e la verifica parte da QUI, su POST, quando l'utente tocca il bottone.
+export async function confirmRecoveryLinkAction(formData: FormData): Promise<void> {
+  const tokenHash = String(formData.get('token_hash') ?? '').trim()
+  if (!tokenHash || tokenHash.length > 255) redirect('/reset-password?error=link_scaduto')
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
+
+  if (!error) redirect('/reset-password/confirm')
+
+  console.error('[reset-password/verifica] verifyOtp:', error.status, error.code, error.message)
+  // Verifica fallita: si chiude la sessione locale (chi torna al login non
+  // deve ritrovarsi DENTRO l'app senza che nulla gli abbia chiesto una
+  // password — motivo del 12 ago, conservato sul solo ramo di errore).
+  const { error: outErr } = await supabase.auth.signOut({ scope: 'local' })
+  if (outErr) console.warn('[reset-password/verifica] signOut:', outErr.message)
+  // Il codice d'errore viaggia nell'indirizzo (nessun dato personale): è la
+  // diagnosi leggibile da una schermata fotografata.
+  redirect(`/reset-password?error=link_scaduto${error.code ? `&m=${encodeURIComponent(error.code)}` : ''}`)
+}
+
+// ============================================================
 // RESET PASSWORD — conferma nuova password
 // ============================================================
 export async function confirmResetPasswordAction(
