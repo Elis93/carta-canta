@@ -810,8 +810,11 @@ export default async function AiutoPage({
       {/* ── TUTORIAL: il giro guidato del primo accesso e le guide di sezione.
           Sono arrivati qui da "Account e sicurezza" (7 ago): chi cerca un
           tutorial cerca aiuto, non le impostazioni del proprio account. */}
+      {/* Stesso stacco dalle linguette della scheda Aiuto (Eli 21 ago: era
+          2px contro i 14 del gemello — due schede della stessa pagina non
+          possono respirare in modo diverso). */}
       {attiva === 'tutorial' && (
-        <div style={{ margin: '2px 15px 0' }}>
+        <div style={{ margin: '14px 15px 0' }}>
           <ReviewTutorialCard />
         </div>
       )}
