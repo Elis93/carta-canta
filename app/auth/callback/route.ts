@@ -69,22 +69,30 @@ export async function GET(request: NextRequest) {
     }
   )
 
-  // ⚠️ RECUPERO PASSWORD anche su QUESTO percorso (12 ago): il fix «chiudi la
-  // sessione prima di verificare il token di recupero» era solo in
-  // /auth/confirm (percorso token_hash). Se il template email di Supabase
-  // usasse il ConfirmationURL di default, il recovery passerebbe da qui e
-  // erediterebbe la vecchia sessione — gli stessi due difetti visti da Eli.
-  // Stessa scelta e stesso trade-off dichiarato di /auth/confirm.
-  if (searchParams.get('type') === 'recovery' || next.startsWith('/reset-password')) {
-    const { error: outErr } = await supabase.auth.signOut({ scope: 'local' })
-    if (outErr) console.warn('[auth/callback] signOut pre-recovery fallito:', outErr.message)
-  }
+  const isRecovery = searchParams.get('type') === 'recovery' || next.startsWith('/reset-password')
 
-  // Scambia il code PKCE con una sessione; i cookie vengono raccolti in setAll
+  // ⚠️ NIENTE signOut PRIMA dello scambio (bug trovato il 21 ago leggendo il
+  // sorgente di supabase-js): `signOut()` cancella anche il cookie
+  // `<storageKey>-code-verifier` (GoTrueClient `_removeSession`), che è
+  // ESATTAMENTE il segreto PKCE di cui `exchangeCodeForSession` ha bisogno.
+  // Il signOut «di cortesia» aggiunto il 12 ago rendeva quindi IMPOSSIBILE
+  // completare un recupero password che passasse da qui: lo scambio falliva
+  // sempre e si finiva su /login con un errore generico.
+  // L'ordine giusto è: si scambia (la sessione nuova SOSTITUISCE la vecchia,
+  // quindi il problema dell'eredità non si pone), e solo se lo scambio
+  // FALLISCE si chiude la sessione locale — così nessuno resta dentro l'app
+  // senza che gli sia stata chiesta una password.
   const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
   if (error || !data.user) {
-    console.error('[auth/callback] exchangeCodeForSession:', error?.message)
+    console.error('[auth/callback] exchangeCodeForSession:', error?.status, error?.code, error?.message)
+    if (isRecovery) {
+      const { error: outErr } = await supabase.auth.signOut({ scope: 'local' })
+      if (outErr) console.warn('[auth/callback] signOut post-fallimento:', outErr.message)
+      const dest = new URL('/reset-password?error=link_scaduto', origin)
+      if (error?.code) dest.searchParams.set('m', error.code)
+      return NextResponse.redirect(dest)
+    }
     return NextResponse.redirect(new URL('/login?error=oauth_failed', origin))
   }
 

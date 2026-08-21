@@ -14,6 +14,10 @@ function ResetPasswordForm() {
   const [state, formAction, isPending] = useActionState(resetPasswordAction, null)
   const searchParams = useSearchParams()
   const urlError = searchParams.get('error')
+  // Motivo tecnico restituito da Supabase (nessun dato personale): serve a
+  // capire DAVVERO perché un link fresco viene rifiutato — senza, una
+  // schermata fotografata dice solo «non valido» (collaudo Eli 21 ago).
+  const motivo = searchParams.get('m')
 
   return (
     <>
@@ -28,6 +32,11 @@ function ResetPasswordForm() {
               ricevuto: se hai più email di reset in casella, apri la più recente.
               Altrimenti richiedine uno nuovo qui sotto.
             </p>
+            {motivo && (
+              <p className="text-[11px] text-amber-700/80 mt-1.5">
+                Codice: {motivo}
+              </p>
+            )}
           </div>
         </div>
       )}

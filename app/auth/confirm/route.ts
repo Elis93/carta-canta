@@ -87,31 +87,20 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const supabase = await createClient()
 
-    // ⚠️ RECUPERO PASSWORD: si chiude PRIMA la sessione eventualmente aperta
-    // su questo dispositivo. Due motivi, ed entrambi vengono dal collaudo di
-    // Eli del 12 ago:
-    //  ① un link appena ricevuto veniva rifiutato come «scaduto» mentre nel
-    //    browser era attiva una sessione Google — verificare un token di
-    //    recupero mentre se ne porta un'altra è la combinazione che fallisce;
-    //  ② senza, chi tornava al login si ritrovava DENTRO l'app senza che
-    //    nulla gli avesse chiesto una password: tecnicamente corretto (la
-    //    sessione era sua), ma indistinguibile da un accesso non autorizzato.
-    // `scope: 'local'` — si chiude questo dispositivo, non gli altri: chi
-    // recupera la password non deve perdere le sessioni del telefono.
-    // ⚠️ Trade-off ACCETTATO e dichiarato: questo signOut gira PRIMA di
-    // validare il token, quindi un link di recupero già consumato (o forgiato)
-    // chiude comunque la sessione su questo dispositivo. È il prezzo del
-    // percorso di successo — senza, il verifyOtp fallisce con una sessione
-    // attiva e il «torna al login» eredita la vecchia sessione. Il danno del
-    // caso brutto è basso (si rientra col login); l'alternativa era peggio.
-    if (type === 'recovery') {
-      // signOut RITORNA {error}, non lancia: se la revoca fallisse, la
-      // sessione resta viva e il verifyOtp può rifallire «da scaduto» — senza
-      // questa riga nei log non resterebbe alcuna traccia del perché.
-      const { error: outErr } = await supabase.auth.signOut({ scope: 'local' })
-      if (outErr) console.warn('[auth/confirm] signOut pre-recovery fallito:', outErr.message)
-    }
-
+    // ⚠️ RECUPERO PASSWORD — l'ordine è: PRIMA si verifica il token, POI (solo
+    // se la verifica fallisce) si chiude la sessione locale. Corretto il
+    // 21 ago, leggendo il sorgente di supabase-js:
+    //  ① il signOut cancella anche il cookie `<storageKey>-code-verifier`
+    //    (GoTrueClient `_removeSession`), cioè il segreto PKCE del recupero:
+    //    farlo prima significa buttare via un pezzo del flusso in corso;
+    //  ② la ragione per cui era stato messo prima (12 ago: «un token di
+    //    recupero verificato mentre c'è un'altra sessione fallisce») era una
+    //    DIAGNOSI, non una prova — e il codice la smentisce: `verifyOtp` è una
+    //    POST a /verify con la sola chiave pubblica, non manda il JWT della
+    //    sessione, quindi la sessione attiva non può farla fallire.
+    // Resta valido il motivo ②bis del 12 ago: se la verifica fallisce, chi
+    // torna al login non deve ritrovarsi DENTRO l'app senza che nulla gli
+    // abbia chiesto una password → il signOut si fa lì, sul ramo di errore.
     const { error } = await supabase.auth.verifyOtp({ token_hash, type })
 
     if (!error) {
@@ -130,12 +119,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL(next, origin))
     }
 
-    console.error('[auth/confirm] verifyOtp error:', error.message)
+    console.error('[auth/confirm] verifyOtp error:', error.status, error.code, error.message)
 
     // Per il reset password: rimanda alla pagina di richiesta reset con messaggio
     // (il link potrebbe essere già stato usato o scaduto)
     if (type === 'recovery') {
-      return NextResponse.redirect(new URL('/reset-password?error=link_scaduto', origin))
+      // `scope: 'local'` — si chiude solo questo dispositivo: chi recupera la
+      // password non deve perdere la sessione degli altri.
+      const { error: outErr } = await supabase.auth.signOut({ scope: 'local' })
+      if (outErr) console.warn('[auth/confirm] signOut post-fallimento:', outErr.message)
+      // Il codice d'errore di Supabase viaggia nell'indirizzo (nessun dato
+      // personale): senza accesso ai log è l'unico modo perché una schermata
+      // fotografata dica DAVVERO cos'è successo.
+      const dest = new URL('/reset-password?error=link_scaduto', origin)
+      if (error.code) dest.searchParams.set('m', error.code)
+      return NextResponse.redirect(dest)
     }
   }
 
