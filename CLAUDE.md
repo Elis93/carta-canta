@@ -29,6 +29,12 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 21 ago (4) — Home: «In scadenza» e «Fatture elettroniche» in UNA card col filetto (come Attività recente)
+Eli: le due sezioni gestite come le attività recenti — una card unica divisa da una linea grigia — «ma con la distanza tra le due parti un pochino più marcata».
+- **`ScadenzeHomeCard`**: via le due card bianche separate → una card sola, preventivo sopra e fattura sotto, divisi da un filetto `1px #e4e2dc` (lo stesso di Attività recente) con **14px** d'aria per lato (le attività ne hanno 12 — è il «pochino più marcato»). I filetti verticali colorati d'urgenza restano ancorati ai singoli blocchi.
+- **`FeHomeRows`**: le due righe (Da trasmettere · Scartate) perdono card propria e ombra → una card unica `padding 13px 14px` con lo stesso filetto a 14px. Commento di testa del file aggiornato.
+- tsc+build+**733** test verdi · scan 0.
+
 ### ✅ 21 ago (3) — Il dato è arrivato: `otp_expired` su link fresco → PAGINA-PONTE anti-scanner + scelta account Google
 Eli col codice a schermo: «Codice: otp_expired» su un link appena ricevuto — e il contesto completo: account CANCELLATO a mano su Supabase tempo fa, ora vuole riconfigurare; «Accedi con Google» la porta dentro ma senza farle scegliere l'account.
 - **[FLUSSO RECOVERY RIFATTO: verifica su POST, non su GET]** `otp_expired` su un link fresco + indirizzo Gmail = il token monouso viene consumato da uno **scanner di posta** che apre il link in GET prima del tocco umano (Gmail lo fa per controllare i link). Ora `/auth/confirm` con `type=recovery` **non verifica più**: reindirizza alla **pagina-ponte `/reset-password/verifica?token_hash=…`** («Crea la nuova password» + bottone **Continua**); è il bottone — `confirmRecoveryLinkAction`, POST — a fare `verifyOtp` e portare a `/reset-password/confirm`. Uno scanner carica la pagina ma non preme il tasto. Fallimento → `/reset-password?error=link_scaduto&m=<code>` + signOut locale (il motivo ② del 12 ago vive sul ramo di errore). `/reset-password/verifica` aggiunto ai PUBLIC_PATHS del proxy.

@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
 // ── «Fatture elettroniche» (Home mobile, redesign 19-20 ago) ────────────────
-// Due righe compatte e toccabili, coerenti con il resto della Home (via le
-// due «scatole» affiancate). Riga 1 → la pagina «Fatture da trasmettere»
+// UNA card con due righe toccabili divise da un filetto (Eli 21 ago — lo
+// stesso schema di «Attività recente», con un filo più d'aria). Riga 1 → la pagina «Fatture da trasmettere»
 // (elenco col conto alla rovescia dei 12 giorni e il tasto di invio);
 // riga 2 → la stessa pagina filtrata sulle scartate (motivo dello scarto +
 // correzione). Niente «Vedi tutte» in testata: le righe SONO i collegamenti.
@@ -23,7 +23,7 @@ function FeRow({ href, dotColor, label, sub, subColor, count }: {
   return (
     <Link
       href={href}
-      style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', borderRadius: 13, boxShadow: SH, padding: '12px 13px', textDecoration: 'none', color: 'inherit' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}
     >
       <span aria-hidden style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: dotColor }} />
       <span style={{ fontSize: 14, fontWeight: 600, color: '#161616', flexShrink: 0 }}>{label}</span>
@@ -46,7 +46,10 @@ export function FeHomeRows({ daTrasmettereCount, termineLabel, scartateCount, st
   return (
     <div style={style}>
       <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>Fatture elettroniche</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* UNA card sola con le due righe divise da un filetto (Eli 21 ago:
+          come «Attività recente», ma col respiro un po' più marcato — 14px
+          contro i 12 delle attività). */}
+      <div style={{ background: '#fff', borderRadius: 13, boxShadow: SH, padding: '13px 14px' }}>
         <FeRow
           href="/fatture/da-trasmettere"
           dotColor={daTrasmettereCount > 0 ? '#3f6fb0' : '#c9c7c0'}
@@ -54,6 +57,7 @@ export function FeHomeRows({ daTrasmettereCount, termineLabel, scartateCount, st
           sub={daTrasmettereCount > 0 ? (termineLabel ?? 'allo SdI') : ''}
           count={daTrasmettereCount}
         />
+        <div aria-hidden style={{ height: 1, background: '#e4e2dc', margin: '14px 0' }} />
         <FeRow
           href="/fatture/da-trasmettere?solo=scartate"
           dotColor={scartateCount > 0 ? '#b05656' : '#c9c7c0'}

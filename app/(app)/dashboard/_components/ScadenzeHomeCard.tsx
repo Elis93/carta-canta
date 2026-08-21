@@ -280,12 +280,14 @@ export function ScadenzeHomeCard({ preventivo, fattura, workspaceName }: {
           </ContextHint>
         </div>
       )}
-      <div style={{ position: 'relative', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px' }}>
+      {/* UNA card sola con le due parti divise da un filetto (Eli 21 ago:
+          «come le attività recenti, ma con la distanza un po' più marcata»
+          — lì le righe respirano 12px, qui 14). */}
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px' }}>
         {preventivo
           ? <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />
           : <VuotoBlock kind="preventivo" />}
-      </div>
-      <div style={{ position: 'relative', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px', marginTop: 10 }}>
+        <div aria-hidden style={{ height: 1, background: '#e4e2dc', margin: '14px 0' }} />
         {fattura
           ? <ScadenzaBlock doc={fattura} kind="fattura" workspaceName={workspaceName} />
           : <VuotoBlock kind="fattura" />}
