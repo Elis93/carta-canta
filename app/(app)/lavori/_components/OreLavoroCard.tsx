@@ -7,7 +7,7 @@
 // lavoro: il margine diventa quello VERO, non solo materiali.
 // ============================================================
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
 import { Loader2, Pause, Play, Plus, Pencil, Check, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -41,6 +41,21 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost }:
   const [pending, startTransition] = useTransition()
   const [action, setAction] = useState<string | null>(null)
   const [manualHours, setManualHours] = useState('')
+  // Arrivo dal tasto Timer della Home (`/lavori/[id]#ore`): il cursore deve
+  // essere GIÀ nel campo delle ore, pronto a scrivere (Eli, 21 ago). Lo
+  // scorrimento lo fa ScrollToHash: qui si dà solo il fuoco, con
+  // `preventScroll` per non litigare con lui sulla posizione.
+  const manualRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (window.location.hash !== '#ore') return
+    // Mai rubare il fuoco (e aprire la tastiera) da sotto il lucchetto.
+    if (document.querySelector('[aria-label="App bloccata"]')) return
+    let raf2 = 0
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => manualRef.current?.focus({ preventScroll: true }))
+    })
+    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2) }
+  }, [])
   // Modalità "correggi il totale a mano" (valore assoluto, non delta)
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
@@ -192,6 +207,7 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost }:
           {/* Aggiunta manuale */}
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             <input
+              ref={manualRef}
               value={manualHours}
               onChange={(e) => setManualHours(e.target.value.replace(/[^\d.,-]/g, ''))}
               inputMode="decimal"

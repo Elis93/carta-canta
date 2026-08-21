@@ -29,6 +29,13 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 21 ago (5) — Dal tasto Timer della Home il cursore è già nel campo delle ore
+Eli: «quando in Home clicco sul simbolo del timer nel lavoro in corso, voglio che mi porti nel lavoro col cursore già dentro la sezione Ore di lavoro».
+- **`OreLavoroCard`**: se l'indirizzo porta l'ancora `#ore` (cioè si arriva dal tasto Timer, non aprendo la scheda normalmente), al montaggio il **campo «Ore (es. 1,5)» prende il fuoco** — su telefono la tastiera si apre da sola e si scrive subito. `focus({ preventScroll: true })`: lo scorrimento resta a **ScrollToHash** (20 ago), così i due non litigano sulla posizione. Doppio rAF per partire a contenuto dipinto.
+- ⚠️ **Guardia sul lucchetto**: se a schermo c'è AppLock (`[aria-label="App bloccata"]`) il fuoco NON si prende — rubare il cursore e aprire la tastiera da sotto la schermata di blocco sarebbe sbagliato due volte.
+- Il tasto **Foto** resta com'era (nessun campo da compilare: lì basta lo scorrimento).
+- tsc+build+**733** test verdi · scan 0.
+
 ### ✅ 21 ago (4) — Home: «In scadenza» e «Fatture elettroniche» in UNA card col filetto (come Attività recente)
 Eli: le due sezioni gestite come le attività recenti — una card unica divisa da una linea grigia — «ma con la distanza tra le due parti un pochino più marcata».
 - **`ScadenzeHomeCard`**: via le due card bianche separate → una card sola, preventivo sopra e fattura sotto, divisi da un filetto `1px #e4e2dc` (lo stesso di Attività recente) con **14px** d'aria per lato (le attività ne hanno 12 — è il «pochino più marcato»). I filetti verticali colorati d'urgenza restano ancorati ai singoli blocchi.
