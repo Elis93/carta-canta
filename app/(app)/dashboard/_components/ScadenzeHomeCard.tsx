@@ -17,6 +17,7 @@ import { Mail, Phone, Loader2, CheckCircle2, Info } from 'lucide-react'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
+import { ContextHint } from '@/components/shared/ContextHint'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -255,11 +256,30 @@ export function ScadenzeHomeCard({ preventivo, fattura, workspaceName }: {
   // la fattura (il tipo lo dice la riga «Preventivo 023/2026»); i «vedi
   // tutti» coi conteggi vivono ora nei riquadri della TESTATA navy
   // (Preventivi in scadenza / Fatture da incassare), non più qui in piede.
+  // Mini-tutorial UNA-TANTUM sui tre tasti (Eli 20 ago): serve soprattutto a
+  // dire che la busta INVIA SUBITO l'email di sollecito, senza anteprima —
+  // chi la tocca per "vedere cosa fa" deve saperlo PRIMA. ContextHint (§B.2):
+  // resta finché non viene chiuso, mai durante il tutorial.
+  const hasActionButtons = Boolean(
+    preventivo?.clientEmail || preventivo?.clientPhone ||
+    fattura?.clientEmail || fattura?.clientPhone
+  )
   return (
     <div style={{ margin: '18px 15px 0' }}>
       <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
         In scadenza
       </div>
+      {hasActionButtons && (
+        <div style={{ marginBottom: 10 }}>
+          <ContextHint id="tasti-sollecito-home">
+            I tre tasti accanto a ogni scadenza:{' '}
+            <Mail size={13} style={{ display: 'inline', verticalAlign: '-2px' }} aria-hidden />{' '}
+            <b>invia subito</b>{' '}al cliente un&rsquo;email di sollecito già scritta — parte al
+            tocco, senza mostrarti il testo prima. Con <b>WhatsApp</b>{' '}apri il messaggio
+            pronto: lo rivedi e lo mandi tu. La <b>cornetta</b>{' '}chiama il cliente.
+          </ContextHint>
+        </div>
+      )}
       <div style={{ position: 'relative', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px' }}>
         {preventivo
           ? <ScadenzaBlock doc={preventivo} kind="preventivo" workspaceName={workspaceName} />

@@ -108,6 +108,16 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       <b>sdi consegnata</b>, <b>sdi inviata</b>, <b>sdi emessa</b>{' '}o <b>sdi scartata</b>.</>,
   },
   {
+    q: 'Cosa fanno i tre tasti accanto a una scadenza in Home?',
+    parole: ['sollecita', 'sollecito', 'busta', 'whatsapp', 'chiama', 'email automatica'],
+    a: <>Nella sezione <b>In scadenza</b>{' '}della Home, accanto a ogni documento: la{' '}
+      <b>busta</b>{' '}invia <b>subito</b>{' '}al cliente un&rsquo;email di sollecito già scritta —
+      parte al tocco, senza mostrarti il testo prima (la spunta verde conferma l&rsquo;invio).{' '}
+      <b>WhatsApp</b>{' '}apre il messaggio pronto col link al documento: lo rivedi e lo mandi tu.
+      La <b>cornetta</b>{' '}avvia la chiamata al numero in rubrica. I tasti compaiono solo se il
+      cliente ha email o telefono salvati.</>,
+  },
+  {
     q: 'Non voglio più sollecitare un preventivo: cosa faccio?',
     a: <>Nelle pagine <b>Preventivi in scadenza</b>{' '}e <b>Fatture in scadenza</b>, sotto ogni
       documento c&rsquo;è l&rsquo;orologio <b>Posticipa il sollecito</b>. Da lì puoi rimandarlo di{' '}

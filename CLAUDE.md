@@ -29,6 +29,12 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 20 ago (13) — Mini-tutorial sui 3 tasti della scadenza (la busta manda l'email SUBITO)
+Eli: alla prima scadenza in Home serve un minuscolo tutorial sui tre tasti — «soprattutto per spiegare che il tasto email manda l'email direttamente, senza mostrare il testo: se lo tocchi, la mail parte subito».
+- **`ContextHint id="tasti-sollecito-home"`** dentro `ScadenzeHomeCard`, sotto il titolo «In scadenza», SOLO se almeno un documento ha i tasti (email o telefono in rubrica). Testo: la **busta invia subito** l'email di sollecito già scritta — parte al tocco, senza anteprima; **WhatsApp** apre il messaggio pronto (lo rivedi e lo mandi tu); la **cornetta** chiama. Regole ContextHint (§B.2) gratis: una volta sola per dispositivo (sparisce alla ✕), mai durante il tutorial, mai due hint nella stessa sessione.
+- **FAQ nuova** «Cosa fanno i tre tasti accanto a una scadenza in Home?» (parole: sollecita, busta, whatsapp, chiama) — il punto delicato (email senza anteprima) va anche dove si torna a cercare, non solo nel hint una-tantum.
+- tsc+build+**733** test+smoke 28/28 verdi · scan 0.
+
 ### ✅ 20 ago (12) — Lotto serale: campanella selezionata, titolo sopralluogo con cliente, voce che si chiude dalla testata, cestino accanto all'IVA, pillola «In modifica»
 Sei punti di Eli in un messaggio.
 - **[BELL] Campanella selezionata = BIANCA + tendina più stretta**: variante hero aperta → icona `#fff` e bordo bianco (chiusa resta oro); desktop aperta → cerchio navy pieno con icona bianca. Pannello da `min(400, vw−20)` a **`min(340, vw−48)`** — si legge come tendina, non come pagina sovrapposta.
