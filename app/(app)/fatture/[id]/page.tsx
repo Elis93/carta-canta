@@ -38,6 +38,7 @@ import { ChiediRecensioneButton } from '../_components/ChiediRecensioneButton'
 import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
+import { PosticipaSollecito } from '@/components/shared/PosticipaSollecito'
 import { docNumberSlug } from '@/lib/documents/numero'
 import { riepilogoIva } from '@/lib/fiscal/calcoli'
 import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
@@ -115,6 +116,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // arriva già, e se la migration non ci fosse arriverebbe semplicemente
   // `undefined` — nessuna query in più e tolleranza gratis.
   const archiviato = !!(doc as { archived_at?: string | null }).archived_at
+  // Promemoria spenti / rinviati (074-075). Letti dal `select('*')` già fatto:
+  // pre-migration i campi sono `undefined` e le due righe restano invisibili.
+  const sollecitiSpenti = !!(doc as { reminders_off_at?: string | null }).reminders_off_at
+  const rinvioRaw = (doc as { snooze_until?: string | null }).snooze_until ?? null
+  const rinvioAttivo = rinvioRaw && rinvioRaw > new Date().toISOString() ? rinvioRaw : null
 
   // Pubblicata = interruttore acceso E pubblicazione confermata (stesse due
   // condizioni con cui /professionisti/[id] decide se la vetrina esiste).
@@ -564,6 +570,22 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       <div className="lg:hidden" style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9 }}>
         <StatusBadge status={doc.status} docType={doc.doc_type} />
       </div>
+
+      {/* Promemoria spenti o rinviati: DETTO SUL DOCUMENTO (Eli 21 ago — una
+          fattura non compariva in Home «In scadenza» e la ragione, un
+          «Non ricordarmelo più» toccato giorni prima, non si vedeva da
+          nessuna parte). Compare solo quando c'è qualcosa da dire; il
+          tasto per riaccenderli è dentro il componente. */}
+      {(sollecitiSpenti || rinvioAttivo) && (
+        <div style={{ margin: '10px 15px 0' }} className="lg:mx-6">
+          <PosticipaSollecito
+            documentId={id}
+            docType="fattura"
+            snoozeUntil={rinvioAttivo}
+            remindersOff={sollecitiSpenti}
+          />
+        </div>
+      )}
 
       {/* Downgrade Pro→Free: fattura bloccata (oltre le 8 inviate). Spento e
           spiegato, non nascosto: si apre e si consulta, ma le azioni sono

@@ -124,7 +124,12 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       <b>3 giorni</b>, <b>1 settimana</b>{' '}o <b>2 settimane</b>{' '}— e torna da solo quando il
       tempo è scaduto — oppure scegliere <b>Non ricordarmelo più</b>: il documento resta in tutte
       le liste dov&rsquo;è sempre stato, ma smette di comparire fra i promemoria. Ci ripensi? Nella
-      stessa pagina trovi <b>Riattiva i promemoria</b>.</>,
+      stessa pagina trovi <b>Riattiva i promemoria</b>{' '}— e da quel momento il
+      documento stesso te lo dice: aprendolo, sotto il badge di stato, compare
+      <b>&laquo;Non te lo ricordo più&raquo;</b>{' '}col tasto per riaccenderli.
+      ⚠️ Finché sono spenti il documento <b>non compare</b>{' '}nella sezione
+      &laquo;In scadenza&raquo; della Home: resta però in tutte le liste,
+      dov&rsquo;è sempre stato.</>,
   },
   {
     q: 'Cosa vuol dire archiviare un preventivo o una fattura?',

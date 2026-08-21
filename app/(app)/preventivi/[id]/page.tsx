@@ -36,6 +36,7 @@ import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
+import { PosticipaSollecito } from '@/components/shared/PosticipaSollecito'
 import { docNumberSlug } from '@/lib/documents/numero'
 
 interface Props {
@@ -104,6 +105,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   // arriva già, e se la migration non ci fosse arriverebbe semplicemente
   // `undefined` — nessuna query in più e tolleranza gratis.
   const archiviato = !!(doc as { archived_at?: string | null }).archived_at
+  // Promemoria spenti / rinviati (074-075). Letti dal `select('*')` già fatto:
+  // pre-migration i campi sono `undefined` e le due righe restano invisibili.
+  const sollecitiSpenti = !!(doc as { reminders_off_at?: string | null }).reminders_off_at
+  const rinvioRaw = (doc as { snooze_until?: string | null }).snooze_until ?? null
+  const rinvioAttivo = rinvioRaw && rinvioRaw > new Date().toISOString() ? rinvioRaw : null
 
   // Template attivo per il documento corrente (usato per il PDF)
   const activeTemplate = templates?.find((t) => t.id === (doc as any).template_id)
@@ -398,6 +404,22 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       {archiviato && (
         <div style={{ margin: '14px 15px 0' }} className="lg:mx-6 lg:mt-6">
           <ArchivioBanner documentId={id} docType="preventivo" />
+        </div>
+      )}
+
+      {/* Promemoria spenti o rinviati: DETTO SUL DOCUMENTO (Eli 21 ago — un
+          documento spariva dalla sezione «In scadenza» della Home e la
+          ragione, un «Non ricordarmelo più» toccato giorni prima, non si
+          vedeva da nessuna parte). Compare solo quando c'è qualcosa da dire;
+          il tasto per riaccenderli è dentro il componente. */}
+      {(sollecitiSpenti || rinvioAttivo) && (
+        <div style={{ margin: '10px 15px 0' }} className="lg:mx-6">
+          <PosticipaSollecito
+            documentId={id}
+            docType="preventivo"
+            snoozeUntil={rinvioAttivo}
+            remindersOff={sollecitiSpenti}
+          />
         </div>
       )}
 

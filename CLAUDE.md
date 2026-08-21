@@ -29,6 +29,13 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 21 ago (6) — «Perché questa fattura non è in Home?»: i promemoria spenti ora si vedono SUL documento
+Eli: una fattura Inviata, in scadenza fra 2 giorni, non compariva nella sezione «In scadenza». **Non era un bug**: la riga aveva `reminders_off_at` valorizzato (un «Non ricordarmelo più» toccato la mattina). Diagnosi fatta leggendo la riga vera del DB, non per ipotesi.
+- ⚠️ **Il difetto vero era la NON-scopribilità**: lo stato «promemoria spenti» viveva solo nella pagina delle scadenze, quindi il documento spariva dalla Home **senza dire perché** e l'unico modo di capirlo era ricordarsi di un gesto fatto giorni prima. Ora, aprendo il preventivo o la fattura, sotto il badge di stato compare **«Non te lo ricordo più»** (o «Sollecito rimandato al …») col tasto per riaccendere — riusando `PosticipaSollecito`, che quei due rami li ha già: nessuna logica nuova, nessun controllo in più sui documenti normali (la riga esiste SOLO se c'è qualcosa da dire).
+- Campi letti dal `select('*')` già presente con cast tollerante (pre-migration sono `undefined` → riga invisibile), quindi **zero query in più**.
+- **FAQ** «Non voglio più sollecitare un preventivo» estesa: dice ora che il documento stesso lo segnala e che, finché sono spenti, **non compare in Home** ma resta in tutte le liste.
+- tsc+build+**733** test+smoke 28/28 verdi · scan 0.
+
 ### ✅ 21 ago (5) — Dal tasto Timer della Home il cursore è già nel campo delle ore
 Eli: «quando in Home clicco sul simbolo del timer nel lavoro in corso, voglio che mi porti nel lavoro col cursore già dentro la sezione Ore di lavoro».
 - **`OreLavoroCard`**: se l'indirizzo porta l'ancora `#ore` (cioè si arriva dal tasto Timer, non aprendo la scheda normalmente), al montaggio il **campo «Ore (es. 1,5)» prende il fuoco** — su telefono la tastiera si apre da sola e si scrive subito. `focus({ preventScroll: true })`: lo scorrimento resta a **ScrollToHash** (20 ago), così i due non litigano sulla posizione. Doppio rAF per partire a contenuto dipinto.
