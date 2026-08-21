@@ -108,7 +108,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
       {/* Filetto d'urgenza al FILO del bordo sinistro della card (la card è
           position:relative): stessa colonna del filetto di «Lavoro in corso»
           (Eli 20 ago: «devono essere tutte nella stessa identica posizione»). */}
-      <span aria-hidden style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 3, borderRadius: 3, background: urgColor }} />
+      <span aria-hidden style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 2, borderRadius: 2, background: urgColor }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
         <span style={{ fontSize: 15, fontWeight: 700, color: '#161616', minWidth: 0, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {mainLabel}

@@ -23,7 +23,7 @@ export function LavoroInCorsoCard({ id, title, style }: { id: string; title: str
     <div style={style}>
       <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>Lavoro in corso</div>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 13, boxShadow: SH, padding: '7px 8px 7px 12px' }}>
-        <span aria-hidden style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 3, borderRadius: 3, background: '#2f8a63' }} />
+        <span aria-hidden style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 2, borderRadius: 2, background: '#2f8a63' }} />
         <Link
           href={`/lavori/${id}`}
           style={{
