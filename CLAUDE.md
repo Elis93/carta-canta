@@ -29,6 +29,15 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### 🟡 21 ago — Reset password inceppato (collaudo Eli): diagnosi + messaggio onesto sul rate limit + SMTP da configurare
+Eli: Google non la fa entrare, password dimenticata, il link di reset dà «Link non più valido», il rinvio dà «Errore nell'invio dell'email».
+- **[DIAGNOSI] Il banner giallo viene da `/auth/confirm`** (percorso token_hash, server-side, `verifyOtp` — NON dipende da cookie/browser): se fallisce, il token è DAVVERO consumato o superato a Supabase. Cause tipiche: email di reset più vecchia aperta al posto dell'ultima (ogni richiesta invalida le precedenti), o link pre-aperto da uno scanner. Il motivo esatto è nei log Vercel: riga `[auth/confirm] verifyOtp error:`.
+- **[CAUSA PROBABILE del banner rosso + radice di tutto] Le email di AUTH partono dal servizio integrato di Supabase**, non da Resend: nessun Custom SMTP configurato (verificato: zero note SMTP in tutta la documentazione). Il servizio integrato è da sviluppo — ~2 email/ora per progetto + 60s tra richieste per indirizzo → più tentativi ravvicinati = invio rifiutato, consegne lente = si apre l'email vecchia. **Nuova sezione 0-zero in COSE_DA_FARE_ELI**: configurare SMTP Resend su Supabase (5 min) + alzare il rate limit.
+- **[FIX] `resetPasswordAction` non appiattisce più l'errore**: 429/`over_email_send_rate_limit` → «Hai già richiesto un link da poco… apri l'email più recente»; il motivo vero finisce nei log (`[reset-password] resetPasswordForEmail:`), senza l'email dell'utente.
+- **Vercel MCP**: ora vede il team «Carta canta» ma `list_projects` è vuoto (progetto non nel team collegato) → log ancora da leggere dal pannello di Eli.
+- ⚠️ **Aperto**: «Con Google non mi fa accedere» — serve il sintomo esatto (cosa compare?). Sblocco immediato suggerito: Supabase → Authentication → Users → ⋯ → Send magic link.
+- tsc+build verdi.
+
 ### ✅ 20 ago (13) — Mini-tutorial sui 3 tasti della scadenza (la busta manda l'email SUBITO)
 Eli: alla prima scadenza in Home serve un minuscolo tutorial sui tre tasti — «soprattutto per spiegare che il tasto email manda l'email direttamente, senza mostrare il testo: se lo tocchi, la mail parte subito».
 - **`ContextHint id="tasti-sollecito-home"`** dentro `ScadenzeHomeCard`, sotto il titolo «In scadenza», SOLO se almeno un documento ha i tasti (email o telefono in rubrica). Testo: la **busta invia subito** l'email di sollecito già scritta — parte al tocco, senza anteprima; **WhatsApp** apre il messaggio pronto (lo rivedi e lo mandi tu); la **cornetta** chiama. Regole ContextHint (§B.2) gratis: una volta sola per dispositivo (sparisce alla ✕), mai durante il tutorial, mai due hint nella stessa sessione.

@@ -32,6 +32,30 @@ NB: il banner Vercel "Organization MFA enforcement → Upgrade to Pro" NON serve
 
 ---
 
+## 📧 0-zero. URGENTE — SMTP di Supabase per le email di accesso (21 ago)
+
+> Emerso dal tuo collaudo del reset password («Errore nell'invio dell'email»):
+> le email di **accesso** (conferma registrazione, reset password, magic link)
+> NON passano da Resend — le manda **Supabase col suo servizio integrato**, che
+> è pensato solo per lo sviluppo: pochissime email l'ora per TUTTO il progetto,
+> consegne lente e nessuna garanzia. Con utenti veri il reset password si
+> incepperebbe esattamente come è successo a te.
+
+**Cosa fare (5 minuti):** Supabase → Project Settings → Authentication →
+**SMTP Settings** → Enable Custom SMTP e inserisci Resend:
+- Host: `smtp.resend.com` · Port: `465`
+- Username: `resend`
+- Password: la **RESEND_API_KEY** (la stessa che sta su Vercel)
+- Sender email: `noreply@send.cartacanta.app` · Sender name: `Carta Canta`
+
+Poi in Authentication → **Rate Limits** alza «Email sent» a un valore sensato
+(es. 30/ora). Da lì le email di accesso partono da Resend come tutte le altre.
+
+- [ ] SMTP Resend configurato su Supabase
+- [ ] Rate limit email alzato
+
+---
+
 ## 🔐 0-bis. DUE MIGRATION (5 ago) — applicate, resta da confermare
 
 Applicate da Eli il 5 agosto dal telefono. **Verificato dal vivo**: le impostazioni

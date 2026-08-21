@@ -453,6 +453,16 @@ export async function resetPasswordAction(
   })
 
   if (error) {
+    // Nei log resta il motivo VERO (collaudo Eli 21 ago: il messaggio piatto
+    // «Errore nell'invio» nascondeva il rate limit di Supabase). Niente email
+    // dell'utente nei log.
+    console.error('[reset-password] resetPasswordForEmail:', error.status, (error as { code?: string }).code, error.message)
+    // Supabase limita l'invio per sicurezza: un link per indirizzo ogni ~60s,
+    // più un tetto orario del progetto. Detto com'è, non «riprova» a vuoto.
+    const code = (error as { code?: string }).code ?? ''
+    if (error.status === 429 || code === 'over_email_send_rate_limit' || /rate limit|security purposes/i.test(error.message)) {
+      return { error: 'Hai già richiesto un link da poco: per sicurezza se ne può chiedere un altro solo dopo qualche minuto. Quando arriva, apri l\u2019email più recente.' }
+    }
     return { error: 'Errore nell\'invio dell\'email. Riprova.' }
   }
 
