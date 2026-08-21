@@ -27,6 +27,8 @@ export default async function VerificaResetPage({
         <CardDescription>
           Hai chiesto di reimpostare la password. Tocca il tasto per continuare:
           si apre il modulo dove scriverne una nuova.
+          {' '}Se hai richiesto più link, <b>vale solo quello dell&rsquo;email più
+          recente</b>: gli altri sono stati annullati.
         </CardDescription>
       </CardHeader>
       <CardContent>
