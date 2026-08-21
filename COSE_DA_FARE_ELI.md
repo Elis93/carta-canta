@@ -41,8 +41,13 @@ NB: il banner Vercel "Organization MFA enforcement → Upgrade to Pro" NON serve
 > consegne lente e nessuna garanzia. Con utenti veri il reset password si
 > incepperebbe esattamente come è successo a te.
 
-**Cosa fare (5 minuti):** Supabase → Project Settings → Authentication →
-**SMTP Settings** → Enable Custom SMTP e inserisci Resend:
+**Cosa fare (5 minuti):** nel pannello Supabase la voce si trova sotto
+**Authentication** (icona utenti nella barra a sinistra) → sezione
+*Configuration* → **Emails** → linguetta **SMTP Settings** → interruttore
+«Enable Custom SMTP». Link diretto:
+https://supabase.com/dashboard/project/ivbzuhgwszkdnlsybsao/auth/smtp
+(se il pannello è la versione vecchia: Project Settings → Authentication →
+SMTP Settings). Poi inserisci Resend:
 - Host: `smtp.resend.com` · Port: `465`
 - Username: `resend`
 - Password: la **RESEND_API_KEY** (la stessa che sta su Vercel)

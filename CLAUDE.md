@@ -1857,6 +1857,7 @@ Questa regola PREVALE su crescita, marketing e velocità di rilascio. In pratica
 1. MAI `any` senza commento ESLint esplicito
 2. MAI chiavi API nel client — tutto passa da Server Actions o API Routes
 2-bis. **MAI credenziali/password nei file committati** (il repo è PUBBLICO) — nemmeno quelle dell'account demo: vivono in `.env.local` (es. `DEMO_PASSWORD`). Lezione GitGuardian 15 lug 2026.
+2-ter. **MAI indirizzi email personali di Eli** (o di chiunque) in file, handoff, commit o risposte in chat (richiesta esplicita di Eli, 21 ago 2026): negli esempi si usa sempre un segnaposto (`tuaemailpersonale@…`). Bonifica del 6 ago già fatta; la cronologia git pubblica non si riscrive.
 3. MAI skipare i test sui calcoli fiscali — coverage 100% obbligatoria su `lib/fiscal/`
 4. Commit atomici con conventional commits: `feat/fix/chore/docs/test`
 5. Ogni modifica: `npx tsc --noEmit` + `npm run build` devono essere verdi prima del commit
