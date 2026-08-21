@@ -32,32 +32,21 @@ NB: il banner Vercel "Organization MFA enforcement → Upgrade to Pro" NON serve
 
 ---
 
-## 📧 0-zero. URGENTE — SMTP di Supabase per le email di accesso (21 ago)
+## 📧 0-zero. Email di accesso (SMTP) — ✅ GIÀ CONFIGURATO (verificato da Eli, 21 ago)
 
-> Emerso dal tuo collaudo del reset password («Errore nell'invio dell'email»):
-> le email di **accesso** (conferma registrazione, reset password, magic link)
-> NON passano da Resend — le manda **Supabase col suo servizio integrato**, che
-> è pensato solo per lo sviluppo: pochissime email l'ora per TUTTO il progetto,
-> consegne lente e nessuna garanzia. Con utenti veri il reset password si
-> incepperebbe esattamente come è successo a te.
+> Nato dal collaudo del reset password. **Esito della verifica: il Custom SMTP
+> era GIÀ attivo** (la password non si rilegge dal pannello: è normale, i
+> segreti salvati si possono solo sovrascrivere) e il rate «Email sent» è a
+> **100/ora** — va bene così. La diagnosi «servizio integrato di sviluppo»
+> del 21 ago era quindi sbagliata: veniva dall'assenza di note nei documenti,
+> non dal pannello.
 
-**Cosa fare (5 minuti):** nel pannello Supabase la voce si trova sotto
-**Authentication** (icona utenti nella barra a sinistra) → sezione
-*Configuration* → **Emails** → linguetta **SMTP Settings** → interruttore
-«Enable Custom SMTP». Link diretto:
-https://supabase.com/dashboard/project/ivbzuhgwszkdnlsybsao/auth/smtp
-(se il pannello è la versione vecchia: Project Settings → Authentication →
-SMTP Settings). Poi inserisci Resend:
-- Host: `smtp.resend.com` · Port: `465`
-- Username: `resend`
-- Password: la **RESEND_API_KEY** (la stessa che sta su Vercel)
-- Sender email: `noreply@send.cartacanta.app` · Sender name: `Carta Canta`
-
-Poi in Authentication → **Rate Limits** alza «Email sent» a un valore sensato
-(es. 30/ora). Da lì le email di accesso partono da Resend come tutte le altre.
-
-- [ ] SMTP Resend configurato su Supabase
-- [ ] Rate limit email alzato
+Resta UN controllo, utile se il reset dovesse dare ancora «otp_expired» su
+un link fresco:
+- [ ] **Email OTP Expiration**: Authentication → Providers (o Sign In/Up) →
+      **Email** → campo «Email OTP Expiration (seconds)». Se è basso
+      (es. 300), portalo a **3600**. Un valore basso fa morire i link
+      prima ancora di aprirli.
 
 ---
 
