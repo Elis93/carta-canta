@@ -54,6 +54,11 @@ Redis). Restano:
 - **Cookie policy / Privacy / Termini:** campi in giallo compilati dopo l'OK
   dell'avvocato (contatto rimandato a settembre).
 - **Dicitura "copia di cortesia"** sulle fatture PDF finché lo SdI non è live.
+- **Quando lo SdI si accende in produzione:** aggiungere alla tabella dei
+  fornitori dell'informativa privacy la riga **Openapi S.p.A. — trasmissione
+  delle fatture al Sistema di Interscambio e conservazione a norma** (oggi
+  c'è solo la riga della verifica P.IVA, corretta finché lo SdI è spento:
+  nessun dato parte). Stesso momento del gate avvocato sui testi OpenAPI.
 - **Piano di ritenzione dati / cancellazione** confermato con l'avvocato.
 
 ---
