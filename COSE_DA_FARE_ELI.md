@@ -138,15 +138,16 @@ produzione con quella password: va cambiata subito.
 > · **Avvocato → non ancora contattato**, si parte a **settembre**. Qui basta **una lista unica**:
 >   tutto quello che si accumula entra nel PDF che gli si manderà, in un colpo solo.
 
-- [ ] **Inviare all'avvocato UN SOLO file**: `CartaCanta_Avvocato_DOSSIER_UNICO_19lug2026.pdf`
-      (in chat, 19 lug — 16 aree: riassorbe e SOSTITUISCE tutti i PDF precedenti del
-      7/14/15/17 lug e l'addendum ads; include anche le domande sulla campagna video AI).
-      ⏭️ **Da aggiungere alla prossima rigenerazione del dossier** (annotato 4 ago):
-      pagamenti con carta via **Stripe Connect Standard** (direct charge sull'account
-      dell'artigiano, Carta Canta mai parte del flusso di denaro) — conferma impostazione
-      + aggiornamento Termini/Privacy (Stripe destinatario). Dettagli in PROGETTO_PAGAMENTI_CARTA.md §3.
-      Allega solo, se te lo chiede: PLAY_STORE_SCHEDA.md (per il Data Safety, punto 15)
-      e il brief video (per il punto 16)
+- [ ] **Inviare all'avvocato UN SOLO file**: `CartaCanta_Avvocato_DOSSIER_UNICO_23ago2026.pdf`
+      (in chat, 23 ago — **18 sezioni, 40 domande Q1-Q40**: riassorbe e SOSTITUISCE il
+      dossier del 19 lug e tutte le annotazioni «da aggiungere» accumulate dopo —
+      Stripe Connect (4 ago), verifica P.IVA/addendum TULPS (5 ago), cookie/PostHog (6 ago),
+      email di conferma accettazione (10 ago), ruoli art. 28, claim AGCM, referral,
+      registro art. 30, piano violazioni).
+      ⚠️ Si manda SOLO allo studio scelto, dopo il preventivo — non nelle mail di
+      richiesta preventivo (lì bastano i link alle pagine pubbliche).
+      Insieme al dossier: contratto+DPA Openapi (sez. 13), PLAY_STORE_SCHEDA.md
+      (Data Safety, sez. 14) e il brief video (sez. 17), se li chiede.
 - [x] **Commercialista — dossier GIÀ INVIATO** (conferma di Eli, 7 ago), con la mail preparata
       insieme. Il file era `CartaCanta_Commercialista_DOSSIER_UNICO_5ago2026.pdf`
       (17 aree, 40 domande numerate D1-D40; riassorbiva e sostituiva il dossier del 19 lug).
