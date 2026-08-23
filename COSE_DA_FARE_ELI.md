@@ -139,7 +139,7 @@ produzione con quella password: va cambiata subito.
 >   tutto quello che si accumula entra nel PDF che gli si manderà, in un colpo solo.
 
 - [ ] **Inviare all'avvocato UN SOLO file**: `CartaCanta_Avvocato_DOSSIER_UNICO_23ago2026.pdf`
-      (in chat, 23 ago — **18 sezioni, 40 domande Q1-Q40**: riassorbe e SOSTITUISCE il
+      (in chat, 23 ago — **22 sezioni, 54 domande Q1-Q54**: riassorbe e SOSTITUISCE il
       dossier del 19 lug e tutte le annotazioni «da aggiungere» accumulate dopo —
       Stripe Connect (4 ago), verifica P.IVA/addendum TULPS (5 ago), cookie/PostHog (6 ago),
       email di conferma accettazione (10 ago), ruoli art. 28, claim AGCM, referral,
