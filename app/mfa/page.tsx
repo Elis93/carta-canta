@@ -16,6 +16,7 @@ import { ShieldCheck, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRecoveryCode } from '@/lib/actions/mfa'
 import { markActive } from '@/lib/biometric/local'
+import { UnlockVeil } from '@/components/security/UnlockVeil'
 
 export default function MfaChallengePage() {
   const router = useRouter()
@@ -92,6 +93,8 @@ export default function MfaChallengePage() {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', overflowY: 'auto' }}>
+      {/* Il velo del blocco app non deve coprire questa pagina (revisione 24 ago) */}
+      <UnlockVeil />
       <div style={{ width: 70, height: 70, borderRadius: '50%', background: 'rgba(201,164,76,.15)', border: '1px solid rgba(201,164,76,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
         <ShieldCheck size={34} style={{ color: '#c9a44c' }} />
       </div>

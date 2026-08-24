@@ -10,11 +10,12 @@
 //      Utente già noto, onboarding completo → /dashboard (o ?next=)
 //      Utente già noto, onboarding incompleto → /onboarding
 //
-// ── NOTA COOKIE (FIX-11) ────────────────────────────────────────────────────
-// Non usiamo createClient() (che si affida a cookies() di next/headers)
-// perché in Next.js 16 + Vercel i cookie scritti via cookieStore.set()
-// NON vengono automaticamente propagati a un NextResponse.redirect().
-// Usiamo invece il pattern request-based (identico a proxy.ts):
+// ── NOTA COOKIE (FIX-11, premessa superata) ─────────────────────────────────
+// Il pattern request-based nacque dall'ipotesi che i cookie scritti via
+// cookieStore.set() non passassero attraverso NextResponse.redirect(). Sui
+// sorgenti di Next 16.2.11 l'ipotesi è SMENTITA (appendMutableCookies li
+// propaga anche ai redirect dei route handler). Il pattern resta perché è
+// esplicito e testato in produzione (identico a proxy.ts):
 // • setAll() scrive i cookie sia su request.cookies (in-memory, per le
 //   query Supabase successive) sia su supabaseResponse (un NextResponse.next)
 // • redirectWithSession() copia i cookie da supabaseResponse al 302 finale
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code')
   const rawNext = searchParams.get('next') ?? '/dashboard'
   // Solo path interni: blocca open redirect ("//evil.com", "https://evil.com")
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes(':') && !rawNext.includes('\\') ? rawNext : '/dashboard'
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes(':') && !rawNext.includes('\\') && !rawNext.startsWith('/api/') ? rawNext : '/dashboard'
 
   // Mancanza del code = flusso OAuth non completato
   if (!code) {
@@ -107,9 +108,13 @@ export async function GET(request: NextRequest) {
     return res
   }
 
-  // ── Password reset (recovery) ─────────────────────────────────────────────
-  // Se next punta alla pagina di conferma reset, non servono controlli workspace
-  // né onboarding: la sessione è appena stabilita, redirect diretto.
+  // ── Password reset (recovery) — RAMO DI RISERVA ───────────────────────────
+  // Il flusso email VERO non passa di qui: il template Recovery di Supabase
+  // punta a /auth/confirm?token_hash=…&type=recovery (verifica su POST dalla
+  // pagina-ponte /reset-password/verifica, 21-24 ago). Questo ramo copre solo
+  // il caso in cui il template tornasse al flusso PKCE con ?code=: meglio un
+  // ramo dormiente che un recovery che atterra in dashboard. Nessun controllo
+  // workspace/onboarding: la sessione è appena stabilita, redirect diretto.
   // Doppio controllo: parametro `next` (se preservato da Supabase) OPPURE
   // parametro `type=recovery` (aggiunto da Supabase come fallback).
   const type = searchParams.get('type')

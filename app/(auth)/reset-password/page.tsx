@@ -93,7 +93,9 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Card>
+    // mx/mt: il layout (auth) non dà padding orizzontale (login e signup hanno
+    // i loro margini inline) → senza, la card tocca i bordi dello schermo.
+    <Card className="mx-4 mt-8">
       <CardHeader className="text-center">
         <CardTitle className="text-xl">Reimposta password</CardTitle>
         <CardDescription>

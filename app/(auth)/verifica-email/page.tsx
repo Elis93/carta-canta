@@ -63,18 +63,21 @@ export default function VerificaEmailPage() {
         </div>
       </div>
 
-      {/* Resend */}
+      {/* Resend — il form resta visibile anche dopo un invio riuscito: chi ha
+          sbagliato indirizzo al primo tentativo deve poterne provare un altro
+          senza ricaricare la pagina. */}
       <div style={{ padding: '0 28px', marginTop: 18 }}>
-        {state?.success ? (
-          <p style={{ background: '#d4efe2', color: '#2f8a63', borderRadius: 12, padding: '11px 12px', textAlign: 'center', fontSize: 14 }}>
-            {state.success}
-          </p>
-        ) : (
-          <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {state?.success && (
+            <p style={{ background: '#d4efe2', color: '#2f8a63', borderRadius: 12, padding: '11px 12px', textAlign: 'center', fontSize: 14 }}>
+              {state.success}
+            </p>
+          )}
             <input
               type="email"
               name="email"
               placeholder="La tua email"
+              autoComplete="email"
               required
               style={{
                 width: '100%',
@@ -113,7 +116,6 @@ export default function VerificaEmailPage() {
               {pending ? 'Invio in corso…' : 'Rinvia email'}
             </button>
           </form>
-        )}
       </div>
 
       {/* Footer link */}

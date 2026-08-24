@@ -84,7 +84,8 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
   // Eli (15 ago): il messaggio «Account creato» deve comparire in un POP-UP
   // chiudibile con la X, non come banner in linea.
   const [emailBannerDismissed, setEmailBannerDismissed] = useState(false)
-  const showEmailBanner = state?.success === 'verifica-email' && !emailBannerDismissed
+  const emailSent = state?.success === 'verifica-email'
+  const showEmailBanner = emailSent && !emailBannerDismissed
   // Portal montato solo lato client (evita mismatch SSR).
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
@@ -123,7 +124,10 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
     }
   }
 
-  const disabled = isPending || isRedirecting || showEmailBanner
+  // ⚠️ A email di conferma inviata il form resta DISABILITATO anche dopo la
+  // chiusura del pop-up: riarmarlo invitava a un secondo «Crea account» che —
+  // per la regola anti-enumerazione — non manda nulla e non dice perché.
+  const disabled = isPending || isRedirecting || emailSent
 
   return (
     <>
@@ -309,10 +313,22 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
               ? 'Creazione account…'
               : isRedirecting
                 ? 'Reindirizzamento…'
-                : showEmailBanner
+                : emailSent
                   ? 'Email inviata ✓'
                   : 'Crea account'}
           </button>
+
+          {/* Chiuso il pop-up, l'informazione resta a schermo: senza questo
+              pannello restava un form pieno e spento, senza spiegazione. */}
+          {emailSent && emailBannerDismissed && (
+            <div style={{ marginTop: 14, borderRadius: 12, background: '#d4efe2', color: '#2f8a63', padding: '11px 13px', fontSize: 13.5, lineHeight: 1.5, textAlign: 'center' }}>
+              <b>Email di conferma inviata.</b>{' '}Apri il link che ti abbiamo mandato
+              per attivare l&rsquo;account.{' '}
+              <Link href="/verifica-email" style={{ color: '#2f8a63', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 2 }}>
+                Non arriva?
+              </Link>
+            </div>
+          )}
         </form>
       </div>
 

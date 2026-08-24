@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
   // Anti open-redirect: solo path interni. Allineato a loginAction e
   // /auth/callback — blocca anche `:` e `\` (un `\` viene normalizzato in `//`
   // da new URL → host esterno). Audit sicurezza 20 lug.
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes(':') && !rawNext.includes('\\')
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes(':') && !rawNext.includes('\\') && !rawNext.startsWith('/api/')
     ? rawNext
     : '/onboarding'
 
@@ -92,10 +92,23 @@ export async function GET(request: NextRequest) {
     // bruciato al tocco umano. Il link atterra ora su una pagina-ponte
     // (/reset-password/verifica) e la verifica parte dal BOTTONE, con una
     // POST: uno scanner carica la pagina ma non preme mai il tasto.
+    // ⚠️ Il token viaggia in un COOKIE httpOnly monouso, MAI nella query
+    // della pagina (revisione 24 ago): un segreto nell'URL di una pagina
+    // renderizzata finirebbe in cronologia, referer e negli strumenti di
+    // statistica/errori (PostHog registra l'URL completo delle pageview).
+    // ⚠️ NB: gli scanner più aggressivi (es. Safe Links) sanno anche
+    // premere i bottoni — se «otp_expired» su link freschi ricomparisse,
+    // la prima ipotesi da verificare è quella, non un regresso di questo fix.
     if (type === 'recovery') {
-      const dest = new URL('/reset-password/verifica', origin)
-      dest.searchParams.set('token_hash', token_hash)
-      return NextResponse.redirect(dest)
+      const res = NextResponse.redirect(new URL('/reset-password/verifica', origin))
+      res.cookies.set('cc_recovery_token', token_hash, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 600, // 10 minuti: il tempo di premere un bottone, non di più
+      })
+      return res
     }
 
     const supabase = await createClient()

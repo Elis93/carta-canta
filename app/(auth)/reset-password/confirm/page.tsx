@@ -63,7 +63,7 @@ function ConfirmForm() {
                 asChild
                 className="border-amber-300 text-amber-800 hover:bg-amber-100 hover:text-amber-900"
               >
-                <Link href="/login">Mantieni password attuale</Link>
+                <Link href="/dashboard">Mantieni password attuale</Link>
               </Button>
               <Button
                 type="button"
@@ -93,6 +93,12 @@ function ConfirmForm() {
           {isPending && <Loader2 className="animate-spin" />}
           {isPending ? 'Salvataggio…' : 'Salva nuova password'}
         </Button>
+        <p className="text-center text-sm text-muted-foreground">
+          Qualcosa non va?{' '}
+          <Link href="/reset-password" className="underline underline-offset-2 hover:text-foreground">
+            Richiedi un nuovo link
+          </Link>
+        </p>
       </div>
     </form>
   )
@@ -100,7 +106,7 @@ function ConfirmForm() {
 
 export default function ResetPasswordConfirmPage() {
   return (
-    <Card>
+    <Card className="mx-4 mt-8">
       <CardHeader className="text-center">
         <CardTitle className="text-xl">Nuova password</CardTitle>
         <CardDescription>Scegli una password sicura di almeno 8 caratteri.</CardDescription>

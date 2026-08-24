@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { isChunkLoadError, recoverFromChunkError } from '@/lib/chunk-error'
+import { UnlockVeil } from '@/components/security/UnlockVeil'
 
 export default function AppError({
   error,
@@ -40,6 +41,8 @@ export default function AppError({
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
+      {/* Il velo del blocco app non deve coprire questa pagina (revisione 24 ago) */}
+      <UnlockVeil />
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
         <AlertTriangle className="h-7 w-7 text-destructive" />
       </div>

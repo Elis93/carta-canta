@@ -80,7 +80,8 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
         <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>
           Password
         </span>
-        <Link href="/reset-password" style={{ fontSize: 12, color: 'var(--cc-muted)' }}>
+        {/* Padding + margini negativi: area toccabile ~40px senza spostare il testo */}
+        <Link href="/reset-password" style={{ fontSize: 12, color: 'var(--cc-muted)', padding: '12px 4px', margin: '-12px -4px', display: 'inline-block' }}>
           Hai dimenticato la password?
         </Link>
       </div>
@@ -230,8 +231,13 @@ function LoginPageContent() {
         {errorParam === 'link_scaduto' && (
           <p className="mb-4 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
             Link non più valido: è scaduto oppure è già stato utilizzato. Ogni link vale
-            una sola volta e resta valido solo l&rsquo;ultimo ricevuto. Accedi per
-            richiederne uno nuovo.
+            una sola volta e resta valido solo l&rsquo;ultimo ricevuto.
+            {' '}Se era il link di <b>conferma della registrazione</b>, fattene inviare
+            un altro dalla{' '}
+            <Link href="/verifica-email" className="font-semibold underline underline-offset-2">
+              pagina di verifica email
+            </Link>
+            ; altrimenti accedi qui sotto per richiederne uno nuovo.
           </p>
         )}
         {giaConnesso && (

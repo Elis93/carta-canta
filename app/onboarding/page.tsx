@@ -11,6 +11,8 @@ import { updateWorkspaceData, uploadLogo } from '@/lib/actions/workspace'
 import { createClient } from '@/lib/supabase/client'
 import { AtecoMultiSelect } from '@/components/shared/AtecoMultiSelect'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
+import { UnlockVeil } from '@/components/security/UnlockVeil'
+import { toast } from 'sonner'
 
 // ── Stili condivisi mockup ──────────────────────────────────
 const fieldLabel: React.CSSProperties = {
@@ -420,12 +422,28 @@ export default function OnboardingPage() {
   async function handleEsci() {
     // scope 'local': uscire dall'onboarding non deve sloggare gli ALTRI
     // dispositivi (il default di supabase-js è 'global' — audit 17 ago).
-    try { await createClient().auth.signOut({ scope: 'local' }) } catch { /* best effort */ }
+    // ⚠️ signOut RITORNA {error}, non lancia (terza volta che questa classe
+    // di bug spunta — revisione 24 ago): se fallisse, i cookie resterebbero
+    // validi e router.push('/login') rimbalzerebbe QUI via proxy→dashboard→
+    // onboarding — la via d'uscita che riporta al punto di partenza, in
+    // silenzio. Meglio dirlo e far riprovare.
+    try {
+      const { error } = await createClient().auth.signOut({ scope: 'local' })
+      if (error) {
+        toast.error('Uscita non riuscita: controlla la connessione e riprova.')
+        return
+      }
+    } catch {
+      toast.error('Uscita non riuscita: controlla la connessione e riprova.')
+      return
+    }
     router.push('/login')
   }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#fff' }}>
+      {/* Il velo del blocco app non deve coprire questa pagina (revisione 24 ago) */}
+      <UnlockVeil />
       <div className="w-full max-w-[420px] mx-auto">
         {/* Logo brand (icona CC navy + oro, come nelle pagine auth) */}
         <div style={{ paddingTop: 26, display: 'flex', justifyContent: 'center' }}>

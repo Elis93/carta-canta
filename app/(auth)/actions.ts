@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation'
 import { createElement } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createBareClient } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
 import { sendEmail } from '@/lib/email/send'
@@ -20,7 +21,7 @@ import { verifyTurnstile } from '@/lib/turnstile'
 import { sendSecurityAlert } from '@/lib/security/alert'
 import { logSecurityEvent } from '@/lib/security/events'
 import { clientIpFrom } from '@/lib/client-ip'
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 
 type ActionResult = {
   error?:         string
@@ -159,10 +160,11 @@ export async function loginAction(
     ip: clientIpFrom(await headers()),
   })
 
-  // NON usare redirect() qui: stessa ragione di signupAction — in Next.js 16
-  // + Vercel, redirect() dentro una Server Action non propaga i Set-Cookie di
-  // sessione Supabase. Restituiamo il path di destinazione e lasciamo che il
-  // client navighi via router.push() quando i cookie sono già nel browser.
+  // Qui si restituisce il path e naviga il client (router.push). Nota storica:
+  // la motivazione originaria («redirect() non propaga i Set-Cookie») è stata
+  // SMENTITA leggendo i sorgenti di Next 16.2.11 (i cookie mutati passano
+  // attraverso il redirect delle server action). Il pattern resta perché
+  // funziona e il client deve comunque gestire captcha/errori nel form.
   return { success: redirectTo }
 }
 
@@ -344,11 +346,10 @@ async function signupActionInner(
     }),
   }).catch(() => {})
 
-  // NON usare redirect() qui: terminerebbe la Server Action con una risposta
-  // speciale che in alcuni runtime (Next.js 16 + Vercel Edge) non propaga
-  // correttamente i Set-Cookie scritti da signUp(). Restituiamo invece un
-  // successo e lasciamo che il client navighi via router.push() — in quel
-  // momento i cookie di sessione sono già nel browser.
+  // Si restituisce un successo e naviga il client (router.push). Nota storica:
+  // la motivazione originaria («redirect() non propaga i Set-Cookie») è stata
+  // SMENTITA sui sorgenti di Next 16.2.11 — il pattern resta perché il client
+  // deve comunque mostrare il pop-up «Account creato» prima di navigare.
   return { success: 'onboarding' }
 }
 
@@ -443,12 +444,20 @@ export async function resetPasswordAction(
     return { error: 'Inserisci la tua email.' }
   }
 
-  const supabase = await createClient()
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    // Usiamo il Route Handler /auth/callback come landing point del link email:
-    // exchangeCodeForSession viene eseguito lì (dove i Set-Cookie vengono
-    // propagati correttamente nel redirect), poi il browser arriva su
-    // /reset-password/confirm già autenticato — senza bisogno di passare il code.
+  // ⚠️ Client USA-E-GETTA senza cookie (revisione 24 ago): il client di
+  // sessione, in modalità PKCE, a ogni richiesta di reset scriveva nel
+  // browser un cookie `-code-verifier` nuovo — SOVRASCRIVENDO quello di un
+  // eventuale «Accedi con Google» avviato in un'altra scheda, che al ritorno
+  // falliva con oauth_failed. Il template email usa il percorso token_hash
+  // (/auth/confirm), quindi quel verifier non serviva comunque a nulla.
+  const bare = createBareClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  )
+  const { error } = await bare.auth.resetPasswordForEmail(email, {
+    // redirectTo resta come riserva: col template token_hash il link email
+    // punta a /auth/confirm e questo parametro non viene usato.
     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/reset-password/confirm`,
   })
 
@@ -476,24 +485,49 @@ export async function resetPasswordAction(
 // posta aprono i link e bruciavano il token monouso — collaudo Eli 21 ago,
 // codice otp_expired su link fresco): atterra su /reset-password/verifica,
 // e la verifica parte da QUI, su POST, quando l'utente tocca il bottone.
-export async function confirmRecoveryLinkAction(formData: FormData): Promise<void> {
-  const tokenHash = String(formData.get('token_hash') ?? '').trim()
+export async function confirmRecoveryLinkAction(): Promise<void> {
+  // Freno: POST pubblica invocabile senza sessione — senza limite si potrebbe
+  // martellare /verify di Supabase da un solo IP (revisione 24 ago).
+  const limited = await isAuthRateLimited({
+    action: 'recovery-verify', requests: 10, window: '15 m', windowMs: 15 * 60 * 1000,
+  })
+  if (limited) redirect('/reset-password?error=link_scaduto&m=troppi_tentativi')
+
+  // Il token arriva dal COOKIE monouso scritto da /auth/confirm — mai dal
+  // form, mai dall'URL (un segreto in un URL di pagina finisce in cronologia
+  // e negli strumenti di statistica). Si cancella SUBITO: un secondo submit
+  // (tasto indietro, cronologia) trova il cookie assente e riparte pulito
+  // invece di bruciare la verifica appena riuscita.
+  const cookieStore = await cookies()
+  const tokenHash = cookieStore.get('cc_recovery_token')?.value?.trim() ?? ''
+  cookieStore.delete('cc_recovery_token')
   if (!tokenHash || tokenHash.length > 255) redirect('/reset-password?error=link_scaduto')
 
-  const supabase = await createClient()
-  const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
+  // Cintura come signupAction: un blip di rete verso Supabase non deve
+  // diventare la pagina «Qualcosa è andato storto» senza uscita.
+  let failCode: string | null = null
+  try {
+    const supabase = await createClient()
+    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
 
-  if (!error) redirect('/reset-password/confirm')
+    if (!error) redirect('/reset-password/confirm')
 
-  console.error('[reset-password/verifica] verifyOtp:', error.status, error.code, error.message)
-  // Verifica fallita: si chiude la sessione locale (chi torna al login non
-  // deve ritrovarsi DENTRO l'app senza che nulla gli abbia chiesto una
-  // password — motivo del 12 ago, conservato sul solo ramo di errore).
-  const { error: outErr } = await supabase.auth.signOut({ scope: 'local' })
-  if (outErr) console.warn('[reset-password/verifica] signOut:', outErr.message)
+    console.error('[reset-password/verifica] verifyOtp:', error.status, error.code, error.message)
+    // Verifica fallita: si chiude la sessione locale (chi torna al login non
+    // deve ritrovarsi DENTRO l'app senza che nulla gli abbia chiesto una
+    // password — motivo del 12 ago, conservato sul solo ramo di errore).
+    const { error: outErr } = await supabase.auth.signOut({ scope: 'local' })
+    if (outErr) console.warn('[reset-password/verifica] signOut:', outErr.message)
+    failCode = error.code ?? 'sconosciuto'
+  } catch (e) {
+    // redirect() lancia NEXT_REDIRECT: va lasciato passare.
+    if (e && typeof e === 'object' && 'digest' in e && String((e as { digest?: string }).digest).startsWith('NEXT_REDIRECT')) throw e
+    console.error('[reset-password/verifica] eccezione:', e)
+    failCode = 'errore_di_rete'
+  }
   // Il codice d'errore viaggia nell'indirizzo (nessun dato personale): è la
   // diagnosi leggibile da una schermata fotografata.
-  redirect(`/reset-password?error=link_scaduto${error.code ? `&m=${encodeURIComponent(error.code)}` : ''}`)
+  redirect(`/reset-password?error=link_scaduto&m=${encodeURIComponent(failCode ?? 'sconosciuto')}`)
 }
 
 // ============================================================
@@ -518,19 +552,25 @@ export async function confirmResetPasswordAction(
   const { error } = await supabase.auth.updateUser({ password })
 
   if (error) {
-    // FIX-2: rileva "stessa password" — Supabase restituisce status 422
-    // con message "New password should be different from the old password."
-    // oppure code "same_password" nelle versioni più recenti del client.
     const e = error as unknown as { status?: number; code?: string; message?: string }
+    // ⚠️ MAI classificare per il solo status 422 (revisione 24 ago): Supabase
+    // lo usa anche per `weak_password` (es. protezione password compromesse) —
+    // e l'utente leggeva «uguale a quella attuale» su una password nuova.
     const isSamePassword =
-      e.status === 422 ||
       e.code === 'same_password' ||
-      (e.message?.toLowerCase().includes('same') ?? false)
-
+      /different from the old|same password/i.test(e.message ?? '')
     if (isSamePassword) {
       return { samePassword: true }
     }
-
+    if (e.code === 'weak_password') {
+      return { error: 'Questa password non è abbastanza sicura (potrebbe essere comparsa in violazioni di dati note): scegline un\u2019altra.' }
+    }
+    // Sessione di recupero assente o scaduta: «Riprova» qui non funzionerebbe
+    // MAI — l'unica strada è riaprire il link o chiederne uno nuovo.
+    if (e.code === 'session_missing' || e.status === 400 || e.status === 401) {
+      return { error: 'La sessione di recupero non è più attiva. Riapri il link dall\u2019email più recente oppure richiedine uno nuovo dalla pagina «Reimposta password».' }
+    }
+    console.error('[reset-password/confirm] updateUser:', e.status, e.code, e.message)
     return { error: 'Errore durante il reset. Riprova.' }
   }
 
@@ -551,5 +591,15 @@ export async function confirmResetPasswordAction(
     ip: clientIpFrom(await headers()),
   })
 
-  redirect('/login')
+  // Il senso del recupero è ESPELLERE chi era entrato: si revocano le sessioni
+  // sugli ALTRI dispositivi (questa resta — l'utente ha appena provato di
+  // essere lui). Best-effort: la password è già cambiata comunque.
+  const { error: othersErr } = await supabase.auth.signOut({ scope: 'others' })
+  if (othersErr) console.warn('[reset-password/confirm] signOut others:', othersErr.message)
+
+  // Si atterra DENTRO l'app: la sessione è viva, e un redirect a /login
+  // rimbalzerebbe comunque su /dashboard senza mai mostrare una conferma
+  // (revisione 24 ago). Entrare con la password nuova È la conferma; l'email
+  // di avviso qui sopra resta la traccia scritta.
+  redirect('/dashboard')
 }

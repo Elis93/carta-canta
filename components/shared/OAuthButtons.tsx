@@ -14,6 +14,8 @@ import { useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
+import { markActive } from '@/lib/biometric/local'
+import { toast } from 'sonner'
 
 // Logo Google "G" multicolore — SVG inline, zero dipendenze extra
 function GoogleIcon() {
@@ -73,7 +75,8 @@ export function OAuthButtons() {
       // da /login?redirect=/studio con Google deve atterrare su /studio, non
       // su /dashboard. Stessa validazione anti open-redirect del callback.
       const raw = params.get('redirect') ?? ''
-      if (raw.startsWith('/') && !raw.startsWith('//') && !raw.includes(':') && !raw.includes('\\')) {
+      if (raw.startsWith('/') && !raw.startsWith('//') && !raw.includes(':') && !raw.includes('\\')
+        && !raw.startsWith('/api/') && raw !== '/login' && raw !== '/signup') {
         cb.searchParams.set('next', raw)
       }
 
@@ -90,7 +93,20 @@ export function OAuthButtons() {
         cb.searchParams.set('cc_ref', ref)
       }
 
-      await supabase.auth.signInWithOAuth({
+      // ⚠️ Autenticarsi CONTA come attività per il blocco impronta (revisione
+      // 24 ago): il ritorno da Google è una navigazione DURA — il marker di
+      // attività era stantio e la grazia di navigazione assente, quindi chi
+      // aveva il blocco su «Ad ogni apertura» trovava il LUCCHETTO subito
+      // dopo aver scelto l'account («con Google non mi fa accedere»). Il
+      // percorso email/password aveva già il suo markActive (17 ago): questa
+      // è la gemella per OAuth. La grazia cc_lock_nav vive in sessionStorage,
+      // che sopravvive al giro su Google nella stessa scheda (5 minuti).
+      try {
+        markActive()
+        sessionStorage.setItem('cc_lock_nav', String(Date.now()))
+      } catch { /* storage bloccato: al massimo si vede il lucchetto */ }
+
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           // Supabase redirige qui dopo l'autenticazione Google
@@ -102,8 +118,14 @@ export function OAuthButtons() {
           queryParams: { prompt: 'select_account' },
         },
       })
-      // signInWithOAuth redirige il browser — non serve gestire il risultato.
-      // setLoading(false) non verrà mai raggiunto in caso di successo.
+      // signInWithOAuth RITORNA {error}, non lancia (stessa classe di bug già
+      // vista due volte): senza questo controllo un fallimento lasciava solo
+      // uno spinner infinito senza messaggio.
+      if (error) {
+        toast.error('Accesso con Google non riuscito: riprova.')
+        setLoading(false)
+      }
+      // In caso di successo il browser sta già navigando verso Google.
     } catch {
       setLoading(false)
     }

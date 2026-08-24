@@ -42,7 +42,6 @@ function PasswordInput({
       />
       <button
         type="button"
-        tabIndex={-1}
         aria-label={visible ? 'Nascondi password' : 'Mostra password'}
         disabled={disabled}
         onClick={() => setVisible((v) => !v)}
