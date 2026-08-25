@@ -268,7 +268,7 @@ export function MobilePublicCard({
       {/* ── VESTE «RICEVUTA» (mockup B scelto da Eli, 25 ago) ─────────────────
           Un foglio bianco a tutta larghezza: riga del marchio con filetto navy,
           numero ENORME centrato in Georgia, chip ambra della scadenza, voci a
-          filetti, conteggio su fondo crema e TOTALE in fascia navy. L'oro è
+          filetti, conteggio su fondo crema e TOTALE grande sotto un filetto navy. L'oro è
           solo nei dettagli. Tutte le condizioni (proposte, acconto, ritenuta,
           bollo…) sono le stesse di prima: cambia solo la messa in scena. */}
       <div style={{ background: '#fff', padding: '16px 16px 0' }}>
@@ -384,14 +384,17 @@ export function MobilePublicCard({
         </div>
       )}
 
-      {/* ── TOTALE: fascia navy a tutta larghezza (mockup B) ── */}
+      {/* ── TOTALE su bianco, sotto un filetto navy (Eli 25 ago sera: la
+          fascia scura era «davvero impattante») — l'eleganza la fanno il
+          filetto, l'occhiello bronzo e la cifra grande in Georgia, senza
+          fondi pieni. Stessa veste nel riepilogo interno del documento. ── */}
       {!tierPicker && total != null && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '12px 16px', background: '#1a1a2e', color: '#fff' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '13px 16px', background: '#fff', borderTop: '2px solid #1a1a2e' }}>
           {/* 18 lug: con più proposte il totale "secco" confondeva — è
               quello della proposta di riferimento (la Base),
               e la scelta avviene sotto */}
-          <span style={{ fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', color: '#e6cf94', fontWeight: 700 }}>Totale</span>
-          <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 24 }}>{formatEur(total)}</span>
+          <span style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: '#8a6b28', fontWeight: 700 }}>Totale</span>
+          <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 24, color: '#161616' }}>{formatEur(total)}</span>
         </div>
       )}
 

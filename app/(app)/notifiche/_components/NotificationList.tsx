@@ -135,11 +135,24 @@ export function NotificationList({
     })
   }
 
-  if (items.length === 0) {
+  // Nel PANNELLO della campanella si vedono SOLO le non lette (Eli 25 ago:
+  // «quando clicco su Segna come lette devono scomparire dal menu a tendina»):
+  // la tendina è il posto delle cose nuove, la storia completa — lette
+  // comprese — sta nella pagina «Vedi tutte le notifiche». Sulla pagina
+  // /notifiche (compact=false) restano tutte, con le lette attenuate.
+  const visibili = compact ? items.filter((n) => !n.read) : items
+
+  if (visibili.length === 0) {
     return (
       <div style={{ margin: compact ? 0 : '14px 15px 0', background: '#fff', borderRadius: compact ? 0 : 14, boxShadow: compact ? 'none' : SH, padding: '28px 15px', textAlign: 'center' }}>
-        <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>Nessun avviso</p>
-        <p style={{ fontSize: 13, color: '#55534b', marginTop: 4 }}>Quando succede qualcosa che merita la tua attenzione, lo trovi qui.</p>
+        <p style={{ fontWeight: 600, color: '#161616', fontSize: 14 }}>
+          {compact && items.length > 0 ? 'Niente da leggere' : 'Nessun avviso'}
+        </p>
+        <p style={{ fontSize: 13, color: '#55534b', marginTop: 4 }}>
+          {compact && items.length > 0
+            ? 'Le notifiche già lette restano in «Vedi tutte le notifiche», qui sotto.'
+            : 'Quando succede qualcosa che merita la tua attenzione, lo trovi qui.'}
+        </p>
       </div>
     )
   }
@@ -161,7 +174,7 @@ export function NotificationList({
       )}
 
       <div style={{ margin: compact ? 0 : `${hasUnread ? 6 : 14}px 15px 0`, background: '#fff', borderRadius: compact ? 0 : 14, boxShadow: compact ? 'none' : SH, padding: '2px 14px' }}>
-        {items.map((n, idx) => {
+        {visibili.map((n, idx) => {
           const t = TYPE_ICON[n.type]
           return (
             <Link
@@ -171,7 +184,7 @@ export function NotificationList({
               style={{
                 display: 'flex', gap: 10, width: '100%', textAlign: 'left', padding: '12px 0',
                 textDecoration: 'none', color: 'inherit', fontFamily: 'inherit',
-                borderBottom: idx < items.length - 1 ? '0.5px solid #eee' : 'none',
+                borderBottom: idx < visibili.length - 1 ? '0.5px solid #eee' : 'none',
                 opacity: n.read ? 0.55 : 1,
               }}
             >

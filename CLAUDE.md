@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 25 agosto 2026** (lotto di 6: campanella aggiornata, deep-link messaggi, fix «Registrazione annullata», sconto nel foglio, restyle DiscountField, blocchi art. 21 sulle fatture).
+> **Ultima sessione: 25 agosto 2026** (sera: totale su bianco col filetto in 3 superfici, «Anteprima» detta giusta, tendina campanella solo non lette).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -28,6 +28,13 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### ✅ 25 ago (8) — Ripensamento sul totale: via la fascia navy (filetto elegante su bianco, 3 superfici) + «Anteprima» detta giusta + tendina campanella solo non lette
+Tre punti di Eli, uno è un cambio di idea sul mockup B appena implementato.
+- **[UI] La fascia navy del TOTALE era «davvero impattante»** → sostituita in TUTTE e 3 le superfici (riepilogo interno `preventivi/[id]` + `fatture/[id]` e pagina cliente `MobilePublicCard`, «magari bianco come il resto») con la veste elegante: **filetto navy 2px sopra, occhiello TOTALE bronzo (#8a6b28) maiuscoletto, cifra in Georgia 22-24 su fondo chiaro** — niente più fondi pieni, niente full-bleed (via i margini negativi). Verificata sul componente VERO in Chromium a 390px (harness ricostruito): 0 fasce navy residue, filetto su tutte e 3 le card, Georgia ok, 0 overflow. Commenti «fascia navy» aggiornati (un commento sbagliato genera lavori futuri sbagliati) + riga /novita corretta («totale in grande sotto un filetto scuro»).
+- **[COPY] «Stai vedendo il documento come lo vede il cliente» faceva credere che il cliente avesse SOLO quella vista** (Eli: non deve sembrare che manchi il documento completo col template) → ora: *«Anteprima della pagina del cliente: dal link apre anche il documento completo, col template che hai scelto»* — su preventivo E fattura.
+- **[CAMPANELLA] La tendina mostra SOLO le non lette**: «Segna tutte come lette» (o il tocco su una) le fa sparire dal pannello — la storia completa, lette comprese, resta nella pagina «Vedi tutte le notifiche» (la /notifiche, compact=false, invariata: lette attenuate). Nuovo stato vuoto del pannello a lettura avvenuta: «Niente da leggere — le notifiche già lette restano in "Vedi tutte le notifiche", qui sotto». `visibili = compact ? items.filter(!read) : items` in `NotificationList`; il badge era già corretto (conta le non lette).
+- tsc+build+**742**+smoke 28/28 verdi · scan 0.
 
 ### ✅ 25 ago (7) — Lotto di 6: campanella che si aggiorna, messaggio che si apre da solo, «Registrazione annullata» sul successo, sconto nel foglio, blocchi art. 21 sulle fatture
 Sei punti di Eli in un messaggio (2 foto + 2 in arrivo sul tema sconti).

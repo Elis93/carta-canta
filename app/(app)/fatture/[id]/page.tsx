@@ -825,7 +825,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* ── MOBILE: IL FOGLIO (mockup B «Foglio», Eli 25 ago) — in lettura il
             documento si vede come un foglio: filetto d'oro, numero in Georgia,
-            totale in fascia navy. La forma stessa dice «non è un modulo». ── */}
+            totale grande sotto un filetto navy. La forma stessa dice «non è un modulo». ── */}
         {docItems.length > 0 && !editing && (
           <div className="lg:hidden" style={{ background: '#fbfaf7', border: '1px solid #e6e1d5', borderTop: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 10px 26px -16px rgba(20,20,40,.5)', padding: '15px 15px' }}>
             <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', color: '#8a6b28' }}>
@@ -897,10 +897,12 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 </span>
               </div>
             ))}
-            {/* TOTALE in fascia navy a tutta larghezza (mockup B) */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', margin: '8px -15px 0', padding: '12px 15px', background: '#1a1a2e', color: '#fff' }}>
-              <span style={{ fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', color: '#e6cf94', fontWeight: 700 }}>Totale</span>
-              <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 21 }}>
+            {/* TOTALE sotto un filetto navy, su fondo chiaro come il resto
+                (Eli 25 ago sera: la fascia scura era «davvero impattante»).
+                Stessa veste della pagina del cliente e del preventivo. */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 10, paddingTop: 11, borderTop: '2px solid #1a1a2e' }}>
+              <span style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: '#8a6b28', fontWeight: 700 }}>Totale</span>
+              <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 22, color: '#161616' }}>
                 {`€\u00A0${Number((doc as any).total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
               </span>
             </div>
@@ -950,11 +952,12 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         )}
 
-        {/* Il foglio è la vista del cliente: dirlo toglie il dubbio
-            «dov'è finita la modifica?» (mockup B, Eli 25 ago). */}
+        {/* ⚠️ «Anteprima», non «come lo vede il cliente» (Eli 25 ago sera):
+            la frase secca faceva credere che il cliente avesse SOLO questa
+            vista — dal link apre anche il documento completo col template. */}
         {docItems.length > 0 && !editing && (
           <p className="lg:hidden" style={{ margin: '-6px 0 0', textAlign: 'center', fontSize: 12, color: 'var(--cc-muted)' }}>
-            Stai vedendo il documento come lo vede il cliente
+            Anteprima della pagina del cliente: dal link apre anche il documento completo, col template che hai scelto
           </p>
         )}
 
