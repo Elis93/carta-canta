@@ -104,12 +104,16 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
       tabIndex={0}
       onClick={() => router.push(href)}
       onKeyDown={(e) => { if (e.key === 'Enter') router.push(href) }}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', position: 'relative' }}
     >
-      {/* Filetto d'urgenza al FILO del bordo sinistro della card (la card è
-          position:relative): stessa colonna del filetto di «Lavoro in corso»
-          (Eli 20 ago: «devono essere tutte nella stessa identica posizione»). */}
-      <span aria-hidden style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 2, borderRadius: 2, background: urgColor }} />
+      {/* Filetto d'urgenza ancorato al SUO blocco (position:relative qui
+          sopra — ⚠️ senza, l'absolute risale al primo antenato posizionato
+          della pagina e diventa una striscia lunga quanto la Home: bug del
+          25 ago, nato dall'unione dei due blocchi in una card sola). Il
+          left negativo compensa il padding orizzontale della card (15px)
+          così il filetto resta al FILO del bordo sinistro, stessa colonna
+          di «Lavoro in corso» (Eli 20 ago: «stessa identica posizione»). */}
+      <span aria-hidden style={{ position: 'absolute', left: -15, top: 2, bottom: 2, width: 2, borderRadius: 2, background: urgColor }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
         <span style={{ fontSize: 15, fontWeight: 700, color: '#161616', minWidth: 0, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {mainLabel}
