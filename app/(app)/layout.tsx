@@ -55,9 +55,12 @@ async function AppLayoutInner({
   // (i cookie sono validi per lui) e reindirizzerebbe subito a /dashboard,
   // creando il loop  layout→/login→middleware→/dashboard→layout→/login.
   //
-  // Propaghiamo invece un errore all'error boundary (app/(app)/error.tsx),
-  // che mostra all'utente il pulsante "Riprova". Al secondo tentativo il token
-  // è di solito già stato aggiornato correttamente.
+  // Propaghiamo invece un errore all'error boundary. ⚠️ Un errore lanciato dal
+  // LAYOUT non viene catturato da app/(app)/error.tsx (il boundary è annidato
+  // DENTRO il layout): risale ad app/error.tsx — che per questo monta
+  // UnlockVeil, altrimenti il velo cc-locked coprirebbe la pagina d'errore.
+  // L'utente vede il pulsante «Riprova»; al secondo tentativo il token è di
+  // solito già stato aggiornato correttamente.
   if (!user) {
     throw new Error(
       'Sessione non disponibile. Ricarica la pagina o rieffettua il login.'

@@ -108,15 +108,17 @@ export async function GET(request: NextRequest) {
     return res
   }
 
-  // ── Password reset (recovery) — RAMO DI RISERVA ───────────────────────────
+  // ── Password reset (recovery) — RAMO DORMIENTE ────────────────────────────
   // Il flusso email VERO non passa di qui: il template Recovery di Supabase
   // punta a /auth/confirm?token_hash=…&type=recovery (verifica su POST dalla
-  // pagina-ponte /reset-password/verifica, 21-24 ago). Questo ramo copre solo
-  // il caso in cui il template tornasse al flusso PKCE con ?code=: meglio un
-  // ramo dormiente che un recovery che atterra in dashboard. Nessun controllo
+  // pagina-ponte /reset-password/verifica, 21-24 ago). ⚠️ E con l'attuale
+  // richiesta di reset (client implicit, nessun code_challenge) un ?code= per
+  // il recovery NON può più arrivare: questo ramo oggi è irraggiungibile —
+  // NON è una rete di sicurezza contro un template sbagliato (quel caso rompe
+  // il recovery a monte, vedi resetPasswordAction). Resta perché innocuo e
+  // perché, se un giorno la richiesta tornasse PKCE, evita che un recovery
+  // atterri in dashboard senza passare dal form password. Nessun controllo
   // workspace/onboarding: la sessione è appena stabilita, redirect diretto.
-  // Doppio controllo: parametro `next` (se preservato da Supabase) OPPURE
-  // parametro `type=recovery` (aggiunto da Supabase come fallback).
   const type = searchParams.get('type')
   if (next.startsWith('/reset-password') || type === 'recovery') {
     return redirectWithSession(new URL('/reset-password/confirm', origin))

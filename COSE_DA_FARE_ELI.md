@@ -43,10 +43,15 @@ NB: il banner Vercel "Organization MFA enforcement → Upgrade to Pro" NON serve
 
 Resta UN controllo, utile se il reset dovesse dare ancora «otp_expired» su
 un link fresco:
-- [ ] **Email OTP Expiration**: Authentication → Providers (o Sign In/Up) →
-      **Email** → campo «Email OTP Expiration (seconds)». Se è basso
-      (es. 300), portalo a **3600**. Un valore basso fa morire i link
-      prima ancora di aprirli.
+- [x] ~~**Email OTP Expiration**~~ ✅ verificato da Eli («è già 3600»).
+- [ ] ⚠️ **Template «Reset password» (REQUISITO, non preferenza — 24 ago)**:
+      Authentication → Email Templates → **Reset password**: il link deve
+      essere `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`.
+      Dal 24 ago la richiesta di reset non prepara più il percorso alternativo
+      (PKCE): col vecchio `{{ .ConfirmationURL }}` il recupero password NON
+      funzionerebbe affatto (token verificato all'apertura del link → di nuovo
+      bruciabile dagli scanner di posta, e sessione invisibile al server).
+      Se il template è già così, non toccare nulla — basta la conferma.
 
 ---
 

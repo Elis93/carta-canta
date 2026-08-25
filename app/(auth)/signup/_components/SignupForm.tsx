@@ -84,7 +84,12 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
   // Eli (15 ago): il messaggio «Account creato» deve comparire in un POP-UP
   // chiudibile con la X, non come banner in linea.
   const [emailBannerDismissed, setEmailBannerDismissed] = useState(false)
-  const emailSent = state?.success === 'verifica-email'
+  // «Ho sbagliato indirizzo» riarma il form per UN nuovo tentativo (secondo
+  // ricontrollo 24 ago: senza, chi aveva scritto l'email sbagliata restava
+  // bloccato per sempre — il rinvio di /verifica-email non può aiutare un
+  // indirizzo che non ha mai ricevuto nulla).
+  const [riarmato, setRiarmato] = useState(false)
+  const emailSent = state?.success === 'verifica-email' && !riarmato
   const showEmailBanner = emailSent && !emailBannerDismissed
   // Portal montato solo lato client (evita mismatch SSR).
   const [mounted, setMounted] = useState(false)
@@ -109,6 +114,12 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
   useEffect(() => {
     if (state?.success === 'onboarding') router.push('/onboarding')
     if (state?.error) setCaptchaKey((k) => k + 1)
+    // Un NUOVO invio riuscito (indirizzo corretto dopo «Ho sbagliato») riparte
+    // pulito: pop-up di nuovo visibile, form di nuovo spento.
+    if (state?.success === 'verifica-email') {
+      setRiarmato(false)
+      setEmailBannerDismissed(false)
+    }
     // Registrazione completata (sia conferma-email in prod sia onboarding in dev):
     // evento top-of-funnel con le UTM → attribution delle sponsorizzate.
     if ((state?.success === 'verifica-email' || state?.success === 'onboarding') && !signupTracked.current) {
@@ -327,6 +338,15 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
               <Link href="/verifica-email" style={{ color: '#2f8a63', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 2 }}>
                 Non arriva?
               </Link>
+              <span style={{ display: 'block', marginTop: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setRiarmato(true)}
+                  style={{ background: 'none', border: 'none', padding: '6px 4px', color: '#2f8a63', fontSize: 13, fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer' }}
+                >
+                  Ho sbagliato indirizzo: correggilo
+                </button>
+              </span>
             </div>
           )}
         </form>

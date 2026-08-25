@@ -21,8 +21,27 @@ function ResetPasswordForm() {
 
   return (
     <>
-      {/* Banner link scaduto (quando si clicca una seconda volta sul link email) */}
-      {urlError === 'link_scaduto' && (
+      {/* Banner d'errore dalla pagina-ponte. ⚠️ Non tutti i fallimenti sono
+          «link scaduto» (secondo ricontrollo 24 ago): il rate limit e un blip
+          di rete lasciano il token ANCORA VALIDO — dire «richiedine uno nuovo»
+          lì spingeva a invalidare un link buono e a sbattere nel limite dei
+          60 secondi di Supabase. Basta riaprire il link dall'email. */}
+      {urlError === 'link_scaduto' && (motivo === 'troppi_tentativi' || motivo === 'errore_di_rete') && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 mb-4">
+          <AlertCircle className="size-4 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold">
+              {motivo === 'troppi_tentativi' ? 'Troppi tentativi' : 'Connessione non riuscita'}
+            </p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              {motivo === 'troppi_tentativi'
+                ? 'Il link è ancora valido, ma per sicurezza serve una pausa: aspetta qualche minuto e riapri il link dall’email più recente.'
+                : 'La verifica non è arrivata a Supabase: il link è ancora valido. Riapri il link dall’email più recente e riprova.'}
+            </p>
+          </div>
+        </div>
+      )}
+      {urlError === 'link_scaduto' && motivo !== 'troppi_tentativi' && motivo !== 'errore_di_rete' && (
         <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 mb-4">
           <AlertCircle className="size-4 shrink-0 mt-0.5" />
           <div>

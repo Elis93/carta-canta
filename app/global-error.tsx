@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { UnlockVeil } from '@/components/security/UnlockVeil'
 
 // ⚠️ global-error SOSTITUISCE il root layout, quindi globals.css (importato
 // solo lì) può non essere caricato quando questa pagina appare: SOLO stili
@@ -34,6 +35,9 @@ export default function GlobalError({
           color: '#161616',
         }}
       >
+        {/* Se il velo anti-lampo (cc-locked) era attivo e il CSS è ancora
+            caricato, senza questa rimozione la pagina d'errore resta navy. */}
+        <UnlockVeil />
         <h2 style={{ fontSize: 20, fontWeight: 600, margin: 0 }}>Errore critico</h2>
         <p style={{ fontSize: 14, color: '#6b7280', maxWidth: 384, margin: 0, lineHeight: 1.5 }}>
           Si è verificato un errore imprevisto. Prova a ricaricare la pagina.

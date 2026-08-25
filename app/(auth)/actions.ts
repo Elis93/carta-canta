@@ -450,14 +450,22 @@ export async function resetPasswordAction(
   // eventuale «Accedi con Google» avviato in un'altra scheda, che al ritorno
   // falliva con oauth_failed. Il template email usa il percorso token_hash
   // (/auth/confirm), quindi quel verifier non serviva comunque a nulla.
+  // ⚠️ CONSEGUENZA (secondo ricontrollo 24 ago): questo client è in modalità
+  // IMPLICIT (default di supabase-js) → nessun code_challenge nella richiesta
+  // → il percorso PKCE (?code= su /auth/callback) per il recovery NON esiste
+  // più. Il template Supabase «Reset password» che punta a
+  // /auth/confirm?token_hash={{ .TokenHash }}&type=recovery è quindi un
+  // REQUISITO, non una preferenza: col vecchio {{ .ConfirmationURL }} il
+  // token verrebbe verificato alla GET (di nuovo bruciabile dagli scanner) e
+  // i token arriverebbero nel fragment, invisibili al server → recovery rotto.
   const bare = createBareClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { auth: { persistSession: false, autoRefreshToken: false } }
   )
   const { error } = await bare.auth.resetPasswordForEmail(email, {
-    // redirectTo resta come riserva: col template token_hash il link email
-    // punta a /auth/confirm e questo parametro non viene usato.
+    // Col template token_hash questo parametro non viene usato; NON è una
+    // riserva funzionante (vedi nota sopra sul flusso implicit).
     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/reset-password/confirm`,
   })
 
