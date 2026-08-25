@@ -483,7 +483,11 @@ export async function resetPasswordAction(
     return { error: 'Errore nell\'invio dell\'email. Riprova.' }
   }
 
-  return { success: 'Email inviata. Controlla la tua casella.' }
+  // ⚠️ Anti-enumerazione (richiesta Eli, 25 ago — stessa regola del signup):
+  // «Email inviata» confermava che l'account esiste, e mentiva quando non
+  // esiste (Supabase risponde ok anche per un indirizzo mai registrato).
+  // La formula condizionale è lo standard dei siti fatti bene.
+  return { success: `Se c’è un account associato a ${email}, riceverai un’email con il link per reimpostare la password. Controlla anche la posta indesiderata.` }
 }
 
 // ============================================================
