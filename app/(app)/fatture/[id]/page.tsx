@@ -858,6 +858,26 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 {`€\u00A0${Number((doc as any).subtotal ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
               </span>
             </div>
+            {/* Sconto di documento (foto Eli 25 ago): il riepilogo interno lo
+                ometteva mentre PDF e pagina del cliente lo mostrano — e senza
+                la riga i numeri non tornavano (Subtotale + IVA ≠ Totale).
+                Stessa formula della pagina pubblica: % sul subtotale + fisso,
+                mai oltre il subtotale. */}
+            {(() => {
+              const sub = Number((doc as any).subtotal ?? 0)
+              const pct = Number((doc as any).discount_pct ?? 0)
+              const fix = Number((doc as any).discount_fixed ?? 0)
+              const sconto = Math.min(Math.round((sub * (pct / 100) + fix) * 100) / 100, sub)
+              if (sconto <= 0) return null
+              return (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
+                  <span style={{ color: '#161616', fontWeight: 400 }}>Sconto{pct > 0 && !fix ? ` (${pct}%)` : ''}</span>
+                  <span style={{ color: '#2f8a63', fontWeight: 500 }}>
+                    {`−€\u00A0${sconto.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  </span>
+                </div>
+              )
+            })()}
             {/* Marca da bollo: senza questa riga il totale saltava da 100 a
                 102 senza dire da dove venissero i 2 € (screenshot Eli 26 lug).
                 Il PDF la mostrava già: qui mancava. */}

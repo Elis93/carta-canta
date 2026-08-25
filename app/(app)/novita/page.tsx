@@ -18,6 +18,8 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Anche dentro l’app, il preventivo o la fattura già salvati si mostrano come un foglio: capisci al volo che stai guardando il documento com’è, non un modulo da compilare. Per cambiarlo, il tasto «Modifica» in alto a destra ora è navy, impossibile da mancare.',
       'La cronologia registra ogni nuova scadenza: primo invio, rinvio di uno scaduto, proroga del termine di pagamento — ogni volta che dai un termine nuovo, resta scritto quando e quale.',
       'Se il cliente riapre il link di un documento già accettato o pagato, l’apertura ora compare comunque in cronologia (prima si perdeva).',
+      'Lo sconto sul documento ora compare anche nel riepilogo dentro l’app (Subtotale → Sconto → IVA → Totale), come già nel PDF e nella pagina del cliente: i numeri tornano a colpo d’occhio. E il comando dello sconto nel modulo è un campo solo, con %/€ incorporati.',
+      'Le fatture partono solo con i dati del cliente al completo: nome, indirizzo e città, e partita IVA o codice fiscale — quello che la legge vuole scritto in fattura. Se manca qualcosa, l’app te lo dice e ti manda a completare la scheda del cliente.',
     ],
   },
   {

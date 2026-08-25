@@ -30,6 +30,7 @@ import { registraConfermaFiscale } from '@/lib/documents/conferma-fiscale'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 import { stripPrefissoLegacy } from '@/lib/utils'
+import { richiedeDatiFattura, datiFatturaMancanti, messaggioDatiFattura } from '@/lib/documents/dati-fattura'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     .select(`
       *,
       document_items(*),
-      clients(name, email, phone, piva, indirizzo, cap, citta, provincia, paese)
+      clients(name, surname, email, phone, piva, codice_fiscale, indirizzo, cap, citta, provincia, paese)
     `)
     .eq('id', id)
     .eq('workspace_id', workspace.id)
@@ -237,7 +238,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // trova un contatto esistente per email o ne crea uno nuovo, poi
   // aggiorna il documento. Il client join (doc.clients) viene sovrascritto
   // da pdfClientOverride per il resto della route.
-  type ClientRow = { name: string; email: string | null; phone: string | null; piva: string | null; indirizzo: string | null; cap: string | null; citta: string | null; provincia: string | null; paese: string | null }
+  type ClientRow = { name: string; surname?: string | null; email: string | null; phone: string | null; piva: string | null; codice_fiscale?: string | null; indirizzo: string | null; cap: string | null; citta: string | null; provincia: string | null; paese: string | null }
   let pdfClientOverride: ClientRow | null = doc.clients as ClientRow | null
 
   // Se il documento non ha ancora un cliente e l'email di invio è fornita,
@@ -250,7 +251,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     // e saltiamo del tutto il controllo conflitto (non serve: la scelta è esplicita).
     const { data: chosenClient } = await supabase
       .from('clients')
-      .select('id, name, email, phone, piva, indirizzo, cap, citta, provincia, paese')
+      .select('id, name, surname, email, phone, piva, codice_fiscale, indirizzo, cap, citta, provincia, paese')
       .eq('id', body.clientId)
       .eq('workspace_id', workspace.id)
       .maybeSingle()
@@ -274,7 +275,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     // Cerca un contatto esistente per email nel workspace
     const { data: existingClient } = await supabase
       .from('clients')
-      .select('id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia, paese')
+      .select('id, name, surname, email, phone, piva, codice_fiscale, indirizzo, cap, citta, provincia, paese')
       .eq('workspace_id', workspace.id)
       .eq('email', body.to)
       .maybeSingle()
@@ -316,7 +317,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       const { data: newClient, error: insertErr } = await supabase
         .from('clients')
         .insert({ workspace_id: workspace.id, name: resolvedClientName, email: body.to })
-        .select('id, name, email, phone, piva, indirizzo, cap, citta, provincia, paese')
+        .select('id, name, surname, email, phone, piva, codice_fiscale, indirizzo, cap, citta, provincia, paese')
         .single()
 
       if (insertErr || !newClient) {
@@ -395,6 +396,19 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     // 4. Se template ancora null: nessun template nel workspace.
     //    buildPdfHtml gestisce null con stili di default — l'invio procede comunque.
+  }
+
+  // ⚖️ FATTURE (e note): i dati del cliente che l'art. 21 DPR 633/1972
+  // pretende in fattura — nome, residenza o domicilio, P.IVA o codice
+  // fiscale — devono esserci prima che il documento parta (Eli 25 ago).
+  // Vale per OGNI invio email, primo o reinvio: la copia consegnata si
+  // genera dai dati vivi del cliente. pdfClientOverride è il cliente
+  // RISOLTO da qualunque strada (associato, scelto, appena creato).
+  if (richiedeDatiFattura(doc.doc_type)) {
+    const mancanti = datiFatturaMancanti(pdfClientOverride)
+    if (mancanti.length > 0) {
+      return NextResponse.json({ error: messaggioDatiFattura(mancanti, doc.doc_type) }, { status: 422 })
+    }
   }
 
   // ── Blocco Free: applicato solo ai draft (primo invio) ──────

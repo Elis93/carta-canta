@@ -18,7 +18,7 @@
 // pubblica, dove il cliente vede i totali delle proposte già scontati.
 // ============================================================
 
-import { calcolaDocumento } from '@/lib/fiscal/calcoli'
+import { calcolaDocumento, roundFiscale } from '@/lib/fiscal/calcoli'
 import type { FiscalOptions } from '@/types/index'
 
 export type TierKey = 'base' | 'consigliata' | 'premium'
@@ -49,6 +49,8 @@ export interface TotaleProposta {
   /** "Base" / "Premium" — pronto da mostrare */
   label: string
   subtotal: number
+  /** Sconto di documento applicato a QUESTA proposta (0 se non c'è) */
+  sconto: number
   taxAmount: number
   bollo: number
   total: number
@@ -103,6 +105,7 @@ export function totaliPerProposta(
       tier,
       label: TIER_LABEL[tier],
       subtotal: f.subtotal,
+      sconto: roundFiscale(f.subtotal - f.afterDiscount),
       taxAmount: f.taxAmount,
       bollo: f.bollo,
       total: f.total,

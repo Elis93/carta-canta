@@ -15,6 +15,7 @@ import Link from 'next/link'
 import { Bell } from 'lucide-react'
 import type { AppNotification } from '@/lib/notifications'
 import { NotificationList } from '@/app/(app)/notifiche/_components/NotificationList'
+import { applicaLetteLocali } from '@/lib/notifiche-lette-locali'
 import { useAnchorRect, useCloseOnOutsideMouseDown } from '@/components/shared/dropdown-portal'
 
 export function NotificationBell({
@@ -34,6 +35,14 @@ export function NotificationBell({
   const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setMounted(true) }, [])
+
+  // Tornando in Home dalla cache del router la lista può essere STANTIA
+  // (notifica appena letta ancora «non letta») → si sottraggono le letture
+  // locali della sessione. Dopo il mount, mai nell'initializer: il primo
+  // render deve combaciare con quello del server (idratazione).
+  useEffect(() => {
+    setUnread(applicaLetteLocali(notifications).filter((n) => !n.read).length)
+  }, [notifications])
 
   const close = useCallback(() => setOpen(false), [])
   const rect = useAnchorRect(btnRef, open)

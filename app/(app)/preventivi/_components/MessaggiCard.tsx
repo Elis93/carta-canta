@@ -14,7 +14,7 @@
 // scriva, invece di lasciarlo credere che il messaggio "arrivi" da solo.
 // ============================================================
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { MessageSquare, Loader2, Send, Mail, AlertTriangle, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { runAction } from '@/lib/run-action'
@@ -54,6 +54,13 @@ export function MessaggiCard({
   // SOLO quando c'è da rispondere: se hai già risposto, la conversazione è
   // storia e non deve occupare spazio nel documento.
   const [open, setOpen] = useState(attesa)
+
+  // Arrivo dal deep-link #messaggi (campanella / email): la tendina si apre
+  // da sola — atterrare sulla sezione giusta ma CHIUSA obbligava a un secondo
+  // tocco (collaudo Eli 25 ago). Dopo il mount (window non esiste sul server).
+  useEffect(() => {
+    if (anchorId && window.location.hash === `#${anchorId}`) setOpen(true)
+  }, [anchorId])
 
   function invia() {
     const body = text.trim()

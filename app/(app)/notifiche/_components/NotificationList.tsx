@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Eye, Banknote, AlertTriangle, Receipt, BellRing, MessageSquare, Clock, Tag } from 'lucide-react'
 import { markNotificationsReadAction } from '@/lib/actions/notifications'
+import { segnaLettaLocale, applicaLetteLocali } from '@/lib/notifiche-lette-locali'
 import type { AppNotification } from '@/lib/notifications'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
@@ -58,7 +59,10 @@ export function NotificationList({
   // in Home (feedback Eli 22 lug #16). Marcandola letta subito localmente,
   // diventa "letta" come le altre all'istante.
   const [items, setItems] = useState(notifications)
-  useEffect(() => { setItems(notifications) }, [notifications])
+  // Le letture LOCALI (sessionStorage) si applicano dopo il mount, mai
+  // nell'initializer: il componente è renderizzato anche sul server e un
+  // valore diverso lì creerebbe un mismatch di idratazione.
+  useEffect(() => { setItems(applicaLetteLocali(notifications)) }, [notifications])
   useEffect(() => { onUnreadChange?.(items.filter((x) => !x.read).length) }, [items, onUnreadChange])
 
   // La navigazione è affidata a un <Link> NATIVO (naviga sempre, come
@@ -68,6 +72,9 @@ export function NotificationList({
   function markRead(n: AppNotification) {
     if (n.read) return
     setItems((prev) => prev.map((x) => (x.key === n.key ? { ...x, read: true } : x)))
+    // Rete contro la cache stantia (25 ago): la Home può tornare a schermo
+    // PRIMA della revalidation — la campanella sottrae comunque questa chiave.
+    segnaLettaLocale(n.key)
     // Fire-and-forget VOLUTO (la navigazione non deve aspettare), ma con il
     // .catch: senza rete la promise verrebbe rifiutata e resterebbe una
     // "unhandled rejection" (rumore in Sentry). Se fallisce, la notifica
@@ -92,6 +99,7 @@ export function NotificationList({
     // "riprova" senza che ci sia più nulla da premere (review 22 lug).
     const before = items
     setItems((prev) => prev.map((x) => ({ ...x, read: true })))
+    segnaLettaLocale(...unread)
     startTransition(async () => {
       // 18 lug (Eli: "non succede nulla"): prima QUALSIASI fallimento era
       // invisibile — l'{error} dell'action veniva ignorato e un'app rimasta

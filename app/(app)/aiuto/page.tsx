@@ -197,6 +197,21 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       normale — è un&rsquo;irregolarità solo formale, non sanzionabile.</>,
   },
   {
+    q: 'Non riesco a inviare una fattura: dice che mancano dati del cliente. Quali servono?',
+    parole: ['codice fiscale', 'partita iva', 'indirizzo cliente', 'dati obbligatori', 'art. 21', 'fattura bloccata', 'non inviabile'],
+    a: <>Per legge (art. 21 DPR 633/1972) ogni fattura deve riportare, del cliente:{' '}
+      <b>nome e cognome</b>{' '}(o la ragione sociale), la <b>residenza o il domicilio</b>{' '}
+      (indirizzo e città) e la <b>partita IVA</b>{' '}— oppure il <b>codice fiscale</b>{' '}se è
+      un privato. Se nella scheda del cliente manca qualcuno di questi dati, l&rsquo;app blocca
+      l&rsquo;invio della fattura (email, WhatsApp e copia del link) e ti dice cosa manca.
+      <br /><br />
+      Per sbloccare: apri <b>Clienti</b>{' '}dalla rubrica, tocca il cliente e completa i campi
+      mancanti — poi torna sulla fattura e invia. I <b>preventivi</b>{' '}non sono toccati: non
+      sono documenti fiscali e partono anche col solo nome. Per la trasmissione allo{' '}
+      <b>SdI</b>{' '}serve qualcosa in più (l&rsquo;indirizzo completo con CAP): se manca, te lo
+      dice al momento della trasmissione.</>,
+  },
+  {
     q: 'Posso far comparire l’acconto già impostato su ogni preventivo?',
     parole: ['acconto', 'anticipo', 'caparra', '30%', 'default', 'sempre uguale', 'impostazioni'],
     a: <>Sì. In <VaiA a="impGenerale" />, sezione <b>Dati dell&rsquo;attività</b>, c&rsquo;è{' '}

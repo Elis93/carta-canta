@@ -26,6 +26,7 @@ import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, baseStorna
 // helper prendono il client Supabase come argomento (review 11 ago).
 import { registraConfermaFiscale, fermaPilotaSdi } from '@/lib/documents/conferma-fiscale'
 import { logNuovaScadenza } from '@/lib/documents/log-scadenza'
+import { richiedeDatiFattura, datiFatturaMancanti, messaggioDatiFattura } from '@/lib/documents/dati-fattura'
 
 /** L'artigiano annulla la trasmissione automatica programmata su UN
  *  documento («Annulla» sulla card SdI). Il documento resta trasmissibile
@@ -1930,11 +1931,20 @@ export async function sendDocumentAction(
   // Verifica che il cliente abbia un'email valida
   const { data: clientData } = await supabase
     .from('clients')
-    .select('email')
+    .select('email, name, surname, indirizzo, citta, piva, codice_fiscale')
     .eq('id', doc.client_id)
     .maybeSingle()
   if (!clientData?.email) {
     return { error: 'Il cliente non ha un\'email — aggiungila in Clienti prima di inviare' }
+  }
+
+  // ⚖️ FATTURE (e note): i dati del cliente che l'art. 21 DPR 633/1972
+  // pretende in fattura — nome, residenza o domicilio, P.IVA o CF — devono
+  // esserci PRIMA che il documento parta (richiesta Eli 25 ago: «blocchi
+  // all'invio se quelle cose mancano»). I preventivi non sono toccati.
+  if (richiedeDatiFattura(doc.doc_type)) {
+    const mancanti = datiFatturaMancanti(clientData)
+    if (mancanti.length > 0) return { error: messaggioDatiFattura(mancanti, doc.doc_type) }
   }
 
   // Assegna numero documento se ancora null
@@ -2058,6 +2068,19 @@ export async function registerManualSendAction(
 
   // Determina il tipo documento (dalla query o dall'hint del chiamante)
   const tipoDoc = String(docTypeHint ?? (doc as Record<string, unknown>).doc_type ?? 'preventivo')
+
+  // ⚖️ FATTURE (e note): dati del cliente obbligatori per l'art. 21 (nome,
+  // residenza o domicilio, P.IVA o CF) — questo è il varco WhatsApp/«Copia
+  // link», che non passa dall'email. Stessa guardia di sendDocumentAction.
+  if (richiedeDatiFattura(tipoDoc)) {
+    const { data: cli } = await supabase
+      .from('clients')
+      .select('name, surname, indirizzo, citta, piva, codice_fiscale')
+      .eq('id', String((doc as Record<string, unknown>).client_id))
+      .maybeSingle()
+    const mancanti = datiFatturaMancanti(cli)
+    if (mancanti.length > 0) return { error: messaggioDatiFattura(mancanti, tipoDoc) }
+  }
 
   // Piano Free: blocco all'INVIO se la quota del tipo è piena (preventivi e
   // fatture: 8 ciascuno, contatori separati — 083). Le note di credito non
@@ -3178,7 +3201,7 @@ export async function registerManualResendAction(
 
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, doc_type, validity_days, sent_at, document_log')
+    .select('id, status, doc_type, validity_days, sent_at, document_log, client_id')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .is('deleted_at', null)
@@ -3188,6 +3211,19 @@ export async function registerManualResendAction(
   if (await isDocFreeLocked(supabase, workspace, doc)) return { error: DOC_LOCKED_MESSAGE }
   if (doc.status === 'draft' || !doc.sent_at) {
     return { error: 'Questo documento non risulta ancora inviato: usa «Invia al cliente».' }
+  }
+
+  // ⚖️ FATTURE (e note): il reinvio è una consegna come la prima — i dati
+  // dell'art. 21 sul cliente (nome, residenza o domicilio, P.IVA o CF) vanno
+  // controllati anche qui (Eli 25 ago). Correggere la rubrica sblocca subito.
+  if (richiedeDatiFattura(doc.doc_type) && (doc as Record<string, unknown>).client_id) {
+    const { data: cli } = await supabase
+      .from('clients')
+      .select('name, surname, indirizzo, citta, piva, codice_fiscale')
+      .eq('id', String((doc as Record<string, unknown>).client_id))
+      .maybeSingle()
+    const mancanti = datiFatturaMancanti(cli)
+    if (mancanti.length > 0) return { error: messaggioDatiFattura(mancanti, doc.doc_type) }
   }
 
   const now = new Date()

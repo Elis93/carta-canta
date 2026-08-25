@@ -214,6 +214,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     ivaOpts,
   ).filter((r) => r.rate > 0)
   const ivaRighe = righeIvaDi(docItems)
+  // Sconto di documento in euro, per la riga del riepilogo: % sul subtotale
+  // più l'eventuale fisso, arrotondato e mai oltre il subtotale (stessa
+  // formula della pagina pubblica e del motore). Senza questa riga il foglio
+  // non tornava: Subtotale 90 + IVA 18,70 ≠ Totale 103,70 (foto Eli 25 ago).
+  const scontoDocumento = Math.min(
+    Math.round((subtotal * (ivaOpts.discount_pct / 100) + ivaOpts.discount_fixed) * 100) / 100,
+    subtotal,
+  )
 
   // Preventivo con più proposte: un calcolo PER PROPOSTA (null se ce n'è una
   // sola, e allora restano i totali salvati sul documento).
@@ -650,6 +658,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                         <span>Subtotale</span>
                         <span style={{ fontWeight: 500 }}>{euro(p.subtotal)}</span>
                       </div>
+                      {p.sconto > 0 && (
+                        <div style={riepilogoRow}>
+                          <span>Sconto{ivaOpts.discount_pct > 0 && !ivaOpts.discount_fixed ? ` (${ivaOpts.discount_pct}%)` : ''}</span>
+                          <span style={{ fontWeight: 500, color: '#2f8a63' }}>−{euro(p.sconto)}</span>
+                        </div>
+                      )}
                       {p.taxAmount > 0 && righeIvaDi(docItems.filter((i) => tierOf(i as unknown as VoceConTier) === p.tier)).map((r) => (
                         <div key={r.rate} style={riepilogoRow}>
                           <span>IVA {r.rate}%</span>
@@ -697,6 +711,16 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                   <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
                   <span style={{ color: '#161616', fontWeight: 500 }}>{euro(subtotal)}</span>
                 </div>
+                {/* Sconto di documento (foto Eli 25 ago: il riepilogo interno lo
+                    OMETTEVA — Subtotale 90, IVA, Totale — mentre PDF e pagina
+                    del cliente lo mostrano). Stessa formula della pagina
+                    pubblica: % sul subtotale + fisso, mai oltre il subtotale. */}
+                {scontoDocumento > 0 && (
+                  <div style={sumRow}>
+                    <span style={{ color: '#161616', fontWeight: 400 }}>Sconto{ivaOpts.discount_pct > 0 && !ivaOpts.discount_fixed ? ` (${ivaOpts.discount_pct}%)` : ''}</span>
+                    <span style={{ color: '#2f8a63', fontWeight: 500 }}>−{euro(scontoDocumento)}</span>
+                  </div>
+                )}
                 {taxAmount > 0 && ivaRighe.map((r) => (
                   <div key={r.rate} style={sumRow}>
                     <span style={{ color: '#161616', fontWeight: 400 }}>IVA {r.rate}%</span>

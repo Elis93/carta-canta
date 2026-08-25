@@ -71,6 +71,11 @@ describe('totaliPerProposta', () => {
     // 112 e 336, che è quanto lo SdI avrebbe scartato con l'errore 00422.
     expect(con[0].total).toBe(109.8)  // 90 + 19,80
     expect(con[1].total).toBe(329.4)  // 270 + 59,40
+    // Il campo `sconto` dice quanto è stato tolto a QUESTA proposta (per la
+    // riga «Sconto −X» del riepilogo); senza sconto resta 0.
+    expect(con[0].sconto).toBe(10)
+    expect(con[1].sconto).toBe(30)
+    expect(senza[0].sconto).toBe(0)
   })
 
   it('salta le proposte senza voci e tiene l’ordine Base → Premium', () => {

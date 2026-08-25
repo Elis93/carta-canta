@@ -19,12 +19,17 @@
 import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 
-// ⚠️ Stessa ALTEZZA del campo importo (40px): prima l'interruttore era più
-// basso del campo accanto e la riga sembrava sbilenca (Eli, 20 ago, foto).
+// Interruttore %/€ DENTRO il campo (25 ago, Eli: «com'è l'opzione sconto nel
+// riepilogo non mi piace, è brutto»): prima erano TRE controlli slegati sulla
+// riga — un blocco navy pieno, il campo, la ✕ — che pesavano più delle righe
+// dei totali intorno. Ora unità e importo vivono in UN solo riquadro (lo
+// schema dei campi con l'unità incorporata) e l'altezza è pari per costruzione
+// (la regola del 20 ago sulle altezze diverse non può più rompersi).
 const SEG: React.CSSProperties = {
-  border: 'none', background: 'transparent', cursor: 'pointer',
-  fontSize: 13, fontWeight: 600, padding: '0 12px', height: 38, lineHeight: 1,
-  color: 'var(--cc-text-2)',
+  border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
+  width: 32, height: 30, lineHeight: 1, borderRadius: 7, padding: 0,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  fontFamily: 'inherit',
 }
 
 export function DiscountField({
@@ -79,46 +84,50 @@ export function DiscountField({
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text)' }}>Sconto</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-          {/* Interruttore %/€ */}
-          <div style={{ display: 'inline-flex', alignItems: 'stretch', border: '1px solid #e3e3e6', borderRadius: 9, overflow: 'hidden', background: '#fff', height: 40, boxSizing: 'border-box' }}>
-            <button
-              type="button"
-              onClick={() => switchMode('pct')}
-              aria-pressed={mode === 'pct'}
-              style={{ ...SEG, background: mode === 'pct' ? 'var(--cc-navy)' : 'transparent', color: mode === 'pct' ? '#fff' : 'var(--cc-text-2)' }}
-            >%</button>
-            <button
-              type="button"
-              onClick={() => switchMode('fixed')}
-              aria-pressed={mode === 'fixed'}
-              style={{ ...SEG, background: mode === 'fixed' ? 'var(--cc-navy)' : 'transparent', color: mode === 'fixed' ? '#fff' : 'var(--cc-text-2)' }}
-            >€</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+          {/* UN riquadro solo: unità (%/€) + importo. L'unità attiva è la
+              pillola bianca in rilievo sulla striscia grigia — il navy pieno
+              di prima pesava più dei totali intorno. */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #e3e3e6', borderRadius: 10, overflow: 'hidden', background: '#fff', height: 38, boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#f4f3ef', alignSelf: 'stretch', padding: '0 3px', borderRight: '1px solid #eeece6' }}>
+              <button
+                type="button"
+                onClick={() => switchMode('pct')}
+                aria-pressed={mode === 'pct'}
+                style={{ ...SEG, background: mode === 'pct' ? '#fff' : 'transparent', color: mode === 'pct' ? '#1a1a2e' : 'var(--cc-muted)', boxShadow: mode === 'pct' ? '0 1px 2px rgba(20,20,40,.12)' : 'none' }}
+              >%</button>
+              <button
+                type="button"
+                onClick={() => switchMode('fixed')}
+                aria-pressed={mode === 'fixed'}
+                style={{ ...SEG, background: mode === 'fixed' ? '#fff' : 'transparent', color: mode === 'fixed' ? '#1a1a2e' : 'var(--cc-muted)', boxShadow: mode === 'fixed' ? '0 1px 2px rgba(20,20,40,.12)' : 'none' }}
+              >€</button>
+            </div>
+            {/* Campo valore — solo il modo attivo ha il name di submit; l'altro
+                valore resta in un input nascosto, così non si perde mai. */}
+            <input
+              name={mode === 'pct' ? 'discount_pct' : 'discount_fixed'}
+              type="number"
+              min="0"
+              max={mode === 'pct' ? '100' : undefined}
+              step="0.01"
+              inputMode="decimal"
+              placeholder={mode === 'pct' ? '0' : '0,00'}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
+              style={{ width: 76, height: '100%', boxSizing: 'border-box', textAlign: 'right', border: 'none', outline: 'none', padding: '0 11px', fontSize: 15, background: 'transparent', fontFamily: 'inherit' }}
+              aria-label={mode === 'pct' ? 'Sconto in percentuale' : 'Sconto in euro'}
+            />
           </div>
-          {/* Campo valore — solo il modo attivo ha il name di submit; l'altro
-              valore resta in un input nascosto, così non si perde mai. */}
-          <input
-            name={mode === 'pct' ? 'discount_pct' : 'discount_fixed'}
-            type="number"
-            min="0"
-            max={mode === 'pct' ? '100' : undefined}
-            step="0.01"
-            inputMode="decimal"
-            placeholder={mode === 'pct' ? '0' : '0,00'}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
-            style={{ width: 84, height: 40, boxSizing: 'border-box', textAlign: 'right', border: '1px solid #e3e3e6', borderRadius: 9, padding: '0 11px', fontSize: 15, background: '#fff' }}
-            aria-label={mode === 'pct' ? 'Sconto in percentuale' : 'Sconto in euro'}
-          />
           <input type="hidden" name={mode === 'pct' ? 'discount_fixed' : 'discount_pct'} value={mode === 'pct' ? fixed : pct} />
           <button
             type="button"
             onClick={() => { setPct(''); setFixed(''); setOpen(false); onDirty?.() }}
             aria-label="Rimuovi sconto"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cc-text-3)', padding: 2 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cc-text-3)', padding: 4 }}
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
       </div>

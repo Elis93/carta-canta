@@ -107,7 +107,19 @@ export function BiometricToggle() {
   async function addBiometric() {
     setBusy(true)
     try {
-      const res = await registerPasskey(guessDeviceLabel())
+      // ⚠️ «Registrazione annullata» va detto SOLO se salta la cerimonia
+      // WebAuthn (l'utente chiude la tendina di sistema). Prima il catch
+      // copriva anche listMyPasskeysAction() DOPO il successo: con la pagina
+      // rimasta aperta attraverso un deploy (gli id delle server action
+      // ruotano) quella chiamata moriva e il toast diceva «annullata» su
+      // un'impronta APPENA registrata (collaudo Eli, 25 ago).
+      let res: Awaited<ReturnType<typeof registerPasskey>>
+      try {
+        res = await registerPasskey(guessDeviceLabel())
+      } catch {
+        toast.info('Registrazione annullata.')
+        return
+      }
       if (!res.ok) { toast.error(res.error ?? 'Registrazione non riuscita. Riprova.'); return }
       setBiometricEnabled(true) // attiva anche il blocco
       // Lega l'impronta all'utente per cui è stata registrata: se un domani su
@@ -119,11 +131,13 @@ export function BiometricToggle() {
       } catch { /* best effort: senza uid resta la via d'uscita a runtime */ }
       setBioOn(true)
       setLockOn(true)
-      const list = await listMyPasskeysAction()
-      setPasskeys(list.passkeys)
+      // La lista serve solo alla UI: se non si aggiorna (rete, deploy) NON
+      // deve trasformare un successo in un altro messaggio.
+      try {
+        const list = await listMyPasskeysAction()
+        setPasskeys(list.passkeys)
+      } catch { /* si riallinea alla prossima apertura della pagina */ }
       toast.success('Sblocco con impronta aggiunto su questo dispositivo.', { closeButton: true })
-    } catch {
-      toast.info('Registrazione annullata.')
     } finally {
       setBusy(false)
     }
