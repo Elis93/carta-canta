@@ -147,6 +147,18 @@ export default async function AltroPage() {
         <CercaFunzione />
       </div>
 
+      {/* ── Testo grande — PRIMA voce dopo il cerca (Eli, 25 ago) ──
+          Stava in fondo alla pagina, sotto tutte le sezioni: ma chi ha bisogno
+          di ingrandire il testo è esattamente chi fatica a leggere e a scorrere
+          fino in fondo per trovarlo. Qui si incontra subito. */}
+      <div style={{ marginTop: 16 }}>
+        <div style={cardStyle}>
+          <div style={{ padding: '9px 0' }}>
+            <TextSizeToggle />
+          </div>
+        </div>
+      </div>
+
       {/* ── Ogni giorno ── */}
       <div style={{ marginTop: 16 }}>
         <div className="cc-section-label" style={sectionLabelStyle}>Ogni giorno</div>
@@ -209,12 +221,7 @@ export default async function AltroPage() {
           loro lista. Resta raggiungibile anche dalla ricerca e dalle FAQ. */}
       <div style={{ marginTop: 16 }}>
         <div style={cardStyle}>
-          <div style={{ padding: '9px 0' }}>
-            <TextSizeToggle />
-          </div>
-          <div style={{ borderTop: '0.5px solid #eee' }}>
-            <InstallAppButton />
-          </div>
+          <InstallAppButton />
         </div>
       </div>
 

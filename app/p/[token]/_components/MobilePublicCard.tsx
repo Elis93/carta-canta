@@ -345,7 +345,10 @@ export function MobilePublicCard({
           return (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
               <span style={{ color: '#161616', fontWeight: 400 }}>
-                Sconto{discountPct ? ` (${discountPct}%)` : ''}
+                {/* La % si mostra SOLO se è tutto lo sconto: con anche una
+                    cifra fissa l'etichetta «(2%)» accanto a −10,50 su un
+                    subtotale di 25 € è una contraddizione (Eli, 25 ago). */}
+                Sconto{discountPct && !discountFixed ? ` (${discountPct}%)` : ''}
               </span>
               <span style={{ color: '#2f8a63', fontWeight: 500 }}>−{formatEur(discountTotal)}</span>
             </div>

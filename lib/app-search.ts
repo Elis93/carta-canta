@@ -113,6 +113,9 @@ export const VOCI_APP: VoceApp[] = [
   // ── Account, sicurezza, dati ───────────────────────────────────────────
   { label: 'Indirizzo di accesso', dove: 'Account › Indirizzo e accesso', href: '/account/accesso',
     parole: ['email', 'indirizzo di accesso', 'con che email entro', 'account'] },
+  { label: 'Testo grande', dove: 'Altro, sopra le sezioni', href: '/altro',
+    desc: 'Ingrandisce scritte e pulsanti in tutta l’app',
+    parole: ['testo grande', 'scritte piccole', 'ingrandire', 'zoom', 'vedo male', 'occhiali', 'leggibile'] },
   { label: 'Blocco dell’app', dove: 'Account › Sicurezza e blocco app', href: '/account/sicurezza',
     desc: 'Impronta o volto per aprire l’app',
     parole: ['impronta', 'blocco', 'bloccare app', 'password app', 'volto', 'faccia', 'sicurezza', 'proteggere'] },

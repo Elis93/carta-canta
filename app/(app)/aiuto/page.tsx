@@ -714,9 +714,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Le scritte sono piccole: posso ingrandirle?',
     parole: ['testo grande', 'leggibile', 'zoom', 'occhiali', 'vedo male'],
-    a: <>Sì: in <VaiA a="strumenti" />{' '}attiva <b>Testo grande</b> — scritte e
-      pulsanti diventano più grandi in tutta l&rsquo;app e sotto le voci dei menu compare una breve
-      spiegazione. Si spegne con lo stesso interruttore. Dal computer lo trovi in{' '}
+    a: <>Sì: apri <VaiA a="strumenti">Altro</VaiA>{' '}e attiva <b>Testo grande</b>, subito
+      sotto il campo di ricerca — scritte e pulsanti diventano più grandi in tutta
+      l&rsquo;app e sotto le voci dei menu compare una breve spiegazione. Si spegne con lo
+      stesso interruttore. Dal computer lo trovi in{' '}
       <VaiA a="impGenerale">Impostazioni › Dati dell&rsquo;attività</VaiA>.</>,
   },
   {

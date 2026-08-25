@@ -58,7 +58,16 @@ export async function POST(request: NextRequest, { params }: Params) {
     `)
     .eq('public_token', token)
     .is('deleted_at', null)
-    .in('status', ['sent', 'viewed'])
+    // ⚠️ NESSUN filtro di stato (bug trovato da Eli il 25 ago: «il cliente ha
+    // aperto il link ma in cronologia non compare»). Il vecchio
+    // `.in('status', ['sent','viewed'])` serviva alla transizione sent→viewed,
+    // ma buttava via anche la REGISTRAZIONE dell'apertura: su un preventivo
+    // già accettato, su una fattura segnata pagata o su uno scaduto, le
+    // riaperture del cliente sparivano — proprio quelle che dicono «l'ha
+    // riletto» e che, con l'IP, affiancano la firma come prova.
+    // Le bozze non hanno pagina pubblica (la pagina fa notFound), ma il
+    // filtro esplicito tiene la regola scritta dove si legge.
+    .neq('status', 'draft')
     .maybeSingle()
 
   if (!doc) return NextResponse.json({ ok: true })
