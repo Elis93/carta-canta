@@ -604,7 +604,13 @@ export default async function PublicDocumentPage({ params }: Props) {
             la possibilità di SCRIVERE, che resta ai documenti attivi. */}
         {(canWriteMessages || conversation.length > 0) && (
           <div style={{ padding: '14px 15px 0', display: 'flex', flexDirection: 'column', gap: 9 }}>
-            <ClientMessages token={token} workspaceName={workspaceName} messages={conversation} canWrite={canWriteMessages} />
+            <ClientMessages
+              token={token}
+              workspaceName={workspaceName}
+              messages={conversation}
+              canWrite={canWriteMessages}
+              docType={isNotaCredito ? 'nota_credito' : isPreventivo ? 'preventivo' : 'fattura'}
+            />
             {canWriteMessages && ownerEmail && (
               <a
                 href={`mailto:${ownerEmail}`}

@@ -29,6 +29,7 @@ export function ClientMessages({
   workspaceName,
   messages: initialMessages,
   canWrite,
+  docType,
 }: {
   token: string
   workspaceName: string
@@ -36,6 +37,10 @@ export function ClientMessages({
   /** false su documenti chiusi (accettato, pagato, annullato): la
       conversazione resta LEGGIBILE, ma non si scrive più. */
   canWrite: boolean
+  /** Il suggerimento nel campo cambia col tipo (Eli 25 ago: «quando
+      potrebbe iniziare i lavori?» su una FATTURA non ha senso — se c'è
+      la fattura, i lavori sono finiti). Tipo esplicito, mai dedotto. */
+  docType: 'preventivo' | 'fattura' | 'nota_credito'
 }) {
   const [messages, setMessages] = useState<ConversationMessage[]>(initialMessages)
   const last = messages[messages.length - 1]
@@ -159,15 +164,25 @@ export function ClientMessages({
               </div>
             ) : (
               <>
+                {/* ⚠️ Niente promesse sull'email (Eli 25 ago): l'avviso al
+                    cliente parte solo se l'artigiano ha la SUA email in
+                    rubrica — qui il cliente non lascia nessun indirizzo, e
+                    «se hai lasciato la tua email» creava solo confusione. */}
                 <p style={{ fontSize: 13, color: '#767676', margin: '0 0 12px', lineHeight: 1.5 }}>
                   Il messaggio arriva direttamente nell&rsquo;app dell&rsquo;artigiano, insieme a
-                  questo documento. Non serve registrarsi: la risposta comparirà qui sotto e, se hai
-                  lasciato la tua email, ti avvisiamo anche per email.
+                  questo documento. Non serve registrarsi: la risposta comparirà qui sotto,
+                  riaprendo questa pagina.
                 </p>
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  placeholder="Es. Buongiorno, quando potrebbe iniziare i lavori?"
+                  placeholder={
+                    docType === 'preventivo'
+                      ? 'Es. Buongiorno, quando potrebbe iniziare i lavori?'
+                      : docType === 'fattura'
+                        ? 'Es. Buongiorno, le confermo il pagamento entro venerdì.'
+                        : 'Es. Buongiorno, ho una domanda su questo documento.'
+                  }
                   rows={4}
                   maxLength={1000}
                   autoFocus
