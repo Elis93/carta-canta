@@ -20,6 +20,9 @@ export interface ClientMessageEmailProps {
  */
 export function ClientMessageEmail({ docLabel, docNumber, message, docUrl }: ClientMessageEmailProps) {
   const rif = docNumber ? `${docLabel} ${docNumber}` : docLabel
+  // Articolo dalla PAROLA (fattura/nota = femminili): «della fattura», non
+  // «del fattura» (errore visto da Eli, 25 ago).
+  const della = /^(fattur|nota)/i.test(docLabel) ? 'della' : 'del'
   return (
     <Html lang="it">
       <Head />
@@ -30,7 +33,7 @@ export function ClientMessageEmail({ docLabel, docNumber, message, docUrl }: Cli
             Messaggio dal cliente
           </Heading>
           <Text style={{ fontSize: 15, color: '#333', lineHeight: 1.6 }}>
-            Il cliente ti ha scritto dalla pagina del{' '}<strong>{rif}</strong>:
+            Il cliente ti ha scritto dalla pagina {della}{' '}<strong>{rif}</strong>:
           </Text>
           <Section style={{ background: '#f7f5f0', borderLeft: '3px solid #c9a44c', borderRadius: 8, padding: '14px 16px', margin: '14px 0' }}>
             <Text style={{ fontSize: 15, color: '#161616', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
@@ -46,9 +49,12 @@ export function ClientMessageEmail({ docLabel, docNumber, message, docUrl }: Cli
             </Button>
           </Section>
           <Hr style={{ borderColor: '#eeeeee', margin: '20px 0 12px' }} />
+          {/* Copy rivista (Eli 25 ago: «rispondi ai recapiti in rubrica»
+              creava confusione — la risposta si scrive DALL'APP, nella card
+              Messaggi, così il cliente la vede sulla pagina del suo link). */}
           <Text style={{ fontSize: 12, color: '#8a887f', lineHeight: 1.5 }}>
-            Rispondi al cliente ai recapiti che hai in rubrica. Il messaggio resta anche
-            nella cronologia del documento in Carta Canta.
+            Per rispondere tocca «Apri il documento»: trovi la conversazione nella
+            card Messaggi. La risposta compare al cliente sulla pagina del suo link.
           </Text>
         </Container>
       </Body>

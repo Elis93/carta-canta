@@ -28,6 +28,7 @@ import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { RestoreVersionButton } from '../_components/RestoreVersionButton'
 import { DocumentTimeline } from '../_components/DocumentTimeline'
 import { MessaggiCard } from '../_components/MessaggiCard'
+import { ScrollToHash } from '@/components/shared/ScrollToHash'
 import { conversationFromLog } from '@/lib/documents/messaggi'
 import { hasPiuProposte, totaliPerProposta, tierOf, TIER_LABEL, TIER_ORDER, type TierKey, type VoceConTier } from '@/lib/documents/proposte'
 import { riepilogoIva } from '@/lib/fiscal/calcoli'
@@ -370,6 +371,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* La pagina ha un loading.tsx: le ancore (#messaggi) hanno bisogno di
+          ScrollToHash, altrimenti lo scroll parte sullo scheletro (regola 20 ago). */}
+      <ScrollToHash />
 
       {/* ── MOBILE HEADER (lg:hidden) ── */}
       <div className="lg:hidden" style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', padding: '12px 15px' }}>
@@ -812,11 +816,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {/* Card Messaggi — solo se il cliente ha scritto dal link (5 ago) */}
           {conversation.length > 0 && (
             <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
+              {/* anchorId solo QUI (mount mobile): sul desktop c'è una seconda
+                  istanza e un id duplicato manderebbe lo scroll su quella nascosta. */}
               <MessaggiCard
                 documentId={doc.id}
                 messages={conversation}
                 clientHasEmail={!!pdfClient?.email}
                 clientName={clientName}
+                anchorId="messaggi"
               />
             </div>
           )}

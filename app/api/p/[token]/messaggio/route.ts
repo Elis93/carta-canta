@@ -18,7 +18,7 @@ import { sendEmail } from '@/lib/email/send'
 import { ClientMessageEmail } from '@/lib/email/templates/client_message'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
 import { clientIpFrom } from '@/lib/client-ip'
-import { formatDocNumber } from '@/lib/utils'
+import { formatDocNumber, docTypeLabel, docTypePath } from '@/lib/utils'
 
 const MAX_LEN = 1000
 
@@ -94,15 +94,18 @@ export async function POST(
       const ownerEmail = ownerData?.user?.email
       if (ownerEmail) {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
-        const isFattura = doc.doc_type === 'fattura'
+        // Tipo VERO, mai per esclusione (regola 9 ago): la nota di credito
+        // usciva come «preventivo» e l'URL della nota era comunque /fatture.
+        const label = docTypeLabel(doc.doc_type).toLowerCase()
+        const laLabel = /^(fattur|nota)/.test(label) ? `la ${label}` : `il ${label}`
         await sendEmail({
           to: ownerEmail,
-          subject: `Messaggio dal cliente su ${isFattura ? 'la fattura' : 'il preventivo'} ${doc.doc_number ? formatDocNumber(doc.doc_number) : ''}`.trim(),
+          subject: `Messaggio dal cliente su ${laLabel} ${doc.doc_number ? formatDocNumber(doc.doc_number) : ''}`.trim(),
           react: createElement(ClientMessageEmail, {
-            docLabel: isFattura ? 'fattura' : 'preventivo',
+            docLabel: label,
             docNumber: doc.doc_number ? formatDocNumber(doc.doc_number) : null,
             message: text,
-            docUrl: `${appUrl}/${isFattura ? 'fatture' : 'preventivi'}/${doc.id}`,
+            docUrl: `${appUrl}/${docTypePath(doc.doc_type)}/${doc.id}#messaggi`,
           }),
         })
       }

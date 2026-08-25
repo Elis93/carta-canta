@@ -110,8 +110,11 @@ export function NotificationBell({
         }
       >
         <Bell size={hero ? 16 : 18} strokeWidth={1.9} />
+        {/* Badge più grande e più acceso (Eli 25 ago: «non si vede»): rosso
+            vivo + anello del colore di fondo (navy in testata, bianco sul
+            desktop) che lo stacca dal cerchio della campanella. */}
         {unread > 0 && (
-          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: hero ? 16 : 17, height: hero ? 16 : 17, borderRadius: 999, background: '#b05656', color: '#fff', fontSize: hero ? 9.5 : 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+          <span style={{ position: 'absolute', top: -7, right: -7, minWidth: 20, height: 20, boxSizing: 'border-box', borderRadius: 999, background: '#e04a3d', border: hero ? '2px solid #1a1a2e' : '2px solid #fff', color: '#fff', fontSize: 11.5, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', lineHeight: 1 }}>
             {unread > 9 ? '9+' : unread}
           </span>
         )}

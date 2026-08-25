@@ -24,17 +24,22 @@ export interface OwnerMessageEmailProps {
  */
 export function OwnerMessageEmail({ workspaceName, docLabel, docNumber, message, publicUrl }: OwnerMessageEmailProps) {
   const rif = docNumber ? `${docLabel} ${docNumber}` : docLabel
+  // Articolo dalla PAROLA (fattura/nota = femminili): «sulla fattura», non
+  // «sul fattura» — e copy NEUTRA: non si dà per scontato che sia stato il
+  // cliente a scrivere per primo (Eli, 25 ago).
+  const fem = /^(fattur|nota)/i.test(docLabel)
+  const sulla = fem ? 'sulla' : 'sul'
   return (
     <Html lang="it">
       <Head />
-      <Preview>{`${workspaceName} ha risposto al tuo messaggio`}</Preview>
+      <Preview>{`Nuovo messaggio da ${workspaceName} ${sulla} ${rif}`}</Preview>
       <Body style={{ backgroundColor: '#f6f6f4', fontFamily: 'Helvetica, Arial, sans-serif' }}>
         <Container style={{ backgroundColor: '#ffffff', borderRadius: 12, padding: '28px 24px', margin: '24px auto', maxWidth: 520 }}>
           <Heading style={{ fontSize: 19, color: '#1a1a2e', margin: '0 0 12px' }}>
-            {workspaceName} ti ha risposto
+            {workspaceName} ti ha scritto
           </Heading>
           <Text style={{ fontSize: 15, color: '#333', lineHeight: 1.6 }}>
-            Ecco la risposta al messaggio che hai scritto sul{' '}<strong>{rif}</strong>:
+            Ecco il messaggio {sulla}{' '}<strong>{rif}</strong>:
           </Text>
           <Section style={{ background: '#f7f5f0', borderLeft: '3px solid #c9a44c', borderRadius: 8, padding: '14px 16px', margin: '14px 0' }}>
             <Text style={{ fontSize: 15, color: '#161616', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
@@ -54,8 +59,8 @@ export function OwnerMessageEmail({ workspaceName, docLabel, docNumber, message,
           </Section>
           <Hr style={{ borderColor: '#eeeeee', margin: '22px 0 12px' }} />
           <Text style={{ fontSize: 12, color: '#8a887f', lineHeight: 1.5 }}>
-            Ricevi questa email perché hai scritto un messaggio dalla pagina del {docLabel} di {workspaceName}.
-            Documento generato con Carta Canta.
+            Ricevi questa email perché {workspaceName} ti ha inviato un messaggio {sulla} {docLabel} che
+            ti riguarda. La conversazione completa è sulla pagina del documento, generato con Carta Canta.
           </Text>
         </Container>
       </Body>

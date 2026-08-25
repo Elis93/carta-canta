@@ -32,12 +32,17 @@ export function MessaggiCard({
   messages: initialMessages,
   clientHasEmail,
   clientName,
+  anchorId,
 }: {
   documentId: string
   messages: ConversationMessage[]
   /** il cliente ha un'email in rubrica → può ricevere l'avviso della risposta */
   clientHasEmail: boolean
   clientName: string | null
+  /** Ancora per i deep-link (#messaggi dalla campanella e dall'email).
+      ⚠️ Da passare a UN solo mount per pagina: con due istanze (mobile +
+      desktop) l'id duplicato farebbe puntare lo scroll a quella nascosta. */
+  anchorId?: string
 }) {
   const [messages, setMessages] = useState<ConversationMessage[]>(initialMessages)
   const [text, setText] = useState('')
@@ -59,13 +64,13 @@ export function MessaggiCard({
       setMessages((prev) => [...prev, { from: 'owner', at: new Date().toISOString(), text: body }])
       setText('')
       if (res.warning) toast.warning(res.warning)
-      else if (res.emailed) toast.success('Risposta inviata: il cliente la riceve anche per email.')
+      else if (res.emailed) toast.success('Risposta inviata: il cliente la riceve anche all’email registrata in rubrica.')
       else toast.success('Risposta inviata.')
     })
   }
 
   return (
-    <div>
+    <div id={anchorId} style={anchorId ? { scrollMarginTop: 80 } : undefined}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -133,7 +138,7 @@ export function MessaggiCard({
       {clientHasEmail ? (
         <p style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: 8 }}>
           <Mail size={14} style={{ flexShrink: 0, marginTop: 2 }} />
-          <span>La risposta compare nella pagina del documento e il cliente la riceve anche per email.</span>
+          <span>La risposta compare nella pagina del documento; il cliente la riceve anche all&rsquo;email registrata in rubrica.</span>
         </p>
       ) : (
         <p style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 13, color: '#b0863e', lineHeight: 1.45, marginTop: 8 }}>

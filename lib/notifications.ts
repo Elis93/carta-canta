@@ -412,7 +412,7 @@ export async function getAppNotifications(
         title: `Messaggio da ${clientDisplayName(doc.clients)}${daRispondere ? ' · da rispondere' : ''}`,
         body: `${num ? `${docTypeLabel(doc.doc_type)} ${num}: ` : ''}${excerpt}`,
         when: e.at,
-        href: `/${docTypePath(doc.doc_type)}/${doc.id}`,
+        href: `/${docTypePath(doc.doc_type)}/${doc.id}#messaggi`,
         read: readKeys.has(key),
       })
     }
@@ -464,7 +464,7 @@ export async function getAppNotifications(
         title: `Fattura ${num ?? ''} scartata dallo SdI`.replace('  ', ' '),
         body: `${doc.sdi_error ?? 'Controlla i dati'}. Correggi e reinvia. Ti abbiamo mandato anche un'email.`,
         when: doc.sdi_updated_at,
-        href: `/fatture/${doc.id}`,
+        href: `/fatture/${doc.id}#sdi`,
         read: readKeys.has(key),
       })
     } else if (!doc.sdi_status && doc.status === 'accepted' && showSdiPending) {
@@ -475,7 +475,7 @@ export async function getAppNotifications(
         title: `Fattura ${num ?? ''} pagata ma non trasmessa allo SdI`.replace('  ', ' '),
         body: 'Tocca per trasmetterla al Sistema di Interscambio.',
         when: doc.paid_at ?? doc.accepted_at,
-        href: `/fatture/${doc.id}`,
+        href: `/fatture/${doc.id}#sdi`,
         read: readKeys.has(key),
       })
     } else if (!doc.sdi_status && showSdiPending) {
@@ -502,7 +502,7 @@ export async function getAppNotifications(
               ? 'Oggi è l’ultimo giorno utile per trasmetterla allo SdI.'
               : `Restano ${termine.giorniRimasti} giorni per la trasmissione allo SdI.`,
           when: doc.created_at,
-          href: `/fatture/${doc.id}`,
+          href: `/fatture/${doc.id}#sdi`,
           read: readKeys.has(key),
         })
       }

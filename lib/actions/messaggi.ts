@@ -22,7 +22,7 @@ import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 import { sendEmail } from '@/lib/email/send'
 import { OwnerMessageEmail } from '@/lib/email/templates/owner_message'
 import { checkPublicRateLimit } from '@/lib/public-rate-limit'
-import { formatDocNumber, docTypePath } from '@/lib/utils'
+import { formatDocNumber, docTypePath, docTypeLabel } from '@/lib/utils'
 
 const MAX_LEN = 1000
 
@@ -114,15 +114,17 @@ export async function sendOwnerMessageAction(
 
   try {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
-    const isFattura = doc.doc_type === 'fattura'
+    // Etichetta dal TIPO VERO, mai per esclusione (regola 9 ago): una nota
+    // di credito si chiamava «preventivo» nell'email al cliente.
+    const label = docTypeLabel(doc.doc_type).toLowerCase()
     const wsName = workspace.ragione_sociale || workspace.name || 'Carta Canta'
     const num = doc.doc_number ? formatDocNumber(doc.doc_number) : null
     const result = await sendEmail({
       to: clientEmail,
-      subject: `Risposta da ${wsName}${num ? ` — ${isFattura ? 'fattura' : 'preventivo'} ${num}` : ''}`,
+      subject: `Messaggio da ${wsName}${num ? ` — ${label} ${num}` : ''}`,
       react: createElement(OwnerMessageEmail, {
         workspaceName: wsName,
-        docLabel: isFattura ? 'fattura' : 'preventivo',
+        docLabel: label,
         docNumber: num,
         message: text,
         publicUrl: doc.public_token ? `${appUrl}/p/${doc.public_token}` : appUrl,

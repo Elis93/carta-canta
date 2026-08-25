@@ -23,6 +23,7 @@ import { SendEmailDialog } from '@/app/(app)/preventivi/_components/SendEmailDia
 import { RestoreVersionButton } from '@/app/(app)/preventivi/_components/RestoreVersionButton'
 import { DocumentTimeline } from '@/app/(app)/preventivi/_components/DocumentTimeline'
 import { MessaggiCard } from '@/app/(app)/preventivi/_components/MessaggiCard'
+import { ScrollToHash } from '@/components/shared/ScrollToHash'
 import { conversationFromLog } from '@/lib/documents/messaggi'
 import { SendEmailDialogController } from '@/app/(app)/preventivi/_components/SendEmailDialogController'
 import { WorkPhotosCard } from '@/app/(app)/preventivi/_components/WorkPhotosCard'
@@ -524,6 +525,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* La pagina ha un loading.tsx: le ancore (#messaggi, #sdi) hanno bisogno
+          di ScrollToHash, altrimenti lo scroll parte sullo scheletro (20 ago). */}
+      <ScrollToHash />
 
       {/* ── MOBILE HEADER (lg:hidden) ── */}
       <div
@@ -845,7 +849,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         {/* ── Fattura elettronica SdI (mockup crescita §1) — su mobile
             nascosta in modifica (il form deve stare in alto, Eli 3 ago) ── */}
         {sdiProps && (
-          <div className={editing ? 'hidden lg:block' : undefined}>
+          <div id="sdi" className={editing ? 'hidden lg:block' : undefined} style={{ scrollMarginTop: 80 }}>
             <SdiCard {...sdiProps} />
           </div>
         )}
@@ -1275,6 +1279,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               messages={conversation}
               clientHasEmail={!!pdfClient?.email}
               clientName={clientName}
+              anchorId="messaggi"
             />
           </div>
         )}
