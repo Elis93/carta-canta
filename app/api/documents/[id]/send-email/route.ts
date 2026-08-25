@@ -507,22 +507,37 @@ export async function POST(request: NextRequest, { params }: Params) {
   const existingLog = Array.isArray((doc as Record<string, unknown>).document_log)
     ? (doc as Record<string, unknown>).document_log as Array<{ type: string; at: string }>
     : []
+  // Scadenze calcolate PRIMA del log: ogni nuovo termine è anche una voce di
+  // cronologia (`expiry_set`, Eli 25 ago), scritta nella stessa update.
+  const firstValidity = ((doc as Record<string, unknown>).validity_days as number | null) ?? 30
+  const firstExpiry = new Date(sentAt)
+  firstExpiry.setDate(firstExpiry.getDate() + firstValidity)
+  // Al REINVIO la scadenza riparte (decisione: expires_at riparte SOLO
+  // al (re)invio, mai al semplice salvataggio)
+  const newExpiry = new Date()
+  newExpiry.setDate(newExpiry.getDate() + firstValidity)
+  // Fattura PAGATA reinviata = copia di cortesia/quietanza: la scadenza
+  // di pagamento NON deve ripartire (review 25 lug C1 — su una fattura
+  // incassata una nuova scadenza è un controsenso).
+  const keepExpiry = doc.doc_type === 'fattura' && doc.status === 'accepted'
+
   const updatedLog = isFirstSend
-    ? existingLog
-    : [...existingLog, { type: 'resent', at: sentAt.toISOString() }]
+    ? [...existingLog, { type: 'expiry_set', at: sentAt.toISOString(), expires: firstExpiry.toISOString() }]
+    : [
+        ...existingLog,
+        { type: 'resent', at: sentAt.toISOString() },
+        ...(keepExpiry ? [] : [{ type: 'expiry_set', at: sentAt.toISOString(), expires: newExpiry.toISOString() }]),
+      ]
 
   const { error: updateError } = isFirstSend
     ? await (() => {
-        const validityDays = (doc as Record<string, unknown>).validity_days as number ?? 30
-        const expiresAt = new Date(sentAt)
-        expiresAt.setDate(expiresAt.getDate() + validityDays)
         return supabase
           .from('documents')
           .update({
             status: 'sent' as const,
             sent_at: sentAt.toISOString(),
             doc_number: finalDocNumber,
-            expires_at: expiresAt.toISOString(),
+            expires_at: firstExpiry.toISOString(),
             pdf_url: null,
             sent_snapshot: snapshot as unknown as Json,
             updated_after_send_at: null,
@@ -532,15 +547,6 @@ export async function POST(request: NextRequest, { params }: Params) {
           .eq('workspace_id', workspace.id)
       })()
     : await (async () => {
-        // Al REINVIO la scadenza riparte (decisione: expires_at riparte SOLO
-        // al (re)invio, mai al semplice salvataggio)
-        const revalidity = ((doc as Record<string, unknown>).validity_days as number | null) ?? 30
-        const newExpiry = new Date()
-        newExpiry.setDate(newExpiry.getDate() + revalidity)
-        // Fattura PAGATA reinviata = copia di cortesia/quietanza: la scadenza
-        // di pagamento NON deve ripartire (review 25 lug C1 — su una fattura
-        // incassata una nuova scadenza è un controsenso).
-        const keepExpiry = doc.doc_type === 'fattura' && doc.status === 'accepted'
         return supabase
           .from('documents')
           .update({

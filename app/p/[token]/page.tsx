@@ -622,11 +622,10 @@ export default async function PublicDocumentPage({ params }: Props) {
           </div>
         )}
 
-        {/* Footer di servizio — ULTIMO */}
-        <div style={{ textAlign: 'center', fontSize: 11, color: '#b3b1ab', padding: '22px 14px 6px' }}>
-          {docLabelCap} {isPreventivo ? 'generato' : 'generata'} con <b style={{ color: 'var(--cc-muted)' }}>Carta Canta</b> · cartacanta.app
-        </div>
-        <div style={{ textAlign: 'center', fontSize: 10, color: '#c2c0b8', padding: '0 14px 24px', lineHeight: 1.5 }}>
+        {/* Footer di servizio — ULTIMO. La riga «emesso con Carta Canta» col
+            logo vive ora nel piede del foglio (MobilePublicCard, veste B):
+            qui resta solo l'avviso di registrazione, senza doppioni. */}
+        <div style={{ textAlign: 'center', fontSize: 10, color: '#c2c0b8', padding: '18px 14px 24px', lineHeight: 1.5 }}>
           L&rsquo;apertura di questa pagina viene registrata.{' '}
           <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#a5a39b', textDecoration: 'underline' }}>Privacy</a>
         </div>

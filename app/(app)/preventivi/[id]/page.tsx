@@ -385,8 +385,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         </span>
         {edit !== '1' ? (
           freeLocked ? null : (
-          // Matita CON etichetta (collaudo 17 ago: «non si capisce la matita»)
-          <Link href={`/preventivi/${id}?edit=1`} aria-label="Modifica preventivo" style={{ display: 'flex', alignItems: 'center', gap: 5, borderRadius: 999, background: '#f4f4f5', padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#55534b', textDecoration: 'none', flexShrink: 0 }}>
+          // Matita CON etichetta (collaudo 17 ago) — NAVY PIENA (mockup B,
+          // Eli 25 ago: «non si capisce che serve cliccare su Modifica»).
+          <Link href={`/preventivi/${id}?edit=1`} aria-label="Modifica preventivo" style={{ display: 'flex', alignItems: 'center', gap: 5, borderRadius: 999, background: '#1a1a2e', padding: '8px 14px', fontSize: 13, fontWeight: 700, color: '#fff', textDecoration: 'none', flexShrink: 0, boxShadow: '0 5px 12px -5px rgba(26,26,46,.6)' }}>
             <Pencil size={15} /> Modifica
           </Link>
           )
@@ -522,10 +523,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          {/* Foto lavoro (mockup cantiere §2.1) */}
-          <div style={{ margin: '14px 15px 0' }}>
-            <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
-          </div>
+          {/* La card Foto è scesa in fondo, dopo il Cliente (mockup B, Eli
+              25 ago): la prima cosa che si incontra dev'essere il documento. */}
 
           {/* Banner rifiutato */}
           {doc.status === 'rejected' && (
@@ -574,30 +573,25 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          {/* Card Cliente — tap: apre la scheda cliente. Se il cliente non è in
-              rubrica (es. eliminato dopo la creazione del documento) la card è
-              statica: prima era un link "#" che non portava da nessuna parte. */}
-          {clientName && (
-            pdfClient?.id ? (
-              <Link href={`/clienti/${pdfClient.id}`} style={{ ...cardStyle, margin: '14px 15px 0', display: 'block', textDecoration: 'none' }}>
-                <div style={cardLabel}>Cliente</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
-                {clientContact && <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>{clientContact}</div>}
-              </Link>
-            ) : (
-              <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
-                <div style={cardLabel}>Cliente</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
-                <div style={{ fontSize: 12, color: '#767676', marginTop: 3 }}>
-                  Non è in rubrica · <Link href="/clienti/nuovo" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Aggiungilo →</Link>
-                </div>
+          {/* ── IL FOGLIO (mockup B «Foglio», scelto da Eli 25 ago) ─────────
+              In lettura il documento SI VEDE come un foglio: filetto d'oro in
+              testa, tipo+numero in Georgia, voci a filetti e totale in fascia
+              navy. È la forma stessa a dire «questo è il documento, non un
+              modulo da compilare». La card Cliente è scesa sotto. */}
+          <div style={{ margin: '14px 15px 0', background: '#fbfaf7', border: '1px solid #e6e1d5', borderTop: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 10px 26px -16px rgba(20,20,40,.5)', padding: '15px 15px' }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', color: '#8a6b28' }}>
+              Preventivo
+            </div>
+            {doc.doc_number && (
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 22, color: '#161616', margin: '3px 0 1px' }}>
+                {formatDocNumber(doc.doc_number)}
               </div>
-            )
-          )}
-
-          {/* Card Riepilogo */}
-          <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
-            <div style={cardLabel}>Riepilogo</div>
+            )}
+            {(clientName || stateText) && (
+              <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', marginBottom: 10 }}>
+                {clientName ?? ''}{clientName && stateText ? ' · ' : ''}{stateText ? stateText.charAt(0).toLowerCase() + stateText.slice(1) : ''}
+              </div>
+            )}
             {doc.title && <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', marginBottom: 6 }}>{doc.title}</div>}
             {/* ⚠️ UN BLOCCO CHIUSO PER PROPOSTA (Eli, 7 ago, mockup approvato):
                 voci e totali della Base, poi voci e totali della Premium.
@@ -715,17 +709,23 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     <span style={{ color: '#161616', fontWeight: 500 }}>{euro(bolloAmount)}</span>
                   </div>
                 )}
-                <div style={{ height: '1px', background: '#e3e3e6', margin: '0 -15px' }} />
-                <div style={{ ...sumRow, fontSize: 16 }}>
-                  <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
-                  <span style={{ color: '#161616', fontWeight: 700 }}>{euro(totalAmount)}</span>
+                {/* TOTALE in fascia navy a tutta larghezza (mockup B) */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', margin: '8px -15px 0', padding: '12px 15px', background: '#1a1a2e', color: '#fff' }}>
+                  <span style={{ fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', color: '#e6cf94', fontWeight: 700 }}>Totale</span>
+                  <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 21 }}>{euro(totalAmount)}</span>
                 </div>
               </>
             )}
             {doc.expires_at && (
-              <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 8 }}>Valido fino al {fmtLong(doc.expires_at)}</div>
+              <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', marginTop: 11 }}>Valido fino al {fmtLong(doc.expires_at)}</div>
             )}
           </div>
+
+          {/* Il foglio è la vista del cliente: dirlo toglie il dubbio
+              «dov'è finita la modifica?» (mockup B, Eli 25 ago). */}
+          <p style={{ margin: '8px 15px 0', textAlign: 'center', fontSize: 12, color: 'var(--cc-muted)' }}>
+            Stai vedendo il documento come lo vede il cliente
+          </p>
 
           {/* Azioni riga 1: Anteprima (bianco bordato) + Condividi (navy pieno).
               Su un preventivo BLOCCATO (Free, oltre gli 8) niente PDF né invio:
@@ -809,6 +809,31 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               </Link>
             </div>
           )}
+
+          {/* Card Cliente — DOPO il foglio e le azioni (mockup B): tap apre la
+              scheda; se il cliente non è in rubrica la card è statica. */}
+          {clientName && (
+            pdfClient?.id ? (
+              <Link href={`/clienti/${pdfClient.id}`} style={{ ...cardStyle, margin: '14px 15px 0', display: 'block', textDecoration: 'none' }}>
+                <div style={cardLabel}>Cliente</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+                {clientContact && <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>{clientContact}</div>}
+              </Link>
+            ) : (
+              <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
+                <div style={cardLabel}>Cliente</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+                <div style={{ fontSize: 12, color: '#767676', marginTop: 3 }}>
+                  Non è in rubrica · <Link href="/clienti/nuovo" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Aggiungilo →</Link>
+                </div>
+              </div>
+            )
+          )}
+
+          {/* Foto lavoro — in fondo (mockup B, Eli 25 ago) */}
+          <div style={{ margin: '14px 15px 0' }}>
+            <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
+          </div>
 
           {/* Card Visualizzazioni RIMOSSA (Eli 3 ago sera): le aperture
               vivono DENTRO la cronologia qui sotto, non in una card propria. */}

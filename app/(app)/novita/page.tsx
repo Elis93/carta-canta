@@ -12,6 +12,16 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
     data: 'Fine agosto 2026',
+    titolo: 'La pagina del cliente e il riepilogo del documento hanno una veste nuova',
+    punti: [
+      'La pagina che il cliente apre dal link ora è una «ricevuta» elegante: il numero del documento grande al centro, la scadenza in evidenza, il totale in una fascia scura ben visibile e, in fondo, il marchio Carta Canta. Stessi contenuti, molto più ordine.',
+      'Anche dentro l’app, il preventivo o la fattura già salvati si mostrano come un foglio: capisci al volo che stai guardando il documento com’è, non un modulo da compilare. Per cambiarlo, il tasto «Modifica» in alto a destra ora è navy, impossibile da mancare.',
+      'La cronologia registra ogni nuova scadenza: primo invio, rinvio di uno scaduto, proroga del termine di pagamento — ogni volta che dai un termine nuovo, resta scritto quando e quale.',
+      'Se il cliente riapre il link di un documento già accettato o pagato, l’apertura ora compare comunque in cronologia (prima si perdeva).',
+    ],
+  },
+  {
+    data: 'Fine agosto 2026',
     titolo: 'Preventivi e fatture più belli: i template rinnovati',
     punti: [
       'Il template «Classico» (il predefinito) ha una veste nuova, più moderna e ordinata: una fascia con data, scadenza e totale sotto la testata, il cliente in un riquadro dedicato e il Totale in un blocco pieno nel tuo colore. Resta pulito, ma con più carattere.',

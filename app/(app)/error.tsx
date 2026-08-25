@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, Loader2 } from 'lucide-react'
-import { isChunkLoadError, recoverFromChunkError } from '@/lib/chunk-error'
+import { isChunkLoadError, recoverFromChunkError, isTransientNetworkError, canAutoRetryNetworkError } from '@/lib/chunk-error'
 import { UnlockVeil } from '@/components/security/UnlockVeil'
 
 export default function AppError({
@@ -19,7 +19,11 @@ export default function AppError({
   // andato storto»"). Non è un vero errore: si recupera ricaricando la versione
   // nuova. Mostriamo «Aggiorno…» invece del testo d'errore per non spaventare.
   const chunk = isChunkLoadError(error)
-  const [showError, setShowError] = useState(!chunk)
+  // Fetch UCCISO dalla sospensione dell'app (25 ago, Eli: l'errore usciva a
+  // OGNI rientro): si ritenta da soli UNA volta — reset() rifà la richiesta
+  // della pagina — invece di mostrare l'errore per un blip che è già passato.
+  const transient = isTransientNetworkError(error)
+  const [showError, setShowError] = useState(!chunk && !transient)
 
   useEffect(() => {
     console.error('[AppError]', error)
@@ -27,14 +31,23 @@ export default function AppError({
       // Se il reload è appena avvenuto e l'errore torna, NON è un chunk vecchio:
       // esci dal ciclo e mostra l'errore vero.
       if (!recoverFromChunkError()) setShowError(true)
+      return
     }
-  }, [error, chunk])
+    if (transient) {
+      if (canAutoRetryNetworkError()) {
+        // Piccola attesa: al resume la rete impiega un attimo a tornare viva.
+        const t = setTimeout(() => reset(), 600)
+        return () => clearTimeout(t)
+      }
+      setShowError(true)
+    }
+  }, [error, chunk, transient, reset])
 
   if (!showError) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
         <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Aggiorno l&rsquo;app…</p>
+        <p className="text-sm text-muted-foreground">{chunk ? 'Aggiorno l’app…' : 'Riprovo…'}</p>
       </div>
     )
   }
@@ -53,6 +66,13 @@ export default function AppError({
           {error.digest && (
             <span className="block mt-1 font-mono text-xs opacity-60">
               ID: {error.digest}
+            </span>
+          )}
+          {/* Errore lato CLIENT (niente digest): il messaggio tecnico è
+              l'unica diagnosi possibile da una schermata fotografata. */}
+          {!error.digest && error.message && (
+            <span className="block mt-1 font-mono text-xs opacity-60">
+              {String(error.message).slice(0, 140)}
             </span>
           )}
         </p>

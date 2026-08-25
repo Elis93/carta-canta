@@ -17,8 +17,10 @@ export interface DocumentLogEntry {
   // reopened (Riapri da rifiutato/scaduto).
   type: 'modified' | 'restored' | 'resent' | 'payment' | 'payment_reset' | 'cancelled' | 'reactivated'
     | 'marked_accepted' | 'marked_rejected' | 'marked_expired' | 'unaccepted' | 'reopened'
-    | 'client_message' | 'owner_message'
+    | 'client_message' | 'owner_message' | 'expiry_set'
   at: string
+  /** solo expiry_set (25 ago): la nuova data di scadenza impostata */
+  expires?: string
   /** solo client_message/owner_message: testo del messaggio */
   text?: string
   /** solo payment/payment_reset: importo in euro */
@@ -405,6 +407,21 @@ export function DocumentTimeline({
         icon: <RotateCcw className="size-3" />,
         label: 'Riaperto — di nuovo in attesa del cliente',
         badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
+        date: entry.at,
+      })
+    } else if (entry.type === 'expiry_set') {
+      // Ogni NUOVO termine è una voce (Eli 25 ago): primo invio, rinvio di
+      // uno scaduto, proroga, cambio validità, «Riapri». Sulla fattura la
+      // scadenza è il termine di PAGAMENTO, sul preventivo la validità.
+      const quando = entry.expires
+        ? new Date(entry.expires).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
+        : null
+      events.push({
+        key: `expiry-${i}`,
+        icon: <Clock className="size-3" />,
+        label: isFattura ? 'Nuovo termine di pagamento' : 'Nuova scadenza',
+        detail: quando ? (isFattura ? `Da pagare entro il ${quando}` : `Valido fino al ${quando}`) : undefined,
+        badgeBg: '#f5e9d0', badgeColor: '#b0863e',
         date: entry.at,
       })
     } else if (entry.type === 'owner_message') {

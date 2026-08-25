@@ -416,7 +416,12 @@ export async function PATCH(
   if (body.status === 'accepted') await appendLog('marked_accepted', tierScelto ? { tier: tierScelto } : undefined)
   else if (body.status === 'rejected') await appendLog('marked_rejected')
   else if (body.status === 'expired') await appendLog('marked_expired')
-  else if (body.status === 'sent' && (doc.status === 'rejected' || doc.status === 'expired')) await appendLog('reopened')
+  else if (body.status === 'sent' && (doc.status === 'rejected' || doc.status === 'expired')) {
+    await appendLog('reopened')
+    // «Riapri» su uno scaduto rinnova la scadenza → voce dedicata (25 ago:
+    // ogni nuovo termine deve comparire in cronologia).
+    if (reopening) await appendLog('expiry_set', { expires: renewedExpiry })
+  }
 
   return NextResponse.json({ success: true, status: body.status })
 }

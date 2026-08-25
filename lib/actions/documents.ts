@@ -25,6 +25,7 @@ import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, baseStorna
 // 'use server' diventa una server action richiamabile dal browser, e quegli
 // helper prendono il client Supabase come argomento (review 11 ago).
 import { registraConfermaFiscale, fermaPilotaSdi } from '@/lib/documents/conferma-fiscale'
+import { logNuovaScadenza } from '@/lib/documents/log-scadenza'
 
 /** L'artigiano annulla la trasmissione automatica programmata su UN
  *  documento («Annulla» sulla card SdI). Il documento resta trasmissibile
@@ -1066,6 +1067,12 @@ export async function updateDocumentAction(
     return { error: 'Impossibile aggiornare il documento. Riprova tra qualche istante.' }
   }
 
+  // Cambio ESPLICITO della validità su un documento già inviato → la nuova
+  // scadenza entra in cronologia (Eli 25 ago: ogni nuovo termine è una voce).
+  if (isSentOrViewed && validityChanged && expiresAt) {
+    await logNuovaScadenza(supabase, documentId, expiresAt.toISOString())
+  }
+
   // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti.
   // Sempre eseguiti: azzerano i campi se i toggle sono stati spenti nel form.
   // Causale della ritenuta (081), tollerante: 'W' = corrispettivi per
@@ -1413,6 +1420,12 @@ export async function saveDraftAction(
     // MAI dichiarare "Bozza salvata" se l'update è fallito (es. numero duplicato)
     console.error('[saveDraft] update documento fallito:', draftUpdErr.message)
     return { error: 'Salvataggio non riuscito. Controlla il numero documento e riprova.' }
+  }
+
+  // Validità cambiata su un documento GIÀ inviato (l'unico caso in cui questo
+  // salvataggio tocca expires_at fuori bozza) → voce in cronologia (25 ago).
+  if (draftIsSentOrViewed && draftValidityChanged) {
+    await logNuovaScadenza(supabase, documentId, expiresAt.toISOString())
   }
 
   // Acconto (038) + Opzioni a livelli (041) — update separati, tolleranti.
@@ -1972,6 +1985,9 @@ export async function sendDocumentAction(
 
   if (error) return { error: 'Errore durante l\'invio' }
 
+  // Il primo invio fissa la PRIMA scadenza → voce in cronologia (25 ago).
+  await logNuovaScadenza(supabase, documentId, expiresAt.toISOString())
+
   // Conferma della bozza (080): data fiscale + eventuale pilota automatico
   await registraConfermaFiscale(supabase, workspace.id, documentId, doc.doc_type)
 
@@ -2116,6 +2132,9 @@ export async function registerManualSendAction(
 
   if (error) return { error: 'Errore durante la registrazione' }
 
+  // L'invio manuale (link/WhatsApp) fissa la scadenza → cronologia (25 ago).
+  await logNuovaScadenza(supabase, documentId, expiresAt.toISOString())
+
   // Conferma della bozza (080): data fiscale + eventuale pilota automatico
   await registraConfermaFiscale(supabase, workspace.id, documentId, tipoDoc)
 
@@ -2194,6 +2213,9 @@ export async function resendExpiredAction(
     // sovrascrivono in silenzio.
     .eq('status', 'expired')
   if (error) return { error: 'Errore durante il rinvio' }
+
+  // Il rinvio di uno scaduto dà un termine NUOVO → cronologia (25 ago).
+  await logNuovaScadenza(supabase, documentId, expiresAt.toISOString())
 
   // ⚠️ Su una FATTURA la pagina è un'altra (bug: si revalidava solo il
   // percorso dei preventivi, quindi la fattura restava «Scaduta» a schermo
@@ -3177,7 +3199,13 @@ export async function registerManualResendAction(
   const keepExpiry = doc.doc_type === 'fattura' && doc.status === 'accepted'
 
   const existingLog = Array.isArray(doc.document_log) ? doc.document_log : []
-  const updatedLog = [...existingLog, { type: 'resent', at: now.toISOString() }]
+  // Col reinvio la validità riparte → anche la NUOVA scadenza va in
+  // cronologia (25 ago), nella stessa scrittura (niente secondo round-trip).
+  const updatedLog = [
+    ...existingLog,
+    { type: 'resent', at: now.toISOString() },
+    ...(keepExpiry ? [] : [{ type: 'expiry_set', at: now.toISOString(), expires: newExpiry.toISOString() }]),
+  ]
 
   const { error } = await supabase
     .from('documents')

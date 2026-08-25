@@ -265,41 +265,53 @@ export function MobilePublicCard({
     // dove finiva. Lo sfondo continuo lo mette la pagina (p/[token]/page.tsx).
     <div>
 
-      {/* ── Header: avatar + workspace name + P.IVA ─────────────────────────── */}
-      <div style={{ background: '#fff', borderBottom: '0.5px solid #eee', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 11 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 9, background: '#1a1a2e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, flex: '0 0 auto' }}>
-          {initials}
+      {/* ── VESTE «RICEVUTA» (mockup B scelto da Eli, 25 ago) ─────────────────
+          Un foglio bianco a tutta larghezza: riga del marchio con filetto navy,
+          numero ENORME centrato in Georgia, chip ambra della scadenza, voci a
+          filetti, conteggio su fondo crema e TOTALE in fascia navy. L'oro è
+          solo nei dettagli. Tutte le condizioni (proposte, acconto, ritenuta,
+          bollo…) sono le stesse di prima: cambia solo la messa in scena. */}
+      <div style={{ background: '#fff', padding: '16px 16px 0' }}>
+        {/* Riga del marchio dell'artigiano, chiusa dal filetto navy */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 14, borderBottom: '2px solid #1a1a2e' }}>
+          <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#f3ede0', border: '1px solid #e0d3b4', color: '#8a6b28', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12.5, fontWeight: 700, flex: '0 0 auto' }}>
+            {initials}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{workspaceName}</div>
+            {workspacePiva && (
+              <div style={{ fontSize: 11.5, color: 'var(--cc-muted)' }}>P.IVA {workspacePiva}</div>
+            )}
+          </div>
         </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{workspaceName}</div>
-          {workspacePiva && (
-            <div style={{ fontSize: 12, color: 'var(--cc-muted)' }}>P.IVA {workspacePiva}</div>
+
+        {/* Hero centrato: tipo · numero · intestatario · chip scadenza */}
+        <div style={{ padding: '18px 0 16px', textAlign: 'center' }}>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.2em', textTransform: 'uppercase', color: '#b0863e' }}>
+            {docLabel}
+          </div>
+          {formattedNum && (
+            <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 38, lineHeight: 1.05, color: '#161616', margin: '7px 0 5px' }}>{formattedNum}</div>
+          )}
+          {(clientName || dateStr) && (
+            <div style={{ fontSize: 13, color: 'var(--cc-muted)' }}>
+              {clientName ? `${isPreventivo ? 'Intestato' : 'Intestata'} a ${clientName}` : ''}{clientName && dateStr ? ' · ' : ''}{dateStr ?? ''}
+            </div>
+          )}
+          {/* Chip della scadenza SOLO sui documenti ancora attivi: su una
+              fattura pagata «Da pagare entro…» sarebbe un controsenso. */}
+          {isActive && expiresAt && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 11, background: '#fdf6e7', border: '1px solid #ecd9ab', color: '#8a6b28', borderRadius: 999, padding: '5px 12px', fontSize: 12, fontWeight: 600 }}>
+              {isPreventivo ? `Valido fino al ${formatShortDate(expiresAt)}` : `Da pagare entro il ${formatShortDate(expiresAt)}`}
+            </div>
           )}
         </div>
       </div>
 
-      {/* ── Document card ──────────────────────────────────────────────────── */}
-      <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '18px 16px' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>
-          {docLabel}
-        </div>
-        {formattedNum && (
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#161616', marginTop: 2 }}>{formattedNum}</div>
-        )}
-        {(clientName || dateStr) && (
-          <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>
-            {clientName ? `Per ${clientName}` : ''}{clientName && dateStr ? ' · ' : ''}{dateStr ?? ''}
-          </div>
-        )}
-
-        {/* Con più proposte gli item qui sono vuoti e il filetto lo mette già
-            il ramo del tierPicker: senza questa condizione se ne vedevano DUE
-            impilati a ~8px, senza niente in mezzo. */}
-        {!tierPicker && <div style={{ height: 1, background: '#eee', margin: '14px -16px' }} />}
-
-        {/* Item rows */}
+      {/* Voci a filetti, sul foglio bianco */}
+      <div style={{ background: '#fff', padding: '0 16px' }}>
         {items.map((item, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 14 }}>
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '11px 0', borderTop: '1px solid #f0efeb', fontSize: 13.5 }}>
             <span style={{ color: '#161616' }}>{item.description ?? '—'}</span>
             {item.total != null && (
               <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{formatEur(item.total)}</span>
@@ -307,129 +319,133 @@ export function MobilePublicCard({
           </div>
         ))}
 
-        {/* ⚠️ CON PIÙ PROPOSTE il riepilogo NUMERICO qui sopra sparisce (scelta
-            di Eli, 9 ago — mockup C): mostrava Subtotale, bollo e «Totale
-            proposta Base» PRIMA che una scelta esistesse, cioè un terzo prezzo
-            che il cliente non ha chiesto e che non può ancora scegliere. I
-            conti di ciascuna proposta stanno dentro la sua card, dove servono. */}
-        {!tierPicker && (subtotal != null || taxAmount != null || total != null) && (
-          <div style={{ height: 0.5, background: '#eee', margin: '8px -16px' }} />
-        )}
-
         {tierPicker && (
-          <>
-            <div style={{ height: 0.5, background: '#eee', margin: '8px -16px' }} />
-            <p style={{ fontSize: 13, color: '#55534b', margin: '8px 0 2px', lineHeight: 1.5 }}>
-              Questo preventivo ha <b>più proposte</b>: qui sotto le trovi tutte, con il
-              prezzo di ciascuna. Scegli quella che preferisci.
-            </p>
-          </>
+          <p style={{ fontSize: 13, color: '#55534b', margin: 0, padding: '10px 0 14px', borderTop: '1px solid #f0efeb', lineHeight: 1.5 }}>
+            Questo preventivo ha <b>più proposte</b>: qui sotto le trovi tutte, con il
+            prezzo di ciascuna. Scegli quella che preferisci.
+          </p>
         )}
+      </div>
 
-        {!tierPicker && subtotal != null && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
-            <span style={{ color: '#161616', fontWeight: 400 }}>Subtotale</span>
-            <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(subtotal)}</span>
-          </div>
-        )}
-        {/* Sconto globale (importo calcolato: % sul subtotale + eventuale fisso) */}
-        {!tierPicker && (() => {
-          const pctAmount = discountPct && subtotal != null ? subtotal * (discountPct / 100) : 0
-          // Arrotondato e mai oltre il subtotale, come il motore fiscale
-          // (review 25 lug B4 — prima uno sconto anomalo superava il subtotale).
-          const discountTotal = Math.min(
-            Math.round((pctAmount + (discountFixed ?? 0)) * 100) / 100,
-            subtotal ?? Number.POSITIVE_INFINITY
-          )
-          if (discountTotal <= 0) return null
-          return (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
-              <span style={{ color: '#161616', fontWeight: 400 }}>
-                {/* La % si mostra SOLO se è tutto lo sconto: con anche una
-                    cifra fissa l'etichetta «(2%)» accanto a −10,50 su un
-                    subtotale di 25 € è una contraddizione (Eli, 25 ago). */}
-                Sconto{discountPct && !discountFixed ? ` (${discountPct}%)` : ''}
-              </span>
-              <span style={{ color: '#2f8a63', fontWeight: 500 }}>−{formatEur(discountTotal)}</span>
+      {/* ⚠️ CON PIÙ PROPOSTE il riepilogo NUMERICO sparisce (scelta di Eli,
+          9 ago — mockup C): mostrava Subtotale, bollo e «Totale proposta
+          Base» PRIMA che una scelta esistesse. I conti di ciascuna proposta
+          stanno dentro la sua card, dove servono. */}
+      {!tierPicker && (subtotal != null || taxAmount != null || (bolloAmount ?? 0) > 0 || (ritenutaAmount ?? 0) > 0) && (
+        <div style={{ background: '#faf9f6', borderTop: '1px solid #eeece6', padding: '6px 16px' }}>
+          {subtotal != null && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13.5 }}>
+              <span style={{ color: '#6b6960' }}>Subtotale</span>
+              <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(subtotal)}</span>
             </div>
-          )
-        })()}
-        {!tierPicker && taxAmount != null && taxAmount > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
-            <span style={{ color: '#161616', fontWeight: 400 }}>{vatLabel}</span>
-            <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(taxAmount)}</span>
-          </div>
-        )}
-        {!tierPicker && bolloAmount != null && bolloAmount > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
-            <span style={{ color: '#161616', fontWeight: 400 }}>Marca da bollo</span>
-            <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(bolloAmount)}</span>
-          </div>
-        )}
-        {!tierPicker && ritenutaAmount != null && ritenutaAmount > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 14 }}>
-            <span style={{ color: '#161616', fontWeight: 400 }}>
-              Ritenuta d&rsquo;acconto{ritenutaPct ? ` ${ritenutaPct}%` : ''}
-            </span>
-            <span style={{ color: '#161616', fontWeight: 500 }}>−{formatEur(ritenutaAmount)}</span>
-          </div>
-        )}
-
-        {!tierPicker && total != null && (
-          <>
-            <div style={{ height: 1, background: '#e3e3e6', margin: '0 -16px' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 16 }}>
-              {/* 18 lug: con più proposte il totale "secco" confondeva — è
-                  quello della proposta di riferimento (la Base),
-                  e la scelta avviene sotto */}
-              <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
-              <span style={{ color: '#161616', fontWeight: 700 }}>{formatEur(total)}</span>
-            </div>
-          </>
-        )}
-
-        {/* ── Acconto (Acconti — riga ambra sotto il totale) ── */}
-        {!tierPicker && deposit && (
-          <div style={{ background: '#f5e9d0', borderRadius: 10, padding: '10px 12px', marginTop: 2 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 13, fontWeight: 600, color: '#2b2b2b' }}>
-              <span>{deposit.label}</span>
-              <span style={{ whiteSpace: 'nowrap' }}>{deposit.kind === 'received' ? '−' : ''}{formatEur(deposit.acconto)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12, color: '#8a6f35', marginTop: 4 }}>
-              <span>{deposit.kind === 'requested' ? 'Saldo a fine lavori' : 'Saldo da pagare'}</span>
-              <span style={{ whiteSpace: 'nowrap' }}>{formatEur(deposit.saldo)}</span>
-            </div>
-          </div>
-        )}
-
-        {/* ── Info importanti: validità/scadenza + termini di pagamento ── */}
-        {(expiresAt || paymentTerms) && (
-          <>
-            <div style={{ height: 0.5, background: '#eee', margin: '4px -16px 0' }} />
-            {expiresAt && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 0 0', fontSize: 13 }}>
-                <span style={{ color: 'var(--cc-muted)' }}>
-                  {isPreventivo ? 'Valido fino al' : 'Scadenza pagamento'}
+          )}
+          {/* Sconto globale (importo calcolato: % sul subtotale + eventuale fisso) */}
+          {(() => {
+            const pctAmount = discountPct && subtotal != null ? subtotal * (discountPct / 100) : 0
+            // Arrotondato e mai oltre il subtotale, come il motore fiscale
+            // (review 25 lug B4 — prima uno sconto anomalo superava il subtotale).
+            const discountTotal = Math.min(
+              Math.round((pctAmount + (discountFixed ?? 0)) * 100) / 100,
+              subtotal ?? Number.POSITIVE_INFINITY
+            )
+            if (discountTotal <= 0) return null
+            return (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13.5 }}>
+                <span style={{ color: '#6b6960' }}>
+                  {/* La % si mostra SOLO se è tutto lo sconto: con anche una
+                      cifra fissa l'etichetta «(2%)» accanto a −10,50 su un
+                      subtotale di 25 € è una contraddizione (Eli, 25 ago). */}
+                  Sconto{discountPct && !discountFixed ? ` (${discountPct}%)` : ''}
                 </span>
-                <span style={{ color: '#161616', fontWeight: 600, whiteSpace: 'nowrap' }}>{formatShortDate(expiresAt)}</span>
+                <span style={{ color: '#2f8a63', fontWeight: 500 }}>−{formatEur(discountTotal)}</span>
               </div>
-            )}
-            {paymentTerms && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 0 0', fontSize: 13 }}>
-                <span style={{ color: 'var(--cc-muted)', flexShrink: 0 }}>Termini di pagamento</span>
-                <span style={{ color: '#161616', fontWeight: 600, textAlign: 'right' }}>{paymentTerms}</span>
-              </div>
-            )}
-          </>
-        )}
+            )
+          })()}
+          {taxAmount != null && taxAmount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13.5 }}>
+              <span style={{ color: '#6b6960' }}>{vatLabel}</span>
+              <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(taxAmount)}</span>
+            </div>
+          )}
+          {bolloAmount != null && bolloAmount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13.5 }}>
+              <span style={{ color: '#6b6960' }}>Marca da bollo</span>
+              <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(bolloAmount)}</span>
+            </div>
+          )}
+          {ritenutaAmount != null && ritenutaAmount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13.5 }}>
+              <span style={{ color: '#6b6960' }}>
+                Ritenuta d&rsquo;acconto{ritenutaPct ? ` ${ritenutaPct}%` : ''}
+              </span>
+              <span style={{ color: '#161616', fontWeight: 500 }}>−{formatEur(ritenutaAmount)}</span>
+            </div>
+          )}
+        </div>
+      )}
 
-        {/* ── Note per il cliente ── */}
-        {notes && (
-          <div style={{ marginTop: 12, background: '#fafafa', borderRadius: 10, padding: '10px 12px' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 4 }}>Note</div>
-            <div style={{ fontSize: 13, color: '#161616', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{notes}</div>
+      {/* ── TOTALE: fascia navy a tutta larghezza (mockup B) ── */}
+      {!tierPicker && total != null && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '12px 16px', background: '#1a1a2e', color: '#fff' }}>
+          {/* 18 lug: con più proposte il totale "secco" confondeva — è
+              quello della proposta di riferimento (la Base),
+              e la scelta avviene sotto */}
+          <span style={{ fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', color: '#e6cf94', fontWeight: 700 }}>Totale</span>
+          <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 24 }}>{formatEur(total)}</span>
+        </div>
+      )}
+
+      {/* ── Acconto (Acconti — riga ambra sotto il totale) ── */}
+      {!tierPicker && deposit && (
+        <div style={{ background: '#f5e9d0', padding: '10px 16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 13, fontWeight: 600, color: '#2b2b2b' }}>
+            <span>{deposit.label}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>{deposit.kind === 'received' ? '−' : ''}{formatEur(deposit.acconto)}</span>
           </div>
-        )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12, color: '#8a6f35', marginTop: 4 }}>
+            <span>{deposit.kind === 'requested' ? 'Saldo a fine lavori' : 'Saldo da pagare'}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>{formatEur(deposit.saldo)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Coda del foglio: scadenza (se non già nel chip), termini, note ── */}
+      {((expiresAt && !isActive) || paymentTerms || notes) && (
+        <div style={{ background: '#fff', borderTop: '1px solid #eeece6', padding: '3px 16px 12px' }}>
+          {expiresAt && !isActive && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '9px 0 0', fontSize: 12.5 }}>
+              <span style={{ color: '#6b6960' }}>
+                {isPreventivo ? 'Valido fino al' : 'Scadenza pagamento'}
+              </span>
+              <span style={{ color: '#161616', fontWeight: 600, whiteSpace: 'nowrap' }}>{formatShortDate(expiresAt)}</span>
+            </div>
+          )}
+          {paymentTerms && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '9px 0 0', fontSize: 12.5 }}>
+              <span style={{ color: '#6b6960', flexShrink: 0 }}>Termini di pagamento</span>
+              <span style={{ color: '#161616', fontWeight: 600, textAlign: 'right' }}>{paymentTerms}</span>
+            </div>
+          )}
+          {notes && (
+            <div style={{ marginTop: 11, background: '#faf9f6', borderRadius: 10, padding: '10px 12px' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 4 }}>Note</div>
+              <div style={{ fontSize: 13, color: '#161616', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{notes}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Piede del foglio: il marchio Carta Canta (richiesta Eli, 25 ago) ── */}
+      <div style={{ background: '#fff', borderTop: '1px solid #f0efeb', padding: '11px 16px 13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+        <svg viewBox="0 0 512 512" width={20} height={20} aria-hidden style={{ flexShrink: 0, borderRadius: 5 }}>
+          <rect width="512" height="512" rx="112" fill="#1a1a2e" />
+          <path d="M342 133 A150 150 0 1 0 342 379" fill="none" stroke="#c9a44c" strokeWidth="38" strokeLinecap="round" />
+          <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round" />
+        </svg>
+        <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>
+          Documento emesso con{' '}
+          <b style={{ color: '#8a6b28', fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 700 }}>Carta&nbsp;Canta</b>
+        </span>
       </div>
 
       {/* ── "Vedi il documento completo" — bottone pieno, ben visibile

@@ -93,8 +93,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   {
     q: 'Come modifico una bozza? Dove devo cliccare?',
     a: <>Apri la bozza dalla lista <b>Preventivi</b>{' '}(o <b>Fatture</b>): la bozza si apre già in
-      modifica. Sui documenti già inviati tocca invece la <b>matita in alto a destra</b>{' '}— il form
-      appare subito sotto la testata. In fondo trovi <b>Salva bozza</b>{' '}/ <b>Aggiorna</b>{' '}e il tasto
+      modifica. Sui documenti già inviati tocca invece il tasto navy{' '}
+      <b>Modifica in alto a destra</b>{' '}— il form appare subito sotto la testata. In fondo trovi <b>Salva bozza</b>{' '}/ <b>Aggiorna</b>{' '}e il tasto
       navy <b>Invia al cliente</b>{' '}(o <b>Salva e invia</b>): salva le modifiche e apre il pop-up
       coi canali d&rsquo;invio.
       <br /><br />
@@ -526,6 +526,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
     a: <>Sì. Su una fattura la scadenza è il <b>termine di pagamento</b>: quando è passato
       la fattura risulta <b>Scaduta</b>, e dal pop-up <b>Invia al cliente</b>{' '}puoi
       concederne uno nuovo (7, 15, 30 giorni…). Lo stato torna a <b>Inviata</b>.
+      Ogni nuovo termine resta scritto nella <b>cronologia</b>{' '}del documento, così
+      vedi sempre quando e quante volte l&rsquo;hai concesso.
       <br /><br />
       <b>Attenzione a non confondere due termini distinti.</b>
       <br /><br />

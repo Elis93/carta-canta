@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, Loader2 } from 'lucide-react'
-import { isChunkLoadError, recoverFromChunkError } from '@/lib/chunk-error'
+import { isChunkLoadError, recoverFromChunkError, isTransientNetworkError, canAutoRetryNetworkError } from '@/lib/chunk-error'
 import { UnlockVeil } from '@/components/security/UnlockVeil'
 
 export default function Error({
@@ -14,21 +14,33 @@ export default function Error({
   reset: () => void
 }) {
   // Chunk vecchio dopo un deploy → ricarica la versione nuova invece di
-  // mostrare l'errore (vedi lib/chunk-error.ts).
+  // mostrare l'errore (vedi lib/chunk-error.ts). Fetch ucciso dalla
+  // sospensione dell'app → un retry automatico (25 ago).
   const chunk = isChunkLoadError(error)
-  const [showError, setShowError] = useState(!chunk)
+  const transient = isTransientNetworkError(error)
+  const [showError, setShowError] = useState(!chunk && !transient)
 
   useEffect(() => {
     console.error('[app/error]', error)
-    if (chunk && !recoverFromChunkError()) setShowError(true)
-  }, [error, chunk])
+    if (chunk) {
+      if (!recoverFromChunkError()) setShowError(true)
+      return
+    }
+    if (transient) {
+      if (canAutoRetryNetworkError()) {
+        const t = setTimeout(() => reset(), 600)
+        return () => clearTimeout(t)
+      }
+      setShowError(true)
+    }
+  }, [error, chunk, transient, reset])
 
   if (!showError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 text-center">
         <UnlockVeil />
         <Loader2 className="size-7 animate-spin text-muted-foreground mb-4" />
-        <p className="text-sm text-muted-foreground">Aggiorno l&rsquo;app…</p>
+        <p className="text-sm text-muted-foreground">{chunk ? 'Aggiorno l’app…' : 'Riprovo…'}</p>
       </div>
     )
   }

@@ -543,10 +543,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </span>
         </span>
         {edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted && !freeLocked && (
-          // Matita CON etichetta (collaudo 17 ago), gemella del preventivo
+          // Matita CON etichetta (collaudo 17 ago) — NAVY PIENA (mockup B,
+          // Eli 25 ago: «non si capisce che serve cliccare su Modifica»).
           <Link
             href={`/fatture/${id}?edit=1`}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, borderRadius: 999, background: '#f4f4f5', padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#55534b', textDecoration: 'none', flexShrink: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, borderRadius: 999, background: '#1a1a2e', padding: '8px 14px', fontSize: 13, fontWeight: 700, color: '#fff', textDecoration: 'none', flexShrink: 0, boxShadow: '0 5px 12px -5px rgba(26,26,46,.6)' }}
             aria-label="Modifica fattura"
           >
             <Pencil size={15} /> Modifica
@@ -822,47 +823,24 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         )}
 
-        {/* ── MOBILE: card Cliente (lg:hidden) — statica se il cliente non è in
-            rubrica (prima era un link "#" che non portava da nessuna parte) ── */}
-        {clientName && !editing && (
-          pdfClient?.id ? (
-            <Link href={`/clienti/${pdfClient.id}`} className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px', display: 'block', textDecoration: 'none' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
-              {(pdfClient?.email || pdfClient?.phone) && (
-                <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>
-                  {[pdfClient?.email, pdfClient?.phone].filter(Boolean).join(' · ')}
-                </div>
-              )}
-            </Link>
-          ) : (
-            <div className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
-              <div style={{ fontSize: 12, color: '#767676', marginTop: 3 }}>
-                Non è in rubrica · <Link href="/clienti/nuovo" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Aggiungilo →</Link>
-              </div>
-            </div>
-          )
-        )}
-
-        {/* ── Fattura elettronica SdI (mockup crescita §1) — su mobile
-            nascosta in modifica (il form deve stare in alto, Eli 3 ago) ── */}
-        {sdiProps && (
-          <div id="sdi" className={editing ? 'hidden lg:block' : undefined} style={{ scrollMarginTop: 80 }}>
-            <SdiCard {...sdiProps} />
-          </div>
-        )}
-
-        {/* ── MOBILE: card Foto lavoro (mockup cantiere §2.1) ── */}
-        <div className={editing ? 'hidden' : 'lg:hidden'}>
-          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
-        </div>
-
-        {/* ── MOBILE: card Riepilogo (lg:hidden) ── */}
+        {/* ── MOBILE: IL FOGLIO (mockup B «Foglio», Eli 25 ago) — in lettura il
+            documento si vede come un foglio: filetto d'oro, numero in Georgia,
+            totale in fascia navy. La forma stessa dice «non è un modulo». ── */}
         {docItems.length > 0 && !editing && (
-          <div className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Riepilogo</div>
+          <div className="lg:hidden" style={{ background: '#fbfaf7', border: '1px solid #e6e1d5', borderTop: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 10px 26px -16px rgba(20,20,40,.5)', padding: '15px 15px' }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', color: '#8a6b28' }}>
+              {isNotaCredito ? 'Nota di credito' : 'Fattura'}
+            </div>
+            {doc.doc_number && (
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 22, color: '#161616', margin: '3px 0 1px' }}>
+                {formatDocNumber(doc.doc_number)}
+              </div>
+            )}
+            {clientName && (
+              <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', marginBottom: 10 }}>
+                Intestata a {clientName}
+              </div>
+            )}
             {docItems.map((item, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 14 }}>
                 <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
@@ -899,10 +877,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 </span>
               </div>
             ))}
-            <div style={{ height: '1px', background: '#e3e3e6', margin: '0 -15px' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: 16 }}>
-              <span style={{ color: '#161616', fontWeight: 600 }}>Totale</span>
-              <span style={{ color: '#161616', fontWeight: 700 }}>
+            {/* TOTALE in fascia navy a tutta larghezza (mockup B) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', margin: '8px -15px 0', padding: '12px 15px', background: '#1a1a2e', color: '#fff' }}>
+              <span style={{ fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', color: '#e6cf94', fontWeight: 700 }}>Totale</span>
+              <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 21 }}>
                 {`€\u00A0${Number((doc as any).total ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}
               </span>
             </div>
@@ -951,6 +929,51 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             )}
           </div>
         )}
+
+        {/* Il foglio è la vista del cliente: dirlo toglie il dubbio
+            «dov'è finita la modifica?» (mockup B, Eli 25 ago). */}
+        {docItems.length > 0 && !editing && (
+          <p className="lg:hidden" style={{ margin: '-6px 0 0', textAlign: 'center', fontSize: 12, color: 'var(--cc-muted)' }}>
+            Stai vedendo il documento come lo vede il cliente
+          </p>
+        )}
+
+        {/* ── MOBILE: card Cliente (lg:hidden) — statica se il cliente non è in
+            rubrica (prima era un link "#" che non portava da nessuna parte) ── */}
+        {clientName && !editing && (
+          pdfClient?.id ? (
+            <Link href={`/clienti/${pdfClient.id}`} className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px', display: 'block', textDecoration: 'none' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+              {(pdfClient?.email || pdfClient?.phone) && (
+                <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>
+                  {[pdfClient?.email, pdfClient?.phone].filter(Boolean).join(' · ')}
+                </div>
+              )}
+            </Link>
+          ) : (
+            <div className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+              <div style={{ fontSize: 12, color: '#767676', marginTop: 3 }}>
+                Non è in rubrica · <Link href="/clienti/nuovo" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Aggiungilo →</Link>
+              </div>
+            </div>
+          )
+        )}
+
+        {/* ── Fattura elettronica SdI (mockup crescita §1) — su mobile
+            nascosta in modifica (il form deve stare in alto, Eli 3 ago) ── */}
+        {sdiProps && (
+          <div id="sdi" className={editing ? 'hidden lg:block' : undefined} style={{ scrollMarginTop: 80 }}>
+            <SdiCard {...sdiProps} />
+          </div>
+        )}
+
+        {/* ── MOBILE: card Foto lavoro (mockup cantiere §2.1) ── */}
+        <div className={editing ? 'hidden' : 'lg:hidden'}>
+          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
+        </div>
 
         {/* ── MOBILE: Anteprima + Condividi (lg:hidden) ──
             Su una fattura BLOCCATA (Free, oltre le 8) niente PDF né invio: sono
