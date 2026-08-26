@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 26 agosto 2026** (chevron della card SdI tagliato: via la pillola COLLAUDO dalla testata).
+> **Ultima sessione: 26 agosto 2026** (foglio del documento bianco con filetto d'oro sopra e sotto).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -28,6 +28,13 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### ✅ 26 ago (2) — Il foglio del documento è BIANCO, con filetto d'oro sopra e sotto
+Eli: «lo sfondo dei documenti in preview come lo vede il cliente voglio che sia bianco e non crema, e bordo oro sia sopra che sotto».
+- **Perché aveva ragione**: il foglio era `#fbfaf7` su una pagina `#f8f6f1` — due creme a un soffio l'uno dall'altro, quindi il foglio non si staccava dallo sfondo dell'app e sembrava una zona della pagina, non un documento. In più **la pagina VERA del cliente è bianca** (`MobilePublicCard`: blocchi `#fff`), quindi l'anteprima raccontava un colore che il cliente non vede.
+- **Fatto** su preventivi/[id] e fatture/[id] (mobile, le due card gemelle): `background: '#fff'` e `borderBottom: '3px solid #c9a44c'` accanto al filetto d'oro già presente in testa — il foglio ora è **chiuso sopra e sotto**, i lati restano il filetto sottile `#e6e1d5`. Dentro non c'era nessun blocco crema da riadattare (i divisori sono grigi, il totale sta sotto il suo filetto scuro).
+- Commento del foglio aggiornato col perché del bianco (un commento che dice «crema» inviterebbe a tornare indietro).
+- tsc+build+**742**+smoke 28/28 verdi · scan 0.
 
 ### ✅ 26 ago — [BUG] Il chevron della card SdI era tagliato: via la pillola COLLAUDO dalla testata
 Eli, foto: «la spunta del menu a tendina di fattura elettronica non si vede, togliamo la parola collaudo da li».

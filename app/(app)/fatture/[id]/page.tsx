@@ -828,7 +828,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             documento si vede come un foglio: filetto d'oro, numero in Georgia,
             totale grande sotto un filetto navy. La forma stessa dice «non è un modulo». ── */}
         {docItems.length > 0 && !editing && (
-          <div className="lg:hidden" style={{ background: '#fbfaf7', border: '1px solid #e6e1d5', borderTop: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 10px 26px -16px rgba(20,20,40,.5)', padding: '15px 15px' }}>
+          <div className="lg:hidden" style={{ background: '#fff', border: '1px solid #e6e1d5', borderTop: '3px solid #c9a44c', borderBottom: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 10px 26px -16px rgba(20,20,40,.5)', padding: '15px 15px' }}>
             <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', color: '#8a6b28' }}>
               {isNotaCredito ? 'Nota di credito' : 'Fattura'}
             </div>

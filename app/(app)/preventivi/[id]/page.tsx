@@ -579,11 +579,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           )}
 
           {/* ── IL FOGLIO (mockup B «Foglio», scelto da Eli 25 ago) ─────────
-              In lettura il documento SI VEDE come un foglio: filetto d'oro in
-              testa, tipo+numero in Georgia, voci a filetti e totale in fascia
-              navy. È la forma stessa a dire «questo è il documento, non un
-              modulo da compilare». La card Cliente è scesa sotto. */}
-          <div style={{ margin: '14px 15px 0', background: '#fbfaf7', border: '1px solid #e6e1d5', borderTop: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 10px 26px -16px rgba(20,20,40,.5)', padding: '15px 15px' }}>
+              In lettura il documento SI VEDE come un foglio: fondo BIANCO come
+              la pagina che apre il cliente (Eli 26 ago: col crema il foglio non
+              si staccava dallo sfondo dell'app), filetto d'oro sopra E sotto a
+              chiuderlo, tipo+numero in Georgia, voci a filetti e totale sotto
+              un filetto scuro. È la forma stessa a dire «questo è il documento,
+              non un modulo da compilare». La card Cliente è scesa sotto. */}
+          <div style={{ margin: '14px 15px 0', background: '#fff', border: '1px solid #e6e1d5', borderTop: '3px solid #c9a44c', borderBottom: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 10px 26px -16px rgba(20,20,40,.5)', padding: '15px 15px' }}>
             <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', color: '#8a6b28' }}>
               Preventivo
             </div>
