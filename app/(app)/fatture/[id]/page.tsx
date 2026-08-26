@@ -799,6 +799,20 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         )}
 
+        {/* ── BANNER DI STATO (pagata/annullata) — IN CIMA (richiesta Eli
+            26 ago): dice perché la pagina è in sola lettura, quindi va letto
+            PRIMA del documento, non dopo — stava in fondo, sotto il foglio e
+            il preventivo collegato. */}
+        {(doc.status === 'accepted' || doc.status === 'rejected') && (
+          <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
+            {doc.status === 'accepted'
+              ? 'Fattura pagata — nessuna modifica consentita.'
+              : canReactivate
+                ? 'Fattura annullata. Puoi riattivarla (torna in bozza) finché non è stata trasmessa allo SdI.'
+                : 'Fattura annullata e già trasmessa allo SdI: per correggerla serve una nota di credito.'}
+          </div>
+        )}
+
         {/* ── BANNER MODIFICATO dopo l'invio (C2) — IN ALTO (richiesta Eli
             3 ago): è l'avviso più importante della pagina, prima stava in
             fondo sotto riepilogo e bottoni e passava inosservato.
@@ -1242,15 +1256,6 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         )}
         </div>
 
-        {(doc.status === 'accepted' || doc.status === 'rejected') && (
-          <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
-            {doc.status === 'accepted'
-              ? 'Fattura pagata — nessuna modifica consentita.'
-              : canReactivate
-                ? 'Fattura annullata. Puoi riattivarla (torna in bozza) finché non è stata trasmessa allo SdI.'
-                : 'Fattura annullata e già trasmessa allo SdI: per correggerla serve una nota di credito.'}
-          </div>
-        )}
 
         {/* ⚠️ «Crea nota di credito» esisteva SOLO su mobile: su computer una
             fattura trasmessa non aveva alcun modo di essere stornata. */}

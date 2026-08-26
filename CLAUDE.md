@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 26 agosto 2026** (ⓘ SdI conciso + FAQ per intero + il rifiuto resta in cronologia).
+> **Ultima sessione: 26 agosto 2026** (banner «Fattura pagata» in cima alla pagina).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -28,6 +28,10 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### ✅ 26 ago (4) — Il banner «Fattura pagata — nessuna modifica consentita» sta IN CIMA
+Eli: il banner di stato dentro una fattura pagata deve stare in cima. Giusto: dice PERCHÉ la pagina è in sola lettura, quindi va letto prima del documento — stava in fondo, sotto il foglio, le card e il preventivo collegato. Spostato (con i suoi due fratelli: «annullata riattivabile» e «annullata e trasmessa → nota di credito») come **prima card della pagina**, sopra il banner «Modificata» — stessa mossa del banner viola del 3 ago. Nessun cambio di condizioni o testo.
+- tsc+build+**742**+smoke 28/28 verdi · scan 0.
 
 ### ✅ 26 ago (3) — ⓘ SdI conciso col pilota davanti + le due spiegazioni per intero nelle FAQ + [BUG] il rifiuto spariva dalla cronologia alla riapertura
 Tre punti di Eli (i primi due sono decisioni di copy sul ⓘ «perfetto ma molto lungo»).
