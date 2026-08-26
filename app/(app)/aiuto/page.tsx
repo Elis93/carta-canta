@@ -279,6 +279,23 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   // card SdI, la Home e l'interruttore, che senza flag non esistono).
   ...(SDI_ATTIVO ? [
   {
+    q: 'Cos’è la trasmissione SdI?',
+    parole: ['sdi', 'sistema di interscambio', 'fattura elettronica', 'trasmissione', 'consegnata', 'scartata', 'copia di cortesia', 'cassetto fiscale'],
+    a: <>Per legge la fattura va emessa in formato <b>elettronico</b>: il PDF che mandi al
+      cliente è solo una <b>copia di cortesia</b>. Il <b>Sistema di Interscambio (SdI)</b>{' '}
+      è il canale dell&rsquo;Agenzia delle Entrate che riceve la fattura elettronica e la
+      recapita al cliente.
+      <br /><br />
+      Dalla card <b>Fattura elettronica (SdI)</b>{' '}sulla fattura la trasmetti con un
+      tocco. Dopo l&rsquo;invio arriva l&rsquo;esito: <b>Consegnata</b>{' '}(tutto a posto)
+      oppure <b>Scartata</b>{' '}(c&rsquo;è un dato da correggere: sistemi e reinvii entro{' '}
+      <b>5 giorni</b>, con lo stesso numero e la stessa data).
+      <br /><br />
+      In alternativa puoi trasmetterla come hai sempre fatto (cassetto fiscale o
+      commercialista): l&rsquo;importante è che ogni documento venga trasmesso{' '}
+      <b>una volta sola</b>.</>,
+  },
+  {
     q: 'Quando una fattura è davvero «emessa»? Cosa sono i 12 giorni?',
     parole: ['emessa', 'emissione', '12 giorni', 'termine', 'tardiva', 'trasmissione', 'bozza', 'copia di cortesia', 'data fattura'],
     a: <>Per l&rsquo;Agenzia delle Entrate la fattura è emessa{' '}
@@ -294,9 +311,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       Finché resta <b>bozza</b>{' '}nessun conteggio parte. Per non fartelo
       tenere a mente, sulla fattura la card <b>Fattura elettronica (SdI)</b>{' '}mostra il{' '}
       <b>conto alla rovescia</b>{' '}— «Da trasmettere entro il … · mancano N giorni» — e
-      negli ultimi 3 giorni ti arriva anche la notifica in campanella. Il tondino ⓘ accanto
-      al conto spiega tutto. E con la <b>trasmissione automatica</b>{' '}attiva non devi
-      nemmeno pensarci: la fattura parte da sola.
+      negli ultimi 3 giorni ti arriva anche la notifica in campanella. E con la{' '}
+      <b>trasmissione automatica</b>{' '}attiva non devi nemmeno pensarci: la fattura
+      parte da sola.
       <br /><br />
       L&rsquo;elenco completo di quelle ancora da trasmettere, in ordine di urgenza, è in{' '}
       <VaiA a="daTrasmettere" />{' '}— ci arrivi anche dal riquadro <b>Da trasmettere</b>{' '}

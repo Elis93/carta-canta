@@ -13,6 +13,7 @@ import { sendEmail } from '@/lib/email/send'
 import { PreventivoAccettatoEmail } from '@/lib/email/templates/preventivo_accettato'
 import { PreventivoAccettatoClienteEmail } from '@/lib/email/templates/preventivo_accettato_cliente'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
+import { logAccettazioneCliente } from '@/lib/documents/log-cliente'
 import { clientIpFrom } from '@/lib/client-ip'
 import { stripPrefissoLegacy } from '@/lib/utils'
 
@@ -222,6 +223,15 @@ export async function POST(
     const { error: tierError } = await db.from('documents').update(tierUpdate).eq('id', doc.id)
     if (tierError) console.error('[accept] update totali proposta scelta fallito:', tierError)
   }
+
+  // ── Cronologia: l'accettazione del cliente resta scritta (Eli 26 ago,
+  // gemella del rifiuto): senza questa voce, un «Riporta in bozza» faceva
+  // sparire dalla storia QUANDO il cliente aveva accettato (e con quale
+  // proposta). Best-effort.
+  await logAccettazioneCliente(admin, doc.id, {
+    tier: (tierUpdate as { accepted_tier?: string } | null)?.accepted_tier ?? null,
+    signer: body.signer_name ?? null,
+  })
 
   // ── Email all'artigiano (best-effort, non blocca) ────────
   try {

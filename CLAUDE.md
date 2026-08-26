@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 26 agosto 2026** (foglio del documento bianco con filetto d'oro sopra e sotto).
+> **Ultima sessione: 26 agosto 2026** (ⓘ SdI conciso + FAQ per intero + il rifiuto resta in cronologia).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -28,6 +28,13 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### ✅ 26 ago (3) — ⓘ SdI conciso col pilota davanti + le due spiegazioni per intero nelle FAQ + [BUG] il rifiuto spariva dalla cronologia alla riapertura
+Tre punti di Eli (i primi due sono decisioni di copy sul ⓘ «perfetto ma molto lungo»).
+- **[FAQ] I due testi del ⓘ vivono ora per intero nelle Domande frequenti**: nuova FAQ **«Cos'è la trasmissione SdI?»** (formato elettronico/copia di cortesia, esiti Consegnata/Scartata coi 5 giorni, alternativa cassetto fiscale/commercialista — nel blocco `SDI_ATTIVO`, come le sorelle) e la FAQ dei 12 giorni — che già conteneva l'intero racconto a 3 punti con l'esempio 10→22 — ripulita dalla riga stantia «il tondino ⓘ accanto al conto spiega tutto» (quel ⓘ non esiste più, sotto).
+- **[SdiCard] UN SOLO ⓘ, conciso, col pilota davanti** (ordine chiesto da Eli): ① «tieni attiva la **trasmissione automatica**» con **link a Impostazioni › Dati fiscali**; ② in breve i 12 giorni (da invio al cliente o primo incasso, il più vecchio) e i 5 giorni dello scarto (stesso numero e stessa data); ③ link alle **Domande frequenti**. Il **secondo ⓘ sul conto alla rovescia è stato RIMOSSO** (stato `termineInfoOpen` + pannello dei 3 punti): due ⓘ nella stessa card dicevano la stessa cosa in due lunghezze. Ramo NC: niente push sul pilota (le note non partono mai da sole), resta lo storno + termini concisi.
+- **[BUG] «Ho rinviato un documento rifiutato ma in cronologia non c'è traccia del rifiuto»** — vero e strutturale: le route pubbliche accept/decline scrivevano solo lo STATO, e le voci «Rifiutato»/«Accettato» della cronologia erano DERIVATE da quello → riaperto il preventivo (status di nuovo `sent`), il rifiuto spariva dalla storia. Nuovo **`lib/documents/log-cliente.ts`** (schema log-scadenza: NON 'use server', client come argomento, best-effort, rilettura fresca): `logRifiutoCliente` → voce `client_rejected` (col motivo) nella route decline; **per simmetria** `logAccettazioneCliente` → `client_accepted` (tier + firmatario) nella route accept — stessa classe di buco: un «Riporta in bozza» azzerava `accepted_at` e la data dell'accettazione si perdeva. `DocumentTimeline`: le due voci nuove renderizzate («Rifiutato dal cliente» col motivo · «Accettato [e firmato] dal cliente» con la proposta) e i derivati soppressi quando la voce di log c'è (dedupe come marked_*). ⚠️ Il campo `reason` del tipo LogEntry esisteva già per payment_reset con un union stretto → unificato a `string | null` (i confronti === restano validi). ⚠️ Retroattivo NO: il rifiuto del documento già riaperto di Giorgio non fu mai scritto e non è ricostruibile; da ora in poi resta.
+- tsc+build+**742**+smoke 28/28 verdi · scan 0/66. ⚠️ Da collaudare: nuovo giro rifiuto→riapertura (la voce deve restare), ⓘ conciso coi 2 link.
 
 ### ✅ 26 ago (2) — Il foglio del documento è BIANCO, con filetto d'oro sopra e sotto
 Eli: «lo sfondo dei documenti in preview come lo vede il cliente voglio che sia bianco e non crema, e bordo oro sia sopra che sotto».

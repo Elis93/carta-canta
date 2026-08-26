@@ -102,9 +102,6 @@ export function SdiCard({
   // Punto ⓘ (richiesta Eli 2 ago): spiegazione in parole semplici di cosa
   // è lo SdI e perché la trasmissione serve — chiusa di default.
   const [infoOpen, setInfoOpen] = useState(false)
-  // ⓘ del timer dei 12 giorni (Eli, 11 ago): spiegazione di cosa vuol dire
-  // «emessa» e da quando corre il termine — accanto alla funzione, come chiesto.
-  const [termineInfoOpen, setTermineInfoOpen] = useState(false)
   const [annullandoAuto, setAnnullandoAuto] = useState(false)
   // Card a TENDINA (Eli 25 ago sera): chiusa di default, APERTA d'ufficio
   // quando c'è qualcosa che non può aspettare — scartata o termine superato
@@ -387,34 +384,47 @@ export function SdiCard({
         </p>
       )}
 
+      {/* ⓘ CONCISO (Eli 26 ago: «lascerei una descrizione più concisa dei 12
+          giorni e dei 5 giorni, ma prima di tutto punterei a fargli tenere
+          attivo il flag di trasmissione automatica, con link, e rimando alle
+          FAQ»): il testo per esteso vive nelle Domande frequenti. */}
       {infoOpen && (
         <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '11px 13px', marginBottom: 11, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
-          <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Cos&rsquo;&egrave; la trasmissione SdI?</p>
           {isNotaCredito ? (
-            <p style={{ margin: '6px 0 0' }}>
-              La nota di credito storna la fattura <b>solo se viene trasmessa</b>: finché
-              resta qui dentro, per l&rsquo;Agenzia delle Entrate quella fattura &egrave;
-              ancora intera. Il Sistema di Interscambio (SdI) &egrave; il canale che la
-              riceve e la recapita al cliente.
-            </p>
+            <>
+              <p style={{ margin: 0 }}>
+                La nota di credito storna la fattura <b>solo se viene trasmessa</b>{' '}allo
+                SdI, il canale dell&rsquo;Agenzia delle Entrate: finché resta qui dentro,
+                quella fattura per il fisco è ancora intera.
+              </p>
+              <p style={{ margin: '6px 0 0' }}>
+                Anche per la nota valgono i <b>12 giorni</b>{' '}dal giorno in cui la mandi
+                al cliente; se viene <b>scartata</b>, la correggi e la ritrasmetti entro{' '}
+                <b>5 giorni</b>, con lo stesso numero e la stessa data. La trasmissione
+                automatica non la riguarda: la nota la trasmetti sempre tu.
+              </p>
+            </>
           ) : (
-            <p style={{ margin: '6px 0 0' }}>
-              Per legge la fattura va emessa in formato ELETTRONICO: il PDF che mandi al
-              cliente &egrave; solo una copia di cortesia. Il Sistema di Interscambio (SdI)
-              &egrave; il canale dell&rsquo;Agenzia delle Entrate che riceve la fattura
-              elettronica e la recapita al cliente.
-            </p>
+            <>
+              <p style={{ margin: 0 }}>
+                Il modo più semplice per non pensarci: tieni attiva la{' '}
+                <Link href="/impostazioni/fiscale" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>trasmissione automatica</Link>{' '}
+                — la fattura parte da sola 24 ore dopo la conferma, e qui vedi quando,
+                col tasto Annulla per fermarla.
+              </p>
+              <p style={{ margin: '6px 0 0' }}>
+                In breve: la fattura è <b>emessa</b>{' '}solo quando passa dallo SdI (il PDF
+                al cliente è una copia di cortesia). Il conto alla rovescia parte dal
+                giorno dell&rsquo;<b>invio al cliente</b>{' '}— o del <b>primo incasso</b>,
+                se arriva prima — e dà <b>12 giorni</b>{' '}per trasmetterla. Se viene{' '}
+                <b>scartata</b>, la correggi e la ritrasmetti entro <b>5 giorni</b>, con lo
+                stesso numero e la stessa data.
+              </p>
+            </>
           )}
           <p style={{ margin: '6px 0 0' }}>
-            Da qui la trasmetti con un tocco. Dopo l&rsquo;invio arriva l&rsquo;esito:{' '}
-            <b>Consegnata</b> (tutto a posto) oppure <b>Scartata</b> (c&rsquo;&egrave; un
-            dato da correggere: sistemi e reinvii entro 5 giorni, con lo stesso numero e
-            la stessa data).
-          </p>
-          <p style={{ margin: '6px 0 0' }}>
-            In alternativa puoi trasmetterla come hai sempre fatto (cassetto fiscale o
-            commercialista): l&rsquo;importante &egrave; che ogni documento venga trasmesso
-            una volta sola.
+            Tutti i dettagli sono nelle{' '}
+            <Link href="/aiuto" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>Domande frequenti</Link>.
           </p>
         </div>
       )}
@@ -496,50 +506,7 @@ export function SdiCard({
                 </>
               )}
             </span>
-            <button
-              type="button"
-              onClick={() => setTermineInfoOpen((o) => !o)}
-              aria-expanded={termineInfoOpen}
-              aria-label="Perché c'è un termine di 12 giorni?"
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '50%', border: '1px solid #d9d7d0', background: termineInfoOpen ? '#f2f2f4' : '#fff', color: '#6f6d64', cursor: 'pointer', padding: 0, flexShrink: 0 }}
-            >
-              <Info size={13} />
-            </button>
           </div>
-          {termineInfoOpen && (
-            /* Riscritto il 25 ago sera (Eli: «non si capisce perché per
-               l'Agenzia non è emessa ma il conto alla rovescia parte; e se il
-               cliente paga prima?»): la contraddizione apparente va sciolta
-               per nome, e la regola detta con un esempio. Niente entità HTML
-               a fine riga: era lì che le parole uscivano attaccate. */
-            <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '11px 13px', marginBottom: 11, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
-              <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Da quando contano i 12 giorni</p>
-              <p style={{ margin: '6px 0 0' }}>
-                <b>1.</b>{' '}Per la legge {isNotaCredito ? 'la nota' : 'la fattura'} è{' '}
-                <b>emessa solo quando passa dallo SdI</b>{' '}(art. 21 DPR 633/1972). Il PDF o
-                il link che mandi al cliente è una copia di cortesia: per l&rsquo;Agenzia delle
-                Entrate il documento non esiste ancora.
-              </p>
-              <p style={{ margin: '6px 0 0' }}>
-                <b>2.</b>{' '}Il tempo però corre lo stesso: il giorno in cui la mandi al
-                cliente diventa la <b>data del documento</b>, e da quel giorno la legge dà{' '}
-                <b>12 giorni</b>{' '}per completare l&rsquo;emissione con la trasmissione.
-                Esempio: la mandi il 10 del mese, va trasmessa entro il 22.
-              </p>
-              <p style={{ margin: '6px 0 0' }}>
-                <b>3.</b>{' '}Se il cliente <b>paga prima</b>{' '}che tu gliel&rsquo;abbia
-                mandata, i 12 giorni partono dal giorno dell&rsquo;<b>incasso</b>: per il
-                fisco l&rsquo;operazione si considera fatta quando viene pagata. In breve:
-                vale la <b>più vecchia</b>{' '}tra le due date — invio al cliente e primo
-                incasso — ed è quella che il conto alla rovescia qui sopra usa già.
-              </p>
-              <p style={{ margin: '6px 0 0' }}>
-                Oltre il termine {isNotaCredito ? 'la nota' : 'la fattura'} resta valida, ma
-                la trasmissione è tardiva e sanzionabile: trasmettila comunque e segnala il
-                ritardo al commercialista — col ravvedimento operoso la sanzione si riduce.
-              </p>
-            </div>
-          )}
         </>
       )}
 

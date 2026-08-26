@@ -10,6 +10,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoRifiutatoEmail } from '@/lib/email/templates/preventivo_rifiutato'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
+import { logRifiutoCliente } from '@/lib/documents/log-cliente'
 
 export async function POST(
   request: NextRequest,
@@ -94,6 +95,11 @@ export async function POST(
     // Un'altra azione (accept/scadenza) ha già mosso lo stato nel frattempo.
     return NextResponse.json({ error: 'Il preventivo è già stato aggiornato. Ricarica la pagina.' }, { status: 409 })
   }
+
+  // ── Cronologia: il rifiuto resta scritto (Eli 26 ago) ────
+  // Best-effort: senza questa voce, alla riapertura del preventivo l'evento
+  // «Rifiutato» — derivato dallo stato — spariva dalla storia.
+  await logRifiutoCliente(admin, doc.id, reason)
 
   // ── Email all'artigiano (best-effort) ────────────────────
   try {

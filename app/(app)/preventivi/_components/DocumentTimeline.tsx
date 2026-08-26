@@ -18,17 +18,21 @@ export interface DocumentLogEntry {
   type: 'modified' | 'restored' | 'resent' | 'payment' | 'payment_reset' | 'cancelled' | 'reactivated'
     | 'marked_accepted' | 'marked_rejected' | 'marked_expired' | 'unaccepted' | 'reopened'
     | 'client_message' | 'owner_message' | 'expiry_set'
+    | 'client_accepted' | 'client_rejected'
   at: string
   /** solo expiry_set (25 ago): la nuova data di scadenza impostata */
   expires?: string
+  /** solo client_accepted: nome di chi ha firmato */
+  signer?: string | null
   /** solo client_message/owner_message: testo del messaggio */
   text?: string
   /** solo payment/payment_reset: importo in euro */
   amount?: number
   /** solo payment: acconto (parziale) o saldo (chiude la fattura) */
   kind?: 'acconto' | 'saldo'
-  /** solo payment_reset: PERCHÉ l'incasso è stato azzerato (27 lug) */
-  reason?: 'correzione' | 'annullamento' | 'riattivazione' | 'non_pagata'
+  /** payment_reset: PERCHÉ l'incasso è stato azzerato (27 lug) —
+      client_rejected: il motivo scritto dal cliente (testo libero) */
+  reason?: string | null
   /** Proposta scelta o annullata (041) — solo su marked_accepted/unaccepted */
   tier?: string | null
 }
@@ -213,7 +217,11 @@ export function DocumentTimeline({
   // Si tiene quella del log, che è la più informativa; l'evento derivato resta
   // per le fatture vecchie, che il log degli incassi non ce l'hanno.
   const hasSaldoLog = isFattura && documentLog.some((e) => e.type === 'payment' && e.kind === 'saldo')
-  if (acceptedAt && (acceptedByClient || !hasMarkedAcceptedLog) && !hasSaldoLog) {
+  // Dal 26 ago la pagina pubblica scrive la SUA voce (client_accepted): se c'è,
+  // l'evento derivato sarebbe un doppione — e la voce di log sopravvive anche
+  // al «Riporta in bozza», che azzera accepted_at.
+  const hasClientAcceptedLog = documentLog.some((e) => e.type === 'client_accepted')
+  if (acceptedAt && !hasClientAcceptedLog && (acceptedByClient || !hasMarkedAcceptedLog) && !hasSaldoLog) {
     events.push({
       key: 'accepted',
       icon: isFattura ? <Banknote className="size-3" /> : <CheckCircle2 className="size-3" />,
@@ -245,7 +253,8 @@ export function DocumentTimeline({
   // con MOTIVAZIONE viene dalla pagina pubblica (che non scrive log) — senza
   // questa condizione, un vecchio "Segna rifiutato" manuale nel log avrebbe
   // nascosto per sempre il rifiuto vero del cliente e il suo motivo.
-  if (status === 'rejected' && (!!rejectionReason || (!hasCancelledLog && !hasMarkedRejectedLog))) {
+  const hasClientRejectedLog = documentLog.some((e) => e.type === 'client_rejected')
+  if (status === 'rejected' && !hasClientRejectedLog && (!!rejectionReason || (!hasCancelledLog && !hasMarkedRejectedLog))) {
     // No specific rejection timestamp — use accepted_at slot as fallback (shouldn't coexist)
     const rejDate = sentAt ?? createdAt ?? new Date().toISOString()
     events.push({
@@ -380,6 +389,27 @@ export function DocumentTimeline({
         icon: <XCircle className="size-3" />,
         label: 'Segnato come rifiutato',
         badgeBg: '#f5dede', badgeColor: '#b05656',
+        date: entry.at,
+      })
+    } else if (entry.type === 'client_rejected') {
+      // Il rifiuto del CLIENTE è una voce PROPRIA dal 26 ago: prima era solo
+      // derivato dallo stato e spariva riaprendo il preventivo — «in
+      // cronologia rimangono TUTTI i passaggi» (regola del 3 ago).
+      events.push({
+        key: `client-rejected-${i}`,
+        icon: <XCircle className="size-3" />,
+        label: 'Rifiutato dal cliente',
+        detail: entry.reason ?? null,
+        badgeBg: '#f5dede', badgeColor: '#b05656',
+        date: entry.at,
+      })
+    } else if (entry.type === 'client_accepted') {
+      events.push({
+        key: `client-accepted-${i}`,
+        icon: <CheckCircle2 className="size-3" />,
+        label: entry.signer ? 'Accettato e firmato dal cliente' : 'Accettato dal cliente',
+        detail: entry.tier ? `Proposta ${TIER_LABEL[entry.tier as TierKey] ?? entry.tier}` : undefined,
+        badgeBg: '#d4efe2', badgeColor: '#2f8a63',
         date: entry.at,
       })
     } else if (entry.type === 'marked_expired') {
