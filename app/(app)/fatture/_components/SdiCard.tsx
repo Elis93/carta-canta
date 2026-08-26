@@ -340,27 +340,20 @@ export function SdiCard({
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: cardOpen ? 8 : 0 }}>
+        {/* ⚠️ L'etichetta è lunga (211px misurati, 272 sulla nota di credito) e
+            NON può stare su una riga con lo stato: sommata a chevron e ⓘ sborda
+            dai 330px interni della card — era il chevron tagliato visto da Eli.
+            Quindi: riga 1 = etichetta + comandi (l'etichetta può andare a capo),
+            riga 2 = lo stato, che ha così tutta la larghezza. */}
         <button
           type="button"
           onClick={() => setCardOpen((v) => !v)}
           aria-expanded={cardOpen}
           style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', minHeight: 28, textAlign: 'left' }}
         >
-          <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
             {isNotaCredito ? 'Nota di credito elettronica (SdI)' : 'Fattura elettronica (SdI)'}
           </span>
-          {ambiente !== 'reale' && (
-            <span style={{ flexShrink: 0, border: '1px solid #e8d6ad', color: '#b0863e', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
-              {ambiente === 'prova' ? 'PROVA' : 'COLLAUDO'}
-            </span>
-          )}
-          {cardOpen ? (
-            <span style={{ flex: 1 }} />
-          ) : (
-            <span style={{ flex: 1, minWidth: 0, textAlign: 'right', fontSize: 12.5, fontWeight: 600, color: riepilogoColore, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {riepilogoChiuso}
-            </span>
-          )}
           <ChevronDown size={18} style={{ color: '#1a1a2e', flexShrink: 0, transform: cardOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }} />
         </button>
         <button
@@ -374,10 +367,18 @@ export function SdiCard({
         </button>
       </div>
 
+      {!cardOpen && (
+        <p style={{ margin: '4px 0 0', fontSize: 12.5, fontWeight: 600, color: riepilogoColore, lineHeight: 1.4 }}>
+          {riepilogoChiuso}
+        </p>
+      )}
+
       {cardOpen && (<>
 
-      {/* ⚠️ Il `title` della pillola non esiste sul telefono, e l'app si usa dal
-          telefono: se l'ambiente non è quello vero, va scritto per esteso. */}
+      {/* ⚠️ Dal 26 ago la pillola PROVA/COLLAUDO non sta più nella testata (rubava
+          la riga al chevron e allo stato): questa riga è l'UNICO avviso che
+          l'ambiente non è quello vero. Non toglierla — e resta la prima cosa
+          della card aperta, perché per trasmettere bisogna comunque aprirla. */}
       {ambiente !== 'reale' && (
         <p style={{ fontSize: 12, color: '#b0863e', margin: '-2px 0 10px', lineHeight: 1.45 }}>
           {ambiente === 'prova'

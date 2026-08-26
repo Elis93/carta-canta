@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 26 agosto 2026** («Converti in fattura» dal lavoro finito + ricerca sui 12 giorni nei competitor).
+> **Ultima sessione: 26 agosto 2026** (chevron della card SdI tagliato: via la pillola COLLAUDO dalla testata).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -28,6 +28,13 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### ✅ 26 ago — [BUG] Il chevron della card SdI era tagliato: via la pillola COLLAUDO dalla testata
+Eli, foto: «la spunta del menu a tendina di fattura elettronica non si vede, togliamo la parola collaudo da li».
+- **CAUSA misurata in Chromium** (replica fedele col font Inter vero): la riga della testata chiedeva **358px** sui **330** interni della card a 390px — etichetta «FATTURA ELETTRONICA (SDI)» **211px** (`flexShrink: 0`) + pillola COLLAUDO ~75 (`flexShrink: 0`) + chevron 18 + ℹ 22 + i gap. I due elementi non comprimibili si servono per primi → il riepilogo di stato collassava a **0px** e chevron/ℹ finivano oltre il bordo. ⚠️ Con la **nota di credito** (etichetta 272px) sarebbe sbordato **anche senza pillola**: il difetto non era la pillola, era la riga singola.
+- **FIX in due mosse**: ① la pillola PROVA/COLLAUDO esce dalla testata (richiesta di Eli); ② da chiusa lo **stato va su una riga propria** sotto l'etichetta (riga 1 = etichetta + chevron + ℹ, con l'etichetta ora comprimibile e libera di andare a capo). **Verificato a 390/360/320/292px**: chevron e ℹ sempre dentro la card, stato mai troncato, zero overflow di pagina; sotto i 360 l'etichetta lunga della nota di credito va a capo invece di sbordare.
+- ⚠️ **L'avviso di ambiente non si perde**: resta la riga ambra per esteso, che è la **prima cosa della card aperta** — e per trasmettere la card va aperta per forza; il toast della trasmissione porta già il suffisso (PROVA)/(COLLAUDO). Commento del codice aggiornato (diceva ancora «la pillola»: un commento sbagliato genera lavori futuri sbagliati).
+- tsc+build+**742**+smoke 28/28 verdi · scan 0/66 (una voce in meno: è sparito il testo della pillola).
 
 ### ✅ 25 ago (11) — «Converti in fattura» anche dal LAVORO + ricerca: da quando partono i 12 giorni da Aruba/Fatture in Cloud
 Due punti di Eli (uno è una domanda con ricerca web su fonti dei competitor).
