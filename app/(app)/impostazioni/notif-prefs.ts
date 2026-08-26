@@ -12,6 +12,7 @@ export function extractNotifPrefs(rawPrefs: Record<string, unknown> | null): Not
     reminder_cliente:     rawPrefs.reminder_cliente     !== false,
     followup_auto:        rawPrefs.followup_auto        === true,
     inapp_visto:          rawPrefs.inapp_visto          !== false,
+    inapp_rifiutato:      rawPrefs.inapp_rifiutato      !== false,
     inapp_acconto:        rawPrefs.inapp_acconto        !== false,
     inapp_richiamo:       rawPrefs.inapp_richiamo       !== false,
     inapp_richiesta:      rawPrefs.inapp_richiesta      !== false,

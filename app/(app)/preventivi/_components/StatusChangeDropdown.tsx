@@ -34,6 +34,8 @@ const DEFAULT_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label:
   ],
   rejected: [
     { status: 'sent', label: 'Riapri (torna a Inviato)' },
+    // Il cliente può cambiare idea dopo un rifiuto (Eli 25 ago).
+    { status: 'accepted', label: 'Segna come Accettato' },
   ],
   // Permette di riaprire un documento scaduto riportandolo a Inviato
   expired: [
@@ -45,7 +47,8 @@ const DEFAULT_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label:
 // restano SOLO le registrazioni di esito (segna accettato/rifiutato/scaduto).
 // Le RIATTIVAZIONI (→sent «Riapri», →draft) sono bloccate dal server: qui si
 // tolgono anche dal menu, così non compare un'opzione che darebbe 403.
-// Per rejected/expired l'array diventa vuoto → il dropdown non si mostra.
+// Per expired l'array diventa vuoto → il dropdown non si mostra; per
+// rejected resta il solo «Segna come Accettato» (registrazione di esito).
 export const LOCKED_TRANSITIONS: Partial<Record<DocStatus, { status: DocStatus; label: string }[]>> =
   Object.fromEntries(
     Object.entries(DEFAULT_TRANSITIONS).map(([stato, opzioni]) => [

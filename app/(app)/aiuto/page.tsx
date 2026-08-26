@@ -212,6 +212,17 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       dice al momento della trasmissione.</>,
   },
   {
+    q: 'Il cliente ha rifiutato il preventivo: posso correggerlo e rinviarlo?',
+    parole: ['rifiutato', 'rifiuto', 'rinviare', 'riaprire', 'cambiato idea', 'nuova approvazione'],
+    a: <>Sì. Apri il preventivo, correggi quello che serve con <b>Modifica</b>{' '}e poi tocca{' '}
+      <b>Invia al cliente</b>: l&rsquo;app ti avvisa che era rifiutato e, alla conferma, lo riporta{' '}
+      <b>Inviato</b>{' '}— il link del cliente torna attivo, può accettarlo di nuovo e la validità
+      riparte. Se invece il cliente ti dice a voce che ha <b>cambiato idea</b>, sul preventivo
+      rifiutato trovi <b>Segna accettato</b>: registra l&rsquo;accettazione senza rimandare nulla.
+      Il rifiuto ti arriva anche nella <b>campanella</b>{' '}in Home, oltre che per email, e ogni
+      passaggio resta scritto in cronologia.</>,
+  },
+  {
     q: 'Posso far comparire l’acconto già impostato su ogni preventivo?',
     parole: ['acconto', 'anticipo', 'caparra', '30%', 'default', 'sempre uguale', 'impostazioni'],
     a: <>Sì. In <VaiA a="impGenerale" />, sezione <b>Dati dell&rsquo;attività</b>, c&rsquo;è{' '}

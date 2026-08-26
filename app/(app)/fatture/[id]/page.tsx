@@ -843,7 +843,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             )}
             {docItems.map((item, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 14 }}>
-                <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
+                <span style={{ color: '#161616' }}>{String(item.description ?? '—')}
+                {(Number(item.discount_pct ?? 0) > 0) && (
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#2f8a63', whiteSpace: 'nowrap' }}>
+                              {' '}Sconto&nbsp;−{Number(item.discount_pct).toLocaleString('it-IT')}%
+                            </span>
+                          )}
+                </span>
                 {item.total != null && (
                   <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>
                     {`€\u00A0${Number(item.total).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`}

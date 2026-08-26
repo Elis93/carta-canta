@@ -7,7 +7,7 @@ import { useTransition, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Eye, Banknote, AlertTriangle, Receipt, BellRing, MessageSquare, Clock, Tag } from 'lucide-react'
+import { Eye, Banknote, AlertTriangle, Receipt, BellRing, MessageSquare, Clock, Tag, XCircle } from 'lucide-react'
 import { markNotificationsReadAction } from '@/lib/actions/notifications'
 import { segnaLettaLocale, applicaLetteLocali } from '@/lib/notifiche-lette-locali'
 import type { AppNotification } from '@/lib/notifications'
@@ -29,6 +29,7 @@ function timeAgo(iso: string | null): string {
 
 const TYPE_ICON: Record<AppNotification['type'], { icon: React.ReactNode; border: string; color: string }> = {
   viewed:             { icon: <Eye size={15} />,           border: '#e9c3d6', color: '#c25b91' },
+  rifiutato:          { icon: <XCircle size={15} />,       border: '#ecc9c9', color: '#b05656' },
   acconto:            { icon: <Banknote size={15} />,      border: '#e8d6ad', color: '#b0863e' },
   richiamo:           { icon: <BellRing size={15} />,      border: '#cfe8da', color: '#2f8a63' },
   richiesta:          { icon: <MessageSquare size={15} />, border: '#c9d4ea', color: '#3f6fb0' },

@@ -644,7 +644,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                       </div>
                       {vociProposta.map((item, k) => (
                         <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '6px 0', fontSize: 14 }}>
-                          <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
+                          <span style={{ color: '#161616' }}>{String(item.description ?? '—')}
+                          {(Number(item.discount_pct ?? 0) > 0) && (
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#2f8a63', whiteSpace: 'nowrap' }}>
+                              {' '}Sconto&nbsp;−{Number(item.discount_pct).toLocaleString('it-IT')}%
+                            </span>
+                          )}
+                          </span>
                           {item.total != null && <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{euro(Number(item.total))}</span>}
                         </div>
                       ))}
@@ -702,7 +708,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <>
                 {docItems.map((item, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 14 }}>
-                    <span style={{ color: '#161616' }}>{String(item.description ?? '—')}</span>
+                    <span style={{ color: '#161616' }}>{String(item.description ?? '—')}
+                    {(Number(item.discount_pct ?? 0) > 0) && (
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#2f8a63', whiteSpace: 'nowrap' }}>
+                              {' '}Sconto&nbsp;−{Number(item.discount_pct).toLocaleString('it-IT')}%
+                            </span>
+                          )}
+                    </span>
                     {item.total != null && <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{euro(Number(item.total))}</span>}
                   </div>
                 ))}
@@ -775,6 +787,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 clientName={clientName}
                 triggerIcon={<Send size={18} />}
                 isExpired={doc.status === 'expired'}
+                isRejected={doc.status === 'rejected'}
                 isModified={!!(doc as any).updated_after_send_at}
                 defaultValidityDays={(doc as any).validity_days ?? 30}
                 triggerStyle={doc.status === 'accepted'
@@ -789,6 +802,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {(doc.status === 'sent' || doc.status === 'viewed') && (
             <div style={{ display: 'flex', gap: 11, padding: '0 15px', marginTop: 11 }}>
               <MobileStatusChips documentId={id} chipBase={segnaChip} />
+            </div>
+          )}
+          {/* Preventivo RIFIUTATO: il cliente può cambiare idea (Eli 25 ago) —
+              «Segna accettato» registra il ripensamento; per rinviarlo con le
+              modifiche c'è «Invia al cliente» qui sopra (riapre e condivide). */}
+          {doc.status === 'rejected' && (
+            <div style={{ display: 'flex', gap: 11, padding: '0 15px', marginTop: 11 }}>
+              <MobileStatusChips documentId={id} chipBase={segnaChip} only="accepted" />
             </div>
           )}
 
@@ -966,6 +987,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 hasVoci={hasVoci}
                 clientName={clientName}
                 isExpired={doc.status === 'expired'}
+                isRejected={doc.status === 'rejected'}
                 isModified={!!(doc as any).updated_after_send_at}
                 defaultValidityDays={(doc as any).validity_days ?? 30}
                 initialOpen={send === '1'}

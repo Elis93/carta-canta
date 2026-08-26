@@ -9,9 +9,13 @@ import { TIER_LABEL, type TierKey } from '@/lib/documents/proposte'
 interface MobileStatusChipsProps {
   documentId: string
   chipBase: React.CSSProperties
+  /** 'accepted' → solo il chip «Segna accettato»: sul preventivo RIFIUTATO
+      l'unico esito ancora registrabile è il ripensamento del cliente
+      (Eli 25 ago: «cambiare idea dopo il rifiuto e accettarlo»). */
+  only?: 'accepted'
 }
 
-export function MobileStatusChips({ documentId, chipBase }: MobileStatusChipsProps) {
+export function MobileStatusChips({ documentId, chipBase, only }: MobileStatusChipsProps) {
   const router = useRouter()
   // ⚠️ Non basta sapere CHE si sta caricando: con due proposte la rotella
   // compariva su entrambi i tasti (Eli, 9 ago — stesso difetto del rinvio
@@ -116,17 +120,19 @@ export function MobileStatusChips({ documentId, chipBase }: MobileStatusChipsPro
           : <Check size={18} style={{ color: '#2f8a63' }} />}
         Segna accettato
       </button>
-      <button
-        type="button"
-        onClick={() => changeStatus('rejected')}
-        disabled={loading !== null}
-        style={{ ...chipBase }}
-      >
-        {loading === 'rejected'
-          ? <Loader2 size={18} className="animate-spin" style={{ color: '#b05656' }} />
-          : <X size={18} style={{ color: '#b05656' }} />}
-        Segna rifiutato
-      </button>
+      {only !== 'accepted' && (
+        <button
+          type="button"
+          onClick={() => changeStatus('rejected')}
+          disabled={loading !== null}
+          style={{ ...chipBase }}
+        >
+          {loading === 'rejected'
+            ? <Loader2 size={18} className="animate-spin" style={{ color: '#b05656' }} />
+            : <X size={18} style={{ color: '#b05656' }} />}
+          Segna rifiutato
+        </button>
+      )}
     </>
   )
 }

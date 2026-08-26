@@ -19,7 +19,9 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'La cronologia registra ogni nuova scadenza: primo invio, rinvio di uno scaduto, proroga del termine di pagamento — ogni volta che dai un termine nuovo, resta scritto quando e quale.',
       'Se il cliente riapre il link di un documento già accettato o pagato, l’apertura ora compare comunque in cronologia (prima si perdeva).',
       'Lo sconto sul documento ora compare anche nel riepilogo dentro l’app (Subtotale → Sconto → IVA → Totale), come già nel PDF e nella pagina del cliente: i numeri tornano a colpo d’occhio. E il comando dello sconto nel modulo è un campo solo, con %/€ incorporati.',
+      'Anche lo sconto della singola voce ora si legge ovunque: accanto alla descrizione — nel PDF, sulla pagina del cliente, nelle card delle proposte e nei riepiloghi — compare «Sconto −10%» in verde. Prima il totale di riga era già scontato ma la percentuale non si vedeva, e «100 € → 90 €» sembrava un errore.',
       'Le fatture partono solo con i dati del cliente al completo: nome, indirizzo e città, e partita IVA o codice fiscale — quello che la legge vuole scritto in fattura. Se manca qualcosa, l’app te lo dice e ti manda a completare la scheda del cliente.',
+      'Un preventivo rifiutato non è più un vicolo cieco: lo correggi e lo rinvii con «Invia al cliente» (torna Inviato e il cliente può accettarlo di nuovo), oppure — se il cliente ha cambiato idea a voce — lo segni accettato direttamente. E il rifiuto ora suona anche nella campanella, non solo per email.',
     ],
   },
   {

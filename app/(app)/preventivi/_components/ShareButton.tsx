@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Share2, Send, Mail, Copy, Loader2, Link2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { registerManualSendAction, registerManualResendAction, resendExpiredAction } from '@/lib/actions/documents'
+import { registerManualSendAction, registerManualResendAction, resendExpiredAction, riapriRifiutatoAction } from '@/lib/actions/documents'
 import { stripPrefissoLegacy } from '@/lib/utils'
 
 interface ShareButtonProps {
@@ -34,6 +34,10 @@ interface ShareButtonProps {
   clientName?: string | null
   /** true se il preventivo è scaduto → mostra il menu "Nuova scadenza" e fa ripartire la validità al rinvio */
   isExpired?: boolean
+  /** true se il preventivo è stato RIFIUTATO dal cliente → il rinvio lo
+      riporta «Inviato» (il link torna accettabile) e la validità riparte.
+      Solo preventivi: una fattura rifiutata è annullata, non si rinvia. */
+  isRejected?: boolean
   /** Giorni di validità predefiniti (per il menu Nuova scadenza) */
   defaultValidityDays?: number
   /** true → apre il pop-up al mount (arrivo da "Invia al cliente" in creazione, ?send=1) */
@@ -104,6 +108,7 @@ export function ShareButton({
   triggerIcon,
   clientName,
   isExpired,
+  isRejected,
   defaultValidityDays,
   initialOpen = false,
   isModified = false,
@@ -214,9 +219,10 @@ export function ShareButton({
       return
     }
 
-    // Preventivo scaduto: chiedi conferma PRIMA di far ripartire la validità
-    // (i giorni si scelgono nel select "Nuova scadenza" del pop-up)
-    if (isExpired) {
+    // Preventivo scaduto o RIFIUTATO: chiedi conferma PRIMA di riattivarlo
+    // (i giorni si scelgono nel select "Nuova scadenza" del pop-up). Sul
+    // rifiutato il rinvio è ciò che rende il link di nuovo accettabile.
+    if (isExpired || isRejected) {
       toast.success('Link copiato negli appunti')
       setConfirmResend(true)
       return
@@ -281,13 +287,19 @@ export function ShareButton({
     }
   }
 
-  // Conferma rinvio dopo la copia del link (preventivi scaduti): riparte la validità
+  // Conferma rinvio dopo la copia del link (scaduti e rifiutati): il
+  // documento torna «Inviato» e la validità riparte.
   async function confirmResendExpired() {
     if (resending) return
     setResending(true)
     setError(null)
     try {
-      const result = await runAction(() => resendExpiredAction(documentId, validityDays), 'rinviare il documento')
+      const result = await runAction(
+        () => isRejected
+          ? riapriRifiutatoAction(documentId, validityDays)
+          : resendExpiredAction(documentId, validityDays),
+        'rinviare il documento',
+      )
       if (result.error) {
         setError(result.error)
         return
@@ -295,9 +307,11 @@ export function ShareButton({
       router.refresh()
       setConfirmResend(false)
       setOpen(false)
-      toast.success(isFatturaLike
-        ? `Nuovo termine di pagamento: fra ${validityDays} giorni.`
-        : `La validità riparte: scade tra ${validityDays} giorni.`)
+      toast.success(isRejected
+        ? `Il preventivo è di nuovo Inviato: il cliente può accettarlo. Scade tra ${validityDays} giorni.`
+        : isFatturaLike
+          ? `Nuovo termine di pagamento: fra ${validityDays} giorni.`
+          : `La validità riparte: scade tra ${validityDays} giorni.`)
     } finally {
       setResending(false)
     }
@@ -336,6 +350,26 @@ export function ShareButton({
     // È il dialog stesso a gestire salvataggio, stato e scadenza — qui non si
     // segna nulla come inviato.
     if (channel === 'email') {
+      // Scaduto o rifiutato: il documento va PRIMA riportato «Inviato» — la
+      // route email rifiuta gli stati chiusi dei preventivi, e il dialog si
+      // sarebbe aperto solo per fallire all'invio (buco pre-esistente sugli
+      // scaduti, chiuso col giro dei rifiutati).
+      if (isExpired || isRejected) {
+        setChannelPending('email')
+        setError(null)
+        try {
+          const result = await runAction(
+            () => isRejected
+              ? riapriRifiutatoAction(documentId, validityDays)
+              : resendExpiredAction(documentId, validityDays),
+            'rinviare il documento',
+          )
+          if (result.error) { setError(result.error); return }
+          router.refresh()
+        } finally {
+          setChannelPending(null)
+        }
+      }
       setOpen(false)
       window.dispatchEvent(new CustomEvent('cartacanta:open-send-dialog', { detail: { documentId } }))
       return
@@ -375,25 +409,32 @@ export function ShareButton({
         avvisoDodiciGiorni()
       }
 
-      // Per i preventivi scaduti: rinvia → reimposta la scadenza (giorni scelti) + stato Inviato
-      if (isExpired) {
-        const result = await runAction(() => resendExpiredAction(documentId, validityDays), 'rinviare il documento')
+      // Scaduti e rifiutati: rinvia → stato Inviato + scadenza dai giorni scelti
+      if (isExpired || isRejected) {
+        const result = await runAction(
+          () => isRejected
+            ? riapriRifiutatoAction(documentId, validityDays)
+            : resendExpiredAction(documentId, validityDays),
+          'rinviare il documento',
+        )
         if (result.error) {
           setError(result.error)
           return
         }
         router.refresh()
         // Stessa conferma che dà «Copia» dopo il rinvio (Eli, 20 ago)
-        toast.success(isFatturaLike
-          ? `Nuovo termine di pagamento: fra ${validityDays} giorni.`
-          : `La validità riparte: scade tra ${validityDays} giorni.`)
+        toast.success(isRejected
+          ? `Il preventivo è di nuovo Inviato: il cliente può accettarlo. Scade tra ${validityDays} giorni.`
+          : isFatturaLike
+            ? `Nuovo termine di pagamento: fra ${validityDays} giorni.`
+            : `La validità riparte: scade tra ${validityDays} giorni.`)
       }
 
       // ⚠️ Documento già inviato e poi MODIFICATO: il pop-up RESTA APERTO, così
       // tornando da WhatsApp (o dal foglio di condivisione) si trova la domanda
       // «l'hai mandato?». Chiudendolo, come si faceva prima, il badge
       // «Modificato» sarebbe rimasto lì senza che nessuno lo chiedesse.
-      const chiediReinvio = !isDraft && !isExpired && isModified
+      const chiediReinvio = !isDraft && !isExpired && !isRejected && isModified
       if (chiediReinvio) setConfirmResent(true)
       else setOpen(false)
 
@@ -473,8 +514,8 @@ export function ShareButton({
               </button>
             </div>
 
-            {/* Nuova scadenza (solo per i preventivi scaduti) */}
-            {isExpired && (
+            {/* Nuova scadenza (preventivi scaduti e rifiutati) */}
+            {(isExpired || isRejected) && (
               <div style={{ marginTop: 14 }}>
                 <label htmlFor="rinvia-validity" style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
                   {isFatturaLike ? 'Nuovo termine di pagamento' : 'Nuova scadenza'}
@@ -512,7 +553,15 @@ export function ShareButton({
             {confirmResend && (
               <div style={{ marginTop: 14, background: '#f7f7f8', border: '1px solid #e6e6e6', borderRadius: 12, padding: '13px 14px' }}>
                 <p style={{ fontSize: 14, color: '#161616', lineHeight: 1.45, margin: 0 }}>
-                  {isFatturaLike ? (
+                  {isRejected ? (
+                    <>
+                      Questo preventivo è stato <strong style={{ fontWeight: 600 }}>rifiutato</strong>.
+                      Rinviandolo torna <strong style={{ fontWeight: 600 }}>Inviato</strong>: il cliente
+                      può accettarlo di nuovo e la validità riparte —{' '}
+                      <strong style={{ fontWeight: 600 }}>{validityDays} giorni</strong>{' '}
+                      (modificabile qui sopra).
+                    </>
+                  ) : isFatturaLike ? (
                     <>
                       Il <strong style={{ fontWeight: 600 }}>termine di pagamento</strong>{' '}di questa
                       fattura è passato. Vuoi dare al cliente un nuovo termine? Sarà{' '}
@@ -529,9 +578,11 @@ export function ShareButton({
                   )}
                 </p>
                 <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.45, margin: '6px 0 0' }}>
-                  {isFatturaLike
-                    ? 'È solo una proroga commerciale: la data della fattura non cambia, e nemmeno il termine per trasmetterla allo SdI.'
-                    : 'Se non lo rinvii, il link copiato mostrerà il preventivo come scaduto.'}
+                  {isRejected
+                    ? 'Se non lo rinvii, il link copiato mostrerà il preventivo come rifiutato e il cliente non potrà accettarlo.'
+                    : isFatturaLike
+                      ? 'È solo una proroga commerciale: la data della fattura non cambia, e nemmeno il termine per trasmetterla allo SdI.'
+                      : 'Se non lo rinvii, il link copiato mostrerà il preventivo come scaduto.'}
                 </p>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                   <button
@@ -549,7 +600,7 @@ export function ShareButton({
                     style={{ flex: 1, height: 42, borderRadius: 11, border: 'none', background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                   >
                     {resending && <Loader2 size={16} className="animate-spin" />}
-                    Fai ripartire
+                    {isRejected ? 'Rinvia al cliente' : 'Fai ripartire'}
                   </button>
                 </div>
               </div>
@@ -652,10 +703,16 @@ export function ShareButton({
                 <strong style={{ fontWeight: 600 }}>Inviato</strong>{' '}e il link diventa apribile dal cliente.
               </p>
             )}
-            {/* Info per i documenti scaduti */}
-            {isExpired && !isDraft && (
+            {/* Info per i documenti scaduti/rifiutati */}
+            {(isExpired || isRejected) && !isDraft && (
               <p style={{ fontSize: 12, color: '#767676', textAlign: 'center', lineHeight: 1.5, marginTop: 14 }}>
-                {isFatturaLike ? (
+                {isRejected ? (
+                  <>
+                    Rinviando, il preventivo torna <strong style={{ fontWeight: 600 }}>Inviato</strong>{' '}
+                    e il cliente può <strong style={{ fontWeight: 600 }}>accettarlo di nuovo</strong>{' '}
+                    (scade tra <strong style={{ fontWeight: 600 }}>{validityDays} giorni</strong>).
+                  </>
+                ) : isFatturaLike ? (
                   <>
                     Rinviando, il termine di pagamento riparte da oggi (
                     <strong style={{ fontWeight: 600 }}>fra {validityDays} giorni</strong>

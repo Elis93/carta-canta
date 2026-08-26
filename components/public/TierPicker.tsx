@@ -20,6 +20,8 @@ export interface PublicTierItem {
   unit: string
   unit_price: number
   total: number
+  /** Sconto della singola voce (25 ago): il totale è già scontato, la % va detta. */
+  discount_pct?: number | null
 }
 
 export interface PublicTier {
@@ -171,6 +173,11 @@ export function TierPicker({ tiers, initialTier }: { tiers: PublicTier[]; initia
                     >
                       <span style={{ flex: 1, minWidth: 0, fontWeight: uguale ? 400 : 600 }}>
                         {it.description}
+                        {(it.discount_pct ?? 0) > 0 && (
+                          <span style={{ fontSize: 11.5, fontWeight: 600, color: '#2f8a63', whiteSpace: 'nowrap' }}>
+                            {' '}Sconto&nbsp;−{Number(it.discount_pct).toLocaleString('it-IT')}%
+                          </span>
+                        )}
                         {it.quantity !== 1 && (
                           <span style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', marginTop: 1, fontWeight: 400 }}>
                             {it.quantity.toLocaleString('it-IT', { maximumFractionDigits: 3 })}{it.unit ? ` ${it.unit}` : ''} × {fmtEuro(it.unit_price)}

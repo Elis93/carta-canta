@@ -11,7 +11,9 @@ import { isDocFreeLocked, DOC_LOCKED_MESSAGE } from '@/lib/plan/free-lock'
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   sent:     ['accepted', 'rejected', 'expired'],
   viewed:   ['accepted', 'rejected', 'expired'],
-  rejected: ['sent'],
+  // «accepted»: il cliente può cambiare idea dopo un rifiuto (Eli 25 ago) —
+  // il rifiuto non è una lapide, è uno stato come gli altri.
+  rejected: ['sent', 'accepted'],
   // "Riapri (torna a Inviato)" dal dropdown — senza questa chiave il bottone
   // esisteva ma la PATCH rispondeva sempre 409.
   expired:  ['sent'],
@@ -306,9 +308,12 @@ export async function PATCH(
     } catch { /* pre-migration: nessun blocco */ }
   }
 
-  // Riapertura di uno scaduto: senza rinnovare expires_at il cron lo
-  // rimarcherebbe 'expired' la notte stessa (la scadenza è nel passato).
-  const reopening = doc.status === 'expired' && body.status === 'sent'
+  // Riapertura di uno scaduto O di un rifiutato: la validità riparte.
+  // Sullo scaduto è obbligatorio (senza rinnovare expires_at il cron lo
+  // rimarcherebbe 'expired' la notte stessa); sul rifiutato è il senso
+  // dell'operazione — si rimanda al cliente per una NUOVA approvazione
+  // (Eli 25 ago), e un termine già consumato non è un invito a rispondere.
+  const reopening = (doc.status === 'expired' || doc.status === 'rejected') && body.status === 'sent'
   const renewDays = Number(doc.validity_days) > 0 ? Math.floor(Number(doc.validity_days)) : 30
   const renewedExpiry = new Date(Date.now() + renewDays * 24 * 60 * 60 * 1000).toISOString()
 
@@ -418,8 +423,8 @@ export async function PATCH(
   else if (body.status === 'expired') await appendLog('marked_expired')
   else if (body.status === 'sent' && (doc.status === 'rejected' || doc.status === 'expired')) {
     await appendLog('reopened')
-    // «Riapri» su uno scaduto rinnova la scadenza → voce dedicata (25 ago:
-    // ogni nuovo termine deve comparire in cronologia).
+    // «Riapri» (da scaduto o rifiutato) rinnova la scadenza → voce dedicata
+    // (25 ago: ogni nuovo termine deve comparire in cronologia).
     if (reopening) await appendLog('expiry_set', { expires: renewedExpiry })
   }
 

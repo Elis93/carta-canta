@@ -19,7 +19,7 @@ type ServerClient = Awaited<ReturnType<typeof createClient>>
 
 export interface AppNotification {
   key: string
-  type: 'viewed' | 'acconto' | 'richiamo' | 'richiesta' | 'preventivo_fermo' | 'messaggio' | 'sdi_scartata' | 'sdi_da_trasmettere' | 'listino_scaduto'
+  type: 'viewed' | 'rifiutato' | 'acconto' | 'richiamo' | 'richiesta' | 'preventivo_fermo' | 'messaggio' | 'sdi_scartata' | 'sdi_da_trasmettere' | 'listino_scaduto'
   title: string
   body: string
   when: string | null
@@ -40,6 +40,7 @@ export async function getAppNotifications(
   prefs: Record<string, unknown> | null
 ): Promise<AppNotification[]> {
   const showViewed = prefs?.inapp_visto !== false
+  const showRifiutato = prefs?.inapp_rifiutato !== false
   const showFermo = prefs?.inapp_preventivo_fermo !== false
   // ⚠️ SEMPRE attivi, senza interruttore (Eli 15 ago, #7): perderli costa —
   // un messaggio del cliente senza risposta, o una fattura scartata dallo SdI
@@ -72,7 +73,7 @@ export async function getAppNotifications(
   // è scaduto. Confronto per data di calendario, senza fuso (valid_until è DATE).
   const oggiData = new Date().toISOString().slice(0, 10)
 
-  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, richiesteRes, fermoRes, messaggiRes, readsRes, senzaPromemoria, listiniScadutiRes, listiniUsatiRes] = await Promise.all([
+  const [viewedRes, accontoRes, sdiRes, convertedRes, richiamiRes, richiesteRes, fermoRes, messaggiRes, readsRes, senzaPromemoria, listiniScadutiRes, listiniUsatiRes, rifiutatiRes] = await Promise.all([
     showViewed
       ? supabase
           .from('documents')
@@ -256,6 +257,22 @@ export async function getAppNotifications(
           }
         })()
       : Promise.resolve({ data: null }),
+    // Preventivi RIFIUTATI dal cliente (Eli 25 ago: «è giusto che il rifiuto
+    // non compaia in campanella ma solo come email?» — no): finestra 60 giorni
+    // sull'ultimo tocco. ⚠️ Non esiste una colonna rejected_at: updated_at è
+    // l'approssimazione onesta (al momento del rifiuto è il rifiuto stesso).
+    showRifiutato
+      ? supabase
+          .from('documents')
+          .select('id, doc_number, doc_type, updated_at, rejection_reason, clients ( name, surname )')
+          .eq('workspace_id', workspaceId)
+          .eq('doc_type', 'preventivo')
+          .eq('status', 'rejected')
+          .is('deleted_at', null)
+          .gte('updated_at', msgCutoff)
+          .order('updated_at', { ascending: false })
+          .limit(20)
+      : Promise.resolve({ data: null }),
   ])
 
   const readKeys = new Set<string>(
@@ -283,6 +300,35 @@ export async function getAppNotifications(
       type: 'viewed',
       title: `Preventivo ${num ?? ''} visto dal cliente`.replace('  ', ' '),
       body: `${clientDisplayName(doc.clients)} ha aperto il preventivo.`,
+      when: doc.updated_at,
+      href: `/preventivi/${doc.id}`,
+      read: readKeys.has(key),
+    })
+  }
+
+  // ── Preventivi rifiutati dal cliente ──────────────────────────────────
+  // Chiave SENZA timestamp (stabile: updated_at cambia a ogni tocco e la
+  // notifica risorgerebbe non-letta). Se il preventivo viene riaperto lo
+  // stato cambia e la voce sparisce da sé; un secondo rifiuto dopo la
+  // riapertura non ri-suona — residuo accettato e dichiarato.
+  for (const doc of (rifiutatiRes?.data ?? []) as Array<{
+    id: string
+    doc_number: string | null
+    doc_type: string
+    updated_at: string | null
+    rejection_reason: string | null
+    clients: { name: string | null; surname: string | null } | null
+  }>) {
+    const key = `rifiutato:${doc.id}`
+    const num = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
+    const motivo = String(doc.rejection_reason ?? '').trim()
+    notifications.push({
+      key,
+      type: 'rifiutato',
+      title: `Preventivo ${num ?? ''} rifiutato`.replace('  ', ' '),
+      body: motivo
+        ? `${clientDisplayName(doc.clients)}: «${motivo.slice(0, 120)}». Puoi modificarlo e rinviarlo dalla sua pagina.`
+        : `${clientDisplayName(doc.clients)} ha rifiutato il preventivo. Puoi modificarlo e rinviarlo dalla sua pagina.`,
       when: doc.updated_at,
       href: `/preventivi/${doc.id}`,
       read: readKeys.has(key),

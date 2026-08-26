@@ -7,6 +7,9 @@ import { formatDocNumber } from '@/lib/utils'
 interface Item {
   description: string | null
   total: number | null
+  /** Sconto della singola voce (25 ago): il totale è già scontato, la %
+      va DETTA — «100 € → 90 €» senza spiegazione sembra un errore. */
+  discountPct?: number | null
 }
 
 interface MobilePublicCardProps {
@@ -312,7 +315,14 @@ export function MobilePublicCard({
       <div style={{ background: '#fff', padding: '0 16px' }}>
         {items.map((item, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '11px 0', borderTop: '1px solid #f0efeb', fontSize: 13.5 }}>
-            <span style={{ color: '#161616' }}>{item.description ?? '—'}</span>
+            <span style={{ color: '#161616' }}>
+              {item.description ?? '—'}
+              {(item.discountPct ?? 0) > 0 && (
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#2f8a63', whiteSpace: 'nowrap' }}>
+                  {' '}Sconto&nbsp;−{Number(item.discountPct).toLocaleString('it-IT')}%
+                </span>
+              )}
+            </span>
             {item.total != null && (
               <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{formatEur(item.total)}</span>
             )}

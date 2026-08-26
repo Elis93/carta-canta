@@ -2250,6 +2250,92 @@ export async function resendExpiredAction(
   return { ok: true }
 }
 
+// ── riapriRifiutatoAction ─────────────────────────────────────────────────
+// Rinvia al cliente un preventivo RIFIUTATO (Eli 25 ago: «l'artigiano deve
+// avere la possibilità di modificarlo e rinviarlo per la sua nuova
+// approvazione»): torna «Inviato», la validità riparte, il link del cliente
+// torna accettabile. Gemella di resendExpiredAction, con la sua guardia.
+//
+// ⚠️ SOLO preventivi: una fattura 'rejected' è ANNULLATA — si riattiva in
+// bozza dalla sua route, mai riportata «Inviata» da qui.
+
+export async function riapriRifiutatoAction(
+  documentId: string,
+  validityDays: number,
+): Promise<{ error?: string; ok?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autenticato' }
+
+  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id, plan')
+  if (!workspace) return { error: 'Workspace non trovato' }
+
+  const days = Number.isFinite(validityDays) && validityDays > 0 ? Math.floor(validityDays) : 30
+
+  const { data: doc } = await supabase
+    .from('documents')
+    .select('id, status, doc_type')
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (!doc) return { error: 'Documento non trovato' }
+  if (doc.doc_type !== 'preventivo') {
+    return { error: 'Questo documento non è un preventivo: una fattura annullata si riattiva dalla sua pagina.' }
+  }
+  // Downgrade Pro→Free: riaprire = un nuovo invio, bloccato oltre gli 8.
+  if (await isDocFreeLocked(supabase, workspace, doc)) return { error: DOC_LOCKED_MESSAGE }
+  if (doc.status !== 'rejected') {
+    return { error: 'Questo preventivo non risulta rifiutato: ricarica la pagina.' }
+  }
+
+  const now = new Date()
+  const expiresAt = new Date(now)
+  expiresAt.setDate(expiresAt.getDate() + days)
+
+  const { error } = await supabase
+    .from('documents')
+    .update({
+      status: 'sent',
+      expires_at: expiresAt.toISOString(),
+      validity_days: days,
+      updated_after_send_at: null,
+      pdf_url: null,
+    })
+    .eq('id', documentId)
+    .eq('workspace_id', workspace.id)
+    // Lo stato deve essere ancora quello letto (anti-race).
+    .eq('status', 'rejected')
+  if (error) return { error: 'Errore durante il rinvio' }
+
+  // Cronologia: riapertura + nuovo termine (25 ago) — la voce 'reopened' la
+  // scrive solo la route del Riapri manuale; qui la si aggiunge insieme alla
+  // scadenza, così le due strade lasciano la stessa storia.
+  try {
+    const { data: fresh } = await supabase
+      .from('documents').select('document_log').eq('id', documentId).maybeSingle()
+    const current = Array.isArray(fresh?.document_log) ? fresh.document_log : []
+    const { error: logErr } = await supabase
+      .from('documents')
+      .update({ document_log: [
+        ...current,
+        { type: 'reopened', at: now.toISOString() },
+        { type: 'expiry_set', at: now.toISOString(), expires: expiresAt.toISOString() },
+      ] as unknown as Json })
+      .eq('id', documentId)
+    if (logErr && !isMissingColumnError(logErr)) {
+      console.error('[riapriRifiutato] log cronologia non scritto:', logErr)
+    }
+  } catch (e) {
+    console.error('[riapriRifiutato] log cronologia non scritto:', e)
+  }
+
+  revalidatePath('/preventivi')
+  revalidatePath(`/preventivi/${documentId}`)
+  revalidatePath('/dashboard')
+  return { ok: true }
+}
+
 // ── duplicateDocumentAction ───────────────────────────────────────────────
 
 export async function duplicateDocumentAction(

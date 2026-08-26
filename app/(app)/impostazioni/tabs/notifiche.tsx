@@ -13,6 +13,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
   reminder_cliente:     true,
   followup_auto:        false,
   inapp_visto:          true,
+  inapp_rifiutato:      true,
   inapp_acconto:        true,
   inapp_preventivo_fermo: true,
   inapp_messaggio:      true,
@@ -183,6 +184,14 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
           description="Il cliente ha aperto il preventivo"
           checked={prefs.inapp_visto !== false}
           onChange={(v) => setNotif('inapp_visto', v)}
+          disabled={isPending}
+        />
+        <Divider />
+        <NotifRow
+          label="Preventivo rifiutato"
+          description="Il cliente ha rifiutato: puoi modificarlo e rinviarlo"
+          checked={prefs.inapp_rifiutato !== false}
+          onChange={(v) => setNotif('inapp_rifiutato', v)}
           disabled={isPending}
         />
         <Divider />

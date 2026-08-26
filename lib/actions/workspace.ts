@@ -499,6 +499,8 @@ const NotificationPrefsSchema = z.object({
   followup_auto:        z.boolean().default(false),
   // Notifiche in app (campanella) — default true
   inapp_visto:   z.boolean().default(true),
+  // Preventivo rifiutato dal cliente (25 ago — prima arrivava solo l'email)
+  inapp_rifiutato: z.boolean().default(true),
   inapp_acconto: z.boolean().default(true),
   inapp_richiamo: z.boolean().default(true),
   // Richieste nuove dalla vetrina dei professionisti (29 lug)

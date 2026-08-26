@@ -441,6 +441,17 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     }
   }
 
+  /** Sconto della SINGOLA voce (Eli 25 ago sera: «voglio che si vedano anche
+   *  gli sconti applicati alle singole voci in tutte le viste»): il totale di
+   *  riga è già scontato, ma senza questa dicitura «Prezzo 100 → Totale 90»
+   *  sembrava un conto sbagliato. Verde come nel resto dell'app; le righe
+   *  sintetiche dei beni significativi hanno discount_pct 0 e restano mute. */
+  function scontoVoceEl(item: { discount_pct?: number | null }, size = '15px'): string {
+    const pct = Number(item.discount_pct ?? 0)
+    if (!(pct > 0)) return ''
+    return ` <span style="font-size:${size};font-weight:600;color:#2f8a63;white-space:nowrap;">Sconto&nbsp;−${pct.toLocaleString('it-IT')}%</span>`
+  }
+
   /** Righe voci: con più proposte ogni gruppo è un blocco SEPARATO —
    *  intestazione a banda, voci, e in coda il MINI-RIEPILOGO della proposta
    *  (subtotale/IVA/bollo → Totale proposta): il cliente vede come si arriva
@@ -773,7 +784,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #eef0f1;">
-          <td style="padding:12px 10px;font-size:19px;color:#1e2830;">${esc(item.description)}</td>
+          <td style="padding:12px 10px;font-size:19px;color:#1e2830;">${esc(item.description)}${scontoVoceEl(item)}</td>
           <td style="padding:12px 8px;font-size:19px;text-align:right;color:#6c727a;white-space:nowrap;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
           <td style="padding:12px 8px;font-size:19px;text-align:right;color:#6c727a;white-space:nowrap;">${fmt(Number(item.unit_price))}&nbsp;€</td>
           <td style="padding:12px 10px;font-size:19px;text-align:right;font-weight:700;color:#16202b;white-space:nowrap;">${fmt(Number(item.total))}&nbsp;€</td>
@@ -890,7 +901,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #f0f0f0;">
-          <td style="padding:10px 10px;font-size:19px;color:#111;font-weight:500;">${esc(item.description)}</td>
+          <td style="padding:10px 10px;font-size:19px;color:#111;font-weight:500;">${esc(item.description)}${scontoVoceEl(item)}</td>
           <td style="padding:10px 8px;font-size:19px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
           <td style="padding:10px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))}&nbsp;€</td>
           <td style="padding:10px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))}&nbsp;€</td>
@@ -1037,7 +1048,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <tr style="border-bottom:1px solid #ebebeb;">
             <td style="padding:10px 8px;font-size:17px;color:#aaa;font-family:${MONO};vertical-align:top;white-space:nowrap;">${code}</td>
             <td style="padding:10px 8px;font-size:19px;vertical-align:top;line-height:1.5;">
-              ${esc(item.description)}<br>
+              ${esc(item.description)}${scontoVoceEl(item, '14px')}<br>
               <span style="font-size:19px;font-weight:700;color:#111;font-family:${MONO};">${fmt(Number(item.total))}&nbsp;€</span>
             </td>
             <td style="padding:10px 8px;font-size:17px;text-align:center;color:#888;vertical-align:top;">${esc(item.unit ?? 'cad')}</td>
@@ -1184,7 +1195,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #efeee9;">
-          <td style="padding:11px 0;font-size:19px;color:#2a333c;">${esc(item.description)}</td>
+          <td style="padding:11px 0;font-size:19px;color:#2a333c;">${esc(item.description)}${scontoVoceEl(item)}</td>
           <td style="padding:11px 10px;font-size:19px;text-align:right;color:#8a8f96;white-space:nowrap;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
           <td style="padding:11px 10px;font-size:19px;text-align:right;color:#8a8f96;white-space:nowrap;">${fmt(Number(item.unit_price))}&nbsp;€</td>
           <td style="padding:11px 0;font-size:19px;text-align:right;font-weight:600;color:#22303c;white-space:nowrap;">${fmt(Number(item.total))}&nbsp;€</td>

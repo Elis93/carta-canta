@@ -412,6 +412,9 @@ export default async function PublicDocumentPage({ params }: Props) {
             unit: String(it.unit ?? ''),
             unit_price: Number(it.unit_price ?? 0),
             total: Number(it.total ?? 0),
+            // Sconto della voce (25 ago): il motore lo conserva nello spread,
+            // le righe sintetiche dei beni significativi lo azzerano — giusto.
+            discount_pct: Number((it as { discount_pct?: number | null }).discount_pct ?? 0) || null,
           })),
         }
       })
@@ -510,6 +513,7 @@ export default async function PublicDocumentPage({ params }: Props) {
       ).map((i) => ({
         description: i.description,
         total: Number(i.total ?? 0),
+        discountPct: Number((i as { discount_pct?: number | null }).discount_pct ?? 0) || null,
       }))
 
   return (

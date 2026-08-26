@@ -1399,11 +1399,13 @@ export function PreventivoForm({
               <>
                 {/* #8 (Eli 14 ago): dire COSA caricare e A COSA SERVE — prima i
                     tasti «Dalle foto/note» non lo spiegavano. */}
+                {/* Copy asciugata (Eli 25 ago sera: «più chiara e concisa, non
+                    menzioniamo le note»). Il tasto «Dalle note» resta e si
+                    spiega da sé quando compare. */}
                 <p style={{ fontSize: 11.5, color: 'var(--cc-muted)', margin: '0 2px 10px', lineHeight: 1.5 }}>
-                  Non ti va di scriverle a mano?{' '}<b>Fotografa</b>{' '}un preventivo scritto a mano,
-                  un elenco di materiali o un listino (immagini JPG, PNG o HEIC), carica un{' '}
-                  <b>PDF</b>{' '}con «Da un testo», oppure parti dalle{' '}<b>note</b>{' '}che hai
-                  preso: l&rsquo;app le legge e ti propone le voci già compilate, da controllare e correggere.
+                  <b>Fotografa</b>{' '}un preventivo scritto a mano, un elenco di materiali o un
+                  listino (JPG, PNG o HEIC), oppure carica un{' '}<b>PDF</b>{' '}con «Da un testo»:
+                  l&rsquo;app legge e ti propone le voci già compilate, da controllare e correggere.
                 </p>
                 {(mode === 'create' || defaultValues?.status === 'draft') && (
                   <input
