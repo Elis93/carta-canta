@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 25 agosto 2026** (notte: card a tendina nel riepilogo, frase staccata, link alla scheda cliente, ⓘ dei 12 giorni riscritto).
+> **Ultima sessione: 26 agosto 2026** («Converti in fattura» dal lavoro finito + ricerca sui 12 giorni nei competitor).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -28,6 +28,12 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### ✅ 25 ago (11) — «Converti in fattura» anche dal LAVORO + ricerca: da quando partono i 12 giorni da Aruba/Fatture in Cloud
+Due punti di Eli (uno è una domanda con ricerca web su fonti dei competitor).
+- **[FEATURE] La fattura si crea anche dalla scheda Lavoro**: in `lavori/[id]/page.tsx`, card «Documenti collegati», quando il lavoro è **finito/fatturato**, la fattura NON esiste ancora e il preventivo d'origine è ancora **accepted** → mount di `<ConvertiFatturaButton documentId fullWidth />` (lo STESSO componente della pagina preventivo: stessa route `/api/preventivi/[id]/converti-fattura` con tutte le guardie — accepted only, free-lock, idempotenza SQL) sotto un filetto, con la riga onesta: «La fattura riprende le voci del preventivo (il prezzo pattuito). Ore e spese del lavoro restano il tuo margine; gli extra concordati li aggiungi sulla fattura prima di inviarla.» — coerente con la ricerca del giro (10) sul ciclo a corpo. Select `docInfo` estesa a `status` (tipo dichiarato allineato, niente cast). Sostituisce il vecchio testo-puntatore «tocca il preventivo qui sopra…». FAQ nuova «Il lavoro è finito: come faccio la fattura?» + punto in /novita.
+- **[RICERCA, risposta in chat] «La data di partenza all'invio al cliente l'abbiamo stabilita noi o si fa così?»**: la regola dei 12 giorni è LEGGE (art. 21 c.4: dalla **data dell'operazione**, non una nostra scelta); la scelta nostra è QUALE giorno diventa la data del documento. FiC e Aruba sono **invoice-first** (data documento = oggi di default, trasmissione contestuale alla creazione, copia di cortesia al cliente DOPO l'emissione) → da loro il problema quasi non si pone. Il nostro flusso è **client-first** (prima il preventivo/la copia al cliente, poi l'emissione): far nascere `doc_date` al primo invio è la traduzione corretta — la copia del cliente PORTA una data e l'XML deve avere la stessa; il pilota automatico (+24h) è ciò che ci allinea al «trasmetti subito» dei competitor. Regola «più vecchia tra invio e primo incasso» confermata (art. 6: servizi = incasso; la fattura anticipata fissa la data). Fonti citate in chat (guide FiC/Aruba/Danea/Fiscozen).
+- tsc+build+**742**+smoke 28/28 verdi · scan 0/67. ⚠️ Da collaudare sul telefono: tasto sul lavoro finito (visibile solo con preventivo accettato e senza fattura).
 
 ### ✅ 25 ago (10) — Card a tendina nel riepilogo (Cliente/Foto/SdI) + frase staccata + link alla scheda cliente (anche sotto il blocco art. 21) + i 12 giorni rispiegati
 Cinque punti di Eli (due domande con ricerca: il ciclo preventivo→lavoro→fattura e i 12 giorni).

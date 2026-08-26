@@ -23,6 +23,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Le fatture partono solo con i dati del cliente al completo: nome, indirizzo e città, e partita IVA o codice fiscale — quello che la legge vuole scritto in fattura. Se manca qualcosa, l’app te lo dice e ti manda a completare la scheda del cliente.',
       'Un preventivo rifiutato non è più un vicolo cieco: lo correggi e lo rinvii con «Invia al cliente» (torna Inviato e il cliente può accettarlo di nuovo), oppure — se il cliente ha cambiato idea a voce — lo segni accettato direttamente. E il rifiuto ora suona anche nella campanella, non solo per email.',
       'Nel riepilogo del documento le card Cliente, Foto lavoro e Fattura elettronica si aprono e chiudono come tendine: chiuse mostrano l’essenziale (il nome, quante foto, lo stato SdI), aperte tutto il resto. La card Cliente aperta ha «Apri la scheda»: porta dritto alla sua pagina in rubrica — e quando una fattura è bloccata per dati mancanti, sotto l’avviso c’è il collegamento diretto alla scheda da completare.',
+      'La fattura si crea anche dal Lavoro: sulla scheda di un lavoro finito, nella card «Documenti collegati», c’è «Converti in fattura». Riprende le voci del preventivo (il prezzo pattuito); ore e spese del lavoro restano il tuo margine, e gli extra concordati li aggiungi prima di inviarla.',
     ],
   },
   {

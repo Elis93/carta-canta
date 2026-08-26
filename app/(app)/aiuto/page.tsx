@@ -707,6 +707,17 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       <b>«Mostra le ore al cliente»</b>.</>,
   },
   {
+    q: 'Il lavoro è finito: come faccio la fattura?',
+    parole: ['lavoro finito', 'fatturare', 'converti', 'consuntivo', 'extra'],
+    a: <>Sulla scheda del <b>Lavoro</b>{' '}finito, nella card <b>Documenti collegati</b>, trovi il
+      tasto <b>Converti in fattura</b>{' '}(se il preventivo è ancora accettato e la fattura non
+      esiste già). La fattura riprende le <b>voci del preventivo</b>, cioè il prezzo pattuito col
+      cliente; le ore e le spese segnate sul lavoro restano il tuo <b>margine interno</b>{' '}e non
+      finiscono in fattura. Se durante il lavoro avete concordato degli <b>extra</b>, aggiungili
+      come voci sulla fattura prima di inviarla. Lo stesso tasto c&rsquo;è anche sulla pagina del
+      preventivo accettato.</>,
+  },
+  {
     q: 'Come funzionano appuntamenti e agenda?',
     parole: ['calendario', 'sopralluogo', 'appuntamento'],
     a: <>In un <b>sopralluogo</b>, apri la card <b>Appuntamento</b> e imposta data e ora:

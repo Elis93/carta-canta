@@ -15,6 +15,7 @@ import { RapportinoCard, type RapportinoData } from '../_components/RapportinoCa
 import { RichiamoCard } from '../_components/RichiamoCard'
 import { ContextHint } from '@/components/shared/ContextHint'
 import { OreLavoroCard } from '../_components/OreLavoroCard'
+import { ConvertiFatturaButton } from '@/app/(app)/preventivi/_components/ConvertiFatturaButton'
 
 export const metadata = { title: 'Lavoro' }
 
@@ -34,7 +35,7 @@ export default async function LavoroDetailPage({
   const db = supabase as any
   let defaults: LavoroDefaults | null = null
   let documentId: string | null = null
-  let docInfo: { doc_number: string | null; doc_type: string } | null = null
+  let docInfo: { doc_number: string | null; doc_type: string; status: string | null } | null = null
   let fattura: { id: string; doc_number: string | null } | null = null
   let workPhotos: WorkPhoto[] = []
   let preventivato: number | null = null
@@ -154,7 +155,7 @@ export default async function LavoroDetailPage({
       const [{ data: doc }, { data: fatt }, { data: wp }] = await Promise.all([
         supabase
           .from('documents')
-          .select('doc_number, doc_type, total')
+          .select('doc_number, doc_type, total, status')
           .eq('id', documentId)
           .maybeSingle(),
         supabase
@@ -229,12 +230,23 @@ export default async function LavoroDetailPage({
               <FileText size={15} /> Fattura {fattura.doc_number ? formatDocNumber(fattura.doc_number) : ''} →
             </Link>
           )}
-          {/* Lavoro finito, non ancora fatturato: guida a trasformare il
-              preventivo in fattura (feedback Eli 22 lug #17). */}
-          {!fattura && (defaults?.status === 'finito' || defaults?.status === 'fatturato') && (
-            <p style={{ fontSize: 12.5, color: '#8a6c33', margin: 0, lineHeight: 1.45 }}>
-              Lavoro finito: tocca il preventivo qui sopra per aprirlo e trasformarlo in fattura.
-            </p>
+          {/* Lavoro finito, non ancora fatturato → il tasto che crea la fattura
+              QUI, senza passare dal preventivo (Eli 25 ago sera: «trasformare
+              il lavoro in fattura, considerando quanto c'era nel preventivo»).
+              Riusa la stessa conversione (voci e cliente dal preventivo =
+              prezzo pattuito, a corpo); ore e spese del lavoro restano il
+              margine interno. Solo se il preventivo è ancora ACCETTATO —
+              riportato in bozza, la conversione verrebbe rifiutata. */}
+          {!fattura && (defaults?.status === 'finito' || defaults?.status === 'fatturato')
+            && docInfo?.status === 'accepted' && (
+            <div style={{ borderTop: '0.5px solid #eee', paddingTop: 10, marginTop: 2 }}>
+              <ConvertiFatturaButton documentId={documentId} fullWidth />
+              <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '8px 0 0', lineHeight: 1.45 }}>
+                La fattura riprende le voci del preventivo (il prezzo pattuito). Ore e spese
+                del lavoro restano il tuo margine; gli extra concordati li aggiungi sulla
+                fattura prima di inviarla.
+              </p>
+            </div>
           )}
         </div>
       )}
