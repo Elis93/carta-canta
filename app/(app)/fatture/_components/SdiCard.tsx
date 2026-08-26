@@ -8,9 +8,9 @@
 // Emessa da ritirare nel cassetto fiscale / Scartata (+motivo e reinvio).
 // ============================================================
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Loader2, CheckCircle2, AlertTriangle, Clock, Crown, Download, RefreshCw, Info } from 'lucide-react'
+import { Send, Loader2, CheckCircle2, AlertTriangle, Clock, Crown, Download, RefreshCw, Info, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { riferimentoTrasmissione, termineTrasmissione, scadenzaLabel } from '@/lib/sdi/termini'
@@ -106,6 +106,21 @@ export function SdiCard({
   // «emessa» e da quando corre il termine — accanto alla funzione, come chiesto.
   const [termineInfoOpen, setTermineInfoOpen] = useState(false)
   const [annullandoAuto, setAnnullandoAuto] = useState(false)
+  // Card a TENDINA (Eli 25 ago sera): chiusa di default, APERTA d'ufficio
+  // quando c'è qualcosa che non può aspettare — scartata o termine superato
+  // (gli avvisi fiscali non si nascondono, regola §B.2). Il riepilogo di
+  // stato resta comunque leggibile nella testata da chiusa.
+  const [cardOpen, setCardOpen] = useState<boolean>(() => {
+    if (sdiStatus === 'scartata') return true
+    const rif = riferimentoTrasmissione(docCreatedAt, docPaidAt)
+    const t = sdiStatus === null && rif ? termineTrasmissione(rif) : null
+    return !!t?.fuoriTermine
+  })
+  // Deep-link #sdi (campanella): la card deve trovarsi APERTA, non solo
+  // scrollata a schermo. Dopo il mount (window non esiste sul server).
+  useEffect(() => {
+    if (window.location.hash === '#sdi') setCardOpen(true)
+  }, [])
   // Il pilota è «in programma» finché sdi_auto_at è valorizzato e non si è
   // trasmesso nulla. ⚠️ NIENTE confronto col futuro: il cron gira ogni ora
   // in punto, quindi fra l'orario programmato e il giro successivo passano
@@ -308,32 +323,58 @@ export function SdiCard({
   // solo il consiglio generico del riquadro di stato.
   const erroreSpiegato = sdiStatus === 'scartata' ? spiegaErroreSdi(sdiError) : null
 
+  // Stato in UNA riga per la testata della tendina chiusa.
+  const riepilogoChiuso = sdiStatus === 'scartata' ? 'Scartata — da correggere'
+    : sdiStatus === 'consegnata' ? 'Consegnata'
+    : sdiStatus === 'inviata' ? 'Inviata — attendo esito'
+    : sdiStatus === 'mancata_consegna' ? 'Emessa'
+    : termine?.fuoriTermine ? 'Termine superato'
+    : pilotaVisibile ? 'Parte da sola'
+    : termine ? `Entro il ${scadenzaLabel(termine.scadenza)}`
+    : 'Da trasmettere'
+  const riepilogoColore = sdiStatus === 'scartata' || termine?.fuoriTermine ? '#b05656'
+    : sdiStatus === 'consegnata' ? '#2f8a63'
+    : (termine && termine.giorniRimasti <= 3) ? '#b0863e'
+    : '#55534b'
+
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
-          {isNotaCredito ? 'Nota di credito elettronica (SdI)' : 'Fattura elettronica (SdI)'}
-          <button
-            type="button"
-            onClick={() => setInfoOpen((o) => !o)}
-            aria-expanded={infoOpen}
-            aria-label="Cosa significa la trasmissione SdI"
-            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '50%', border: '1px solid #d9d7d0', background: infoOpen ? '#f2f2f4' : '#fff', color: '#6f6d64', cursor: 'pointer', padding: 0 }}
-          >
-            <Info size={13} />
-          </button>
-        </span>
-        {ambiente !== 'reale' && (
-          <span
-            title={ambiente === 'prova'
-              ? 'Provider di prova: non esce nulla dall’app.'
-              : 'Ambiente di collaudo: la fattura NON arriva all’Agenzia delle Entrate.'}
-            style={{ border: '1px solid #e8d6ad', color: '#b0863e', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}
-          >
-            {ambiente === 'prova' ? 'PROVA' : 'COLLAUDO'}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: cardOpen ? 8 : 0 }}>
+        <button
+          type="button"
+          onClick={() => setCardOpen((v) => !v)}
+          aria-expanded={cardOpen}
+          style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', minHeight: 28, textAlign: 'left' }}
+        >
+          <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+            {isNotaCredito ? 'Nota di credito elettronica (SdI)' : 'Fattura elettronica (SdI)'}
           </span>
-        )}
+          {ambiente !== 'reale' && (
+            <span style={{ flexShrink: 0, border: '1px solid #e8d6ad', color: '#b0863e', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
+              {ambiente === 'prova' ? 'PROVA' : 'COLLAUDO'}
+            </span>
+          )}
+          {cardOpen ? (
+            <span style={{ flex: 1 }} />
+          ) : (
+            <span style={{ flex: 1, minWidth: 0, textAlign: 'right', fontSize: 12.5, fontWeight: 600, color: riepilogoColore, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {riepilogoChiuso}
+            </span>
+          )}
+          <ChevronDown size={18} style={{ color: '#1a1a2e', flexShrink: 0, transform: cardOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }} />
+        </button>
+        <button
+          type="button"
+          onClick={() => { setCardOpen(true); setInfoOpen((o) => !o) }}
+          aria-expanded={infoOpen}
+          aria-label="Cosa significa la trasmissione SdI"
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '50%', border: '1px solid #d9d7d0', background: infoOpen ? '#f2f2f4' : '#fff', color: '#6f6d64', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+        >
+          <Info size={13} />
+        </button>
       </div>
+
+      {cardOpen && (<>
 
       {/* ⚠️ Il `title` della pillola non esiste sul telefono, e l'app si usa dal
           telefono: se l'ambiente non è quello vero, va scritto per esteso. */}
@@ -465,25 +506,36 @@ export function SdiCard({
             </button>
           </div>
           {termineInfoOpen && (
+            /* Riscritto il 25 ago sera (Eli: «non si capisce perché per
+               l'Agenzia non è emessa ma il conto alla rovescia parte; e se il
+               cliente paga prima?»): la contraddizione apparente va sciolta
+               per nome, e la regola detta con un esempio. Niente entità HTML
+               a fine riga: era lì che le parole uscivano attaccate. */
             <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '11px 13px', marginBottom: 11, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
-              <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Come funziona l&rsquo;emissione, in tre passi</p>
+              <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Da quando contano i 12 giorni</p>
               <p style={{ margin: '6px 0 0' }}>
-                <b>1.</b>{' '}Quando mandi {isNotaCredito ? 'la nota' : 'la fattura'} al cliente,
-                per l&rsquo;Agenzia delle Entrate <b>non &egrave; ancora emessa</b>: il PDF e il
-                link sono una copia di cortesia. Quel giorno per&ograve; conta, perch&eacute;
-                diventa la <b>data del documento</b>.
+                <b>1.</b>{' '}Per la legge {isNotaCredito ? 'la nota' : 'la fattura'} è{' '}
+                <b>emessa solo quando passa dallo SdI</b>{' '}(art. 21 DPR 633/1972). Il PDF o
+                il link che mandi al cliente è una copia di cortesia: per l&rsquo;Agenzia delle
+                Entrate il documento non esiste ancora.
               </p>
               <p style={{ margin: '6px 0 0' }}>
-                <b>2.</b>{' '}Da quella data — o dal giorno del <b>primo incasso</b>, se il
-                cliente paga prima — hai <b>12 giorni</b>{' '}per trasmetterla allo
-                SdI. Il conto alla rovescia qui sopra conta proprio questi giorni.
+                <b>2.</b>{' '}Il tempo però corre lo stesso: il giorno in cui la mandi al
+                cliente diventa la <b>data del documento</b>, e da quel giorno la legge dà{' '}
+                <b>12 giorni</b>{' '}per completare l&rsquo;emissione con la trasmissione.
+                Esempio: la mandi il 10 del mese, va trasmessa entro il 22.
               </p>
               <p style={{ margin: '6px 0 0' }}>
-                <b>3.</b>{' '}Solo con la <b>trasmissione allo SdI</b>{' '}
-                {isNotaCredito ? 'la nota' : 'la fattura'} &egrave; emessa davvero (art. 21
-                DPR 633/1972). Oltre il termine vale comunque, ma &egrave; un&rsquo;emissione
-                tardiva sanzionabile: trasmettila lo stesso e parlane col commercialista —
-                col ravvedimento operoso la sanzione si riduce.
+                <b>3.</b>{' '}Se il cliente <b>paga prima</b>{' '}che tu gliel&rsquo;abbia
+                mandata, i 12 giorni partono dal giorno dell&rsquo;<b>incasso</b>: per il
+                fisco l&rsquo;operazione si considera fatta quando viene pagata. In breve:
+                vale la <b>più vecchia</b>{' '}tra le due date — invio al cliente e primo
+                incasso — ed è quella che il conto alla rovescia qui sopra usa già.
+              </p>
+              <p style={{ margin: '6px 0 0' }}>
+                Oltre il termine {isNotaCredito ? 'la nota' : 'la fattura'} resta valida, ma
+                la trasmissione è tardiva e sanzionabile: trasmettila comunque e segnala il
+                ritardo al commercialista — col ravvedimento operoso la sanzione si riduce.
               </p>
             </div>
           )}
@@ -669,6 +721,7 @@ export function SdiCard({
           </div>
         </DialogContent>
       </Dialog>
+      </>)}
     </div>
   )
 }

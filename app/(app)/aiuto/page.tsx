@@ -286,10 +286,12 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       link che mandi al cliente sono una <b>copia di cortesia</b>: gli servono per leggerla
       e pagarla, ma non valgono come emissione.
       <br /><br />
-      La <b>data della fattura</b>{' '}nasce quando la bozza viene <b>confermata</b>{' '}
-      (il primo invio al cliente o «Segna pagata»): finché resta bozza puoi lavorarci con
-      calma, senza che nessun conteggio parta. Da quella data (o dal primo incasso, se
-      arriva prima) corrono i <b>12 giorni</b>{' '}per la trasmissione. Per non fartelo
+      Il tempo però corre lo stesso: il giorno del <b>primo invio al cliente</b>{' '}diventa
+      la <b>data della fattura</b>, e da lì la legge dà <b>12 giorni</b>{' '}per completare
+      l&rsquo;emissione con la trasmissione (la mandi il 10, va trasmessa entro il 22).
+      Se il cliente <b>paga prima</b>{' '}di ricevere la fattura, i 12 giorni partono dal
+      giorno dell&rsquo;<b>incasso</b>: vale sempre la <b>più vecchia</b>{' '}tra le due date.
+      Finché resta <b>bozza</b>{' '}nessun conteggio parte. Per non fartelo
       tenere a mente, sulla fattura la card <b>Fattura elettronica (SdI)</b>{' '}mostra il{' '}
       <b>conto alla rovescia</b>{' '}— «Da trasmettere entro il … · mancano N giorni» — e
       negli ultimi 3 giorni ti arriva anche la notifica in campanella. Il tondino ⓘ accanto

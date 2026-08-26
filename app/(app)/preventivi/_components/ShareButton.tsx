@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { runAction } from '@/lib/run-action'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Share2, Send, Mail, Copy, Loader2, Link2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -117,6 +118,9 @@ export function ShareButton({
   const router = useRouter()
   const [open, setOpen] = useState(initialOpen)
   const [error, setError] = useState<string | null>(null)
+  // Id del cliente con la scheda da completare (blocco art. 21): sotto
+  // l'errore compare «Apri la scheda del cliente» (Eli 25 ago sera).
+  const [errorClienteId, setErrorClienteId] = useState<string | null>(null)
   const [channelPending, setChannelPending] = useState<'whatsapp' | 'email' | 'altre' | null>(null)
   const [confirmResent, setConfirmResent] = useState(false)
   const [markingResent, setMarkingResent] = useState(false)
@@ -203,7 +207,7 @@ export function ShareButton({
       toast.error(`Aggiungi almeno una voce prima di inviare ${art} ${docLabel}`)
       return
     }
-    setError(null)
+    setError(null); setErrorClienteId(null)
     setConfirmResent(false)
     setConfirmResend(false)
     setOpen(true)
@@ -238,7 +242,7 @@ export function ShareButton({
     if (isDraft) {
       if (markingSent) return
       setMarkingSent(true)
-      setError(null)
+      setError(null); setErrorClienteId(null)
       try {
         // Auto-salva le eventuali modifiche non salvate nel form
         type SaveFn = () => Promise<{ ok: boolean; error?: string }>
@@ -253,6 +257,7 @@ export function ShareButton({
         const result = await runAction(() => registerManualSendAction(documentId, undefined, docType), 'registrare l’invio')
         if (result.error) {
           setError(`${result.error} Il link copiato non funziona finché il documento resta in bozza: risolvi e riprova con «Copia».`)
+          setErrorClienteId(result.clienteDaCompletare ?? null)
           return
         }
         router.refresh()
@@ -292,7 +297,7 @@ export function ShareButton({
   async function confirmResendExpired() {
     if (resending) return
     setResending(true)
-    setError(null)
+    setError(null); setErrorClienteId(null)
     try {
       const result = await runAction(
         () => isRejected
@@ -323,11 +328,12 @@ export function ShareButton({
   async function confirmMarkResent() {
     if (markingResent) return
     setMarkingResent(true)
-    setError(null)
+    setError(null); setErrorClienteId(null)
     try {
       const result = await runAction(() => registerManualResendAction(documentId), 'registrare l’invio')
       if (result.error) {
         setError(result.error)
+        setErrorClienteId(result.clienteDaCompletare ?? null)
         return
       }
       router.refresh()
@@ -356,7 +362,7 @@ export function ShareButton({
       // scaduti, chiuso col giro dei rifiutati).
       if (isExpired || isRejected) {
         setChannelPending('email')
-        setError(null)
+        setError(null); setErrorClienteId(null)
         try {
           const result = await runAction(
             () => isRejected
@@ -376,7 +382,7 @@ export function ShareButton({
     }
 
     setChannelPending(channel)
-    setError(null)
+    setError(null); setErrorClienteId(null)
     try {
       // Per i documenti in bozza: auto-salva + registra invio prima di condividere
       if (isDraft) {
@@ -392,6 +398,7 @@ export function ShareButton({
         const result = await runAction(() => registerManualSendAction(documentId, undefined, docType), 'registrare l’invio')
         if (result.error) {
           setError(result.error)
+          setErrorClienteId(result.clienteDaCompletare ?? null)
           return
         }
         router.refresh()
@@ -732,6 +739,14 @@ export function ShareButton({
             {error && (
               <div style={{ borderRadius: 7, border: '1px solid #fecaca', background: '#fef2f2', padding: '9px 13px', fontSize: 13, color: '#b91c1c', marginTop: 12 }}>
                 {error}
+                {errorClienteId && (
+                  <Link
+                    href={`/clienti/${errorClienteId}`}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 7, fontSize: 13, fontWeight: 700, color: '#1a1a2e', textDecoration: 'none' }}
+                  >
+                    Apri la scheda del cliente →
+                  </Link>
+                )}
               </div>
             )}
           </div>

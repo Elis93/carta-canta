@@ -1892,7 +1892,7 @@ async function incrementaQuotaFree(
 
 export async function sendDocumentAction(
   documentId: string
-): Promise<{ error?: string; ok?: boolean }> {
+): Promise<{ error?: string; ok?: boolean; clienteDaCompletare?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
@@ -1944,7 +1944,12 @@ export async function sendDocumentAction(
   // all'invio se quelle cose mancano»). I preventivi non sono toccati.
   if (richiedeDatiFattura(doc.doc_type)) {
     const mancanti = datiFatturaMancanti(clientData)
-    if (mancanti.length > 0) return { error: messaggioDatiFattura(mancanti, doc.doc_type) }
+    if (mancanti.length > 0) {
+      // `clienteDaCompletare` = id per il link «Apri la scheda del cliente»
+      // sotto l'errore (Eli 25 ago sera): dire cosa manca senza dare la
+      // strada obbligava a cercare il cliente in rubrica a memoria.
+      return { error: messaggioDatiFattura(mancanti, doc.doc_type), clienteDaCompletare: String(doc.client_id) }
+    }
   }
 
   // Assegna numero documento se ancora null
@@ -2022,7 +2027,7 @@ export async function registerManualSendAction(
   documentId: string,
   sentAtParam?: string,   // ISO date string (YYYY-MM-DD) — se omesso usa oggi
   docTypeHint?: string  // 'preventivo' | 'fattura' | 'nota_credito' — sceglie la sequenza corretta
-): Promise<{ error?: string; ok?: boolean; docNumber?: string }> {
+): Promise<{ error?: string; ok?: boolean; docNumber?: string; clienteDaCompletare?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
@@ -2079,7 +2084,9 @@ export async function registerManualSendAction(
       .eq('id', String((doc as Record<string, unknown>).client_id))
       .maybeSingle()
     const mancanti = datiFatturaMancanti(cli)
-    if (mancanti.length > 0) return { error: messaggioDatiFattura(mancanti, tipoDoc) }
+    if (mancanti.length > 0) {
+      return { error: messaggioDatiFattura(mancanti, tipoDoc), clienteDaCompletare: String((doc as Record<string, unknown>).client_id) }
+    }
   }
 
   // Piano Free: blocco all'INVIO se la quota del tipo è piena (preventivi e
@@ -3277,7 +3284,7 @@ async function annotaArchivio(documentId: string, tipo: 'archived' | 'unarchived
 
 export async function registerManualResendAction(
   documentId: string,
-): Promise<{ error?: string; ok?: boolean }> {
+): Promise<{ error?: string; ok?: boolean; clienteDaCompletare?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato' }
@@ -3309,7 +3316,9 @@ export async function registerManualResendAction(
       .eq('id', String((doc as Record<string, unknown>).client_id))
       .maybeSingle()
     const mancanti = datiFatturaMancanti(cli)
-    if (mancanti.length > 0) return { error: messaggioDatiFattura(mancanti, doc.doc_type) }
+    if (mancanti.length > 0) {
+      return { error: messaggioDatiFattura(mancanti, doc.doc_type), clienteDaCompletare: String((doc as Record<string, unknown>).client_id) }
+    }
   }
 
   const now = new Date()

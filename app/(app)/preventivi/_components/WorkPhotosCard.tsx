@@ -10,7 +10,7 @@
 import { useRef, useState } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
-import { Camera, Images, Eye, EyeOff, Loader2, X } from 'lucide-react'
+import { Camera, Images, Eye, EyeOff, Loader2, X, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { usePhotoLightbox, ZoomHotspot } from '@/components/shared/PhotoLightbox'
 import {
@@ -39,17 +39,22 @@ export function WorkPhotosCard({
   documentId,
   initialPhotos,
   initialSignedUrls,
+  collapsible = false,
 }: {
   documentId: string
   initialPhotos: WorkPhoto[]
   /** URL firmate dal server per le foto già presenti — servono ai collaboratori
       (in un team le foto stanno nella cartella di chi le ha caricate). */
   initialSignedUrls?: Record<string, string>
+  /** true = card a tendina, CHIUSA di default (riepiloghi dei documenti,
+      Eli 25 ago). Le altre superfici (lavoro, sopralluogo) restano aperte. */
+  collapsible?: boolean
 }) {
   const router = useRouter()
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const [photos, setPhotos] = useState<WorkPhoto[]>(initialPhotos)
+  const [open, setOpen] = useState(!collapsible)
   // Archivio privato: gli indirizzi delle miniature si chiedono e scadono.
   const photoUrls = useSignedPhotos(photos.map((p) => p.storage_path), initialSignedUrls)
   // Quale bottone ha avviato l'upload → lo spinner compare SOLO lì
@@ -152,10 +157,24 @@ export function WorkPhotosCard({
 
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: photos.length > 0 ? 12 : 8 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>Foto lavoro</span>
-        {photos.length > 0 && <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>{photos.length} foto</span>}
-      </div>
+      {collapsible ? (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, marginBottom: open ? (photos.length > 0 ? 12 : 8) : 0, cursor: 'pointer', fontFamily: 'inherit', minHeight: 28 }}
+        >
+          <span style={{ flex: 1, textAlign: 'left', fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>Foto lavoro</span>
+          <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>{photos.length > 0 ? `${photos.length} foto` : 'nessuna'}</span>
+          <ChevronDown size={18} style={{ color: '#1a1a2e', flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }} />
+        </button>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: photos.length > 0 ? 12 : 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>Foto lavoro</span>
+          {photos.length > 0 && <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>{photos.length} foto</span>}
+        </div>
+      )}
+      {open && (<>
 
       {photos.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
@@ -263,6 +282,7 @@ export function WorkPhotosCard({
           dal preventivo di origine: qui le vedi soltanto. Per cambiarle o nasconderle apri la scheda di quel preventivo.
         </p>
       )}
+      </>)}
 
       {lightbox}
     </div>

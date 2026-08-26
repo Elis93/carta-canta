@@ -3,7 +3,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { signPhotoPaths } from '@/lib/photos/signed-url'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
-import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronLeft, Banknote, Hammer, Link as LinkIcon } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronLeft, ChevronRight, Banknote, Hammer, Link as LinkIcon } from 'lucide-react'
+import { CardTendina } from '@/components/shared/CardTendina'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { LavoroLinkButton } from '@/app/(app)/preventivi/_components/LavoroLinkButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
@@ -961,34 +962,42 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         {/* ⚠️ «Anteprima», non «come lo vede il cliente» (Eli 25 ago sera):
             la frase secca faceva credere che il cliente avesse SOLO questa
             vista — dal link apre anche il documento completo col template. */}
+        {/* marginBottom > dei 16px dello space-y del contenitore (i margini
+            collassano): la frase deve stare ATTACCATA al foglio sopra, non
+            alle card sotto (Eli 25 ago sera). */}
         {docItems.length > 0 && !editing && (
-          <p className="lg:hidden" style={{ margin: '-6px 0 0', textAlign: 'center', fontSize: 12, color: 'var(--cc-muted)' }}>
+          <p className="lg:hidden" style={{ margin: '-6px 0 26px', textAlign: 'center', fontSize: 12, color: 'var(--cc-muted)' }}>
             Anteprima della pagina del cliente: dal link apre anche il documento completo, col template che hai scelto
           </p>
         )}
 
-        {/* ── MOBILE: card Cliente (lg:hidden) — statica se il cliente non è in
-            rubrica (prima era un link "#" che non portava da nessuna parte) ── */}
+        {/* ── MOBILE: card Cliente a TENDINA (Eli 25 ago sera) — chiusa mostra
+            il nome; aperta, il tocco sul nome apre la scheda in rubrica. ── */}
         {clientName && !editing && (
-          pdfClient?.id ? (
-            <Link href={`/clienti/${pdfClient.id}`} className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px', display: 'block', textDecoration: 'none' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
-              {(pdfClient?.email || pdfClient?.phone) && (
-                <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>
-                  {[pdfClient?.email, pdfClient?.phone].filter(Boolean).join(' · ')}
+          <CardTendina label="Cliente" summary={clientName} className="lg:hidden">
+            {pdfClient?.id ? (
+              <Link href={`/clienti/${pdfClient.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</span>
+                  {(pdfClient?.email || pdfClient?.phone) && (
+                    <span style={{ display: 'block', fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>
+                      {[pdfClient?.email, pdfClient?.phone].filter(Boolean).join(' · ')}
+                    </span>
+                  )}
+                </span>
+                <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3, fontSize: 12.5, fontWeight: 600, color: '#1a1a2e', whiteSpace: 'nowrap' }}>
+                  Apri la scheda <ChevronRight size={14} aria-hidden />
+                </span>
+              </Link>
+            ) : (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+                <div style={{ fontSize: 12, color: '#767676', marginTop: 3 }}>
+                  Non è in rubrica · <Link href="/clienti/nuovo" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Aggiungilo →</Link>
                 </div>
-              )}
-            </Link>
-          ) : (
-            <div className="lg:hidden" style={{ background: '#fff', borderRadius: 14, boxShadow: 'var(--cc-shadow)', padding: '15px 15px' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}>Cliente</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
-              <div style={{ fontSize: 12, color: '#767676', marginTop: 3 }}>
-                Non è in rubrica · <Link href="/clienti/nuovo" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Aggiungilo →</Link>
-              </div>
-            </div>
-          )
+              </>
+            )}
+          </CardTendina>
         )}
 
         {/* ── Fattura elettronica SdI (mockup crescita §1) — su mobile
@@ -999,9 +1008,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         )}
 
-        {/* ── MOBILE: card Foto lavoro (mockup cantiere §2.1) ── */}
+        {/* ── MOBILE: card Foto lavoro, a tendina (Eli 25 ago sera) ── */}
         <div className={editing ? 'hidden' : 'lg:hidden'}>
-          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
+          <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} collapsible />
         </div>
 
         {/* ── MOBILE: Anteprima + Condividi (lg:hidden) ──

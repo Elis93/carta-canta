@@ -407,7 +407,11 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (richiedeDatiFattura(doc.doc_type)) {
     const mancanti = datiFatturaMancanti(pdfClientOverride)
     if (mancanti.length > 0) {
-      return NextResponse.json({ error: messaggioDatiFattura(mancanti, doc.doc_type) }, { status: 422 })
+      // clienteDaCompletare = id per il link «Apri la scheda del cliente»
+      // nel dialog (Eli 25 ago sera). Può mancare (cliente appena creato
+      // senza insert riuscito): il messaggio resta comunque chiaro.
+      const cid = (pdfClientOverride as { id?: string } | null)?.id ?? (doc.client_id as string | null) ?? null
+      return NextResponse.json({ error: messaggioDatiFattura(mancanti, doc.doc_type), ...(cid ? { clienteDaCompletare: cid } : {}) }, { status: 422 })
     }
   }
 

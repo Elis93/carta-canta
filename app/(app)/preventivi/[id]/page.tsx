@@ -5,7 +5,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { signPhotoPaths } from '@/lib/photos/signed-url'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ChevronLeft, ExternalLink, AlertTriangle, Info, FileCheck2, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Hammer } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, AlertTriangle, Info, FileCheck2, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Hammer } from 'lucide-react'
+import { CardTendina } from '@/components/shared/CardTendina'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { PdfActions } from '../_components/PdfActions'
 import { SendEmailDialog } from '../_components/SendEmailDialog'
@@ -352,10 +353,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     background: '#fff', borderRadius: 14,
     boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
     padding: '15px 15px',
-  }
-  const cardLabel: React.CSSProperties = {
-    fontSize: 13, fontWeight: 600, letterSpacing: '.07em',
-    textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12,
   }
   const sumRow: React.CSSProperties = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -762,7 +759,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {/* ⚠️ «Anteprima», non «come lo vede il cliente» (Eli 25 ago sera):
               la frase secca faceva credere che il cliente avesse SOLO questa
               vista — dal link apre anche il documento completo col template. */}
-          <p style={{ margin: '8px 15px 0', textAlign: 'center', fontSize: 12, color: 'var(--cc-muted)' }}>
+          {/* Aria SOTTO la frase più che sopra (Eli 25 ago sera: «così vicina
+              alle card sottostanti che sembra legata a esse e non al foglio»). */}
+          <p style={{ margin: '7px 15px 24px', textAlign: 'center', fontSize: 12, color: 'var(--cc-muted)' }}>
             Anteprima della pagina del cliente: dal link apre anche il documento completo, col template che hai scelto
           </p>
 
@@ -858,29 +857,36 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </div>
           )}
 
-          {/* Card Cliente — DOPO il foglio e le azioni (mockup B): tap apre la
-              scheda; se il cliente non è in rubrica la card è statica. */}
+          {/* Card Cliente a TENDINA (Eli 25 ago sera) — chiusa mostra il nome
+              nel riepilogo; aperta, il tocco sul NOME apre la scheda in
+              rubrica (con la freccia: prima era un link senza affordance e
+              sembrava una card statica). */}
           {clientName && (
-            pdfClient?.id ? (
-              <Link href={`/clienti/${pdfClient.id}`} style={{ ...cardStyle, margin: '14px 15px 0', display: 'block', textDecoration: 'none' }}>
-                <div style={cardLabel}>Cliente</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
-                {clientContact && <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>{clientContact}</div>}
-              </Link>
-            ) : (
-              <div style={{ ...cardStyle, margin: '14px 15px 0' }}>
-                <div style={cardLabel}>Cliente</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
-                <div style={{ fontSize: 12, color: '#767676', marginTop: 3 }}>
-                  Non è in rubrica · <Link href="/clienti/nuovo" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Aggiungilo →</Link>
-                </div>
-              </div>
-            )
+            <CardTendina label="Cliente" summary={clientName} style={{ margin: '14px 15px 0' }}>
+              {pdfClient?.id ? (
+                <Link href={`/clienti/${pdfClient.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</span>
+                    {clientContact && <span style={{ display: 'block', fontSize: 13, color: 'var(--cc-muted)', marginTop: 3 }}>{clientContact}</span>}
+                  </span>
+                  <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3, fontSize: 12.5, fontWeight: 600, color: '#1a1a2e', whiteSpace: 'nowrap' }}>
+                    Apri la scheda <ChevronRight size={14} aria-hidden />
+                  </span>
+                </Link>
+              ) : (
+                <>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#161616' }}>{clientName}</div>
+                  <div style={{ fontSize: 12, color: '#767676', marginTop: 3 }}>
+                    Non è in rubrica · <Link href="/clienti/nuovo" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'none' }}>Aggiungilo →</Link>
+                  </div>
+                </>
+              )}
+            </CardTendina>
           )}
 
-          {/* Foto lavoro — in fondo (mockup B, Eli 25 ago) */}
+          {/* Foto lavoro — in fondo, a tendina (mockup B + Eli 25 ago sera) */}
           <div style={{ margin: '14px 15px 0' }}>
-            <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
+            <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} collapsible />
           </div>
 
           {/* Card Visualizzazioni RIMOSSA (Eli 3 ago sera): le aperture

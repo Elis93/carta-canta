@@ -261,6 +261,9 @@ export function SendEmailDialog({
   const [loading,  setLoading]  = useState(false)
   const [sent,     setSent]     = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
+  // Id del cliente con la scheda da completare (blocco art. 21): sotto
+  // l'errore compare «Apri la scheda del cliente» (Eli 25 ago sera).
+  const [apiErrorClienteId, setApiErrorClienteId] = useState<string | null>(null)
   // Conflitto cliente: email già associata a un contatto con nome diverso
   const [clientConflict, setClientConflict] = useState<{ id: string; name: string; email: string | null } | null>(null)
 
@@ -449,6 +452,7 @@ export function SendEmailDialog({
       const data = await res.json() as {
         ok?: boolean
         error?: string
+        clienteDaCompletare?: string
         clientConflict?: { id: string; name: string; email: string | null }
       }
       // Email già associata a un altro contatto → chiedi conferma
@@ -458,6 +462,7 @@ export function SendEmailDialog({
       }
       if (!res.ok || !data.ok) {
         setApiError(data.error ?? "Errore durante l'invio. Riprova.")
+        setApiErrorClienteId(data.clienteDaCompletare ?? null)
         return
       }
       setSent(true)
@@ -584,7 +589,17 @@ export function SendEmailDialog({
             {apiError && (
               <Alert variant="destructive">
                 <AlertCircle className="size-4" />
-                <AlertDescription>{apiError}</AlertDescription>
+                <AlertDescription>
+                  {apiError}
+                  {apiErrorClienteId && (
+                    <Link
+                      href={`/clienti/${apiErrorClienteId}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, fontSize: 13, fontWeight: 700, color: '#1a1a2e', textDecoration: 'none' }}
+                    >
+                      Apri la scheda del cliente →
+                    </Link>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
 
