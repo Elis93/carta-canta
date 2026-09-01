@@ -78,9 +78,22 @@ export function NotificationBell({
         aria-label="Notifiche"
         className="cc-portal-float"
         // Il tocco su una notifica è un <Link> che naviga: il pannello si
-        // chiude subito, così tornando indietro non lo si ritrova aperto.
-        onClickCapture={(e) => {
-          if ((e.target as HTMLElement).closest('a')) setOpen(false)
+        // chiude, così tornando indietro non lo si ritrova aperto.
+        // ⚠️ In fase BUBBLE, mai in capture (bug 26 ago: la notifica non si
+        // segnava letta): React flusha lo stato TRA il dispatch capture e
+        // quello bubble — con onClickCapture il setOpen smontava il pannello
+        // prima che il bubble arrivasse al Link, e l'onClick del Link (il
+        // markRead, e la navigazione client di next/link) non girava MAI.
+        // In bubble l'onClick del Link è già stato eseguito quando il click
+        // risale fin qui.
+        onClick={(e) => {
+          if ((e.target as HTMLElement).closest('a')) {
+            setOpen(false)
+            // Il markRead del Link è già passato (bubble) e ha scritto la
+            // lettura locale: il pallino si aggiorna subito, anche se la
+            // navigazione porta alla pagina in cui si è già.
+            setUnread(applicaLetteLocali(notifications).filter((n) => !n.read).length)
+          }
         }}
         style={{
           position: 'fixed', top, left, width, zIndex: 80,

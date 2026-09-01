@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 26 agosto 2026** (ⓘ SdI con deep-link alle FAQ + pagamenti non visti dall'app + Annulla solo nelle FAQ).
+> **Ultima sessione: 26 agosto 2026** (la notifica toccata in campanella ora si segna letta: il markRead non girava mai dal pannello).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -28,6 +28,14 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### ✅ 26 ago (6) — [BUG, riprodotto] La notifica toccata in campanella NON si segnava letta: il markRead non girava MAI dal pannello
+Eli: «ho cliccato su una notifica in campanella, sono entrata alla pagina, ma tornando in Home la notifica c'era ancora, non letta». **Riprodotto in Chromium coi componenti veri** (NotificationBell+NotificationList, stub di action/next-link): dopo il tocco → sessionStorage VUOTO, ZERO chiamate all'action, pannello chiuso. Il `markRead` non veniva mai eseguito.
+- **CAUSA (meccanica di React, non una svista di logica)**: il pannello aveva `onClickCapture` che faceva `setOpen(false)` al tocco su un link. React dispatcha capture e bubble come **due passaggi separati** (due listener nativi al root) e **flusha gli update discreti TRA i due** → il pannello si SMONTAVA a fine capture, e la fase bubble non trovava più il Link: il suo `onClick` — cioè markRead (lettura locale + server) E la navigazione client di next/link — non girava mai. La navigazione avveniva col default del browser (hard load), per questo «sembrava funzionare».
+- **FIX**: la chiusura passa da `onClickCapture` a **`onClick` (bubble)** — quando il click risale al pannello, l'onClick del Link è GIÀ stato eseguito. In più, alla chiusura il pallino si ricalcola da `applicaLetteLocali` (il markRead ha appena scritto la lettura locale, sincrona) → badge giusto all'istante anche restando sulla stessa pagina.
+- **Verificato in Chromium, giro completo**: tocco → sessionStorage scritto + 1ª chiamata (revalidate:false) + badge 2→1 subito · a 1,6s la 2ª chiamata con revalidation · re-render con props STANTIE (= ritorno in Home dalla cache) → badge 1 · pannello riaperto senza la notifica letta.
+- ⚠️ Il difetto c'era **dal 20 ago** (nascita della tendina): il markRead dal pannello non ha mai funzionato — dalla pagina /notifiche (senza il capture) funzionava, per questo le reti dei giri precedenti (sessionStorage, doppia chiamata) sembravano non bastare: erano a valle di un click mai consegnato. ⚠️ Trappola del banco scoperta per strada: con `createRoot` su un div interno gli eventi di un PORTAL su body non raggiungono React (root listener fuori dal path DOM) — il banco monta su `document.body`, come Next che idrata l'intero documento.
+- tsc+build+**742**+smoke 28/28 verdi · scan 0/66.
 
 ### ✅ 26 ago (5) — Il ⓘ SdI apre GIÀ la domanda giusta nelle FAQ + «l'app non vede i pagamenti» + l'Annulla spiegato solo nelle FAQ
 Tre rifiniture di Eli sul ⓘ della card SdI del giro (3).
