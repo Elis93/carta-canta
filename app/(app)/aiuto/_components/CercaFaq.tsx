@@ -20,7 +20,7 @@
 // restare muto.
 // ============================================================
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'
 
 export interface VoceFaq {
@@ -28,6 +28,8 @@ export interface VoceFaq {
   a: React.ReactNode
   /** Parole dell'artigiano che non compaiono nel titolo della domanda */
   parole?: string[]
+  /** Ancora stabile per i deep-link (/aiuto#slug): la domanda si apre da sola */
+  id?: string
 }
 
 function normalizza(s: string): string {
@@ -43,6 +45,23 @@ function normalizza(s: string): string {
 
 export function CercaFaq({ voci }: { voci: VoceFaq[] }) {
   const [q, setQ] = useState('')
+
+  // Deep-link (Eli 26 ago: «quando clicco su vai a Domande frequenti, mi si
+  // apre già la domanda con la risposta completa»): arrivando con
+  // /aiuto#slug la voce corrispondente si APRE e si scrolla a schermo.
+  // ⚠️ Si agisce sul DOM (`.open = true`), NON con la prop `open` di React:
+  // una prop controllata impedirebbe all'utente di richiuderla al prossimo
+  // re-render. Doppio rAF: si parte a contenuto dipinto (schema ScrollToHash).
+  useEffect(() => {
+    const slug = window.location.hash.slice(1)
+    if (!slug || !voci.some((v) => v.id === slug)) return
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = document.getElementById(slug) as HTMLDetailsElement | null
+      if (!el) return
+      el.open = true
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }))
+  }, [voci])
 
   const indice = useMemo(
     () => voci.map((v) => normalizza([v.q, ...(v.parole ?? [])].join(' '))),
@@ -105,8 +124,9 @@ export function CercaFaq({ voci }: { voci: VoceFaq[] }) {
       {risultati.map((i, pos) => (
         <details
           key={voci[i].q}
+          id={voci[i].id}
           open={filtrando && risultati.length <= 3}
-          style={{ borderBottom: pos < risultati.length - 1 ? '0.5px solid #eee' : 'none' }}
+          style={{ borderBottom: pos < risultati.length - 1 ? '0.5px solid #eee' : 'none', scrollMarginTop: 78 }}
         >
           <summary style={{ padding: '11px 0', fontSize: 14, fontWeight: 600, color: '#161616', cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             {voci[i].q}

@@ -409,22 +409,28 @@ export function SdiCard({
               <p style={{ margin: 0 }}>
                 Il modo più semplice per non pensarci: tieni attiva la{' '}
                 <Link href="/impostazioni/fiscale" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>trasmissione automatica</Link>{' '}
-                — la fattura parte da sola 24 ore dopo la conferma, e qui vedi quando,
-                col tasto Annulla per fermarla.
+                — la fattura parte da sola 24 ore dopo la conferma.
               </p>
               <p style={{ margin: '6px 0 0' }}>
                 In breve: la fattura è <b>emessa</b>{' '}solo quando passa dallo SdI (il PDF
                 al cliente è una copia di cortesia). Il conto alla rovescia parte dal
                 giorno dell&rsquo;<b>invio al cliente</b>{' '}— o del <b>primo incasso</b>,
-                se arriva prima — e dà <b>12 giorni</b>{' '}per trasmetterla. Se viene{' '}
+                se arriva prima: l&rsquo;app non vede i pagamenti che ricevi, quindi
+                l&rsquo;incasso lo registri tu sulla fattura — e dà <b>12 giorni</b>{' '}per
+                trasmetterla. Se viene{' '}
                 <b>scartata</b>, la correggi e la ritrasmetti entro <b>5 giorni</b>, con lo
                 stesso numero e la stessa data.
               </p>
             </>
           )}
+          {/* I link aprono GIÀ la domanda giusta, con la risposta per intero
+              (deep-link #slug, CercaFaq): «quando clicco su vai a Domande
+              frequenti, mi si apre già la domanda» — Eli 26 ago. */}
           <p style={{ margin: '6px 0 0' }}>
-            Tutti i dettagli sono nelle{' '}
-            <Link href="/aiuto" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>Domande frequenti</Link>.
+            Tutti i dettagli sono nelle Domande frequenti:{' '}
+            <Link href="/aiuto#trasmissione-sdi" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>cos&rsquo;è lo SdI</Link>{' '}·{' '}
+            <Link href="/aiuto#dodici-giorni" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>i 12 giorni</Link>{isNotaCredito ? null : (<>{' '}·{' '}
+            <Link href="/aiuto#trasmissione-automatica" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>la trasmissione automatica</Link></>)}.
           </p>
         </div>
       )}

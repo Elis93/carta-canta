@@ -15,7 +15,7 @@ const SDI_ATTIVO = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
 // `parole`: i sinonimi dell'artigiano che NON compaiono nel titolo della
 // domanda — il cerca guarda titolo + queste, mai il testo della risposta.
-const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
+const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string }> = [
   {
     q: 'Come creo e invio un preventivo?',
     a: <>Tocca il <b>+</b>{' '}in basso e scegli <b>Nuovo preventivo</b>, poi scegli (o crea) il cliente,
@@ -280,6 +280,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   ...(SDI_ATTIVO ? [
   {
     q: 'Cos’è la trasmissione SdI?',
+    id: 'trasmissione-sdi',
     parole: ['sdi', 'sistema di interscambio', 'fattura elettronica', 'trasmissione', 'consegnata', 'scartata', 'copia di cortesia', 'cassetto fiscale'],
     a: <>Per legge la fattura va emessa in formato <b>elettronico</b>: il PDF che mandi al
       cliente è solo una <b>copia di cortesia</b>. Il <b>Sistema di Interscambio (SdI)</b>{' '}
@@ -297,6 +298,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   },
   {
     q: 'Quando una fattura è davvero «emessa»? Cosa sono i 12 giorni?',
+    id: 'dodici-giorni',
     parole: ['emessa', 'emissione', '12 giorni', 'termine', 'tardiva', 'trasmissione', 'bozza', 'copia di cortesia', 'data fattura'],
     a: <>Per l&rsquo;Agenzia delle Entrate la fattura è emessa{' '}
       <b>solo quando viene trasmessa allo SdI</b>{' '}(art. 21 DPR 633/1972). Il PDF o il
@@ -308,6 +310,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
       l&rsquo;emissione con la trasmissione (la mandi il 10, va trasmessa entro il 22).
       Se il cliente <b>paga prima</b>{' '}di ricevere la fattura, i 12 giorni partono dal
       giorno dell&rsquo;<b>incasso</b>: vale sempre la <b>più vecchia</b>{' '}tra le due date.
+      ⚠️ L&rsquo;app <b>non vede i pagamenti</b>{' '}che arrivano sul tuo conto: quando il
+      cliente paga, registralo tu sulla fattura («Segna pagata», o l&rsquo;acconto) — il
+      conteggio può partire solo dalle date che l&rsquo;app conosce.
       Finché resta <b>bozza</b>{' '}nessun conteggio parte. Per non fartelo
       tenere a mente, sulla fattura la card <b>Fattura elettronica (SdI)</b>{' '}mostra il{' '}
       <b>conto alla rovescia</b>{' '}— «Da trasmettere entro il … · mancano N giorni» — e
@@ -326,12 +331,20 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[] }> = [
   },
   {
     q: 'La fattura parte da sola allo SdI? Come funziona la trasmissione automatica?',
+    id: 'trasmissione-automatica',
     parole: ['automatica', 'automatico', 'pilota', 'parte da sola', 'trasmissione automatica', '24 ore', 'annulla trasmissione'],
     a: <>Sì, ed è <b>accesa di partenza</b>: quando confermi una fattura (il primo invio al
       cliente o «Segna pagata»), la trasmissione allo SdI viene <b>programmata dopo 24 ore</b>.
-      Un avviso te lo dice nel momento stesso, e sulla fattura la card SdI mostra{' '}
-      <b>quando partirà</b>, col tasto <b>Annulla</b>{' '}se vuoi fermarla — le 24 ore servono
-      proprio ad avere il tempo di un ripensamento.
+      Un avviso te lo dice nel momento stesso, e sulla fattura la card{' '}
+      <b>Fattura elettronica (SdI)</b>{' '}mostra giorno e ora della partenza in un riquadro
+      azzurro.
+      <br /><br />
+      Vuoi fermarla? Nel riquadro c&rsquo;è il tasto <b>Annulla</b>: ferma la partenza
+      automatica di <b>quella sola fattura</b>, prima che avvenga — non viene inviato nulla
+      e non si cancella nulla. La fattura resta dov&rsquo;è e la trasmetti tu quando
+      preferisci, col tasto <b>Invia allo SdI</b>{' '}e il conto alla rovescia dei 12 giorni
+      a ricordarti il termine. Le 24 ore di attesa servono proprio a questo: il tempo di
+      ricontrollare i dati o cambiare idea.
       <br /><br />
       Se l&rsquo;invio automatico non riesce, <b>non insiste da solo</b>: la fattura torna
       alla trasmissione manuale e <b>ti arriva un&rsquo;email</b>{' '}che te lo dice, col

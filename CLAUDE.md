@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 26 agosto 2026** (banner «Fattura pagata» in cima alla pagina).
+> **Ultima sessione: 26 agosto 2026** (ⓘ SdI con deep-link alle FAQ + pagamenti non visti dall'app + Annulla solo nelle FAQ).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -28,6 +28,14 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### ✅ 26 ago (5) — Il ⓘ SdI apre GIÀ la domanda giusta nelle FAQ + «l'app non vede i pagamenti» + l'Annulla spiegato solo nelle FAQ
+Tre rifiniture di Eli sul ⓘ della card SdI del giro (3).
+- **[DEEP-LINK] I link del ⓘ aprono direttamente la domanda con la risposta per intero**: le voci FAQ hanno ora un campo `id?` (slug) e **`CercaFaq`** al mount legge `window.location.hash` — se combacia, apre il `<details>` e scrolla (doppio rAF, schema ScrollToHash; l'effetto vive NEL componente quindi il loading.tsx non lo rompe). ⚠️ Si agisce sul DOM (`.open = true`), MAI con la prop `open` controllata: l'utente deve poter richiudere la voce anche dopo un re-render. Slug: `#trasmissione-sdi` · `#dodici-giorni` · `#trasmissione-automatica`. Il P3 del ⓘ è ora «Tutti i dettagli sono nelle Domande frequenti: cos'è lo SdI · i 12 giorni · la trasmissione automatica» (tre link; sulla NC manca l'ultimo). **Verificato in Chromium sul componente vero**: arrivo con `#dodici-giorni` → aperta+scrollata+risposta visibile, altre chiuse; richiudibile dopo click+re-render; senza hash tutte chiuse.
+- **[COPY] «L'app non vede i pagamenti che ricevi»** detto sia nel ⓘ conciso (inline sul «primo incasso»: l'incasso lo registri tu sulla fattura) sia nella FAQ dei 12 giorni (⚠️ riga dedicata: «Segna pagata» o acconto — il conteggio può partire solo dalle date che l'app conosce).
+- **[COPY] L'Annulla sparisce dal ⓘ** (Eli: «spiegato male, lo lascerei solo nelle FAQ»): il P1 del ⓘ dice solo «parte da sola 24 ore dopo la conferma»; la FAQ della trasmissione automatica ha ora un paragrafo suo, chiaro: ferma la partenza automatica di QUELLA sola fattura prima che avvenga, non invia e non cancella nulla, la fattura resta e si trasmette a mano col conto alla rovescia; le 24 ore servono a ricontrollare o cambiare idea.
+- ⚠️ Nel giro node_modules era SPARITO dall'ambiente (container riciclato): `npm ci` e via — nessun impatto sul codice.
+- tsc+build+**742**+smoke 28/28 verdi · scan 0/66. ⚠️ Da collaudare sul telefono: tocco su uno dei tre link dal ⓘ → la domanda si apre da sola.
 
 ### ✅ 26 ago (4) — Il banner «Fattura pagata — nessuna modifica consentita» sta IN CIMA
 Eli: il banner di stato dentro una fattura pagata deve stare in cima. Giusto: dice PERCHÉ la pagina è in sola lettura, quindi va letto prima del documento — stava in fondo, sotto il foglio, le card e il preventivo collegato. Spostato (con i suoi due fratelli: «annullata riattivabile» e «annullata e trasmessa → nota di credito») come **prima card della pagina**, sopra il banner «Modificata» — stessa mossa del banner viola del 3 ago. Nessun cambio di condizioni o testo.
