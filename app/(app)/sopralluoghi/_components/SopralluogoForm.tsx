@@ -169,7 +169,9 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   // (Eli, 19 ago). Restano collassabili solo i blocchi che «prendono molto
   // spazio»: Appunti (aperto, è il cuore), Foto (chiuso), Appuntamento (chiuso,
   // ma aperto se ne esiste già uno).
-  const [openAppunti, setOpenAppunti] = useState(true)
+  // Chiusa di default come Foto (Eli 26 ago: «quando apro un nuovo sopralluogo,
+  // Appunti e Misure deve essere chiuso»); il riepilogo da chiusa dice se c'è testo.
+  const [openAppunti, setOpenAppunti] = useState(false)
   const [openFoto, setOpenFoto] = useState(false)
   const [openAppt, setOpenAppt] = useState(Boolean(defaults?.scheduledAt))
   // Giorno scelto senza ora: il picker deve restare visibile per correggere

@@ -973,15 +973,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </div>
         )}
 
-        {/* ⚠️ «Anteprima», non «come lo vede il cliente» (Eli 25 ago sera):
-            la frase secca faceva credere che il cliente avesse SOLO questa
-            vista — dal link apre anche il documento completo col template. */}
-        {/* marginBottom > dei 16px dello space-y del contenitore (i margini
-            collassano): la frase deve stare ATTACCATA al foglio sopra, non
-            alle card sotto (Eli 25 ago sera). */}
+        {/* Didascalia SECCA (Eli 26 ago: via «dal link apre anche il documento
+            completo, col template che hai scelto»). marginBottom > dei 16px
+            dello space-y del contenitore (i margini collassano): la frase deve
+            stare ATTACCATA al foglio sopra, non alle card sotto (25 ago). */}
         {docItems.length > 0 && !editing && (
           <p className="lg:hidden" style={{ margin: '-6px 0 26px', textAlign: 'center', fontSize: 12, color: 'var(--cc-muted)' }}>
-            Anteprima della pagina del cliente: dal link apre anche il documento completo, col template che hai scelto
+            Anteprima della pagina del cliente
           </p>
         )}
 

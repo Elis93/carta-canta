@@ -28,7 +28,7 @@ export function LavoroInCorsoCard({ id, title, style }: { id: string; title: str
           href={`/lavori/${id}`}
           style={{
             flex: 1, minWidth: 0, padding: '6px 0 6px 6px', textDecoration: 'none',
-            fontSize: 14.5, fontWeight: 600, color: '#161616', lineHeight: 1.3,
+            fontSize: 14.5, fontWeight: 500, color: '#2b2b2b', lineHeight: 1.3,
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}
         >

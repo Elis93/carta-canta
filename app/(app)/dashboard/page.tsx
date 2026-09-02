@@ -760,8 +760,8 @@ export default async function DashboardPage() {
               Gratuito
             </span>
             <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: 'var(--cc-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <b style={{ fontWeight: 600, color: '#161616' }}>{freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT}</b> preventivi ·{' '}
-              <b style={{ fontWeight: 600, color: '#161616' }}>{freeInvoiceStatus?.docsUsed ?? 0}/{FREE_INVOICE_LIMIT}</b> fatture
+              <b style={{ fontWeight: 500, color: '#2b2b2b' }}>{freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT}</b> preventivi ·{' '}
+              <b style={{ fontWeight: 500, color: '#2b2b2b' }}>{freeInvoiceStatus?.docsUsed ?? 0}/{FREE_INVOICE_LIMIT}</b> fatture
             </span>
             <Link href="/abbonamento" style={{ fontSize: 12.5, fontWeight: 600, color: '#b0863e', textDecoration: 'none', whiteSpace: 'nowrap' }}>
               Pro →
@@ -846,7 +846,7 @@ export default async function DashboardPage() {
                     }}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {lav.title ?? 'Lavoro'}{lavClient ? ` · ${lavClient}` : ''}
                       </div>
                       <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2 }}>
@@ -895,7 +895,7 @@ export default async function DashboardPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {/* CLIENTE prima del numero (Eli, 19 ago: il nome si deve
                         leggere in chiaro) */}
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {clientName ? `${clientName} · ` : ''}{displayLabel}
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2 }}>

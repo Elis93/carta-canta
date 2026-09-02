@@ -26,11 +26,11 @@ function FeRow({ href, dotColor, label, sub, subColor, count }: {
       style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}
     >
       <span aria-hidden style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: dotColor }} />
-      <span style={{ fontSize: 14, fontWeight: 600, color: '#161616', flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 14, fontWeight: 500, color: '#2b2b2b', flexShrink: 0 }}>{label}</span>
       <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: subColor ?? 'var(--cc-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {sub}
       </span>
-      <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 17, fontWeight: 600, color: '#161616', flexShrink: 0 }}>{count}</span>
+      <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 17, fontWeight: 400, color: '#2b2b2b', flexShrink: 0 }}>{count}</span>
       <span aria-hidden style={{ color: '#c2c1bd', fontSize: 18, lineHeight: 1, flexShrink: 0 }}>›</span>
     </Link>
   )

@@ -758,13 +758,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             )}
           </div>
 
-          {/* ⚠️ «Anteprima», non «come lo vede il cliente» (Eli 25 ago sera):
-              la frase secca faceva credere che il cliente avesse SOLO questa
-              vista — dal link apre anche il documento completo col template. */}
-          {/* Aria SOTTO la frase più che sopra (Eli 25 ago sera: «così vicina
-              alle card sottostanti che sembra legata a esse e non al foglio»). */}
+          {/* Didascalia SECCA (Eli 26 ago: via «dal link apre anche il documento
+              completo, col template che hai scelto»). Aria SOTTO la frase più
+              che sopra (25 ago: «così vicina alle card sottostanti che sembra
+              legata a esse e non al foglio»). */}
           <p style={{ margin: '7px 15px 24px', textAlign: 'center', fontSize: 12, color: 'var(--cc-muted)' }}>
-            Anteprima della pagina del cliente: dal link apre anche il documento completo, col template che hai scelto
+            Anteprima della pagina del cliente
           </p>
 
           {/* Azioni riga 1: Anteprima (bianco bordato) + Condividi (navy pieno).

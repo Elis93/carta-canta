@@ -435,25 +435,10 @@ export function SdiCard({
         </div>
       )}
 
-      {/* Promemoria di trasparenza (feedback Eli 26 lug: "andrebbe messo
-          nella sezione Fattura Elettronica"): finché non c'è stata alcuna
-          trasmissione, il posto giusto per dire "questo PDF non è la
-          fattura elettronica" è QUI, accanto al bottone che la trasmette —
-          non un banner sperso in fondo alla pagina. Con un esito SdI
-          (anche scartata) lo stato racconta già tutto. */}
-      {/* ⚠️ Non compare quando il pilota è attivo: «ricordati di trasmetterla»
-          sopra «non devi fare niente» sono due ordini contrari a 12px di
-          distanza (review 11 ago). */}
-      {sdiStatus === null && !pilotaVisibile && (
-        <div style={{ background: '#f5e9d0', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: 11 }}>
-          <AlertTriangle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 1 }} />
-          <span style={{ fontSize: 12, color: '#8a6a2f', lineHeight: 1.45 }}>
-            {isNotaCredito
-              ? 'Finché non la trasmetti, per l’Agenzia delle Entrate la fattura è ancora intera: la nota storna solo dopo l’invio, qui sotto oppure tramite il cassetto fiscale o il commercialista.'
-              : 'Il documento che invii al cliente non sostituisce la fattura elettronica: ricordati di trasmetterla qui sotto, oppure tramite il cassetto fiscale o il commercialista.'}
-          </span>
-        </div>
-      )}
+      {/* Il promemoria giallo «Il documento che invii al cliente non
+          sostituisce la fattura elettronica…» (26 lug) è stato TOLTO da Eli
+          il 26 ago: la stessa cosa la dicono già il ⓘ conciso, il conto alla
+          rovescia dei 12 giorni e le FAQ — era un terzo modo di dirla. */}
 
       {/* ── Pilota automatico (Eli, 11 ago: «automatico deve essere default e
           sia chiaro all'artigiano»): la trasmissione è GIÀ in programma —

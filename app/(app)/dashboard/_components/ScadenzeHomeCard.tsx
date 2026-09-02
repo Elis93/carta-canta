@@ -115,10 +115,10 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
           di «Lavoro in corso» (Eli 20 ago: «stessa identica posizione»). */}
       <span aria-hidden style={{ position: 'absolute', left: -15, top: 2, bottom: 2, width: 2, borderRadius: 2, background: urgColor }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: '#161616', minWidth: 0, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+        <span style={{ fontSize: 15, fontWeight: 500, color: '#2b2b2b', minWidth: 0, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {mainLabel}
         </span>
-        <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 16, fontWeight: 600, color: '#161616', whiteSpace: 'nowrap', flexShrink: 0 }}>
+        <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 16, fontWeight: 400, color: '#2b2b2b', whiteSpace: 'nowrap', flexShrink: 0 }}>
           {formatCurrency(doc.total ?? 0)}
         </span>
       </div>
