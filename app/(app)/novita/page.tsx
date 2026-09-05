@@ -12,8 +12,10 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
     data: 'Inizio settembre 2026',
-    titolo: 'Gli avvisi non sono più gialli',
+    titolo: 'Gli avvisi non sono più gialli, e la pagina del documento è riordinata',
     punti: [
+      'La pagina di un preventivo o di una fattura ha un ordine solo: stato, foglio, una riga di azioni (Anteprima · Invia · ⋯), il tasto navy del passo successivo («Segna pagata» sulla fattura da incassare, «Converti in fattura» sul preventivo accettato), poi le tendine e in fondo Elimina. Le azioni secondarie — sollecito, annulla, collega, archivia — stanno nel menu ⋯.',
+      'Sul preventivo non ci sono più «Segna accettato» e «Segna rifiutato» in pagina: l’esito lo dà il cliente dal link, con la prova. Per chi risponde al telefono restano nel menu ⋯ come «Segna accettato a voce».',
       'Tutti gli avvisi dell’app — «fattura pagata», «preventivo scaduto», il conto alla rovescia dello SdI, i limiti del piano gratuito — hanno ora la stessa veste: una card bianca con un filetto colorato a sinistra e un’icona. Il testo resta scuro e leggibile; il colore dice solo quanto è urgente: verde è una buona notizia, ambra una scadenza o una cosa da fare, rosso un blocco, blu un’informazione.',
       'Sotto ogni avviso, quando serve, c’è una riga in grigio con cosa fare: il comando da usare o il collegamento giusto.',
     ],

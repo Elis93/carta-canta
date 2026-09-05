@@ -91,6 +91,21 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       il cliente non li vede mai.</>,
   },
   {
+    q: 'Nella pagina di un preventivo o di una fattura, dove sono i comandi?',
+    parole: ['tre puntini', 'menu', 'altro', 'segna pagata', 'converti', 'sollecita', 'annulla', 'archivia', 'elimina', 'collega'],
+    a: <>Sotto il foglio c&rsquo;è <b>una riga sola</b>: <b>Anteprima</b>, <b>Invia</b>{' '}e il menu{' '}
+      <b>⋯</b>. Il tasto <b>navy</b>{' '}è sempre il passo successivo: su una fattura da incassare
+      è <b>Segna pagata</b>, su una bozza è <b>Invia</b>, su un preventivo accettato è{' '}
+      <b>Converti in fattura</b>. Su una fattura pagata, nello stesso posto, trovi{' '}
+      <b>Segna come non pagata</b>{' '}(più discreto: serve solo a correggere).
+      <br /><br />
+      Tutto il resto sta nel menu <b>⋯</b>: sollecito, annulla, collega a un preventivo, scheda
+      lavoro, archivia, elimina — e sul preventivo i due ripieghi <b>Segna accettato a voce</b>{' '}/{' '}
+      <b>Segna rifiutato</b>, per il cliente che risponde al telefono invece che dal link. Sotto, le
+      tendine (Cliente, Fattura elettronica, Foto, Collegati, Cronologia) e in fondo{' '}
+      <b>Elimina</b>.</>,
+  },
+  {
     q: 'Come modifico una bozza? Dove devo cliccare?',
     a: <>Apri la bozza dalla lista <b>Preventivi</b>{' '}(o <b>Fatture</b>): la bozza si apre già in
       modifica. Sui documenti già inviati tocca invece il tasto navy{' '}
@@ -140,8 +155,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <b>Non è una cancellazione</b>: il documento resta intero, col suo numero, e continua a
       contare nel <VaiA a="bilancio" />, negli export e nel registro delle fatture. Il posto dove
       un documento sparisce davvero è il <VaiA a="cestino" />, che ha il conto alla rovescia di 15
-      giorni: l&rsquo;archivio no. Per archiviare: il menu <b>⋯</b>{' '}sulla riga della lista, oppure
-      l&rsquo;orologio nelle pagine delle scadenze.{' '}
+      giorni: l&rsquo;archivio no. Per archiviare: il menu <b>⋯</b>{' '}sulla riga della lista o
+      dentro il documento, oppure l&rsquo;orologio nelle pagine delle scadenze.{' '}
       <b>Il cerca li trova lo stesso</b>: archiviare toglie un documento dalla lista che sfogli,
       non dalla ricerca — se cerchi il nome del cliente compare, con l&rsquo;etichetta
       &laquo;Archiviato&raquo;. E cercando la parola <b>archiviati</b>{' '}li vedi tutti.</>,
@@ -183,7 +198,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <b>Trasmessa allo SdI</b>{' '}(l&rsquo;hai inviata da qui e ha un esito): per l&rsquo;Agenzia
       è emessa. Non si elimina e non si annulla — si storna con una <b>nota di credito</b>, e
       l&rsquo;app non te la fa nemmeno provare: il tasto Elimina è spento, e al posto di
-      &laquo;Annulla&raquo; trovi <b>&laquo;Crea nota di credito&raquo;</b>. Va conservata{' '}
+      &laquo;Annulla&raquo; c&rsquo;è la tendina <b>Note di credito</b>{' '}con{' '}
+      <b>&laquo;Crea nota di credito&raquo;</b>. Va conservata{' '}
       <b>dieci anni</b>.
       <br /><br />
       <b>Mandata al cliente ma mai trasmessa</b>{' '}(gliel&rsquo;hai girata via email o WhatsApp
@@ -218,7 +234,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <b>Invia al cliente</b>: l&rsquo;app ti avvisa che era rifiutato e, alla conferma, lo riporta{' '}
       <b>Inviato</b>{' '}— il link del cliente torna attivo, può accettarlo di nuovo e la validità
       riparte. Se invece il cliente ti dice a voce che ha <b>cambiato idea</b>, sul preventivo
-      rifiutato trovi <b>Segna accettato</b>: registra l&rsquo;accettazione senza rimandare nulla.
+      rifiutato apri il menu <b>⋯</b>{' '}e tocca <b>Segna accettato a voce</b>: registra
+      l&rsquo;accettazione senza rimandare nulla.
       Il rifiuto ti arriva anche nella <b>campanella</b>{' '}in Home, oltre che per email, e ogni
       passaggio resta scritto in cronologia.</>,
   },
@@ -245,7 +262,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
     q: 'Come faccio una nota di credito?',
     parole: ['nota di credito', 'storno', 'stornare', 'td04', 'rimborso', 'ho sbagliato la fattura'],
     a: <>Apri la fattura da stornare: se è stata <b>trasmessa allo SdI</b>, al posto di
-      &laquo;Annulla&raquo; trovi <b>&laquo;Crea nota di credito&raquo;</b>. Ti chiede solo il{' '}
+      &laquo;Annulla&raquo; c&rsquo;è la tendina <b>Note di credito</b>{' '}con{' '}
+      <b>&laquo;Crea nota di credito&raquo;</b>. Ti chiede solo il{' '}
       <b>motivo</b>{' '}(errore nella fattura · accordo col cliente · altro); al resto pensa lei:
       cliente, voci, importi e il riferimento alla fattura stornata. Il motivo conta anche per i{' '}
       <b>tempi</b>: per un errore o un accordo col cliente la nota va fatta{' '}
@@ -483,9 +501,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       preventivo <b>vale quella proposta</b>: è la cifra che vedi in Home, nelle liste e nella
       fattura.
       <br /><br />
-      Se il cliente ti risponde a voce, puoi segnarlo tu: apri il preventivo, tocca{' '}
-      <b>Segna accettato</b>{' '}e scegli quale proposta ha accettato. Se sbagli,{' '}
-      <b>Riporta in bozza</b>{' '}e tornano disponibili tutte.</>,
+      Se il cliente ti risponde a voce, puoi segnarlo tu: apri il preventivo, nel menu{' '}
+      <b>⋯</b>{' '}tocca <b>Segna accettato a voce</b>{' '}e scegli quale proposta ha
+      accettato. Se sbagli, <b>Riporta in bozza</b>{' '}(sempre nel menu ⋯) e tornano
+      disponibili tutte.</>,
   },
   {
     q: 'Cosa fa «Ordina: Scadenza vicina»?',
@@ -567,7 +586,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       trasmessa — un lavoro in più concordato, un prezzo o una quantità troppo bassi,
       un&rsquo;IVA applicata per difetto.
       <br /><br />
-      La trovi sulla fattura trasmessa, sotto «Crea nota di credito»: scegli cosa manca e
+      La trovi sulla fattura trasmessa, nella tendina <b>Note di credito</b>, sotto «Crea nota
+      di credito»: scegli cosa manca e
       la nota nasce col cliente e il riferimento alla fattura. ⚠️ <b>Nasce vuota di voci</b>,
       e ci metti <b>solo quello che manca</b>: se ricopiassi tutto il lavoro, il cliente
       pagherebbe due volte.
@@ -706,7 +726,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
   },
   {
     q: 'Il preventivo è stato accettato: e ora?',
-    a: <>Dal preventivo accettato tocca <b>Apri la scheda lavoro</b>: nella sezione <b>Lavori</b>{' '}(in Altro)
+    a: <>Dal preventivo accettato tocca <b>Apri la scheda lavoro</b>{' '}(nella tendina{' '}
+      <b>Collegati</b>{' '}o nel menu <b>⋯</b>): nella sezione <b>Lavori</b>{' '}(in Altro)
       segui il lavoro passo passo — da fare, in corso, finito, fatturato — con note, foto e
       l&rsquo;<b>economia del lavoro</b>{' '}(preventivato, speso e margine).</>,
   },

@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 
-export function RiportaInBozzaButton({ documentId, fullWidth = false }: { documentId: string; fullWidth?: boolean }) {
+export function RiportaInBozzaButton({ documentId, fullWidth = false, triggerStyle }: { documentId: string; fullWidth?: boolean; triggerStyle?: React.CSSProperties }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
@@ -51,6 +51,7 @@ export function RiportaInBozzaButton({ documentId, fullWidth = false }: { docume
         fontSize: 14, fontWeight: 600, border: '1px solid #e3e3e6',
         background: '#fff', color: '#1a1a2e', cursor: loading ? 'wait' : 'pointer',
         fontFamily: 'inherit', padding: '0 16px',
+        ...triggerStyle,
       }}
     >
       {loading

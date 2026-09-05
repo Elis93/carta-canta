@@ -31,6 +31,8 @@ interface LinkToPreventivoButtonProps {
   currentPreventivoId?: string | null
   /** Trigger compatto (bottone "Cambia"/"Collega") per la card in cima al dettaglio */
   compact?: boolean
+  /** Etichetta del bottone compatto (default «Collega»/«Cambia»). */
+  triggerLabel?: string
   /** Stile inline del trigger compatto */
   triggerStyle?: React.CSSProperties
 }
@@ -41,6 +43,7 @@ export function LinkToPreventivoButton({
   currentPreventivoId,
   compact,
   triggerStyle,
+  triggerLabel,
 }: LinkToPreventivoButtonProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -145,7 +148,7 @@ export function LinkToPreventivoButton({
       {compact ? (
         <button type="button" onClick={handleOpen} style={triggerStyle}>
           <ArrowLeftRight size={15} />
-          {currentPreventivoId ? 'Cambia' : 'Collega'}
+          {triggerLabel ?? (currentPreventivoId ? 'Cambia' : 'Collega')}
         </button>
       ) : (
         <div className="flex items-center gap-2">

@@ -50,6 +50,7 @@ export function SegnaPagataButton({
   alreadyPaid = 0,
   wasDraft = false,
   avvisoSdi = null,
+  triggerStyle,
 }: {
   documentId: string
   total?: number | null
@@ -59,6 +60,8 @@ export function SegnaPagataButton({
   wasDraft?: boolean
   /** Avviso dei 12 giorni alla conferma (Eli, 11 ago) — 'auto' se il pilota partirà */
   avvisoSdi?: 'auto' | 'manuale' | null
+  /** Veste del bottone (pagina A: navy pieno o bianco a seconda dello stato). */
+  triggerStyle?: React.CSSProperties
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -145,6 +148,7 @@ export function SegnaPagataButton({
           fontSize: 14, fontWeight: 600, border: 'none',
           background: '#1a1a2e', color: '#fff', cursor: 'pointer',
           boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', whiteSpace: 'nowrap',
+          ...triggerStyle,
         }}
       >
         <Banknote size={18} />

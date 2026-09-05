@@ -17,11 +17,13 @@ import {
 
 interface ConvertiFatturaButtonProps {
   documentId: string
+  /** Veste del bottone (pagina A: navy pieno, l'unico della pagina). */
+  triggerStyle?: React.CSSProperties
   /** Bottone a piena larghezza e prominente (mobile) — etichetta sempre visibile */
   fullWidth?: boolean
 }
 
-export function ConvertiFatturaButton({ documentId, fullWidth }: ConvertiFatturaButtonProps) {
+export function ConvertiFatturaButton({ documentId, fullWidth, triggerStyle }: ConvertiFatturaButtonProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -55,14 +57,23 @@ export function ConvertiFatturaButton({ documentId, fullWidth }: ConvertiFattura
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {fullWidth ? (
-          <Button
-            variant="default"
-            className="w-full"
-            style={{ height: 48, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
+          // NAVY dell'app, non il nero shadcn (inventario 26 ago): è «il
+          // passo successivo», nello stesso posto di «Segna pagata» sulla
+          // fattura (mockup A).
+          <button
+            type="button"
+            style={{
+              boxSizing: 'border-box', width: '100%', height: 46, borderRadius: 12,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              fontSize: 14, fontWeight: 600, border: '1px solid #1a1a2e',
+              background: '#1a1a2e', color: '#fff', cursor: 'pointer', fontFamily: 'inherit',
+              boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
+              ...triggerStyle,
+            }}
           >
-            <FileCheck2 className="size-4" />
-            Crea fattura
-          </Button>
+            <FileCheck2 size={18} />
+            Converti in fattura
+          </button>
         ) : (
           <Button variant="default" size="sm">
             <FileCheck2 className="size-4" />

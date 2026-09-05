@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 
-export function RiattivaFatturaButton({ documentId, fullWidth = false }: { documentId: string; fullWidth?: boolean }) {
+export function RiattivaFatturaButton({ documentId, fullWidth = false, triggerStyle }: { documentId: string; fullWidth?: boolean; triggerStyle?: React.CSSProperties }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
@@ -57,6 +57,7 @@ export function RiattivaFatturaButton({ documentId, fullWidth = false }: { docum
         fontSize: 14, fontWeight: 600, border: '1px solid #1a1a2e',
         background: '#1a1a2e', color: '#fff', cursor: loading ? 'wait' : 'pointer',
         fontFamily: 'inherit', padding: '0 16px',
+        ...triggerStyle,
       }}
     >
       {loading

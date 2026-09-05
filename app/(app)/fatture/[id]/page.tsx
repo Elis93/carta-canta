@@ -3,10 +3,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { signPhotoPaths } from '@/lib/photos/signed-url'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
-import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronLeft, ChevronRight, Banknote, Hammer, Link as LinkIcon } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronRight, Hammer, Link as LinkIcon } from 'lucide-react'
 import { CardTendina } from '@/components/shared/CardTendina'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
-import { LavoroLinkButton } from '@/app/(app)/preventivi/_components/LavoroLinkButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
 import { AnnullaFatturaButton } from '../_components/AnnullaFatturaButton'
 import { NotaCreditoButton } from '../_components/NotaCreditoButton'
@@ -42,6 +41,9 @@ import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
 import { Avviso } from '@/components/shared/Avviso'
 import { PosticipaSollecito } from '@/components/shared/PosticipaSollecito'
+import { MenuAltro, RigaMenu, RigaArchivia } from '@/app/(app)/_components/documento/MenuAltro'
+import { EliminaDocumentoButton } from '@/app/(app)/_components/documento/EliminaDocumentoButton'
+import { btnBianco, btnNavy, btnBiancoPieno, btnNavyPieno, btnSoft, rigaMenu } from '@/app/(app)/_components/documento/stili'
 import { docNumberSlug } from '@/lib/documents/numero'
 import { riepilogoIva } from '@/lib/fiscal/calcoli'
 import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
@@ -469,32 +471,6 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     ])
   )
 
-  const chipBase: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    gap: 5, flex: 1, borderRadius: 9, padding: '10px 6px',
-    fontSize: 13, fontWeight: 500, textDecoration: 'none',
-    border: '0.5px solid var(--cc-border-color)',
-    background: 'white', color: 'var(--cc-navy)', cursor: 'pointer',
-    whiteSpace: 'nowrap', height: 'auto',
-  }
-
-  // Bottoni azione mobile (mockup 05): 48px, radius 13
-  const mobileActionBase: React.CSSProperties = {
-    flex: 1, boxSizing: 'border-box', height: 48, borderRadius: 13,
-    padding: '0 13px', fontSize: 14, display: 'flex', alignItems: 'center',
-    justifyContent: 'center', gap: 8, background: '#fff',
-    border: '1px solid #e7e7ea', color: '#1a1a2e', fontWeight: 500,
-    textDecoration: 'none', cursor: 'pointer',
-    boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
-  }
-  const mobileActionPrimary: React.CSSProperties = {
-    flex: 1, boxSizing: 'border-box', height: 48, borderRadius: 13,
-    padding: '0 13px', fontSize: 14, display: 'flex', alignItems: 'center',
-    justifyContent: 'center', gap: 8, background: '#1a1a2e', color: '#fff',
-    border: '1px solid #1a1a2e', fontWeight: 600, textDecoration: 'none',
-    cursor: 'pointer', boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)',
-  }
-
   // Righe «IVA x%» PER ALIQUOTA, dal motore (riepilogoIva) sulle voci espanse
   // dei beni significativi — stessa fonte del PDF (gemello di preventivi/[id]).
   // ⚠️ Prima Number(vat_rate ?? 0) su una voce con IVA «predefinita» (null)
@@ -525,6 +501,23 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // ?edit=1 digitato a mano.
   const editing = edit === '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted && !freeLocked
 
+  // ── Pagina A (mockup 5 set): testata, riga di stato, «⋯» ──
+  const fmtShort = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Rome' }).replace('.', '')
+  const numeroBreve = formatDocNumber(doc.doc_number)
+  const headerTitle = numeroBreve !== '—'
+    ? `${isNotaCredito ? 'Nota di credito' : 'Fattura'} ${numeroBreve}`
+    : (isNotaCredito ? 'Nota di credito' : 'Bozza')
+  // La data della riga di stato: quella che conta per QUELLO stato — incasso
+  // sulla pagata, data fiscale (o invio) sulle altre, niente sulla bozza.
+  const statoData: string | null = doc.status === 'accepted'
+    ? (((doc as any).paid_at as string | null) ?? doc.accepted_at ?? null)
+    : doc.status === 'draft'
+      ? null
+      : (((doc as { doc_date?: string | null }).doc_date ?? doc.sent_at) ?? null)
+  const statoRiga = [statoData ? `il ${fmtShort(statoData)}` : null, clientName].filter(Boolean).join(' · ')
+  const showModifica = edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted && !freeLocked
+  const hasIncasso = Number((doc as any).paid_amount ?? 0) > 0
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* La pagina ha un loading.tsx: le ancore (#messaggi, #sdi) hanno bisogno
@@ -537,14 +530,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         style={{ background: '#fff', borderBottom: '2px solid #c9a44c', padding: '12px 15px' }}
       >
         <BackButton fallback="/fatture" />
-        {/* Simbolo tipo documento (A2, 5 lug): banconota ORO = fattura */}
-        <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>
-          <Banknote size={19} style={{ color: '#b08d3e', flexShrink: 0 }} aria-hidden />
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {formatDocNumber(doc.doc_number, doc.doc_type) !== '—' ? formatDocNumber(doc.doc_number, doc.doc_type) : 'Bozza'}
-          </span>
+        {/* Titolo centrato in Georgia (pagina A, 5 set): «Fattura 003/2026»,
+            senza icona — il tipo lo dice la parola. */}
+        <span style={{ flex: 1, minWidth: 0, textAlign: 'center', fontSize: 17, fontWeight: 400, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {headerTitle}
         </span>
-        {edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted && !freeLocked && (
+        {edit !== '1' && !showModifica && <span style={{ width: 36, flexShrink: 0 }} aria-hidden />}
+        {showModifica && (
           // Matita CON etichetta (collaudo 17 ago) — NAVY PIENA (mockup B,
           // Eli 25 ago: «non si capisce che serve cliccare su Modifica»).
           <Link
@@ -574,8 +566,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       </div>
 
       {/* ── MOBILE: badge stato + data (lg:hidden) ── */}
-      <div className="lg:hidden" style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9 }}>
+      <div className="lg:hidden" style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.5, color: 'var(--cc-muted)' }}>
         <StatusBadge status={doc.status} docType={doc.doc_type} />
+        {statoRiga && <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{statoRiga}</span>}
       </div>
 
       {/* Promemoria spenti o rinviati: DETTO SUL DOCUMENTO (Eli 21 ago — una
@@ -648,48 +641,8 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         </div>
       )}
 
-      {/* ── MOBILE: card "Preventivo collegato" (lg:hidden) — Apri + Cambia ──
-          In modifica (?edit=1) le card di sola lettura SPARISCONO così il form
-          appare subito sotto la testata (Eli 3 ago: "le schermate di modifica
-          mi appaiono in basso e non me ne accorgo"). */}
-      <div
-        className={editing ? 'hidden' : 'lg:hidden'}
-        style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)', padding: '15px 15px', display: 'flex', alignItems: 'center', gap: 12 }}
-      >
-        <LinkIcon size={20} style={{ color: originDoc ? '#3f6fb0' : 'var(--cc-muted)', flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
-            {isNotaCredito ? 'Fattura stornata' : 'Preventivo collegato'}
-          </div>
-          {originDoc ? (
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#161616', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {originDoc.doc_number ? formatDocNumber(originDoc.doc_number, isNotaCredito ? 'fattura' : 'preventivo') : (originDoc.title ?? 'bozza')}
-            </div>
-          ) : (
-            <div style={{ fontSize: 14, color: 'var(--cc-muted)', marginTop: 2 }}>Nessuno</div>
-          )}
-        </div>
-        {originDoc && (
-          <Link href={isNotaCredito ? `/fatture/${originDoc.id}` : `/preventivi/${originDoc.id}`} style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none', flexShrink: 0 }}>
-            Apri
-          </Link>
-        )}
-        {/* ⚠️ Sulla NOTA DI CREDITO il collegamento NON si cambia: `origin_document_id`
-            è il riferimento fiscale alla fattura stornata, quello che finisce in
-            `DatiFattureCollegate` dell'XML. Cambiarlo (o toglierlo) renderebbe la
-            nota orfana, o peggio dichiarerebbe all'Agenzia lo storno di un altro
-            documento. Il server lo impediva già; qui sparisce anche il tasto. */}
-        {!isNotaCredito && (
-          <LinkToPreventivoButton
-            fatturaId={id}
-            workspaceId={workspace.id}
-            currentPreventivoId={doc.origin_document_id}
-            compact
-            triggerStyle={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e7e7ea', borderRadius: 10, padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#1a1a2e', background: '#fff', cursor: 'pointer', flexShrink: 0 }}
-          />
-        )}
-      </div>
-
+      {/* La card «Preventivo collegato» è diventata la tendina «Collegati»,
+          più sotto (pagina A, 5 set). */}
 
       <div className="p-4 lg:p-6 space-y-4">
 
@@ -987,6 +940,85 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           </p>
         )}
 
+        {/* ── MOBILE, pagina A (Eli 5 set): UNA riga di azioni — Anteprima ·
+            Invia · «⋯» — e sotto il bottone dello stato, che cambia PESO
+            senza cambiare posto: da incassare → navy «Segna pagata»; bozza →
+            navy su «Invia», «Segna pagata» bianco (chi incassa di persona);
+            pagata → «Segna come non pagata» discreto; annullata → «Riattiva».
+            Sulla nota di credito niente incasso (denaro che torna). Su una
+            fattura BLOCCATA (Free) restano solo «⋯» e la registrazione
+            dell'incasso, che non è una funzione Pro. ── */}
+        {!editing && (
+          <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {!freeLocked && (
+                <AnteprimaButton src={`/api/documents/${id}/pdf?preview=1`} style={btnBianco} />
+              )}
+              {!freeLocked && doc.public_token && !isCancelled && (
+                <ShareButton
+                  avvisoSdi={avvisoSdi}
+                  documentId={id}
+                  publicToken={doc.public_token}
+                  docNumber={doc.doc_number}
+                  docType={doc.doc_type}
+                  isDraft={isDraft}
+                  isExpired={doc.status === 'expired'}
+                  isModified={!!(doc as any).updated_after_send_at}
+                  hasVoci={hasVoci}
+                  clientName={clientName}
+                  triggerLabel="Invia"
+                  triggerStyle={isDraft ? btnNavy : btnBianco}
+                />
+              )}
+              <MenuAltro>
+                {isNotaCredito && !sdiTransmitted && doc.status !== 'rejected' && (
+                  <AnnullaFatturaButton documentId={id} isNotaCredito triggerStyle={rigaMenu} />
+                )}
+                {!isNotaCredito && !sdiTransmitted && (doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && (
+                  <AnnullaFatturaButton
+                    documentId={id}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 nel select *
+                    alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
+                    triggerStyle={rigaMenu}
+                  />
+                )}
+                {!isNotaCredito && (
+                  <div data-keep-open>
+                    <LinkToPreventivoButton
+                      fatturaId={id}
+                      workspaceId={workspace.id}
+                      currentPreventivoId={doc.origin_document_id}
+                      compact
+                      triggerStyle={rigaMenu}
+                      triggerLabel={doc.origin_document_id ? 'Cambia il preventivo collegato' : 'Collega a un preventivo'}
+                    />
+                  </div>
+                )}
+                {linkedLavoro?.id && (
+                  <RigaMenu icon={<Hammer size={18} />} href={`/lavori/${linkedLavoro.id}`}>Apri la scheda lavoro</RigaMenu>
+                )}
+                {!archiviato && <RigaArchivia documentId={id} femminile />}
+                <EliminaDocumentoButton documentId={id} docType={doc.doc_type} docNumber={doc.doc_number} sdiTransmitted={sdiTransmitted} hasIncasso={hasIncasso} menu />
+              </MenuAltro>
+            </div>
+            {!isNotaCredito && (doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && (
+              <SegnaPagataButton
+                documentId={id}
+                total={doc.total}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+                alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
+                wasDraft={isDraft}
+                avvisoSdi={avvisoSdi}
+                triggerStyle={isDraft ? btnBiancoPieno : btnNavyPieno}
+              />
+            )}
+            {!isNotaCredito && doc.status === 'accepted' && (
+              <SegnaNonPagataButton documentId={id} fullWidth triggerStyle={btnSoft} />
+            )}
+            {canReactivate && <RiattivaFatturaButton documentId={id} fullWidth triggerStyle={btnNavyPieno} />}
+          </div>
+        )}
+
         {/* ── MOBILE: card Cliente a TENDINA (Eli 25 ago sera) — chiusa mostra
             il nome; aperta, il tocco sul nome apre la scheda in rubrica. ── */}
         {clientName && !editing && (
@@ -1029,80 +1061,74 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} collapsible />
         </div>
 
-        {/* ── MOBILE: Anteprima + Condividi (lg:hidden) ──
-            Su una fattura BLOCCATA (Free, oltre le 8) niente PDF né invio: sono
-            le azioni vietate. Resta la consultazione (le card qui sopra) e la
-            registrazione dell'incasso più sotto. */}
-        <div className={editing || freeLocked ? 'hidden' : 'flex lg:hidden'} style={{ gap: 11 }}>
-          {/* Anteprima — overlay (19 lug): chiudendo si torna al punto esatto */}
-          <AnteprimaButton
-            src={`/api/documents/${id}/pdf?preview=1`}
-            style={mobileActionBase}
-          />
-          {/* Condividi (navy) — non su una fattura annullata (19 lug) */}
-          {doc.public_token && !isCancelled && (
-            <ShareButton
-              avvisoSdi={avvisoSdi}
-              documentId={id}
-              publicToken={doc.public_token}
-              docNumber={doc.doc_number}
-              docType={doc.doc_type}
-              isDraft={isDraft}
-              isExpired={doc.status === 'expired'}
-                isModified={!!(doc as any).updated_after_send_at}
-              hasVoci={hasVoci}
-              clientName={clientName}
-              triggerStyle={(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') ? mobileActionBase : mobileActionPrimary}
-            />
-          )}
-          {canReactivate && <RiattivaFatturaButton documentId={id} fullWidth />}
-        </div>
+        {/* ── MOBILE: tendina «Collegati» (pagina A) — il preventivo d'origine
+            (o la fattura stornata, sulla nota) e la scheda lavoro. ⚠️ Sulla
+            NOTA il collegamento NON si cambia: è il riferimento fiscale
+            (DatiFattureCollegate dell'XML). ── */}
+        {!editing && (
+          <CardTendina
+            label="Collegati"
+            className="lg:hidden"
+            summary={[
+              originDoc ? (originDoc.doc_number ? formatDocNumber(originDoc.doc_number, isNotaCredito ? 'fattura' : 'preventivo') : 'Preventivo in bozza') : null,
+              linkedLavoro?.id ? 'Lavoro' : null,
+            ].filter(Boolean).join(' · ') || 'nessuno'}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <LinkIcon size={18} style={{ color: originDoc ? '#3f6fb0' : 'var(--cc-muted)', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, color: 'var(--cc-muted)' }}>{isNotaCredito ? 'Fattura stornata' : 'Preventivo'}</div>
+                  {originDoc ? (
+                    <Link href={isNotaCredito ? `/fatture/${originDoc.id}` : `/preventivi/${originDoc.id}`} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 15, fontWeight: 600, color: '#161616', textDecoration: 'none' }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {originDoc.doc_number ? formatDocNumber(originDoc.doc_number, isNotaCredito ? 'fattura' : 'preventivo') : (originDoc.title ?? 'bozza')}
+                      </span>
+                      <ChevronRight size={15} style={{ flexShrink: 0, color: '#1a1a2e' }} aria-hidden />
+                    </Link>
+                  ) : (
+                    <div style={{ fontSize: 14, color: 'var(--cc-muted)' }}>Nessuno</div>
+                  )}
+                </div>
+                {!isNotaCredito && (
+                  <LinkToPreventivoButton
+                    fatturaId={id}
+                    workspaceId={workspace.id}
+                    currentPreventivoId={doc.origin_document_id}
+                    compact
+                    triggerStyle={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e7e7ea', borderRadius: 10, padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#1a1a2e', background: '#fff', cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}
+                  />
+                )}
+              </div>
+              {linkedLavoro?.id && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px solid #ededea', paddingTop: 10 }}>
+                  <Hammer size={18} style={{ color: '#1a1a2e', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: 'var(--cc-muted)' }}>Lavoro</div>
+                    <Link href={`/lavori/${linkedLavoro.id}`} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 15, fontWeight: 600, color: '#161616', textDecoration: 'none' }}>
+                      Apri la scheda lavoro <ChevronRight size={15} style={{ flexShrink: 0, color: '#1a1a2e' }} aria-hidden />
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardTendina>
+        )}
 
-        {/* ── MOBILE: Segna pagata (navy) + Annulla fattura (bianco) affiancati.
-            Anche in BOZZA (review 25 lug #6): pagamento in contanti alla
-            consegna o bozza sbagliata — prima su telefono non c'era NESSUN
-            modo di registrare l'incasso o annullare. ── */}
-        {/* ⚠️ Sulla NOTA DI CREDITO niente «Segna pagata»: non è denaro che
-            entra, è denaro che torna al cliente. Resta solo l'annullamento,
-            e solo finché la nota non è partita. */}
-        {isNotaCredito && !sdiTransmitted && doc.status !== 'rejected' && !editing && (
-          <div className="lg:hidden" style={{ display: 'flex', gap: 11 }}>
-            <AnnullaFatturaButton documentId={id} isNotaCredito />
-          </div>
-        )}
-        {!isNotaCredito && (doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && !editing && (
-          <div className="lg:hidden" style={{ display: 'flex', gap: 11 }}>
-            <SegnaPagataButton
-              documentId={id}
-              total={doc.total}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
-              alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
-              wasDraft={isDraft}
-              avvisoSdi={avvisoSdi}
-            />
-            {/* Trasmessa allo SdI: il server rifiuta l'annullamento (serve una
-                nota di credito) — offrirlo lo stesso faceva scoprire il
-                divieto solo DOPO la conferma (screenshot Eli 26 lug). */}
-            {!sdiTransmitted && (
-              <AnnullaFatturaButton
-                documentId={id}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 nel select *
-                alreadyPaid={(doc as any).payment_status === 'partial' ? Number((doc as any).paid_amount ?? 0) : 0}
-              />
-            )}
-          </div>
-        )}
-        {/* Fattura trasmessa: al posto di «Annulla» il documento che la storna
-            davvero (Eli, 8 ago). Il testo sotto resta: spiega cos'è una nota di
-            credito a chi non l'ha mai fatta. */}
+        {/* ── MOBILE: tendina «Note di credito» (fattura TRASMESSA) — al posto
+            di «Annulla» c'è il documento che la storna davvero (Eli 8 ago);
+            da chiusa dice quante note ci sono e quanto resta da stornare. ── */}
         {sdiTransmitted && !isNotaCredito && !editing && (
-          <div className="lg:hidden" style={{ marginTop: 2 }}>
+          <CardTendina
+            label="Note di credito"
+            className="lg:hidden"
+            summary={noteFattura.length > 0
+              ? `${noteFattura.length} · residuo ${`\u20AC\u00A0${Number(residuoStorno ?? 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}`
+              : 'nessuna'}
+          >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {noteFattura.length > 0 && (
-                <div style={{ background: '#fff', border: '1px solid #e6e6e6', borderRadius: 12, padding: '11px 13px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 6 }}>
-                    Note di credito di questa fattura
-                  </div>
+                <div>
                   {noteFattura.map((n) => (
                     <Link key={n.id} href={`/fatture/${n.id}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '6px 0', fontSize: 13.5, textDecoration: 'none', color: '#161616' }}>
                       <span style={{ fontWeight: 600 }}>{n.doc_number ? formatDocNumber(n.doc_number, 'nota_credito') : 'Nota di credito'}</span>
@@ -1118,49 +1144,24 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 </div>
               )}
               {residuoStorno !== null && residuoStorno <= TOLLERANZA_STORNO ? (
-                <div style={{ border: '1px solid #e6e6e6', background: '#f7f7f8', borderRadius: 12, padding: '11px 13px' }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--cc-muted)' }}>Crea nota di credito</div>
-                  <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '3px 0 0', lineHeight: 1.45 }}>
-                    Questa fattura è già stornata per intero: le sue note di credito
-                    coprono tutto il totale. Se una è sbagliata, aprila e annullala
-                    (si può finché non è trasmessa), poi il residuo si riapre.
-                  </p>
-                </div>
+                <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', margin: 0, lineHeight: 1.45 }}>
+                  Questa fattura è già stornata per intero: le sue note di credito
+                  coprono tutto il totale. Se una è sbagliata, aprila e annullala
+                  (si può finché non è trasmessa), poi il residuo si riapre.
+                </p>
               ) : (
                 <NotaCreditoButton documentId={id} />
               )}
-              {/* La gemella: quando in fattura manca qualcosa invece che
-                  avanzare (art. 26 c.1) — e a differenza della nota di
-                  credito, quella di debito è OBBLIGATORIA. */}
               <NotaDebitoButton documentId={id} />
+              <p style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.45, margin: 0 }}>
+                La fattura è stata trasmessa allo SdI e non è più annullabile. Per
+                correggerla serve una nota di credito: storna, in tutto o in parte,
+                l&rsquo;importo della fattura. Il tasto la prepara già compilata:
+                controlla gli importi, inviala al cliente e trasmettila — lo storno
+                avviene con la trasmissione.
+              </p>
             </div>
-          </div>
-        )}
-        {(doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && sdiTransmitted && !isNotaCredito && !editing && (
-          <p className="lg:hidden" style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: -4 }}>
-            La fattura è stata trasmessa allo SdI e non è più annullabile. Per
-            correggerla serve una nota di credito: storna, in tutto o in parte,
-            l&rsquo;importo della fattura. Il tasto qui sopra la prepara già compilata.
-            Controlla gli importi, inviala al cliente e trasmettila: lo storno avviene
-            con la trasmissione.
-          </p>
-        )}
-
-        {/* ── MOBILE: uscita dal "pagata per errore" (review 25 lug #3) ── */}
-        {doc.status === 'accepted' && (
-          <div className="lg:hidden">
-            <SegnaNonPagataButton documentId={id} fullWidth />
-          </div>
-        )}
-
-        {/* ── MOBILE: scheda lavoro collegata (via preventivo di origine) —
-            dalla fattura si arriva DENTRO al lavoro con un tocco. Sta QUI,
-            in fondo alla zona azioni, nello stesso punto del gemello
-            preventivo (Eli 3 ago sera: "organizziamoci in modo simile"). ── */}
-        {linkedLavoro?.id && !editing && (
-          <div className="lg:hidden">
-            <LavoroLinkButton lavoroId={linkedLavoro.id} fullWidth />
-          </div>
+          </CardTendina>
         )}
 
         {/* ── DESKTOP: Intestazione documento ── */}
@@ -1373,6 +1374,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             sdiUpdatedAt={(doc as any).sdi_updated_at ?? null}
           />
         </div>
+
+        {/* ── MOBILE: Elimina in fondo, sotto un filetto (pagina A) — l'azione
+            distruttiva è l'ultima cosa che si incontra, mai fra le altre. ── */}
+        {!editing && (
+          <div className="lg:hidden" style={{ marginTop: 6, paddingTop: 12, borderTop: '1px solid #e4e2dc' }}>
+            <EliminaDocumentoButton documentId={id} docType={doc.doc_type} docNumber={doc.doc_number} sdiTransmitted={sdiTransmitted} hasIncasso={hasIncasso} />
+          </div>
+        )}
 
         <Separator className="hidden lg:block" />
 

@@ -31,7 +31,7 @@ const MOTIVI = [
   { v: 'altro',    label: 'Altro', hint: 'Scrivi tu la causale nel documento prima di inviarlo.' },
 ] as const
 
-export function NotaDebitoButton({ documentId }: { documentId: string }) {
+export function NotaDebitoButton({ documentId, triggerStyle }: { documentId: string; triggerStyle?: React.CSSProperties }) {
   const [aperto, setAperto] = useState(false)
   const [inCorso, setInCorso] = useState<string | null>(null)
 
@@ -56,6 +56,7 @@ export function NotaDebitoButton({ documentId }: { documentId: string }) {
           width: '100%', height: 44, borderRadius: 12, border: '1px solid #e3e3e6',
           background: '#fff', color: '#1a1a2e', fontSize: 14, fontWeight: 600,
           cursor: 'pointer', fontFamily: 'inherit',
+          ...triggerStyle,
         }}
       >
         <FilePlus2 size={17} aria-hidden />

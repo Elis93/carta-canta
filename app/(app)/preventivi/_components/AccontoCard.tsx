@@ -59,10 +59,13 @@ export function AccontoCard({
   acconto,
   saldo,
   received,
+  bare = false,
 }: {
   documentId: string
   acconto: number
   saldo: number
+  /** Senza la cornice bianca: dentro una CardTendina «Acconto» (pagina A). */
+  bare?: boolean
   /** Acconto già registrato: importo + data ISO (payment_status 'partial') */
   received: { amount: number; at: string | null } | null
 }) {
@@ -108,7 +111,7 @@ export function AccontoCard({
   }
 
   return (
-    <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 14px' }}>
+    <div style={bare ? undefined : { background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 14px' }}>
       {/* Promemoria dei 12 giorni: compare finché l'acconto è incassato —
           il toast lo si legge una volta sola, questo resta. */}
       {received && (() => {

@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { signPhotoPaths } from '@/lib/photos/signed-url'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, AlertTriangle, Info, FileCheck2, CheckCircle2, XCircle, Pencil, X, Crown, Send, Clock, FileText, Hammer } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, AlertTriangle, Info, FileCheck2, CheckCircle2, XCircle, Pencil, X, Crown, Send, Hammer } from 'lucide-react'
 import { CardTendina } from '@/components/shared/CardTendina'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { PdfActions } from '../_components/PdfActions'
@@ -15,7 +15,6 @@ import { StatusBadge } from '../_components/StatusBadge'
 import { StatusChangeDropdown, LOCKED_TRANSITIONS } from '../_components/StatusChangeDropdown'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { ApriLavoroButton } from '../_components/ApriLavoroButton'
-import { LavoroLinkButton } from '../_components/LavoroLinkButton'
 import { RiportaInBozzaButton } from '../_components/RiportaInBozzaButton'
 import { AnteprimaButton } from '../_components/AnteprimaButton'
 import { AccontoCard } from '../_components/AccontoCard'
@@ -39,6 +38,9 @@ import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
 import { Avviso } from '@/components/shared/Avviso'
+import { MenuAltro, RigaMenu, RigaArchivia, RigaSollecita } from '@/app/(app)/_components/documento/MenuAltro'
+import { EliminaDocumentoButton } from '@/app/(app)/_components/documento/EliminaDocumentoButton'
+import { btnBianco, btnNavy, btnBiancoPieno, rigaMenu } from '@/app/(app)/_components/documento/stili'
 import { PosticipaSollecito } from '@/components/shared/PosticipaSollecito'
 import { docNumberSlug } from '@/lib/documents/numero'
 
@@ -365,16 +367,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '5px 0', fontSize: 13, color: 'var(--cc-muted)',
   }
-  const actionChip: React.CSSProperties = {
-    flex: 1, height: 48, boxSizing: 'border-box', whiteSpace: 'nowrap',
-    borderRadius: 13, padding: '0 13px', fontSize: 14,
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-    boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
-    textDecoration: 'none', cursor: 'pointer',
-  }
-  // Chip "Segna accettato/rifiutato": bianca, bordo neutro, peso 600 (icona colorata gestita nel componente)
-  const segnaChip: React.CSSProperties = { ...actionChip, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontWeight: 600 }
-
   return (
     <div className="max-w-4xl mx-auto">
       {/* La pagina ha un loading.tsx: le ancore (#messaggi) hanno bisogno di
@@ -384,13 +376,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       {/* ── MOBILE HEADER (lg:hidden) ── */}
       <div className="lg:hidden" style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', padding: '12px 15px' }}>
         <BackButton fallback="/preventivi" />
-        {/* Simbolo tipo documento (A2, 5 lug): foglio NAVY = preventivo */}
-        <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e', minWidth: 0 }}>
-          <FileText size={18} style={{ color: '#1a1a2e', flexShrink: 0 }} aria-hidden />
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{headerTitle}</span>
+        {/* Titolo centrato in Georgia (pagina A, 5 set): «Preventivo 007/2026»,
+            senza icona — il tipo lo dice la parola. */}
+        <span style={{ flex: 1, minWidth: 0, textAlign: 'center', fontSize: 17, fontWeight: 400, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {headerTitle}
         </span>
         {edit !== '1' ? (
-          freeLocked ? null : (
+          freeLocked ? <span style={{ width: 36, flexShrink: 0 }} aria-hidden /> : (
           // Matita CON etichetta (collaudo 17 ago) — NAVY PIENA (mockup B,
           // Eli 25 ago: «non si capisce che serve cliccare su Modifica»).
           <Link href={`/preventivi/${id}?edit=1`} aria-label="Modifica preventivo" style={{ display: 'flex', alignItems: 'center', gap: 5, borderRadius: 999, background: '#1a1a2e', padding: '8px 14px', fontSize: 13, fontWeight: 700, color: '#fff', textDecoration: 'none', flexShrink: 0, boxShadow: '0 5px 12px -5px rgba(26,26,46,.6)' }}>
@@ -457,9 +449,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         <div className="lg:hidden" style={{ paddingBottom: 20 }}>
 
           {/* Riga stato: badge + testo contestuale */}
-          <div style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9 }}>
+          <div style={{ margin: '14px 15px 0', display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.5, color: 'var(--cc-muted)' }}>
             <StatusBadge status={doc.status} />
-            {stateText && <span style={{ fontSize: 13, color: 'var(--cc-muted)' }}>{stateText}</span>}
+            {stateText && <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stateText}{clientName ? ` · ${clientName}` : ''}</span>}
           </div>
 
           {/* ── MODIFICATO dopo l'invio — MOBILE (7 ago) ──────────────────
@@ -514,18 +506,6 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     : 'Segnato come accettato da te'}
                 </b>
               </Avviso>
-            </div>
-          )}
-
-          {/* Acconto richiesto (mockup ciclo incasso 3c) */}
-          {accontoInfo && (
-            <div style={{ margin: '14px 15px 0' }}>
-              <AccontoCard
-                documentId={id}
-                acconto={accontoInfo.acconto}
-                saldo={accontoInfo.saldo}
-                received={accontoInfo.received}
-              />
             </div>
           )}
 
@@ -763,97 +743,85 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             Anteprima della pagina del cliente
           </p>
 
-          {/* Azioni riga 1: Anteprima (bianco bordato) + Condividi (navy pieno).
-              Su un preventivo BLOCCATO (Free, oltre gli 8) niente PDF né invio:
-              resta la sola consultazione. */}
-          {!freeLocked && (
-          <div style={{ display: 'flex', gap: 11, padding: '0 15px', marginTop: 16 }}>
-            {/* 19 lug: overlay, non navigazione — chiudendo si torna al punto esatto */}
-            <AnteprimaButton
-              src={`/api/documents/${id}/pdf?preview=1`}
-              style={{ ...actionChip, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontWeight: 500 }}
-            />
-            {doc.public_token && (
-              <ShareButton
-                documentId={id}
-                publicToken={doc.public_token}
-                docNumber={doc.doc_number}
-                docType="preventivo"
-                isDraft={isDraft}
-                hasVoci={hasVoci}
-                clientName={clientName}
-                triggerIcon={<Send size={18} />}
-                isExpired={doc.status === 'expired'}
-                isRejected={doc.status === 'rejected'}
-                isModified={!!(doc as any).updated_after_send_at}
-                defaultValidityDays={(doc as any).validity_days ?? 30}
-                triggerStyle={doc.status === 'accepted'
-                  ? { ...actionChip, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontWeight: 500 }
-                  : { ...actionChip, background: '#1a1a2e', color: '#fff', border: '1px solid #1a1a2e', fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }}
-              />
+          {/* ── Pagina A (Eli 5 set): UNA riga di azioni — Anteprima · Invia ·
+              «⋯» — e basta. Via le chip «Segna accettato / Segna rifiutato»:
+              l'esito lo dà il cliente dal link, con la prova; i due ripieghi
+              «a voce» restano SOLO nel menu «⋯». A preventivo accettato il
+              navy diventa «Converti in fattura», nello stesso posto dove
+              sulla fattura sta «Segna pagata»: UN posto per «il passo
+              successivo». Su un preventivo BLOCCATO (Free) restano solo il
+              «⋯» e la consultazione. */}
+          <div style={{ padding: '0 15px', marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {!freeLocked && (
+                <AnteprimaButton src={`/api/documents/${id}/pdf?preview=1`} style={btnBianco} />
+              )}
+              {!freeLocked && doc.public_token && (
+                <ShareButton
+                  documentId={id}
+                  publicToken={doc.public_token}
+                  docNumber={doc.doc_number}
+                  docType="preventivo"
+                  isDraft={isDraft}
+                  hasVoci={hasVoci}
+                  clientName={clientName}
+                  triggerIcon={<Send size={18} />}
+                  triggerLabel="Invia"
+                  isExpired={doc.status === 'expired'}
+                  isRejected={doc.status === 'rejected'}
+                  isModified={!!(doc as any).updated_after_send_at}
+                  defaultValidityDays={(doc as any).validity_days ?? 30}
+                  triggerStyle={doc.status === 'accepted' ? btnBianco : btnNavy}
+                />
+              )}
+              <MenuAltro>
+                {(doc.status === 'sent' || doc.status === 'viewed') && !freeLocked && (
+                  <RigaSollecita documentId={id} docType="preventivo" />
+                )}
+                {/* Ripiego per il cliente che risponde al telefono e non tocca
+                    mai il link: fuori dalla pagina, come chiesto da Eli. */}
+                {(doc.status === 'sent' || doc.status === 'viewed') && !freeLocked && (
+                  <div data-keep-open>
+                    <MobileStatusChips documentId={id} chipBase={rigaMenu} aVoce />
+                  </div>
+                )}
+                {doc.status === 'rejected' && !freeLocked && (
+                  <div data-keep-open>
+                    <MobileStatusChips documentId={id} chipBase={rigaMenu} only="accepted" aVoce />
+                  </div>
+                )}
+                {/* Riporta in bozza — SOLO accettazione manuale: mai se il
+                    cliente ha accettato dal link (prova FES) o con fattura. */}
+                {doc.status === 'accepted' && !fatturaOrigin && !doc.signer_name && doc.accepted_ip == null && !freeLocked && (
+                  <RiportaInBozzaButton documentId={id} triggerStyle={rigaMenu} />
+                )}
+                {linkedLavoroId ? (
+                  <RigaMenu icon={<Hammer size={18} />} href={`/lavori/${linkedLavoroId}`}>Apri la scheda lavoro</RigaMenu>
+                ) : doc.status === 'accepted' ? (
+                  <ApriLavoroButton documentId={id} compact triggerStyle={rigaMenu} />
+                ) : null}
+                {!archiviato && <RigaArchivia documentId={id} />}
+                <EliminaDocumentoButton documentId={id} docType="preventivo" docNumber={doc.doc_number} signedProof={!!doc.signer_name || doc.accepted_ip != null} menu />
+              </MenuAltro>
+            </div>
+            {/* Il passo successivo, a tutta larghezza: converti in fattura
+                (navy) — o la fattura già fatta (bianco). Bloccato su Free
+                oltre gli 8 (la conversione crea una fattura, vietata). */}
+            {doc.status === 'accepted' && !fatturaOrigin && !freeLocked && (
+              <>
+                <ContextHint id="converti-fattura">
+                  Preventivo accettato: puoi trasformarlo in fattura con un tocco — voci e cliente passano da soli.
+                </ContextHint>
+                <ConvertiFatturaButton documentId={id} fullWidth />
+              </>
             )}
-          </div>
-          )}
-
-          {/* Azioni riga 2: Segna accettato / Segna rifiutato (solo se in attesa) */}
-          {(doc.status === 'sent' || doc.status === 'viewed') && (
-            <div style={{ display: 'flex', gap: 11, padding: '0 15px', marginTop: 11 }}>
-              <MobileStatusChips documentId={id} chipBase={segnaChip} />
-            </div>
-          )}
-          {/* Preventivo RIFIUTATO: il cliente può cambiare idea (Eli 25 ago) —
-              «Segna accettato» registra il ripensamento; per rinviarlo con le
-              modifiche c'è «Invia al cliente» qui sopra (riapre e condivide). */}
-          {doc.status === 'rejected' && (
-            <div style={{ display: 'flex', gap: 11, padding: '0 15px', marginTop: 11 }}>
-              <MobileStatusChips documentId={id} chipBase={segnaChip} only="accepted" />
-            </div>
-          )}
-
-          {/* Crea fattura (full-width navy) — solo se accettato e nessuna fattura collegata.
-              Bloccato su Free oltre gli 8 (la conversione crea una fattura, vietata). */}
-          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && !freeLocked && (
-            <div style={{ padding: '0 15px', marginTop: 11, display: 'flex', flexDirection: 'column', gap: 11 }}>
-              {/* Hint una-tantum (progressive disclosure, 2 ago) */}
-              <ContextHint id="converti-fattura">
-                Preventivo accettato: puoi trasformarlo in fattura con un tocco — voci e cliente passano da soli.
-              </ContextHint>
-              <ConvertiFatturaButton documentId={id} fullWidth />
-            </div>
-          )}
-          {/* Apri lavoro (sezione Lavori): se il lavoro ESISTE già è un link
-              diretto (in ogni stato — Eli 3 ago); altrimenti, su accettato,
-              il bottone che lo crea. */}
-          {doc.doc_type !== 'fattura' && linkedLavoroId && (
-            <div style={{ padding: '0 15px', marginTop: 11 }}>
-              <LavoroLinkButton lavoroId={linkedLavoroId} fullWidth />
-            </div>
-          )}
-          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !linkedLavoroId && (
-            <div style={{ padding: '0 15px', marginTop: 11 }}>
-              <ApriLavoroButton documentId={id} fullWidth />
-            </div>
-          )}
-          {/* Riporta in bozza — SOLO accettazione manuale ("Segna accettato"
-              per errore): mai se il cliente ha accettato dalla pagina pubblica
-              (signer_name/accepted_ip = prova FES) o con fattura collegata. */}
-          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && !doc.signer_name && doc.accepted_ip == null && !freeLocked && (
-            <div style={{ padding: '0 15px', marginTop: 11 }}>
-              <RiportaInBozzaButton documentId={id} fullWidth />
-            </div>
-          )}
-          {/* Link alla fattura già generata */}
-          {doc.status === 'accepted' && doc.doc_type !== 'fattura' && fatturaOrigin && (
-            <div style={{ padding: '0 15px', marginTop: 11 }}>
-              <Link
-                href={`/fatture/${fatturaOrigin.id}`}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 50, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e', fontSize: 14, fontWeight: 600, textDecoration: 'none', boxSizing: 'border-box', boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)' }}
-              >
+            {doc.status === 'accepted' && fatturaOrigin && (
+              <Link href={`/fatture/${fatturaOrigin.id}`} style={btnBiancoPieno}>
                 <FileCheck2 size={18} />
                 Fattura {fatturaOrigin.doc_number ? formatDocNumber(fatturaOrigin.doc_number) : 'bozza'}
               </Link>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Card Cliente a TENDINA (Eli 25 ago sera) — chiusa mostra il nome
               nel riepilogo; aperta, il tocco sul NOME apre la scheda in
@@ -882,10 +850,67 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             </CardTendina>
           )}
 
-          {/* Foto lavoro — in fondo, a tendina (mockup B + Eli 25 ago sera) */}
+          {/* Acconto — tendina come le altre (pagina A); da chiusa dice
+              quanto e se è arrivato. */}
+          {accontoInfo && (
+            <CardTendina
+              label="Acconto"
+              style={{ margin: '14px 15px 0' }}
+              summary={`${euro(accontoInfo.received ? accontoInfo.received.amount : accontoInfo.acconto)} · ${accontoInfo.received ? 'ricevuto' : 'da ricevere'}`}
+              defaultOpen={!accontoInfo.received}
+            >
+              <AccontoCard
+                documentId={id}
+                acconto={accontoInfo.acconto}
+                saldo={accontoInfo.saldo}
+                received={accontoInfo.received}
+                bare
+              />
+            </CardTendina>
+          )}
+
+          {/* Foto lavoro — a tendina (mockup B + Eli 25 ago sera) */}
           <div style={{ margin: '14px 15px 0' }}>
             <WorkPhotosCard documentId={id} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} collapsible />
           </div>
+
+          {/* Collegati — il lavoro (o il tasto che lo crea, su accettato) e
+              la fattura nata da questo preventivo. */}
+          {(linkedLavoroId || fatturaOrigin || doc.status === 'accepted') && (
+            <CardTendina
+              label="Collegati"
+              style={{ margin: '14px 15px 0' }}
+              summary={[
+                linkedLavoroId ? 'Lavoro' : null,
+                fatturaOrigin ? `Fatt. ${fatturaOrigin.doc_number ? formatDocNumber(fatturaOrigin.doc_number) : 'bozza'}` : null,
+              ].filter(Boolean).join(' · ') || 'nessuno'}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {linkedLavoroId ? (
+                  <Link href={`/lavori/${linkedLavoroId}`} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+                    <Hammer size={18} style={{ color: '#1a1a2e', flexShrink: 0 }} />
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)' }}>Lavoro</span>
+                      <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#161616' }}>Apri la scheda lavoro</span>
+                    </span>
+                    <ChevronRight size={15} style={{ flexShrink: 0, color: '#1a1a2e' }} aria-hidden />
+                  </Link>
+                ) : doc.status === 'accepted' ? (
+                  <ApriLavoroButton documentId={id} fullWidth />
+                ) : null}
+                {fatturaOrigin && (
+                  <Link href={`/fatture/${fatturaOrigin.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', borderTop: linkedLavoroId || doc.status === 'accepted' ? '1px solid #ededea' : undefined, paddingTop: linkedLavoroId || doc.status === 'accepted' ? 10 : 0 }}>
+                    <FileCheck2 size={18} style={{ color: '#1a1a2e', flexShrink: 0 }} />
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)' }}>Fattura</span>
+                      <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#161616' }}>{fatturaOrigin.doc_number ? formatDocNumber(fatturaOrigin.doc_number, 'fattura') : 'Bozza di fattura'}</span>
+                    </span>
+                    <ChevronRight size={15} style={{ flexShrink: 0, color: '#1a1a2e' }} aria-hidden />
+                  </Link>
+                )}
+              </div>
+            </CardTendina>
+          )}
 
           {/* Card Visualizzazioni RIMOSSA (Eli 3 ago sera): le aperture
               vivono DENTRO la cronologia qui sotto, non in una card propria. */}
@@ -924,6 +949,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               // eslint-disable-next-line @typescript-eslint/no-explicit-any -- document_log jsonb nel select *
               documentLog={(Array.isArray((doc as any).document_log) ? (doc as any).document_log : []) as DocumentLogEntry[]}
             />
+          </div>
+
+          {/* Elimina in fondo, sotto un filetto (pagina A): l'azione
+              distruttiva è l'ultima cosa che si incontra, mai fra le altre. */}
+          <div style={{ margin: '20px 15px 0', paddingTop: 12, borderTop: '1px solid #e4e2dc' }}>
+            <EliminaDocumentoButton documentId={id} docType="preventivo" docNumber={doc.doc_number} signedProof={!!doc.signer_name || doc.accepted_ip != null} />
           </div>
         </div>
       )}

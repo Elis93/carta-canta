@@ -32,7 +32,7 @@ const MOTIVI = [
   { v: 'altro',   label: 'Altro',                 hint: 'Lavoro annullato o contratto saltato, sconto già previsto nel contratto: qui il limite dell’anno non c’è. Scrivi tu la causale prima di inviarla.' },
 ] as const
 
-export function NotaCreditoButton({ documentId }: { documentId: string }) {
+export function NotaCreditoButton({ documentId, triggerStyle }: { documentId: string; triggerStyle?: React.CSSProperties }) {
   const [aperto, setAperto] = useState(false)
   const [inCorso, setInCorso] = useState<string | null>(null)
 
@@ -57,6 +57,7 @@ export function NotaCreditoButton({ documentId }: { documentId: string }) {
           width: '100%', height: 44, borderRadius: 12, border: '1px solid #e3e3e6',
           background: '#fff', color: '#1a1a2e', fontSize: 14, fontWeight: 600,
           cursor: 'pointer', fontFamily: 'inherit',
+          ...triggerStyle,
         }}
       >
         <FileMinus2 size={17} aria-hidden />

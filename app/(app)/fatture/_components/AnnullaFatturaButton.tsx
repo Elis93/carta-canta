@@ -13,7 +13,8 @@ export function AnnullaFatturaButton({
   documentId,
   alreadyPaid = 0,
   isNotaCredito = false,
-}: { documentId: string; alreadyPaid?: number; isNotaCredito?: boolean }) {
+  triggerStyle,
+}: { documentId: string; alreadyPaid?: number; isNotaCredito?: boolean; triggerStyle?: React.CSSProperties }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const nomeDoc = isNotaCredito ? 'nota di credito' : 'fattura'
@@ -66,6 +67,7 @@ export function AnnullaFatturaButton({
         background: '#fff', color: '#1a1a2e', cursor: loading ? 'wait' : 'pointer',
         boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
         whiteSpace: 'nowrap',
+        ...triggerStyle,
       }}
     >
       {loading
