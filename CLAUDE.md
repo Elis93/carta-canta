@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 26 agosto 2026** (lotto di 8: via frase e banner giallo, Home più leggera, Riepilogo=Note, Appunti chiuso, 3 mockup in attesa di scelta).
+> **Ultima sessione: 5 settembre 2026** (scelte di Eli sui mockup: avvisi 1, documento A rifatta, lavoro B rifatta — in attesa dell'ok per implementare).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -28,6 +28,13 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### 🎯 5 set — SCELTE di Eli sui 3 mockup + i due rifatti (in attesa dell'ok finale prima di implementare)
+Eli ha scelto: **avvisi → proposta 1 «Filetto»** (approvata così com'è) · **documento → A** con due correzioni · **lavoro → B** con una correzione. I due mockup sono stati RIFATTI (stessi URL artifact: `documento` e `lavoro`), verificati in Chromium (9 cornici a 390px, 0 sbordi).
+- **Documento A rifatta**: ① sulla FATTURA «la parte per gestire Segna pagata deve essere cliccabile» → tasto a tutta larghezza SOTTO la riga Anteprima · Invia · «⋯», che cambia PESO con lo stato senza cambiare posto: inviata = navy «Segna pagata» (l'unico navy) · pagata = bianco grigio «Segna come non pagata» · bozza = navy su «Invia» e «Segna pagata» bianco (chi incassa di persona senza mandare il link). ② sul PREVENTIVO «Segna accettato non serve: deve accettare il cliente dal link» → via le due chip dalla pagina; a preventivo accettato il navy nello stesso posto diventa «Converti in fattura» (un posto solo per «il passo successivo»). ⚠️ «Segna accettato a voce» e «Segna rifiutato» lasciati SOLO nel menu «⋯» come ripiego per il cliente che risponde al telefono — detto esplicitamente a Eli, si tolgono con due righe se non li vuole.
+- **Lavoro B rifatta**: «la parte che conteggia le ore sia una sezione unica con unico riquadro bianco» → card «Ore di lavoro» unica: totale grande in Georgia + «timer in corso da 09:40» + manodopera, tasto del timer DENTRO la card (Avvia navy da fermo, Ferma bianco/rosso mentre gira — il navy non resta acceso per ore su «interrompi»), riga «Ore + Aggiungi» sotto un filetto, «Correggi il totale». Niente tendina, niente tasto fuori. Tre cornici: In corso · Finito (navy «Converti in fattura» sotto la testata, Rapportino come tendina) · «Stato e dettagli» aperta (pillole stato + i campi del vecchio modulo con salvataggio automatico → via «Salva modifiche»).
+- ⚠️ Trappole del banco corrette prima di pubblicare: un `.b{flex:1}` figlio diretto di una colonna flex si schiaccia (flex-basis 0) → `.in>.b{flex:none}`; `.hero .k3 div` colpiva anche i div interni dei riquadri → `>div`.
+- ⏸️ **Prossimo passo**: ok di Eli sui due rifatti → implementazione in 3 tranche (avvisi «Filetto» in tutta l'app, ~34 punti · pagina documento A · scheda Lavoro B). Nessun codice toccato in questo giro.
 
 ### ✅ 26 ago (7) — Lotto di 8: via frase e banner giallo · Home più leggera · Riepilogo = Note · Appunti chiuso · 3 MOCKUP (avvisi, documento, lavoro)
 Otto punti di Eli in un messaggio: cinque modifiche dirette + tre mockup. Ultracode: workflow di 8 agenti — i **3 inventari** (documento, lavoro, banner: ~150 blocchi con stili VERI letti dal codice, 37 stili distinti, 45 problemi di coerenza) sono arrivati; i 5 agenti restanti sono morti per un **limite di sessione del servizio** → il resto fatto a mano sugli inventari.
