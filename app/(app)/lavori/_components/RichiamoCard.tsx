@@ -26,7 +26,9 @@ function plusMonths(months: number): string {
   return d.toLocaleDateString('sv-SE') // YYYY-MM-DD, fuso del telefono
 }
 
-export function RichiamoCard({ lavoroId, recallAt, recallNote, documentId }: {
+export function RichiamoCard({ lavoroId, recallAt, recallNote, documentId, bare = false }: {
+  /** Senza cornice: dentro la tendina «Richiama il cliente» (scheda B). */
+  bare?: boolean
   lavoroId: string
   recallAt: string | null
   recallNote: string | null
@@ -91,11 +93,13 @@ export function RichiamoCard({ lavoroId, recallAt, recallNote, documentId }: {
   }
 
   return (
-    <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
+    <div style={bare ? undefined : { background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
       {/* La spiegazione sta nel punto ⓘ (Eli, 11 ago) */}
       <SpiegaCampo
-        etichetta="Richiama il cliente"
-        style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}
+        etichetta={bare ? 'Promemoria di manutenzione' : 'Richiama il cliente'}
+        style={bare
+          ? { fontSize: 12.5, fontWeight: 500, color: 'var(--cc-muted)', marginBottom: 10 }
+          : { fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}
       >
         Per manutenzioni e controlli periodici (caldaia, condizionatori…): alla data scelta ti
         arriva un promemoria nella campanella della Home.

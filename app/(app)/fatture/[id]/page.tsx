@@ -510,12 +510,14 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // La data della riga di stato: quella che conta per QUELLO stato — incasso
   // sulla pagata, data fiscale (o invio) sulle altre, niente sulla bozza.
   const statoData: string | null = doc.status === 'accepted'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 nel select *
     ? (((doc as any).paid_at as string | null) ?? doc.accepted_at ?? null)
     : doc.status === 'draft'
       ? null
       : (((doc as { doc_date?: string | null }).doc_date ?? doc.sent_at) ?? null)
   const statoRiga = [statoData ? `il ${fmtShort(statoData)}` : null, clientName].filter(Boolean).join(' · ')
   const showModifica = edit !== '1' && doc.status !== 'accepted' && doc.status !== 'rejected' && !sdiTransmitted && !freeLocked
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 nel select *
   const hasIncasso = Number((doc as any).paid_amount ?? 0) > 0
 
   return (

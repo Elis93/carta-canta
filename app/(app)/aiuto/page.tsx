@@ -68,8 +68,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
   {
     q: 'Nel margine del lavoro contano anche le mie ore. Posso escluderle?',
     parole: ['manodopera', 'ore', 'costo orario', 'margine', 'lavoro', 'economia', 'forfettario', 'timer'],
-    a: <>Sì. Nella scheda del <b>Lavoro</b>, l&rsquo;«Economia del lavoro» toglie dal margine il
-      <b> costo orario &times; le ore</b>{' '}del timer (il costo orario si imposta in{' '}
+    a: <>Sì. Nella scheda del <b>Lavoro</b>, i tre numeri in testata (Preventivato · Speso ·
+      Margine) tolgono dal margine il <b>costo orario &times; le ore</b>{' '}del timer (il costo
+      orario si imposta in{' '}
       <VaiA a="impFiscale">Dati fiscali</VaiA>). Se lavori in <b>forfettario</b>{' '}le tue ore
       non sono soldi usciti dal conto: puoi togliere la spunta{' '}
       <b>«Conta la manodopera nel margine»</b>{' '}in Dati fiscali, così il margine mostra quanto
@@ -728,8 +729,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
     q: 'Il preventivo è stato accettato: e ora?',
     a: <>Dal preventivo accettato tocca <b>Apri la scheda lavoro</b>{' '}(nella tendina{' '}
       <b>Collegati</b>{' '}o nel menu <b>⋯</b>): nella sezione <b>Lavori</b>{' '}(in Altro)
-      segui il lavoro passo passo — da fare, in corso, finito, fatturato — con note, foto e
-      l&rsquo;<b>economia del lavoro</b>{' '}(preventivato, speso e margine).</>,
+      segui il lavoro passo passo — da fare, in corso, finito, fatturato — con le ore, le
+      spese, le foto e, in testata, <b>preventivato, speso e margine</b>. Lo stato e i
+      dettagli (titolo, cliente, cantiere, note) sono nella tendina <b>Stato e dettagli</b>{' '}
+      in fondo, e si salvano da soli mentre scrivi.</>,
   },
   {
     q: 'Come conto le ore passate in cantiere?',

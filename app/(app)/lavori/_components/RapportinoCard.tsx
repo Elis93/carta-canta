@@ -37,7 +37,7 @@ export interface RapportinoData {
   hasLaborHours: boolean
 }
 
-export function RapportinoCard({ data }: { data: RapportinoData }) {
+export function RapportinoCard({ data, bare = false }: { data: RapportinoData; /** Senza cornice né etichetta: dentro la tendina «Rapportino» (scheda B). */ bare?: boolean }) {
   const router = useRouter()
   const [text, setText] = useState(data.text ?? '')
   const [showLabor, setShowLabor] = useState(data.showLabor)
@@ -89,8 +89,8 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
     : null
 
   return (
-    <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
-      <div style={secLabel}>Rapportino di fine lavoro</div>
+    <div style={bare ? undefined : { background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
+      {!bare && <div style={secLabel}>Rapportino di fine lavoro</div>}
 
       {signed ? (
         <>

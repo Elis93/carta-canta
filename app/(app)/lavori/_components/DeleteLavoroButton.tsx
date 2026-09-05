@@ -13,8 +13,9 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { deleteLavoroAction } from '@/lib/actions/lavori'
+import { btnDanger, rigaMenuDanger } from '@/app/(app)/_components/documento/stili'
 
-export function DeleteLavoroButton({ lavoroId }: { lavoroId: string }) {
+export function DeleteLavoroButton({ lavoroId, variant = 'icon' }: { lavoroId: string; /** icon = cestino tondo in testata · danger = bottone rosso in fondo (scheda B) · menu = riga del «⋯» */ variant?: 'icon' | 'danger' | 'menu' }) {
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
 
@@ -30,14 +31,20 @@ export function DeleteLavoroButton({ lavoroId }: { lavoroId: string }) {
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="Elimina lavoro"
-        onClick={() => setOpen(true)}
-        style={{ width: 32, height: 32, borderRadius: '50%', background: '#f4f4f5', border: 'none', color: '#55534b', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-      >
-        <Trash2 size={16} />
-      </button>
+      {variant === 'icon' ? (
+        <button
+          type="button"
+          aria-label="Elimina lavoro"
+          onClick={() => setOpen(true)}
+          style={{ width: 32, height: 32, borderRadius: '50%', background: '#f4f4f5', border: 'none', color: '#55534b', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+        >
+          <Trash2 size={16} />
+        </button>
+      ) : (
+        <button type="button" onClick={() => setOpen(true)} style={variant === 'menu' ? rigaMenuDanger : btnDanger}>
+          <Trash2 size={18} /> Elimina lavoro
+        </button>
+      )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>

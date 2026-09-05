@@ -42,7 +42,7 @@ export function shouldGoBack(
   )
 }
 
-export function BackButton({ fallback, ariaLabel = 'Indietro' }: { fallback: string; ariaLabel?: string }) {
+export function BackButton({ fallback, ariaLabel = 'Indietro', color = '#55534b' }: { fallback: string; ariaLabel?: string; /** Colore della freccia (chiara sulle testate navy). */ color?: string }) {
   const router = useRouter()
   return (
     <button
@@ -54,7 +54,7 @@ export function BackButton({ fallback, ariaLabel = 'Indietro' }: { fallback: str
         if (shouldGoBack(prev, window.location.pathname, window.history.length)) router.back()
         else router.push(fallback)
       }}
-      style={{ color: '#55534b', display: 'flex', alignItems: 'center', background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}
+      style={{ color, display: 'flex', alignItems: 'center', background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}
     >
       <ChevronLeft size={25} />
     </button>

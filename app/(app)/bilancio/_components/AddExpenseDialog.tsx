@@ -57,7 +57,7 @@ const fieldStyle: React.CSSProperties = {
 
 export interface LavoroOption { id: string; title: string }
 
-export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: LavoroOption[]; defaultLavoroId?: string }) {
+export function AddExpenseDialog({ lavori = [], defaultLavoroId, triggerStyle }: { lavori?: LavoroOption[]; defaultLavoroId?: string; /** Veste del bottone (scheda Lavoro B: bianco dentro la tendina Spese). */ triggerStyle?: React.CSSProperties }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -167,6 +167,7 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId }: { lavori?: La
             gap: 8,
             cursor: 'pointer',
             fontFamily: 'inherit',
+            ...triggerStyle,
           }}
         >
           <Plus size={18} /> Aggiungi spesa

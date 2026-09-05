@@ -3,7 +3,11 @@ import { ScrollToHash } from '@/components/shared/ScrollToHash'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { signPhotoPaths } from '@/lib/photos/signed-url'
 import Link from 'next/link'
-import { FileText } from 'lucide-react'
+import { FileText, FileCheck2, ChevronRight, Hammer } from 'lucide-react'
+import { CardTendina } from '@/components/shared/CardTendina'
+import { MenuAltro, RigaMenu } from '@/app/(app)/_components/documento/MenuAltro'
+import { btnNavyPieno, btnBianco } from '@/app/(app)/_components/documento/stili'
+import { LAVORO_STATUS_META } from '../_components/lavoro-status'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
 import { formatDocNumber, formatCurrency } from '@/lib/utils'
@@ -19,7 +23,6 @@ import { ConvertiFatturaButton } from '@/app/(app)/preventivi/_components/Conver
 
 export const metadata = { title: 'Lavoro' }
 
-const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
 export default async function LavoroDetailPage({
   params,
@@ -209,151 +212,241 @@ export default async function LavoroDetailPage({
   const speseTotale = speseMateriali != null ? speseMateriali + laborCost : (laborCost > 0 ? laborCost : null)
   const margine = preventivato != null && speseTotale != null ? preventivato - speseTotale : null
 
+  // ── Scheda B (Eli 5 set): testata navy, poi UN riquadro per le ore e tendine ──
+  const clientObj = defaults?.client as { name?: string | null; surname?: string | null } | null | undefined
+  const clientName = clientObj ? [clientObj.name, clientObj.surname].filter(Boolean).join(' ') : ''
+  const sottotitolo = [clientName || null, defaults?.address?.trim() || null].filter(Boolean).join(' · ')
+  const statoLavoro = defaults?.status ?? 'da_iniziare'
+  const finito = statoLavoro === 'finito' || statoLavoro === 'fatturato'
+  const puoConvertire = !!documentId && !fattura && finito && docInfo?.status === 'accepted'
+  const fmtGiorno = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', timeZone: 'Europe/Rome' }).replace('.', '')
+  const rapportinoRiepilogo = rapportino
+    ? (rapportino.signedAt ? `Firmato il ${fmtGiorno(rapportino.signedAt)}` : rapportino.url ? 'da firmare' : 'da creare')
+    : null
+  const speseRiepilogo = spese.length > 0
+    ? `${formatCurrency(spese.reduce((a, e) => a + Number(e.amount), 0))} · ${spese.length} ${spese.length === 1 ? 'voce' : 'voci'}`
+    : 'nessuna'
+  const richiamoRiepilogo = recall?.at
+    ? `il ${new Date(recall.at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Rome' }).replace('.', '')}`
+    : 'non impostato'
+  const tile: React.CSSProperties = { flex: 1, minWidth: 0, background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 11, padding: '9px 8px' }
+
   return (
     <div className="max-w-3xl mx-auto">
       <ScrollToHash />
-      <div style={{ background: '#fff', borderBottom: '2px solid #c9a44c', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 15px' }}>
-        <BackButton fallback="/lavori" />
-        <span style={{ flex: 1, fontSize: 18, fontWeight: 600, fontFamily: "Georgia, 'Times New Roman', serif", color: '#1a1a2e' }}>Lavoro</span>
-        <DeleteLavoroButton lavoroId={id} />
+
+      {/* ── TESTATA NAVY (come la Home): titolo, cliente · cantiere, stato e i tre
+          numeri dell'economia. Il bagliore d'oro è quello della Home. ── */}
+      <div style={{ background: '#1a1a2e', color: '#f2ecdd', padding: '12px 15px 16px', position: 'relative', overflow: 'hidden' }}>
+        <div aria-hidden style={{ position: 'absolute', right: -60, top: -70, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,164,76,.35), transparent 65%)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
+          <BackButton fallback="/lavori" color="#e6cf94" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 20, color: '#f7f1e4', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {defaults?.title?.trim() || 'Lavoro'}
+            </div>
+            {sottotitolo && (
+              <div style={{ fontSize: 12.5, color: 'rgba(228,226,232,.75)', marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {sottotitolo}
+              </div>
+            )}
+          </div>
+          <MenuAltro style={{ background: 'transparent', border: '1px solid rgba(255,255,255,.25)', color: '#e6cf94', boxShadow: 'none', width: 40, height: 40, flex: '0 0 40px', borderRadius: 999 }}>
+            {documentId && (
+              <RigaMenu icon={<FileText size={18} />} href={`/preventivi/${documentId}`}>
+                Apri il preventivo{docInfo?.doc_number ? ` ${formatDocNumber(docInfo.doc_number)}` : ''}
+              </RigaMenu>
+            )}
+            {fattura && (
+              <RigaMenu icon={<FileCheck2 size={18} />} href={`/fatture/${fattura.id}`}>
+                Apri la fattura{fattura.doc_number ? ` ${formatDocNumber(fattura.doc_number)}` : ''}
+              </RigaMenu>
+            )}
+            <RigaMenu icon={<Hammer size={18} />} href="#dettagli">Stato e dettagli</RigaMenu>
+            <div data-keep-open>
+              <DeleteLavoroButton lavoroId={id} variant="menu" />
+            </div>
+          </MenuAltro>
+        </div>
+        <div style={{ marginTop: 10, position: 'relative' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 999, background: finito ? 'rgba(47,138,99,.35)' : 'rgba(255,255,255,.14)', border: `1px solid ${finito ? 'rgba(120,210,160,.5)' : 'rgba(255,255,255,.25)'}`, color: '#fff', fontSize: 11.5, fontWeight: 600, padding: '3px 10px' }}>
+            {finito ? '✓' : '●'} {LAVORO_STATUS_META[statoLavoro].label}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 12, position: 'relative' }}>
+          {[
+            { label: 'Preventivato', value: preventivato, white: false },
+            { label: 'Speso', value: speseTotale, white: true },
+            { label: 'Margine', value: margine, white: false, negativo: margine != null && margine < 0 },
+          ].map((k) => (
+            <div key={k.label} style={tile}>
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 17, color: k.negativo ? '#f0a6a6' : k.white ? '#f2ecdd' : '#e6cf94', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {k.value != null ? formatCurrency(k.value) : '—'}
+              </div>
+              <div style={{ fontSize: 10.5, fontWeight: 600, color: 'rgba(228,226,232,.62)', marginTop: 4 }}>{k.label}</div>
+            </div>
+          ))}
+        </div>
+        {preventivato == null && (
+          <p style={{ fontSize: 11.5, color: 'rgba(228,226,232,.62)', margin: '8px 0 0', position: 'relative' }}>
+            Il «preventivato» compare quando il lavoro nasce da un preventivo.
+          </p>
+        )}
       </div>
 
-      {/* Documenti collegati */}
-      {documentId && (
-        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '12px 15px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <Link href={`/preventivi/${documentId}`} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none' }}>
-            <FileText size={15} /> Preventivo {docInfo?.doc_number ? formatDocNumber(docInfo.doc_number) : ''} →
-          </Link>
-          {fattura && (
-            <Link href={`/fatture/${fattura.id}`} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 600, color: '#1a1a2e', textDecoration: 'none' }}>
-              {/* Niente marcatore 'fattura': il testo dice già "Fattura" (regola B.3) */}
-              <FileText size={15} /> Fattura {fattura.doc_number ? formatDocNumber(fattura.doc_number) : ''} →
-            </Link>
-          )}
-          {/* Lavoro finito, non ancora fatturato → il tasto che crea la fattura
-              QUI, senza passare dal preventivo (Eli 25 ago sera: «trasformare
-              il lavoro in fattura, considerando quanto c'era nel preventivo»).
-              Riusa la stessa conversione (voci e cliente dal preventivo =
-              prezzo pattuito, a corpo); ore e spese del lavoro restano il
-              margine interno. Solo se il preventivo è ancora ACCETTATO —
-              riportato in bozza, la conversione verrebbe rifiutata. */}
-          {!fattura && (defaults?.status === 'finito' || defaults?.status === 'fatturato')
-            && docInfo?.status === 'accepted' && (
-            <div style={{ borderTop: '0.5px solid #eee', paddingTop: 10, marginTop: 2 }}>
-              <ConvertiFatturaButton documentId={documentId} fullWidth />
-              <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '8px 0 0', lineHeight: 1.45 }}>
-                La fattura riprende le voci del preventivo (il prezzo pattuito). Ore e spese
-                del lavoro restano il tuo margine; gli extra concordati li aggiungi sulla
-                fattura prima di inviarla.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+      <div style={{ padding: '12px 15px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-      {/* Rapportino IN ALTO quando il lavoro è finito (feedback Eli 22 lug #12):
-          a lavoro concluso è l'azione principale, non deve stare in fondo. */}
-      {rapportino && (
-        <div style={{ padding: '14px 15px 0' }}>
-          <RapportinoCard data={rapportino} />
-        </div>
-      )}
-
-      <LavoroForm defaults={defaults} />
-
-      {/* Economia del lavoro: preventivato vs speso (margine) */}
-      <div style={{ padding: '0 15px 13px' }}>
-        <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
-            Economia del lavoro
+        {/* ── Il passo successivo, a lavoro FINITO: il navy sotto la testata. ──
+            Converti in fattura (solo col preventivo ACCETTATO e senza fattura
+            già fatta — riportato in bozza, la conversione verrebbe rifiutata),
+            altrimenti il rapportino di fine lavoro (apre la sua tendina). */}
+        {puoConvertire && documentId && (
+          <div>
+            <ConvertiFatturaButton documentId={documentId} fullWidth />
+            <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '8px 0 0', lineHeight: 1.45 }}>
+              La fattura riprende le voci del preventivo (il prezzo pattuito). Ore e spese
+              del lavoro restano il tuo margine; gli extra concordati li aggiungi sulla
+              fattura prima di inviarla.
+            </p>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {[
-              { label: 'Preventivato', value: preventivato, color: '#161616' },
-              { label: 'Speso', value: speseTotale, color: '#b05656' },
-              { label: 'Margine', value: margine, color: margine != null && margine < 0 ? '#b05656' : '#2f8a63' },
-            ].map((kpi) => (
-              <div key={kpi.label} style={{ flex: 1, background: '#fafafa', borderRadius: 11, padding: '10px 8px', textAlign: 'center' }}>
-                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--cc-muted)' }}>{kpi.label}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, marginTop: 3, color: kpi.color, whiteSpace: 'nowrap' }}>
-                  {kpi.value != null ? formatCurrency(kpi.value) : '—'}
-                </div>
-              </div>
-            ))}
+        )}
+        {!puoConvertire && finito && rapportino && !rapportino.signedAt && (
+          <a href="#rapportino" style={btnNavyPieno}>
+            <FileText size={18} /> Rapportino di fine lavoro
+          </a>
+        )}
+
+        {/* ── Ore di lavoro — UN riquadro solo (052; compare a migration applicata) ── */}
+        {ore && (
+          <div id="ore" style={{ scrollMarginTop: 80 }}>
+            <OreLavoroCard lavoroId={id} minutes={ore.minutes} timerStartedAt={ore.startedAt} hourlyCost={hourlyCost} countLabor={countLabor} />
           </div>
-          {laborCost > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', marginTop: 8, borderTop: '0.5px solid #eee', fontSize: 13 }}>
-              <span style={{ color: '#161616' }}>Manodopera ({Math.floor(oreTotaliMin / 60)} h {String(oreTotaliMin % 60).padStart(2, '0')} min)</span>
-              <span style={{ color: '#55534b', fontWeight: 600, flexShrink: 0 }}>{formatCurrency(laborCost)}</span>
-            </div>
-          )}
-          {/* 085: manodopera esclusa dal margine → ore mostrate come sola
-              informazione (senza costo), così il dato non si perde. */}
-          {oreEscluse && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', marginTop: 8, borderTop: '0.5px solid #eee', fontSize: 13 }}>
-              <span style={{ color: '#161616' }}>Ore lavorate ({Math.floor(oreTotaliMin / 60)} h {String(oreTotaliMin % 60).padStart(2, '0')} min)</span>
-              <span style={{ color: 'var(--cc-muted)', fontSize: 12, flexShrink: 0 }}>non contate nel margine</span>
-            </div>
-          )}
+        )}
+
+        {/* ── Rapportino: tendina, in alto a lavoro finito (Eli 22 lug #12) ── */}
+        {rapportino && (
+          <CardTendina
+            label="Rapportino"
+            anchorId="rapportino"
+            summary={<span style={{ color: rapportino.signedAt ? '#2f8a63' : undefined }}>{rapportinoRiepilogo}</span>}
+            defaultOpen={finito && !rapportino.signedAt && !rapportino.url}
+          >
+            <RapportinoCard data={rapportino} bare />
+          </CardTendina>
+        )}
+
+        {/* ── Spese: le voci e il tasto per aggiungerne (Pro) ── */}
+        <CardTendina label="Spese" summary={speseRiepilogo}>
           {spese.length > 0 && (
-            <div style={{ marginTop: 10 }}>
+            <div style={{ marginBottom: 10 }}>
               {spese.map((e, i) => (
-                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderTop: i === 0 ? '0.5px solid #eee' : 'none', borderBottom: i < spese.length - 1 ? '0.5px solid #eee' : 'none', fontSize: 13 }}>
+                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderTop: i === 0 ? 'none' : '0.5px solid #eee', fontSize: 13 }}>
                   <span style={{ color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.description}</span>
                   <span style={{ color: '#55534b', fontWeight: 600, flexShrink: 0 }}>{formatCurrency(Number(e.amount))}</span>
                 </div>
               ))}
+              {laborCost > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderTop: '0.5px solid #eee', fontSize: 13 }}>
+                  <span style={{ color: '#161616' }}>Manodopera ({Math.floor(oreTotaliMin / 60)} h {String(oreTotaliMin % 60).padStart(2, '0')} min)</span>
+                  <span style={{ color: '#55534b', fontWeight: 600, flexShrink: 0 }}>{formatCurrency(laborCost)}</span>
+                </div>
+              )}
             </div>
           )}
-          <div style={{ marginTop: 12 }}>
-            {workspace.plan === 'free' ? (
-              /* Il salvataggio spese è Pro (come il Bilancio): niente form
-                 che si rifiuta solo ALLA FINE — lock chiaro subito. */
-              <Link
-                href="/abbonamento"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef', color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 0', textDecoration: 'none' }}
-              >
-                Le spese del lavoro sono una funzione Pro — Scopri Pro
-              </Link>
-            ) : (
-              <AddExpenseDialog lavori={defaults ? [{ id: defaults.id, title: defaults.title || 'Questo lavoro' }] : []} defaultLavoroId={defaults?.id} />
-            )}
-          </div>
-          {preventivato == null && (
-            <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 8, lineHeight: 1.45 }}>
-              Il &laquo;preventivato&raquo; compare quando il lavoro nasce da un preventivo.
+          {spese.length === 0 && laborCost > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '0 0 10px', fontSize: 13 }}>
+              <span style={{ color: '#161616' }}>Manodopera ({Math.floor(oreTotaliMin / 60)} h {String(oreTotaliMin % 60).padStart(2, '0')} min)</span>
+              <span style={{ color: '#55534b', fontWeight: 600, flexShrink: 0 }}>{formatCurrency(laborCost)}</span>
+            </div>
+          )}
+          {oreEscluse && (
+            <p style={{ fontSize: 12, color: 'var(--cc-muted)', margin: '0 0 10px', lineHeight: 1.45 }}>
+              Le {Math.floor(oreTotaliMin / 60)} h {String(oreTotaliMin % 60).padStart(2, '0')} min lavorate non sono contate nel margine (Impostazioni › Fiscale).
             </p>
           )}
+          {workspace.plan === 'free' ? (
+            /* Il salvataggio spese è Pro (come il Bilancio): niente form
+               che si rifiuta solo ALLA FINE — lock chiaro subito. */
+            <Link
+              href="/abbonamento"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef', color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 0', textDecoration: 'none' }}
+            >
+              Le spese del lavoro sono una funzione Pro — Scopri Pro
+            </Link>
+          ) : (
+            <AddExpenseDialog
+              lavori={defaults ? [{ id: defaults.id, title: defaults.title || 'Questo lavoro' }] : []}
+              defaultLavoroId={defaults?.id}
+              triggerStyle={{ ...btnBianco, width: '100%', flex: 'none' }}
+            />
+          )}
+        </CardTendina>
+
+        {/* ── Foto del lavoro (vivono sul preventivo di origine) ── */}
+        {documentId && (
+          <div id="foto" style={{ scrollMarginTop: 80 }}>
+            <WorkPhotosCard documentId={documentId} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} collapsible anchorId="foto" />
+          </div>
+        )}
+
+        {/* ── Collegati: preventivo e fattura ── */}
+        {documentId && (
+          <CardTendina
+            label="Collegati"
+            summary={[
+              docInfo?.doc_number ? `Prev. ${formatDocNumber(docInfo.doc_number)}` : 'Preventivo',
+              fattura ? `Fatt. ${fattura.doc_number ? formatDocNumber(fattura.doc_number) : 'bozza'}` : null,
+            ].filter(Boolean).join(' · ')}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <Link href={`/preventivi/${documentId}`} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+                <FileText size={18} style={{ color: '#1a1a2e', flexShrink: 0 }} />
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)' }}>Preventivo</span>
+                  <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#161616' }}>{docInfo?.doc_number ? formatDocNumber(docInfo.doc_number) : 'Bozza'}</span>
+                </span>
+                <ChevronRight size={15} style={{ flexShrink: 0, color: '#1a1a2e' }} aria-hidden />
+              </Link>
+              {fattura && (
+                <Link href={`/fatture/${fattura.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', borderTop: '1px solid #ededea', paddingTop: 10 }}>
+                  <FileCheck2 size={18} style={{ color: '#1a1a2e', flexShrink: 0 }} />
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)' }}>Fattura</span>
+                    {/* Niente marcatore 'fattura': l'etichetta dice già «Fattura» (regola B.3) */}
+                    <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: '#161616' }}>{fattura.doc_number ? formatDocNumber(fattura.doc_number) : 'Bozza di fattura'}</span>
+                  </span>
+                  <ChevronRight size={15} style={{ flexShrink: 0, color: '#1a1a2e' }} aria-hidden />
+                </Link>
+              )}
+            </div>
+          </CardTendina>
+        )}
+
+        {/* ── Richiama il cliente — promemoria manutenzione (052) ── */}
+        {recall !== null && (
+          <>
+            {/* Hint una-tantum (progressive disclosure, 2 ago): al primo lavoro
+                finito senza richiamo, suggerisce la manutenzione programmata */}
+            {finito && !recall.at && (
+              <ContextHint id="richiamo-lavoro">
+                Lavoro finito: imposta qui sotto il richiamo e l&rsquo;app ti ricorda di ricontattare il cliente tra 6 o 12 mesi (manutenzioni = lavori che tornano).
+              </ContextHint>
+            )}
+            <CardTendina label="Richiama il cliente" summary={richiamoRiepilogo} defaultOpen={!!recall.at}>
+              <RichiamoCard lavoroId={id} recallAt={recall.at} recallNote={recall.note} documentId={documentId} bare />
+            </CardTendina>
+          </>
+        )}
+
+        {/* ── Stato e dettagli: le pillole dello stato e i campi del vecchio
+            modulo, con salvataggio automatico (via «Salva modifiche») ── */}
+        <LavoroForm defaults={defaults} />
+
+        {/* ── Elimina in fondo, sotto un filetto ── */}
+        <div style={{ marginTop: 6, paddingTop: 12, borderTop: '1px solid #e4e2dc' }}>
+          <DeleteLavoroButton lavoroId={id} variant="danger" />
         </div>
       </div>
-
-      {/* Ore di lavoro — timer + manuale (052; compare solo a migration applicata) */}
-      {ore && (
-        <div id="ore" style={{ padding: '0 15px 13px', scrollMarginTop: 80 }}>
-          <OreLavoroCard lavoroId={id} minutes={ore.minutes} timerStartedAt={ore.startedAt} hourlyCost={hourlyCost} />
-        </div>
-      )}
-
-      {/* Richiama il cliente — promemoria manutenzione (052) */}
-      {recall !== null && (
-        <div style={{ padding: '0 15px 13px', display: 'flex', flexDirection: 'column', gap: 11 }}>
-          {/* Hint una-tantum (progressive disclosure, 2 ago): al primo lavoro
-              finito senza richiamo, suggerisce la manutenzione programmata */}
-          {(defaults?.status === 'finito' || defaults?.status === 'fatturato') && !recall.at && (
-            <ContextHint id="richiamo-lavoro">
-              Lavoro finito: imposta qui sotto il richiamo e l&rsquo;app ti ricorda di ricontattare il cliente tra 6 o 12 mesi (manutenzioni = lavori che tornano).
-            </ContextHint>
-          )}
-          <RichiamoCard lavoroId={id} recallAt={recall.at} recallNote={recall.note} documentId={documentId} />
-        </div>
-      )}
-
-      {/* Foto del lavoro (vivono sul preventivo di origine) */}
-      {documentId && (
-        <div id="foto" style={{ padding: '0 15px 16px', scrollMarginTop: 80 }}>
-          <WorkPhotosCard documentId={documentId} initialPhotos={workPhotos} initialSignedUrls={workPhotoSignedUrls} />
-        </div>
-      )}
     </div>
   )
 }

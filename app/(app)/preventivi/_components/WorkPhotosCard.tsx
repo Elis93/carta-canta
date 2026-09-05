@@ -7,7 +7,7 @@
 // visibile), ✕ per staccare la foto dal documento.
 // ============================================================
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { Camera, Images, Eye, EyeOff, Loader2, X, ChevronDown } from 'lucide-react'
@@ -40,8 +40,11 @@ export function WorkPhotosCard({
   initialPhotos,
   initialSignedUrls,
   collapsible = false,
+  anchorId,
 }: {
   documentId: string
+  /** Con `collapsible`: arrivando con #anchorId (tasto Foto della Home) la tendina si apre da sola. */
+  anchorId?: string
   initialPhotos: WorkPhoto[]
   /** URL firmate dal server per le foto già presenti — servono ai collaboratori
       (in un team le foto stanno nella cartella di chi le ha caricate). */
@@ -55,6 +58,13 @@ export function WorkPhotosCard({
   const galleryRef = useRef<HTMLInputElement>(null)
   const [photos, setPhotos] = useState<WorkPhoto[]>(initialPhotos)
   const [open, setOpen] = useState(!collapsible)
+  useEffect(() => {
+    if (!anchorId) return
+    const check = () => { if (window.location.hash === `#${anchorId}`) setOpen(true) }
+    check()
+    window.addEventListener('hashchange', check)
+    return () => window.removeEventListener('hashchange', check)
+  }, [anchorId])
   // Archivio privato: gli indirizzi delle miniature si chiedono e scadono.
   const photoUrls = useSignedPhotos(photos.map((p) => p.storage_path), initialSignedUrls)
   // Quale bottone ha avviato l'upload → lo spinner compare SOLO lì

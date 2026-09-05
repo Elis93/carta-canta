@@ -38,7 +38,13 @@ export function CardTendina({
   // Dopo il mount (window non esiste sul server): il deep-link deve trovare
   // la card APERTA, non solo la pagina scrollata al punto giusto (25 ago).
   useEffect(() => {
-    if (anchorId && window.location.hash === `#${anchorId}`) setOpen(true)
+    if (!anchorId) return
+    const check = () => { if (window.location.hash === `#${anchorId}`) setOpen(true) }
+    check()
+    // Anche un link «#ancora» nella STESSA pagina (es. il navy «Rapportino
+    // di fine lavoro» sulla scheda Lavoro) deve aprire la tendina.
+    window.addEventListener('hashchange', check)
+    return () => window.removeEventListener('hashchange', check)
   }, [anchorId])
 
   return (

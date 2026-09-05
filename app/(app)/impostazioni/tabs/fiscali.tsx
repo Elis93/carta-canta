@@ -277,7 +277,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
                 conteggiate col timer viene tolto dal margine. Se lavori in{' '}
                 <b>forfettario</b>{' '}puoi disattivarla: le tue ore non sono soldi usciti
                 dal conto, così il margine mostra quanto ti resta davvero in cassa. Le ore
-                restano comunque visibili nella Scheda Lavoro, in «Economia del lavoro».
+                restano comunque visibili nella scheda del Lavoro, nel riquadro «Ore di lavoro».
               </span>
             </label>
           </div>
