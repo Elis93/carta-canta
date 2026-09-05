@@ -765,3 +765,8 @@ html.cc-large { --cc-placeholder: #77746c; }
       visibili solo in modalità leggibile ("con descrizioni" — scelta Eli). */
 .cc-desc { display: none; }
 html.cc-large .cc-desc { display: block; }
+
+/* Avviso «Filetto» (components/shared/Avviso.tsx): il grassetto dentro
+   l'avviso è 600, non il 700 del browser — è un'enfasi, non un titolo. */
+.cc-avviso b, .cc-avviso strong { font-weight: 600; }
+.cc-avviso a { color: inherit; }

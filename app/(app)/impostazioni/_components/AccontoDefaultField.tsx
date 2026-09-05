@@ -25,6 +25,7 @@
 // ============================================================
 
 import { useEffect, useRef, useState } from 'react'
+import { Avviso } from '@/components/shared/Avviso'
 
 export function AccontoDefaultField({
   tipoIniziale,
@@ -116,12 +117,12 @@ export function AccontoDefaultField({
       {tipo === '' && <input type="hidden" name="deposit_default_value" value="" />}
 
       {tipo === 'fixed' && (
-        <p style={{ fontSize: 12.5, color: '#8a6a2f', background: '#f5e9d0', borderRadius: 10, padding: '9px 11px', margin: 0, lineHeight: 1.45 }}>
+        <Avviso gravita="info" dentro>
           Su un preventivo più piccolo della cifra fissa, l&rsquo;acconto{' '}
           <b>si ferma al totale</b>: con 500&nbsp;€ di acconto su un preventivo da
           300&nbsp;€, al cliente vengono chiesti 300&nbsp;€ e il saldo è zero. Non gli
           verrà mai chiesto più del dovuto.
-        </p>
+        </Avviso>
       )}
     </div>
   )

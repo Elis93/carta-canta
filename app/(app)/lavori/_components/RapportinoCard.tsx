@@ -11,6 +11,7 @@ import { useState, useTransition } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Copy, FileText, Loader2, Mail, Send } from 'lucide-react'
+import { Avviso } from '@/components/shared/Avviso'
 import { toast } from 'sonner'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { saveRapportoAction } from '@/lib/actions/lavori'
@@ -93,15 +94,12 @@ export function RapportinoCard({ data }: { data: RapportinoData }) {
 
       {signed ? (
         <>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, background: '#d4efe2', borderRadius: 11, padding: '11px 13px' }}>
-            <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 1 }} />
-            <span style={{ fontSize: 13, color: '#1d5c41', lineHeight: 1.5 }}>
-              Firmato da <strong>{data.signerName ?? 'cliente'}</strong>
-              {data.signedAt && (
-                <> il {new Date(data.signedAt).toLocaleString('it-IT', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}</>
-              )}
-            </span>
-          </div>
+          <Avviso gravita="ok" dentro>
+            Firmato da <b>{data.signerName ?? 'cliente'}</b>
+            {data.signedAt && (
+              <> il {new Date(data.signedAt).toLocaleString('it-IT', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}</>
+            )}
+          </Avviso>
           {data.text && (
             <p style={{ fontSize: 13, color: '#55534b', lineHeight: 1.6, whiteSpace: 'pre-wrap', marginTop: 10 }}>{data.text}</p>
           )}

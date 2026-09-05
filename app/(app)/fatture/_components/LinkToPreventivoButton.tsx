@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { AlertTriangle } from 'lucide-react'
 import { formatDocNumber } from '@/lib/utils'
+import { Avviso } from '@/components/shared/Avviso'
 
 interface Preventivo {
   id: string
@@ -236,14 +237,11 @@ export function LinkToPreventivoButton({
               const sel = preventivi.find((p) => p.id === selected)
               if (sel && (sel.status === 'sent' || sel.status === 'viewed')) {
                 return (
-                  <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-3 py-2.5 text-xs text-[#b0863e]">
-                    <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-                    <span>
-                      Collegandolo, il preventivo{' '}
-                      <span className="font-semibold">{formatDocNumber(sel.doc_number)}</span>{' '}
-                      verrà segnato come <span className="font-semibold">Accettato</span>.
-                    </span>
-                  </div>
+                  <Avviso gravita="attenzione" icon={<AlertTriangle size={16} />} dentro>
+                    Collegandolo, il preventivo{' '}
+                    <b>{formatDocNumber(sel.doc_number)}</b>{' '}
+                    verrà segnato come <b>Accettato</b>.
+                  </Avviso>
                 )
               }
               return null

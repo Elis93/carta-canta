@@ -22,6 +22,7 @@ import {
 import { registerDepositReceivedAction } from '@/lib/actions/documents'
 import { parseImportoIt } from '@/lib/utils'
 import { giornoItaliano, termineTrasmissione, scadenzaLabel } from '@/lib/sdi/termini'
+import { Avviso } from '@/components/shared/Avviso'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -114,9 +115,8 @@ export function AccontoCard({
         const rif = giornoItaliano(received.at ? new Date(received.at) : new Date())
         const t = termineTrasmissione(rif)
         return (
-          <div style={{ background: t.fuoriTermine ? '#f5dede' : t.giorniRimasti <= 3 ? '#f5e9d0' : '#f4f3ef', borderRadius: 10, padding: '9px 11px', display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 11 }}>
-            <Clock size={14} style={{ color: t.fuoriTermine ? '#b05656' : t.giorniRimasti <= 3 ? '#b0863e' : '#6f6d64', flexShrink: 0, marginTop: 1 }} />
-            <span style={{ fontSize: 12, lineHeight: 1.45, color: t.fuoriTermine ? '#8a3d3d' : t.giorniRimasti <= 3 ? '#8a6a2f' : '#55534b' }}>
+          <Avviso gravita={t.fuoriTermine ? 'errore' : t.giorniRimasti <= 3 ? 'attenzione' : 'info'} icon={<Clock size={16} />} dentro style={{ marginBottom: 11 }}>
+            <span>
               {t.fuoriTermine ? (
                 <><b>Fattura d’acconto oltre il termine</b>: andava emessa entro il{' '}
                   {scadenzaLabel(t.scadenza)}. Falla comunque e parlane col commercialista.</>
@@ -126,7 +126,7 @@ export function AccontoCard({
                   ({t.giorniRimasti === 0 ? 'oggi è l’ultimo giorno' : t.giorniRimasti === 1 ? 'manca 1 giorno' : `mancano ${t.giorniRimasti} giorni`}).</>
               )}
             </span>
-          </div>
+          </Avviso>
         )
       })()}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>

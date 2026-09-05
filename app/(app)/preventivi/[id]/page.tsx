@@ -38,6 +38,7 @@ import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
+import { Avviso } from '@/components/shared/Avviso'
 import { PosticipaSollecito } from '@/components/shared/PosticipaSollecito'
 import { docNumberSlug } from '@/lib/documents/numero'
 
@@ -438,15 +439,16 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           o duplica. Il dato resta salvato — tornando a Pro riappare usabile. */}
       {freeLocked && (
         <div style={{ margin: '14px 15px 0' }} className="lg:mx-6 lg:mt-6">
-          <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#8a5a00]">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-            <div>
-              <b>Preventivo bloccato</b> — è oltre gli 8 del piano gratuito. Puoi aprirlo e consultarlo, ma non modificarlo, inviarlo, scaricarlo o duplicarlo.{' '}
+          <Avviso
+            gravita="errore"
+            sotto={
               <Link href={PRO_LOCK_HREF} style={{ fontWeight: 600, textDecoration: 'underline' }}>
                 Torna a Pro per sbloccarlo
               </Link>
-            </div>
-          </div>
+            }
+          >
+            <b>Preventivo bloccato</b>: è oltre gli 8 del piano gratuito. Puoi aprirlo e consultarlo, ma non modificarlo, inviarlo, scaricarlo o duplicarlo.
+          </Avviso>
         </div>
       )}
 
@@ -467,18 +469,14 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               solo desktop — e l'app si usa dal telefono. La fattura invece ce
               l'aveva già su entrambi. */}
           {(doc as any).updated_after_send_at && doc.status !== 'accepted' && (
-            <div style={{ margin: '14px 15px 0', background: '#f6f2fc', border: '1px solid #e2d7f4', borderRadius: 10, padding: '12px 14px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#ddd0f4', color: '#161616', borderRadius: 8, padding: '4px 9px', fontSize: 12.5, fontWeight: 700 }}>
-                <AlertTriangle size={14} style={{ flexShrink: 0 }} aria-hidden />
-                Modificato — cliente non avvisato
-              </span>
-              <p style={{ fontSize: 12.5, color: '#3f3d36', marginTop: 8, lineHeight: 1.55 }}>
-                Documento aggiornato il{' '}
-                {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo
-                l&rsquo;invio al cliente. Chi riapre il link vede già la versione aggiornata, ma il
-                cliente non ha ricevuto alcuna comunicazione: si consiglia di inviare nuovamente
-                il preventivo.
-              </p>
+            <div style={{ margin: '14px 15px 0' }}>
+              <Avviso
+                gravita="attenzione"
+                icon={<AlertTriangle size={16} />}
+                sotto={<>Aggiornato il {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo l&rsquo;invio. Chi riapre il link vede già la versione nuova, ma nessuno l&rsquo;ha avvisato: rimandaglielo.</>}
+              >
+                <b>Modificato — il cliente non lo sa</b>
+              </Avviso>
             </div>
           )}
 
@@ -487,32 +485,35 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               ⚠️ Prima l'accettazione MANUALE non aveva alcun banner: segnando
               accettata la Premium non restava traccia visibile della scelta. */}
           {doc.status === 'accepted' && (doc.signer_name || doc.accepted_ip != null || acceptedTierLabel) && (
-            <div style={{ margin: '14px 15px 0', background: '#d4efe2', border: '1px solid #bce3d2', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 2 }} />
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#2f8a63' }}>
+            <div style={{ margin: '14px 15px 0' }}>
+              <Avviso
+                gravita="ok"
+                sotto={
+                  <>
+                    {acceptedTierLabel && (
+                      <div>
+                        <b style={{ fontWeight: 600 }}>Proposta {acceptedTierLabel}</b>
+                        {' '}— {sceltaDalCliente ? 'scelta dal cliente' : 'confermata da te'}
+                      </div>
+                    )}
+                    {doc.accepted_at && (
+                      <div>
+                        {doc.signer_name && <>Firmato da {doc.signer_name} · </>}
+                        {fmtLong(doc.accepted_at)}
+                        {doc.accepted_ip != null && <> · IP {String(doc.accepted_ip)}</>}
+                      </div>
+                    )}
+                  </>
+                }
+              >
+                <b>
                   {doc.signer_name
                     ? 'Accettato e firmato dal cliente'
                     : doc.accepted_ip != null
                     ? 'Accettato dal cliente'
                     : 'Segnato come accettato da te'}
-                </div>
-                {acceptedTierLabel && (
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#2f8a63', marginTop: 3 }}>
-                    Proposta {acceptedTierLabel}
-                    <span style={{ fontWeight: 400 }}>
-                      {' '}— {sceltaDalCliente ? 'scelta dal cliente' : 'confermata da te'}
-                    </span>
-                  </div>
-                )}
-                {doc.accepted_at && (
-                  <div style={{ fontSize: 12, color: '#2f8a63', marginTop: 2 }}>
-                    {doc.signer_name && <>{doc.signer_name} · </>}
-                    {fmtLong(doc.accepted_at)}
-                    {doc.accepted_ip != null && <> · IP {String(doc.accepted_ip)}</>}
-                  </div>
-                )}
-              </div>
+                </b>
+              </Avviso>
             </div>
           )}
 
@@ -533,25 +534,23 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
           {/* Banner rifiutato */}
           {doc.status === 'rejected' && (
-            <div style={{ margin: '14px 15px 0', background: '#f5dede', border: '1px solid #ecc9c9', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <XCircle size={17} style={{ color: '#b05656', flexShrink: 0, marginTop: 2 }} />
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#b05656' }}>Rifiutato dal cliente</div>
-                {doc.rejection_reason && (
-                  <div style={{ fontSize: 12, color: '#b05656', marginTop: 2 }}>Motivo: &ldquo;{doc.rejection_reason}&rdquo;</div>
-                )}
-              </div>
+            <div style={{ margin: '14px 15px 0' }}>
+              <Avviso
+                gravita="errore"
+                icon={<XCircle size={16} />}
+                sotto={doc.rejection_reason ? <>Motivo: &ldquo;{doc.rejection_reason}&rdquo;</> : undefined}
+              >
+                <b>Rifiutato dal cliente</b>
+              </Avviso>
             </div>
           )}
 
           {/* Banner scaduto */}
           {doc.status === 'expired' && (
-            <div style={{ margin: '14px 15px 0', background: '#f5e9d0', border: '1px solid #e8d6ad', borderRadius: 10, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <Clock size={17} style={{ color: '#b0863e', flexShrink: 0, marginTop: 2 }} />
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#b0863e' }}>Preventivo scaduto</div>
-                <div style={{ fontSize: 12, color: '#b0863e', marginTop: 2 }}>Validità superata.{freeLocked ? '' : ' Puoi rinviarlo al cliente.'}</div>
-              </div>
+            <div style={{ margin: '14px 15px 0' }}>
+              <Avviso gravita="attenzione" sotto={<>Validità superata.{freeLocked ? '' : ' Puoi rinviarlo al cliente.'}</>}>
+                <b>Preventivo scaduto</b>
+              </Avviso>
             </div>
           )}
 
@@ -567,14 +566,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           )}
           {/* Banner blocco Free (bozza non inviabile) */}
           {isFree && isDraft && freeTrialStatus?.blocked && (
-            <div style={{ margin: '14px 15px 0' }} className="flex items-start gap-3 rounded-xl border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656]">
-              <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-              <p>
+            <div style={{ margin: '14px 15px 0' }}>
+              <Avviso gravita="errore" sotto={<Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>}>
                 {freeTrialStatus.reason === 'trial_expired'
-                  ? <><strong>Il periodo di prova è terminato.</strong>{' '}Non puoi inviare questo preventivo.{' '}</>
-                  : <><strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano gratuito.</strong>{' '}</>}
-                <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>
-              </p>
+                  ? <><b>Il periodo di prova è terminato.</b>{' '}Non puoi inviare questo preventivo.</>
+                  : <><b>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi del piano gratuito.</b></>}
+              </Avviso>
             </div>
           )}
 
@@ -1095,8 +1092,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
         )}
         {/* ── BANNER BLOCCO TRIAL FREE (desktop) ── */}
         {isFree && isDraft && freeTrialStatus?.blocked && (
-          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656]">
-            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+          <Avviso gravita="errore" desktopOnly>
             <p>
               {freeTrialStatus.reason === 'trial_expired' ? (
                 <>
@@ -1114,110 +1110,93 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               </Link>{' '}
               per preventivi illimitati.
             </p>
-          </div>
+          </Avviso>
         )}
 
         {/* ── BANNER ACCETTAZIONE (con firma) — desktop ── */}
         {doc.status === 'accepted' && (
           <div className="hidden lg:block">
-            <div style={{
-              background: '#d4efe2',
-              border: '1px solid #bce3d2',
-              borderRadius: 10,
-              padding: '11px 14px',
-              display: 'flex',
-              gap: 10,
-              alignItems: 'flex-start',
-            }}>
-              <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0, marginTop: 2 }} />
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#2f8a63' }}>
-                  {doc.signer_name
-                    ? 'Accettato e firmato dal cliente'
-                    : doc.accepted_ip != null
-                    ? 'Accettato dal cliente'
-                    : 'Segnato come accettato da te'}
-                </div>
-                {acceptedTierLabel && (
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#2f8a63', marginTop: 3 }}>
-                    Proposta {acceptedTierLabel}
-                    <span style={{ fontWeight: 400 }}>
+            <Avviso
+              gravita="ok"
+              sotto={
+                <>
+                  {acceptedTierLabel && (
+                    <div>
+                      <b style={{ fontWeight: 600 }}>Proposta {acceptedTierLabel}</b>
                       {' '}— {sceltaDalCliente ? 'scelta dal cliente' : 'confermata da te'}
-                    </span>
-                  </div>
-                )}
-                {doc.accepted_at && (
-                  <div style={{ fontSize: 12, color: '#2f8a63', marginTop: 2 }}>
-                    {doc.signer_name && <>{doc.signer_name} · </>}
-                    {new Date(doc.accepted_at).toLocaleDateString('it-IT', {
-                      day: '2-digit', month: 'long', year: 'numeric',
-                     timeZone: 'Europe/Rome' })}
-                    {doc.accepted_ip != null && <> · IP {String(doc.accepted_ip)}</>}
-                  </div>
-                )}
-                {doc.signature_image && (
-                  <img
-                    src={doc.signature_image}
-                    alt="Firma cliente"
-                    className="mt-2 h-12 object-contain rounded border border-[#bce3d2] bg-white px-2"
-                  />
-                )}
-              </div>
-            </div>
+                    </div>
+                  )}
+                  {doc.accepted_at && (
+                    <div>
+                      {doc.signer_name && <>Firmato da {doc.signer_name} · </>}
+                      {new Date(doc.accepted_at).toLocaleDateString('it-IT', {
+                        day: '2-digit', month: 'long', year: 'numeric',
+                       timeZone: 'Europe/Rome' })}
+                      {doc.accepted_ip != null && <> · IP {String(doc.accepted_ip)}</>}
+                    </div>
+                  )}
+                  {doc.signature_image && (
+                    <img
+                      src={doc.signature_image}
+                      alt="Firma cliente"
+                      className="mt-2 h-12 object-contain rounded border border-[#e4e2dc] bg-white px-2"
+                    />
+                  )}
+                </>
+              }
+            >
+              <b>
+                {doc.signer_name
+                  ? 'Accettato e firmato dal cliente'
+                  : doc.accepted_ip != null
+                  ? 'Accettato dal cliente'
+                  : 'Segnato come accettato da te'}
+              </b>
+            </Avviso>
           </div>
         )}
 
         {/* ── BANNER RIFIUTATO (desktop) ── */}
         {doc.status === 'rejected' && (
-          <div className="hidden lg:block rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656] space-y-1">
-            <p>Il cliente ha rifiutato questo preventivo.</p>
-            {doc.rejection_reason && (
-              <p className="text-[#b05656]">
-                <span className="font-medium">Motivo: </span>
-                {doc.rejection_reason}
-              </p>
-            )}
-          </div>
+          <Avviso gravita="errore" icon={<XCircle size={16} />} desktopOnly sotto={doc.rejection_reason ? <>Motivo: &ldquo;{doc.rejection_reason}&rdquo;</> : undefined}>
+            <b>Rifiutato dal cliente</b>
+          </Avviso>
         )}
 
         {/* ── BANNER SCADUTO (desktop) ── */}
         {doc.status === 'expired' && (
-          <div className="hidden lg:block rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
-            Questo preventivo è scaduto.
-          </div>
+          <Avviso gravita="attenzione" desktopOnly>
+            <b>Preventivo scaduto</b>: validità superata.
+          </Avviso>
         )}
 
         {/* ── BANNER INVIATO (non ancora modificato) — desktop ── */}
         {(doc.status === 'sent' || doc.status === 'viewed') && !(doc as any).updated_after_send_at && (
-          <div className="hidden lg:flex items-start gap-3 rounded-lg border border-[#c3d9f2] bg-[#d8e8fb] px-4 py-3 text-sm text-[#3f6fb0]">
-            <Info className="size-4 shrink-0 mt-0.5" />
-            <p>
-              Questo preventivo è stato inviato. Se lo modifichi, il cliente vedrà
-              subito la versione aggiornata dal link: reinvialo per avvisarlo del cambiamento.
-            </p>
-          </div>
+          <Avviso gravita="info" desktopOnly>
+            Questo preventivo è stato inviato. Se lo modifichi, il cliente vedrà
+            subito la versione aggiornata dal link: reinvialo per avvisarlo del cambiamento.
+          </Avviso>
         )}
 
         {/* ── BANNER MODIFICATO dopo l'invio — desktop ──
             Non su ACCETTATO (review 25 lug #1 trasversale): il ripristino
             è bloccato dal server (trigger 057) e fallirebbe per sempre. */}
         {(doc as any).updated_after_send_at && doc.status !== 'accepted' && (
-          <div className="hidden lg:block rounded-lg border border-[#e2d7f4] bg-[#f6f2fc] px-4 py-3 text-sm">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#ddd0f4] px-2.5 py-1 text-[13px] font-bold text-[#161616]">
-              <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
-              Modificato — cliente non avvisato
-            </span>
-            <p className="mt-2 text-[#3f3d36]">
-              Documento aggiornato il{' '}
-              {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo
-              l&rsquo;invio al cliente. Chi riapre il link vede già la versione aggiornata, ma il
-              cliente non ha ricevuto alcuna comunicazione: si consiglia di inviare nuovamente
-              il preventivo.
-            </p>
-            <div className="mt-2">
-              <RestoreVersionButton documentId={id} />
-            </div>
-          </div>
+          <Avviso
+            gravita="attenzione"
+            icon={<AlertTriangle size={16} />}
+            desktopOnly
+            sotto={
+              <>
+                Aggiornato il {new Date((doc as any).updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo l&rsquo;invio. Chi riapre il link vede già la versione nuova, ma nessuno l&rsquo;ha avvisato: rimandaglielo.
+                <div className="mt-2">
+                  <RestoreVersionButton documentId={id} />
+                </div>
+              </>
+            }
+          >
+            <b>Modificato — il cliente non lo sa</b>
+          </Avviso>
         )}
 
         {/* Form preventivo — desktop sempre; mobile solo con ?edit=1 */}

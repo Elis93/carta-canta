@@ -27,6 +27,7 @@ import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 import { ordinaPerUrgenza } from '@/lib/documents/ordina-scadenza'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
 import { numeroVarianti } from '@/lib/documents/numero'
+import { Avviso } from '@/components/shared/Avviso'
 
 export const metadata = { title: 'Fatture' }
 
@@ -425,30 +426,20 @@ export default async function FatturePage({ searchParams }: Props) {
 
       {/* ── BANNER PIANO FREE (limite 8 fatture inviate, 083) ── */}
       {isFree && freeInvoiceStatus?.blocked && freeInvoiceStatus.reason === 'trial_expired' && (
-        <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656] mb-4">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <p>
-            <strong>Il periodo di prova è terminato.</strong>{' '}
-            Non puoi inviare nuove fatture ai clienti.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>{' '}
-            per fatture illimitate.
-          </p>
-        </div>
+        <Avviso gravita="errore" className="mb-4" sotto={<><Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link> per fatture illimitate.</>}>
+          <b>Il periodo di prova è terminato.</b>{' '}
+          Non puoi inviare nuove fatture ai clienti.
+        </Avviso>
       )}
       {isFree && freeInvoiceStatus?.blocked && freeInvoiceStatus.reason === 'doc_limit' && (
-        <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656] mb-4">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <p>
-            {/* ⚠️ Niente promesse sullo SdI qui: la trasmissione non dipende da
-                QUESTO limite, ma su Free ha un suo contatore (8 e-fatture,
-                lib/sdi/quota.ts) che a questo punto è spesso esaurito anche
-                lui — prometterla «possibile» sarebbe falso (finding revisore). */}
-            <strong>Hai raggiunto il limite di {FREE_INVOICE_LIMIT} fatture gratuite.</strong>{' '}
-            Non puoi inviarne altre al cliente; creare bozze resta possibile.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>{' '}
-            per fatture illimitate.
-          </p>
-        </div>
+        <Avviso gravita="errore" className="mb-4" sotto={<><Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link> per fatture illimitate.</>}>
+          {/* ⚠️ Niente promesse sullo SdI qui: la trasmissione non dipende da
+              QUESTO limite, ma su Free ha un suo contatore (8 e-fatture,
+              lib/sdi/quota.ts) che a questo punto è spesso esaurito anche
+              lui — prometterla «possibile» sarebbe falso (finding revisore). */}
+          <b>Hai raggiunto il limite di {FREE_INVOICE_LIMIT} fatture gratuite.</b>{' '}
+          Non puoi inviarne altre al cliente; creare bozze resta possibile.
+        </Avviso>
       )}
       {isFree && !freeInvoiceStatus?.blocked && freeInvoiceStatus && (
         <div style={{

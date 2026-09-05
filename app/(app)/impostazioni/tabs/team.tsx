@@ -20,6 +20,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
+import { Avviso } from '@/components/shared/Avviso'
 import {
   inviteMemberAction,
   removeMemberAction,
@@ -62,15 +63,9 @@ export function ImpostazioniTeam({ ownerEmail, ownerName, members, canInvite, ma
 
       {/* Piano gate */}
       {!canInvite && (
-        <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
-          <p className="font-medium">Funzione disponibile dal piano Team</p>
-          <p className="text-xs mt-0.5 opacity-80">
-            Passa al piano Team per aggiungere fino a 5 collaboratori con ruoli e permessi.{' '}
-            <a href="/abbonamento" className="underline underline-offset-2 font-medium">
-              Vedi piani →
-            </a>
-          </p>
-        </div>
+        <Avviso gravita="info" sotto={<>Passa al piano Team per aggiungere fino a 5 collaboratori con ruoli e permessi.{' '}<a href="/abbonamento" className="underline underline-offset-2 font-medium">Vedi piani →</a></>}>
+          <b>Funzione disponibile dal piano Team</b>
+        </Avviso>
       )}
 
       {/* Form invito */}

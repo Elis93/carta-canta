@@ -26,6 +26,7 @@ import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 import { ordinaPerUrgenza } from '@/lib/documents/ordina-scadenza'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
 import { numeroVarianti } from '@/lib/documents/numero'
+import { Avviso } from '@/components/shared/Avviso'
 
 interface Props {
   searchParams: Promise<{ q?: string; status?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; client_id?: string; bozza?: string; sort?: string; page?: string }>
@@ -430,26 +431,16 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
       {/* ── BANNER PIANO FREE ── */}
       {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
-        <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656] mb-4">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <p>
-            <strong>Il periodo di prova è terminato.</strong>{' '}
-            Non puoi creare, scaricare o inviare nuovi preventivi.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>{' '}
-            per preventivi illimitati.
-          </p>
-        </div>
+        <Avviso gravita="errore" className="mb-4" sotto={<><Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link> per preventivi illimitati.</>}>
+          <b>Il periodo di prova è terminato.</b>{' '}
+          Non puoi creare, scaricare o inviare nuovi preventivi.
+        </Avviso>
       )}
       {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'doc_limit' && (
-        <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656] mb-4">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <p>
-            <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</strong>{' '}
-            Non puoi creare o inviare altri preventivi.{' '}
-            <Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>{' '}
-            per preventivi illimitati, template personalizzati e niente filigrana.
-          </p>
-        </div>
+        <Avviso gravita="errore" className="mb-4" sotto={<><Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link> per preventivi illimitati, template personalizzati e niente filigrana.</>}>
+          <b>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</b>{' '}
+          Non puoi creare o inviare altri preventivi.
+        </Avviso>
       )}
       {isFree && !freeTrialStatus?.blocked && freeTrialStatus && (
         <div style={{

@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { BackButton } from '@/components/shared/BackButton'
 import { Users, Plus, ChevronRight, AlertTriangle } from 'lucide-react'
+import { Avviso } from '@/components/shared/Avviso'
 
 interface Props {
   searchParams: Promise<{ q?: string }>
@@ -45,18 +46,10 @@ async function DuplicateEmailBanner({ workspaceId }: { workspaceId: string }) {
   const duplicateGroups = await getDuplicateEmailGroups(workspaceId)
   if (duplicateGroups.length === 0) return null
   return (
-    <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 space-y-2">
-      <div className="flex items-center gap-2 text-[#b0863e]">
-        <AlertTriangle className="size-4 shrink-0" />
-        <p className="text-sm font-medium">
-          {duplicateGroups.length === 1
-            ? 'Ci sono contatti che condividono la stessa email'
-            : `Ci sono ${duplicateGroups.length} gruppi di contatti con email in comune`}
-        </p>
-      </div>
-      <ul className="space-y-1 pl-6">
+    <Avviso gravita="attenzione" icon={<AlertTriangle size={16} />} sotto={
+      <ul className="space-y-1">
         {duplicateGroups.map(({ email, contacts }) => (
-          <li key={email} className="text-xs text-[#b0863e]">
+          <li key={email}>
             <span className="font-medium">{email}</span>
             {' '}— usata da:{' '}
             {contacts.map((c, i) => (
@@ -73,7 +66,13 @@ async function DuplicateEmailBanner({ workspaceId }: { workspaceId: string }) {
           </li>
         ))}
       </ul>
-    </div>
+    }>
+      <b>
+        {duplicateGroups.length === 1
+          ? 'Ci sono contatti che condividono la stessa email'
+          : `Ci sono ${duplicateGroups.length} gruppi di contatti con email in comune`}
+      </b>
+    </Avviso>
   )
 }
 

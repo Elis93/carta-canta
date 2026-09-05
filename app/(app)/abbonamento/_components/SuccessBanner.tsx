@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle2, X, AlertCircle } from 'lucide-react'
+import { Avviso } from '@/components/shared/Avviso'
 
 export function SuccessBanner() {
   const searchParams = useSearchParams()
@@ -37,15 +38,11 @@ export function SuccessBanner() {
 
   if (type === 'success') {
     return (
-      <div className="flex items-center gap-3 rounded-lg border border-[#bce3d2] bg-[#d4efe2] px-4 py-3 text-[#2f8a63]">
-        <CheckCircle2 className="size-5 shrink-0 text-[#2f8a63]" />
-        <div className="flex-1">
-          <p className="font-semibold text-sm">🎉 Benvenuto nel nuovo piano!</p>
-          <p className="text-xs opacity-80 mt-0.5">
-            Il tuo piano è stato attivato. Tutte le nuove funzionalità sono ora disponibili.
-          </p>
-        </div>
-        <button onClick={() => setVisible(false)} className="shrink-0 opacity-60 hover:opacity-100">
+      <div style={{ position: 'relative' }}>
+        <Avviso gravita="ok" icon={<CheckCircle2 size={16} />} sotto="Il tuo piano è stato attivato. Tutte le nuove funzionalità sono ora disponibili." style={{ paddingRight: 40 }}>
+          <b>Benvenuto nel nuovo piano!</b>
+        </Avviso>
+        <button onClick={() => setVisible(false)} aria-label="Chiudi" className="opacity-60 hover:opacity-100" style={{ position: 'absolute', top: 10, right: 12 }}>
           <X className="size-4" />
         </button>
       </div>
@@ -53,12 +50,11 @@ export function SuccessBanner() {
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-[#b0863e]">
-      <AlertCircle className="size-5 shrink-0 text-[#b0863e]" />
-      <div className="flex-1">
-        <p className="text-sm">Pagamento annullato. Nessun addebito è stato effettuato.</p>
-      </div>
-      <button onClick={() => setVisible(false)} className="shrink-0 opacity-60 hover:opacity-100">
+    <div style={{ position: 'relative' }}>
+      <Avviso gravita="info" icon={<AlertCircle size={16} />} style={{ paddingRight: 40 }}>
+        <b>Pagamento annullato.</b>{' '}Nessun addebito è stato effettuato.
+      </Avviso>
+      <button onClick={() => setVisible(false)} aria-label="Chiudi" className="opacity-60 hover:opacity-100" style={{ position: 'absolute', top: 10, right: 12 }}>
         <X className="size-4" />
       </button>
     </div>

@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { createClientAction, updateClientAction } from '@/lib/actions/clients'
 import type { Database } from '@/types/database'
+import { Avviso } from '@/components/shared/Avviso'
 
 type ClientRow = Database['public']['Tables']['clients']['Row']
 
@@ -165,26 +166,27 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
       {/* Avvisi non bloccanti */}
       {hasWarnings && (
-        <div className="flex gap-3 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="font-medium">Alcuni campi non sono stati salvati:</p>
-            <ul className="list-disc list-inside space-y-0.5">
-              {state!.warnings!.map((w, i) => (
-                <li key={i}>{w}</li>
-              ))}
-            </ul>
-            <p className="mt-1 text-[#b0863e]">Puoi correggerli e risalvare.</p>
-          </div>
-        </div>
+        <Avviso
+          gravita="attenzione"
+          icon={<AlertTriangle size={16} />}
+          sotto={
+            <>
+              <ul className="list-disc list-inside space-y-0.5">
+                {state!.warnings!.map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+              <p className="mt-1">Puoi correggerli e risalvare.</p>
+            </>
+          }
+        >
+          <b>Alcuni campi non sono stati salvati</b>
+        </Avviso>
       )}
 
       {/* Successo edit mode */}
       {state?.success === 'updated' && !hasWarnings && (
-        <div className="flex items-center gap-2 rounded-lg border border-[#bce3d2] bg-[#d4efe2] px-4 py-3 text-sm text-[#2f8a63]">
-          <CheckCircle2 className="size-4 shrink-0" />
-          Cliente aggiornato correttamente.
-        </div>
+        <Avviso gravita="ok">Cliente aggiornato correttamente.</Avviso>
       )}
 
       {/* ── Sezione CONTATTO ───────────────────────────────── */}
@@ -449,42 +451,10 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
 
       {/* ── Avviso duplicato ─────────────────────────────────── */}
       {showDuplicateWarning && state?.potentialDuplicate && (
-        <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] p-4 space-y-3">
-          <div className="flex items-start gap-2 text-[#b0863e]">
-            <AlertTriangle className="size-4 mt-0.5 shrink-0" />
-            <div className="text-sm">
-              {state.duplicateField === 'email' ? (
-                <p className="font-medium">
-                  L&apos;email{' '}
-                  <span className="font-semibold">{email}</span>{' '}
-                  è già usata dal contatto{' '}
-                  <span className="font-semibold">
-                    {state.potentialDuplicate.name}
-                    {state.potentialDuplicate.surname ? ` ${state.potentialDuplicate.surname}` : ''}
-                  </span>
-                  . È lo stesso?
-                </p>
-              ) : state.duplicateField === 'phone' ? (
-                <p className="font-medium">
-                  Il numero{' '}
-                  <span className="font-semibold">{phone}</span>{' '}
-                  è già usato dal contatto{' '}
-                  <span className="font-semibold">
-                    {state.potentialDuplicate.name}
-                    {state.potentialDuplicate.surname ? ` ${state.potentialDuplicate.surname}` : ''}
-                  </span>
-                  . È lo stesso?
-                </p>
-              ) : (
-                <p className="font-medium">
-                  Abbiamo trovato un contatto molto simile già registrato. È lo stesso?
-                </p>
-              )}
-            </div>
-          </div>
-
+        <Avviso gravita="attenzione" icon={<AlertTriangle size={16} />} sotto={
+          <div className="space-y-3 pt-1">
           {/* Card cliente esistente */}
-          <div className="rounded-md border border-[#e8d6ad] bg-white px-4 py-3 text-sm space-y-0.5">
+          <div className="rounded-md border border-[#e4e2dc] bg-white px-4 py-3 text-sm space-y-0.5">
             <p className="font-semibold text-foreground">
               {state.potentialDuplicate.name}
               {state.potentialDuplicate.surname ? ` ${state.potentialDuplicate.surname}` : ''}
@@ -515,7 +485,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             <Button
               type="button"
               variant="outline"
-              className="flex-1 text-[#b0863e] border-[#e8d6ad] hover:bg-[#f5e9d0]"
+              className="flex-1"
               onClick={() => {
                 setShowDuplicateWarning(false)
                 setForceCreate(true)
@@ -527,7 +497,38 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               )}
             </Button>
           </div>
-        </div>
+          </div>
+        }>
+            <div className="text-sm">
+              {state.duplicateField === 'email' ? (
+                <p className="font-medium">
+                  L&apos;email{' '}
+                  <span className="font-semibold">{email}</span>{' '}
+                  è già usata dal contatto{' '}
+                  <span className="font-semibold">
+                    {state.potentialDuplicate.name}
+                    {state.potentialDuplicate.surname ? ` ${state.potentialDuplicate.surname}` : ''}
+                  </span>
+                  . È lo stesso?
+                </p>
+              ) : state.duplicateField === 'phone' ? (
+                <p className="font-medium">
+                  Il numero{' '}
+                  <span className="font-semibold">{phone}</span>{' '}
+                  è già usato dal contatto{' '}
+                  <span className="font-semibold">
+                    {state.potentialDuplicate.name}
+                    {state.potentialDuplicate.surname ? ` ${state.potentialDuplicate.surname}` : ''}
+                  </span>
+                  . È lo stesso?
+                </p>
+              ) : (
+                <p className="font-medium">
+                  Abbiamo trovato un contatto molto simile già registrato. È lo stesso?
+                </p>
+              )}
+            </div>
+        </Avviso>
       )}
 
       {/* ── Azioni ─────────────────────────────────── */}

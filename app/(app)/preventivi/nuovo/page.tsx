@@ -5,6 +5,7 @@ import { ArrowLeft, AlertTriangle, X, FileText } from 'lucide-react'
 import { PreventivoForm } from '../_components/PreventivoForm'
 import { peekNextDocNumber } from '@/lib/actions/documents'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
+import { Avviso } from '@/components/shared/Avviso'
 
 interface Props {
   searchParams: Promise<{ client_id?: string; titolo?: string; nota?: string; richiesta?: string }>
@@ -161,8 +162,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
           <span>/</span>
           <span className="text-foreground font-medium">Nuovo preventivo</span>
         </div>
-        <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-4 text-sm text-[#b05656]">
-          <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+        <Avviso gravita="errore">
           <div>
             <p className="font-medium mb-1">
               {freeTrialStatus.reason === 'trial_expired'
@@ -181,7 +181,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
               Passa a Pro — preventivi illimitati
             </Link>
           </div>
-        </div>
+        </Avviso>
       </div>
     )
   }

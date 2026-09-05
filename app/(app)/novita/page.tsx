@@ -11,6 +11,14 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 // Aggiungere una voce qui a ogni rilascio rilevante per l'utente.
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
+    data: 'Inizio settembre 2026',
+    titolo: 'Gli avvisi non sono più gialli',
+    punti: [
+      'Tutti gli avvisi dell’app — «fattura pagata», «preventivo scaduto», il conto alla rovescia dello SdI, i limiti del piano gratuito — hanno ora la stessa veste: una card bianca con un filetto colorato a sinistra e un’icona. Il testo resta scuro e leggibile; il colore dice solo quanto è urgente: verde è una buona notizia, ambra una scadenza o una cosa da fare, rosso un blocco, blu un’informazione.',
+      'Sotto ogni avviso, quando serve, c’è una riga in grigio con cosa fare: il comando da usare o il collegamento giusto.',
+    ],
+  },
+  {
     data: 'Fine agosto 2026',
     titolo: 'La pagina del cliente e il riepilogo del documento hanno una veste nuova',
     punti: [

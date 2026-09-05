@@ -42,6 +42,7 @@ import { documentiSenzaPromemoria } from '@/lib/documents/archivio'
 import { eventoLabel, badgeLabel, isFemminile } from '@/lib/documents/etichette'
 import { TodayAgendaCard } from './_components/TodayAgendaCard'
 import { InstallHomeBanner } from '@/components/shared/InstallHomeBanner'
+import { Avviso } from '@/components/shared/Avviso'
 import { LAVORO_STATUS_META, type LavoroStatus } from '@/app/(app)/lavori/_components/lavoro-status'
 
 // ── Tipi ────────────────────────────────────────────────────────────────────
@@ -738,17 +739,14 @@ export default async function DashboardPage() {
 
         {/* 3. Critical blocked banner (mobile) */}
         {isFree && freeTrialStatus?.blocked && (
-          <div style={{ margin: '12px 15px 0', background: '#f5dede', borderRadius: 11, border: '1px solid #ecc9c9', padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#b05656' }}>
-            <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1, color: '#b05656' }} />
-            <p style={{ margin: 0 }}>
-              <strong>
+          <div style={{ margin: '12px 15px 0' }}>
+            <Avviso gravita="errore" sotto={<Link href="/abbonamento" style={{ fontWeight: 600, textDecoration: 'underline' }}>Passa a Pro →</Link>}>
+              <b>
                 {freeTrialStatus.reason === 'trial_expired'
                   ? 'Periodo di prova terminato.'
                   : `Limite di ${FREE_DOC_LIMIT} preventivi raggiunto.`}
-              </strong>
-              {' '}
-              <Link href="/abbonamento" style={{ fontWeight: 600, color: '#b05656' }}>Passa a Pro →</Link>
-            </p>
+              </b>
+            </Avviso>
           </div>
         )}
 
@@ -935,41 +933,21 @@ export default async function DashboardPage() {
 
         {/* Blocked banners */}
         {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'trial_expired' && (
-          <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656]">
-            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-            <p>
-              <strong>Il periodo di prova è terminato.</strong>{' '}
-              Non puoi creare, scaricare o inviare nuovi preventivi.{' '}
-              <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
-                Passa a Pro
-              </Link>{' '}
-              per preventivi illimitati.
-            </p>
-          </div>
+          <Avviso gravita="errore" sotto={<Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link>}>
+            <b>Il periodo di prova è terminato.</b>{' '}
+            Non puoi creare, scaricare o inviare nuovi preventivi.
+          </Avviso>
         )}
         {isFree && freeTrialStatus?.blocked && freeTrialStatus.reason === 'doc_limit' && (
-          <div className="flex items-start gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-sm text-[#b05656]">
-            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-            <p>
-              <strong>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</strong>{' '}
-              Non puoi creare o inviare altri preventivi.{' '}
-              <Link href="/abbonamento" className="font-semibold underline underline-offset-2">
-                Passa a Pro
-              </Link>{' '}
-              per preventivi illimitati, AI import e watermark rimovibile.
-            </p>
-          </div>
+          <Avviso gravita="errore" sotto={<><Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link> per preventivi illimitati, template personalizzati e niente filigrana.</>}>
+            <b>Hai raggiunto il limite di {FREE_DOC_LIMIT} preventivi gratuiti.</b>{' '}
+            Non puoi creare o inviare altri preventivi.
+          </Avviso>
         )}
         {isFree && !freeTrialStatus?.blocked && freeTrialStatus && (
-          <div className="flex items-center justify-between gap-4 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
-            <p>
-              Hai inviato <strong>{freeTrialStatus.docsUsed} di {FREE_DOC_LIMIT}</strong> preventivi gratuiti.{' '}
-              <Link href="/abbonamento" className="font-semibold underline underline-offset-2 hover:text-[#8a6c33]">
-                Passa a Pro
-              </Link>{' '}
-              per preventivi illimitati, AI import e watermark rimovibile.
-            </p>
-          </div>
+          <Avviso gravita="info" sotto={<><Link href="/abbonamento" className="font-semibold underline underline-offset-2">Passa a Pro</Link> per preventivi illimitati, template personalizzati e niente filigrana.</>}>
+            Hai inviato <b>{freeTrialStatus.docsUsed} di {FREE_DOC_LIMIT}</b> preventivi gratuiti.
+          </Avviso>
         )}
 
         {/* Intestazione + campanella (anche su desktop, come su mobile) */}
@@ -988,28 +966,19 @@ export default async function DashboardPage() {
         {(stale.length > 0 || expiringSoon.length > 0) && (
           <div className="space-y-2">
             {stale.length > 0 && (
-              <div className="flex items-center gap-3 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-[#b0863e]">
-                <AlertTriangle className="size-4 shrink-0 text-[#b0863e]" />
-                <p className="text-sm flex-1">
-                  <span className="font-semibold">{stale.length} {stale.length === 1 ? 'preventivo' : 'preventivi'}</span>
-                  {' '}senza risposta da 14+ giorni.{' '}
-                  <Link href="/preventivi/scadenze" className="underline underline-offset-2 font-medium hover:text-[#8a6c33]">
-                    Manda un reminder →
-                  </Link>
-                </p>
-              </div>
+              <Avviso gravita="attenzione" sotto={<Link href="/preventivi/scadenze" className="underline underline-offset-2 font-medium">Manda un sollecito →</Link>}>
+                <b>{stale.length} {stale.length === 1 ? 'preventivo' : 'preventivi'}</b>
+                {' '}senza risposta da 14+ giorni.
+              </Avviso>
             )}
             {expiringSoon.map(d => (
-              <div key={d.id} className="flex items-center gap-3 rounded-lg border border-[#ecc9c9] bg-[#f5dede] px-4 py-3 text-[#b05656]">
-                <CalendarClock className="size-4 shrink-0 text-[#b05656]" />
-                <p className="text-sm flex-1">
-                  Il preventivo{' '}
-                  <Link href={`/preventivi/${d.id}`} className="font-semibold underline underline-offset-2 hover:text-[#8f4444]">
-                    {formatDocNumber(d.doc_number) !== '—' ? formatDocNumber(d.doc_number) : (d.title ?? 'Preventivo')}
-                  </Link>
-                  {' '}scade domani.
-                </p>
-              </div>
+              <Avviso key={d.id} gravita="attenzione" icon={<CalendarClock size={16} />}>
+                Il preventivo{' '}
+                <Link href={`/preventivi/${d.id}`} className="font-semibold underline underline-offset-2">
+                  {formatDocNumber(d.doc_number) !== '—' ? formatDocNumber(d.doc_number) : (d.title ?? 'Preventivo')}
+                </Link>
+                {' '}<b>scade domani</b>.
+              </Avviso>
             ))}
           </div>
         )}

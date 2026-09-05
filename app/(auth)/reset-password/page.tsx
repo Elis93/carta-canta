@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { resetPasswordAction } from '../actions'
+import { Avviso } from '@/components/shared/Avviso'
 
 function ResetPasswordForm() {
   const [state, formAction, isPending] = useActionState(resetPasswordAction, null)
@@ -27,37 +28,27 @@ function ResetPasswordForm() {
           lì spingeva a invalidare un link buono e a sbattere nel limite dei
           60 secondi di Supabase. Basta riaprire il link dall'email. */}
       {urlError === 'link_scaduto' && (motivo === 'troppi_tentativi' || motivo === 'errore_di_rete') && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 mb-4">
-          <AlertCircle className="size-4 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold">
-              {motivo === 'troppi_tentativi' ? 'Troppi tentativi' : 'Connessione non riuscita'}
-            </p>
-            <p className="text-xs text-amber-700 mt-0.5">
-              {motivo === 'troppi_tentativi'
-                ? 'Il link è ancora valido, ma per sicurezza serve una pausa: aspetta qualche minuto e riapri il link dall’email più recente.'
-                : 'La verifica non è arrivata a Supabase: il link è ancora valido. Riapri il link dall’email più recente e riprova.'}
-            </p>
-          </div>
-        </div>
+        <Avviso gravita="attenzione" icon={<AlertCircle size={16} />} className="mb-4" sotto={motivo === 'troppi_tentativi'
+          ? 'Il link è ancora valido, ma per sicurezza serve una pausa: aspetta qualche minuto e riapri il link dall’email più recente.'
+          : 'La verifica non è arrivata a Supabase: il link è ancora valido. Riapri il link dall’email più recente e riprova.'}>
+          <b>{motivo === 'troppi_tentativi' ? 'Troppi tentativi' : 'Connessione non riuscita'}</b>
+        </Avviso>
       )}
       {urlError === 'link_scaduto' && motivo !== 'troppi_tentativi' && motivo !== 'errore_di_rete' && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 mb-4">
-          <AlertCircle className="size-4 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold">Link non più valido</p>
-            <p className="text-xs text-amber-700 mt-0.5">
-              Ogni link di reset vale una sola volta e resta valido solo l&rsquo;ultimo
-              ricevuto: se hai più email di reset in casella, apri la più recente.
-              Altrimenti richiedine uno nuovo qui sotto.
-            </p>
+        <Avviso gravita="attenzione" icon={<AlertCircle size={16} />} className="mb-4" sotto={
+          <>
+            Ogni link di reset vale una sola volta e resta valido solo l&rsquo;ultimo
+            ricevuto: se hai più email di reset in casella, apri la più recente.
+            Altrimenti richiedine uno nuovo qui sotto.
             {motivo && (
-              <p className="text-[11px] text-amber-700/80 mt-1.5">
+              <p className="text-[11px] opacity-80 mt-1.5">
                 Codice: {motivo}
               </p>
             )}
-          </div>
-        </div>
+          </>
+        }>
+          <b>Link non più valido</b>
+        </Avviso>
       )}
 
       {state?.success ? (

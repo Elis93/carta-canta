@@ -16,6 +16,7 @@ import {
   type PublishResult,
 } from '@/lib/actions/marketplace'
 import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
+import { Avviso } from '@/components/shared/Avviso'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -124,12 +125,9 @@ export function MarketplaceProfileForm({
         </div>
 
         {published ? (
-          <div style={{ background: '#d4efe2', border: '1px solid #bce3d2', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#2f8a63', fontWeight: 600 }}>
-            ✓ Profilo pubblicato — i clienti della tua zona possono trovarti.{' '}
-            <Link href={`/professionisti/${workspaceId}`} style={{ color: '#2f8a63', textDecoration: 'underline', fontWeight: 600 }}>
-              Vedi come appare →
-            </Link>
-          </div>
+          <Avviso gravita="ok" dentro sotto={<Link href={`/professionisti/${workspaceId}`} style={{ textDecoration: 'underline', fontWeight: 600 }}>Vedi come appare →</Link>}>
+            <b>Profilo pubblicato</b> — i clienti della tua zona possono trovarti.
+          </Avviso>
         ) : (
           <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: 0 }}>
             Il profilo è <b>spento di default</b>: compili i dati e lo pubblichi quando vuoi.

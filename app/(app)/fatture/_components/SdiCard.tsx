@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import { riferimentoTrasmissione, termineTrasmissione, scadenzaLabel } from '@/lib/sdi/termini'
 import { spiegaErroreSdi } from '@/lib/sdi/errori-comuni'
 import { annullaTrasmissioneAutomaticaAction } from '@/lib/actions/documents'
+import { Avviso } from '@/components/shared/Avviso'
 import {
   Dialog,
   DialogContent,
@@ -257,16 +258,16 @@ export function SdiCard({
         // Senza conferma d'invio i due sotto-stati raccontano la verità al
         // posto del generico "Inviata" (che contraddirebbe il resto della card).
         if (isOrphan) {
-          return { bg: '#f5e9d0', color: '#b0863e', icon: <AlertTriangle size={15} />, label: 'Invio interrotto', sub: 'Sembra che la trasmissione non sia partita: puoi sbloccare la fattura e ritrasmetterla. Se però poco fa hai letto “fattura trasmessa: NON reinviarla”, non sbloccarla — scrivici da Aiuto e controlliamo noi.' }
+          return { gravita: 'attenzione' as const, icon: <AlertTriangle size={16} />, label: 'Invio interrotto', sub: 'Sembra che la trasmissione non sia partita: puoi sbloccare la fattura e ritrasmetterla. Se però poco fa hai letto “fattura trasmessa: NON reinviarla”, non sbloccarla — scrivici da Aiuto e controlliamo noi.' }
         }
         if (isUnconfirmed) {
           // Col marker "tentativo avviato" l'attesa NON si risolve da sola:
           // niente promessa dei 10 minuti, solo la via d'uscita vera.
-          return { bg: '#f5e9d0', color: '#b0863e', icon: <Clock size={15} />, label: 'Invio in verifica', sub: sdiAttempted
+          return { gravita: 'attenzione' as const, icon: <Clock size={16} />, label: 'Invio in verifica', sub: sdiAttempted
             ? 'Non riesco a confermare se la trasmissione è partita. Non reinviarla: scrivici da Aiuto e la verifichiamo noi.'
             : 'Sto ancora controllando se la trasmissione è partita. Ricontrolla tra 10 minuti; se resta così, scrivici da Aiuto.' }
         }
-        return { bg: '#d8e8fb', color: '#3f6fb0', icon: <Clock size={15} />, label: 'Inviata allo SdI', sub: 'In attesa dell’esito del Sistema di Interscambio.' }
+        return { gravita: 'info' as const, icon: <Clock size={16} />, label: 'Inviata allo SdI', sub: 'In attesa dell’esito del Sistema di Interscambio.' }
       case 'consegnata':
         // Copy rifatta (feedback Eli 26 lug: "non si capisce cosa è
         // successo, se è inviata al cliente o altro"). "Destinatario" è
@@ -274,7 +275,7 @@ export function SdiCard({
         // l'artigiano: qui vanno distinte le due cose, e va detto che
         // l'incasso è un'altra faccenda.
         return {
-          bg: '#d4efe2', color: '#2f8a63', icon: <CheckCircle2 size={15} />,
+          gravita: 'ok' as const, icon: <CheckCircle2 size={16} />,
           label: 'Consegnata al cassetto fiscale',
           sub: 'Il Sistema di Interscambio l’ha depositata nel cassetto fiscale del cliente: per l’Agenzia delle Entrate la fattura è emessa. Il pagamento è un’altra cosa: quando i soldi arrivano, ricordati di premere “Segna pagata”.',
         }
@@ -282,7 +283,7 @@ export function SdiCard({
         // Gemello di 'consegnata': "Mancata consegna" da solo suona come un
         // fallimento, mentre la fattura è a tutti gli effetti emessa.
         return {
-          bg: '#f5e9d0', color: '#b0863e', icon: <AlertTriangle size={15} />,
+          gravita: 'attenzione' as const, icon: <AlertTriangle size={16} />,
           label: 'Emessa, da ritirare nel cassetto fiscale',
           sub: 'Il cliente non ha un canale elettronico attivo, quindi il Sistema di Interscambio l’ha lasciata nel suo cassetto fiscale: la fattura è valida ed emessa lo stesso. Avvisalo che la trova lì. Il pagamento è un’altra cosa: quando arriva, premi “Segna pagata”.',
         }
@@ -291,7 +292,7 @@ export function SdiCard({
         // ritrasmessa entro 5 giorni dallo scarto, MANTENENDO numero e data
         // originali. Senza dirlo, l'artigiano non sa di avere una scadenza.
         return {
-          bg: '#f5dede', color: '#b05656', icon: <AlertTriangle size={15} />,
+          gravita: 'errore' as const, icon: <AlertTriangle size={16} />,
           label: 'Scartata dallo SdI',
           sub: `${sdiError ?? 'Il Sistema di Interscambio ha rifiutato la fattura.'} Correggi il dato segnalato e reinviala: va fatto entro 5 giorni, tenendo lo stesso numero e la stessa data.`,
         }
@@ -473,14 +474,13 @@ export function SdiCard({
           abbia sotto controllo la situazione e sia guidato») ── */}
       {termine && (
         <>
-          <div
-            style={{
-              background: termine.fuoriTermine ? '#f5dede' : termine.giorniRimasti <= 3 ? '#f5e9d0' : '#f4f3ef',
-              borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: 11,
-            }}
+          <Avviso
+            gravita={termine.fuoriTermine ? 'errore' : termine.giorniRimasti <= 3 ? 'attenzione' : 'info'}
+            icon={<Clock size={16} />}
+            dentro
+            style={{ marginBottom: 11 }}
           >
-            <Clock size={15} style={{ color: termine.fuoriTermine ? '#b05656' : termine.giorniRimasti <= 3 ? '#b0863e' : '#6f6d64', flexShrink: 0, marginTop: 1 }} />
-            <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.45, color: termine.fuoriTermine ? '#8a3d3d' : termine.giorniRimasti <= 3 ? '#8a6a2f' : '#55534b' }}>
+            <span>
               {termine.fuoriTermine ? (
                 <>
                   <b>Termine di trasmissione superato da {-termine.giorniRimasti === 1 ? 'un giorno' : `${-termine.giorniRimasti} giorni`}</b>{' '}
@@ -497,23 +497,17 @@ export function SdiCard({
                 </>
               )}
             </span>
-          </div>
+          </Avviso>
         </>
       )}
 
       {statusView && (
-        <div style={{ background: statusView.bg, borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: canSend ? 11 : 0 }}>
-          <span style={{ color: statusView.color, flexShrink: 0, marginTop: 1 }}>{statusView.icon}</span>
-          <span>
-            <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#2b2b2b' }}>
-              {statusView.label}
-              {sdiSentAt && sdiStatus === 'inviata' && (
-                <span style={{ fontWeight: 400, color: '#55534b' }}> · {new Date(sdiSentAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '')}</span>
-              )}
-            </span>
-            <span style={{ display: 'block', fontSize: 12, color: '#55534b', marginTop: 2, lineHeight: 1.45 }}>{statusView.sub}</span>
-          </span>
-        </div>
+        <Avviso gravita={statusView.gravita} icon={statusView.icon} dentro style={{ marginBottom: canSend ? 11 : 0 }} sotto={statusView.sub}>
+          <b>{statusView.label}</b>
+          {sdiSentAt && sdiStatus === 'inviata' && (
+            <span style={{ color: '#55534b' }}> · {new Date(sdiSentAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '')}</span>
+          )}
+        </Avviso>
       )}
 
       {/* Scarto tradotto in parole semplici (Eli, 11 ago: «rafforziamo aiuto
@@ -536,13 +530,13 @@ export function SdiCard({
           // Blocco NON legato al limite Free (review 25 lug M5): errore
           // transitorio, pausa del servizio o tetto Pro — il paywall qui
           // sarebbe falso e scorretto. Messaggio onesto, niente bottone.
-          <p style={{ fontSize: 12, color: '#55534b', lineHeight: 1.5, margin: 0, background: '#f5e9d0', borderRadius: 10, padding: '10px 12px' }}>
+          <Avviso gravita="attenzione" dentro>
             {quotaReason === 'unavailable'
               ? 'Non riesco a verificare le e-fatture disponibili in questo momento: riprova tra qualche minuto.'
               : quotaReason === 'budget_paused'
                 ? 'Le e-fatture di prova del piano gratuito sono momentaneamente in pausa: riprendono il mese prossimo. Con Pro sono sempre disponibili.'
                 : 'Per protezione, il tuo account ha un tetto di sicurezza mensile sugli invii e questo mese è stato raggiunto. Non hai fatto niente di sbagliato: scrivici da Aiuto (supporto@cartacanta.app) e lo alziamo subito.'}
-          </p>
+          </Avviso>
         ) : quotaExhausted ? (
           <>
             <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '0 0 11px' }}>
@@ -630,14 +624,10 @@ export function SdiCard({
             {/* Avviso fiscale SEMPRE visibile (regola di Eli sui ⓘ): chi sta
                 per trasmettere fuori termine deve saperlo PRIMA del tocco. */}
             {termine?.fuoriTermine && (
-              <div style={{ background: '#f5e9d0', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start' }}>
-                <AlertTriangle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 1 }} />
-                <span style={{ fontSize: 12, color: '#8a6a2f', lineHeight: 1.45 }}>
-                  I 12 giorni per la trasmissione sono passati (andava trasmessa entro il{' '}
-                  {scadenzaLabel(termine.scadenza)}): è un&rsquo;emissione tardiva. Trasmettila
-                  comunque e parlane col commercialista per il ravvedimento.
-                </span>
-              </div>
+              <Avviso gravita="attenzione" icon={<AlertTriangle size={16} />} dentro sotto="Trasmettila comunque e parlane col commercialista per il ravvedimento.">
+                <b>I 12 giorni per la trasmissione sono passati</b> (andava trasmessa entro il{' '}
+                {scadenzaLabel(termine.scadenza)}): è un&rsquo;emissione tardiva.
+              </Avviso>
             )}
             <div>
               <label style={fieldLabel} htmlFor="sdi-dest">Codice destinatario (7 caratteri)</label>

@@ -34,6 +34,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { preloadClientsAction } from '@/lib/actions/clients'
 import { useAnchorRect, useCloseOnOutsideMouseDown } from '@/components/shared/dropdown-portal'
 import { docTypeLabel } from '@/lib/utils'
+import { Avviso } from '@/components/shared/Avviso'
 
 // ── Tipi ──────────────────────────────────────────────────────────────────
 
@@ -530,17 +531,14 @@ export function SendEmailDialog({
         {/* ── Conflitto cliente: stessa email, nome diverso ── */}
         {clientConflict ? (
           <div className="space-y-4 py-2">
-            <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
-              <AlertCircle className="size-4 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold">Email già associata a un altro contatto</p>
-                <p className="text-xs mt-0.5">
-                  L&apos;indirizzo <strong>{to}</strong> appartiene già al cliente{' '}
-                  <strong>{clientConflict.name}</strong>. Non è possibile avere due contatti
-                  con la stessa email. Vuoi inviare a questo contatto?
-                </p>
-              </div>
-            </div>
+            <Avviso
+              gravita="attenzione"
+              icon={<AlertCircle size={16} />}
+              dentro
+              sotto={<>L&apos;indirizzo <b>{to}</b> appartiene già al cliente <b>{clientConflict.name}</b>. Non è possibile avere due contatti con la stessa email. Vuoi inviare a questo contatto?</>}
+            >
+              <b>Email già associata a un altro contatto</b>
+            </Avviso>
             <div className="flex flex-col gap-2">
               <Button
                 onClick={() => handleSend(true)}

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { confirmResetPasswordAction } from '../../actions'
 import { PasswordStrength, isPasswordStrong } from '@/components/shared/PasswordStrength'
+import { Avviso } from '@/components/shared/Avviso'
 
 function ConfirmForm() {
   const [state, formAction, isPending] = useActionState(confirmResetPasswordAction, null)
@@ -46,36 +47,21 @@ function ConfirmForm() {
 
         {/* FIX-2: banner "stessa password" con due opzioni */}
         {state?.samePassword && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-3">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="size-4 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold">La password inserita è uguale a quella attuale.</p>
-                <p className="text-xs text-amber-700 mt-0.5">
-                  Vuoi mantenerla o sceglierne una nuova?
-                </p>
+          <Avviso gravita="attenzione" icon={<AlertCircle size={16} />} sotto={
+            <>
+              Vuoi mantenerla o sceglierne una nuova?
+              <div className="flex gap-2 flex-wrap mt-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/dashboard">Mantieni password attuale</Link>
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setPassword('')}>
+                  Scegli una nuova password
+                </Button>
               </div>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="border-amber-300 text-amber-800 hover:bg-amber-100 hover:text-amber-900"
-              >
-                <Link href="/dashboard">Mantieni password attuale</Link>
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="text-amber-700 hover:bg-amber-100 hover:text-amber-900"
-                onClick={() => setPassword('')}
-              >
-                Scegli una nuova password
-              </Button>
-            </div>
-          </div>
+            </>
+          }>
+            <b>La password inserita è uguale a quella attuale.</b>
+          </Avviso>
         )}
 
         {state?.error && (

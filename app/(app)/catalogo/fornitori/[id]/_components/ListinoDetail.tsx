@@ -20,6 +20,7 @@ import {
 } from '@/lib/actions/fornitori'
 import { prezzoProposto, giorniAllaScadenza, riepilogoRinnovo } from '@/lib/fornitori/listino'
 import { parseImportoIt } from '@/lib/utils'
+import { Avviso } from '@/components/shared/Avviso'
 
 type ListRow = { id: string; name: string; markup_pct: number | null; valid_until: string | null }
 type ItemRow = { id: string; code: string | null; description: string; unit: string; unit_cost: number }
@@ -342,9 +343,9 @@ export function ListinoDetail({ list, items, ai }: {
                   i PDF lunghi richiedono fino a un minuto e chiudere la
                   pagina butta via il lavoro (il risultato arriva QUI). */}
               {phase === 'extracting' && (
-                <p style={{ fontSize: 12, color: '#b0863e', background: '#f5e9d0', border: '1px solid #e8d6ad', borderRadius: 9, padding: '8px 10px', lineHeight: 1.5, margin: '8px 0 0' }}>
-                  Per i PDF lunghi possono servire fino a un minuto: non chiudere la pagina, le voci compaiono qui appena pronte.
-                </p>
+                <Avviso gravita="attenzione" dentro style={{ margin: '8px 0 0' }}>
+                  Per i PDF lunghi possono servire fino a un minuto: <b>non chiudere la pagina</b>, le voci compaiono qui appena pronte.
+                </Avviso>
               )}
               <input
                 ref={fileRef}
@@ -362,9 +363,9 @@ export function ListinoDetail({ list, items, ai }: {
           ) : (
             <>
               {importNote && (
-                <p style={{ fontSize: 12, color: '#b0863e', background: '#f5e9d0', border: '1px solid #e8d6ad', borderRadius: 9, padding: '8px 10px', lineHeight: 1.5, margin: '0 0 10px' }}>
+                <Avviso gravita="attenzione" dentro style={{ margin: '0 0 10px' }}>
                   {importNote}
-                </p>
+                </Avviso>
               )}
               <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, margin: '0 0 10px' }}>
                 Controlla le voci: qui i numeri sono i <b>COSTI</b>{' '}del fornitore. Il codice articolo aiuta i prossimi rinnovi.

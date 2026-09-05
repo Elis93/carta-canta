@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { FileText, ArrowRight, Loader2, AlertTriangle, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDocNumber } from '@/lib/utils'
+import { Avviso } from '@/components/shared/Avviso'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -101,8 +102,7 @@ export function CreateFromPreventivoButton({ preventivi, autoOpen = false, fullW
                 Questo preventivo non è ancora accettato.
               </DialogDescription>
             </DialogHeader>
-            <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 flex items-start gap-3 text-sm text-[#b0863e]">
-              <AlertTriangle className="size-4 mt-0.5 shrink-0" />
+            <Avviso gravita="attenzione" icon={<AlertTriangle size={16} />} dentro>
               <p>
                 Il preventivo{' '}
                 <strong>
@@ -113,7 +113,7 @@ export function CreateFromPreventivoButton({ preventivi, autoOpen = false, fullW
                 è in stato <strong>{STATUS_LABEL[pendingConfirm.status]?.label ?? pendingConfirm.status}</strong>.
                 Procedendo verrà automaticamente marcato come <strong>accettato</strong>{' '}e verrà creata la fattura.
               </p>
-            </div>
+            </Avviso>
             <div className="flex gap-2 justify-end pt-1">
               <Button
                 variant="outline"

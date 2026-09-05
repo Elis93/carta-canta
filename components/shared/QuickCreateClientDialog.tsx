@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Avviso } from '@/components/shared/Avviso'
 
 // Stesso tipo usato da ClientAutocomplete
 export type ClientHit = {
@@ -136,8 +137,7 @@ export function QuickCreateClientDialog({
         {/* ── Vista conferma duplicato ───────────────────────── */}
         {showDuplicate && dup ? (
           <div className="space-y-4 pt-1">
-            <div className="flex items-start gap-2 text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">
-              <AlertTriangle className="size-4 mt-0.5 shrink-0" />
+            <Avviso gravita="attenzione" icon={<AlertTriangle size={16} />} dentro>
               <div className="text-sm">
                 {state?.duplicateField === 'email' ? (
                   <p className="font-medium">
@@ -163,7 +163,7 @@ export function QuickCreateClientDialog({
                   </p>
                 )}
               </div>
-            </div>
+            </Avviso>
 
             <div className="rounded-md border bg-muted/30 px-4 py-3 text-sm space-y-0.5">
               <p className="font-semibold text-foreground">

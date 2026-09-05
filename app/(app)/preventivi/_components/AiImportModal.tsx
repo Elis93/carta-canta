@@ -17,6 +17,7 @@ import {
   MAX_FILE_SIZE_MB,
 } from '@/lib/ai/types'
 import type { ExtractedItem, ExtractResult } from '@/lib/ai/types'
+import { Avviso } from '@/components/shared/Avviso'
 
 interface AiImportModalProps {
   open: boolean
@@ -390,10 +391,9 @@ export function AiImportModal({ open, onClose, onConfirm }: AiImportModalProps) 
 
             {/* Avviso voci da controllare (F6) */}
             {editedItems.some((i) => i.confidence < 0.8) && (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-                <AlertCircle className="size-4 shrink-0 mt-0.5" />
-                Rileggi le voci segnate «Da controllare»: l&rsquo;AI potrebbe non aver letto bene.
-              </div>
+              <Avviso gravita="attenzione" icon={<AlertCircle size={16} />} dentro>
+                Rileggi le voci segnate <b>«Da controllare»</b>: l&rsquo;AI potrebbe non aver letto bene.
+              </Avviso>
             )}
 
             {/* CTA */}

@@ -9,6 +9,7 @@ import { Copy, Check, Gift, Users, Star, Clock, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
+import { Avviso } from '@/components/shared/Avviso'
 
 interface ReferralPageClientProps {
   code:             string | null
@@ -308,14 +309,10 @@ export function ReferralPageClient({
 
       {/* Banner premi in attesa */}
       {pendingRewards > 0 && (
-        <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e] flex items-center gap-2">
-          <Clock className="size-4 shrink-0" />
-          <span>
-            Hai <strong>{pendingRewards}</strong>{' '}
-            {pendingRewards === 1 ? 'beneficio in attesa' : 'benefici in attesa'}.
-            {' '}Verrà applicato automaticamente il 1° del mese successivo.
-          </span>
-        </div>
+        <Avviso gravita="info" icon={<Clock size={16} />} sotto="Verrà applicato automaticamente il 1° del mese successivo.">
+          Hai <b>{pendingRewards}</b>{' '}
+          {pendingRewards === 1 ? 'beneficio in attesa' : 'benefici in attesa'}.
+        </Avviso>
       )}
 
       {/* Stato vuoto */}

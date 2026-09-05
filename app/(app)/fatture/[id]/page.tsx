@@ -40,6 +40,7 @@ import { ChiediRecensioneButton } from '../_components/ChiediRecensioneButton'
 import { formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
 import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
+import { Avviso } from '@/components/shared/Avviso'
 import { PosticipaSollecito } from '@/components/shared/PosticipaSollecito'
 import { docNumberSlug } from '@/lib/documents/numero'
 import { riepilogoIva } from '@/lib/fiscal/calcoli'
@@ -598,15 +599,16 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           bloccate. Il dato Pro resta salvato — tornando a Pro riappare usabile. */}
       {freeLocked && (
         <div style={{ margin: '14px 15px 0' }} className="lg:mx-6 lg:mt-6">
-          <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#8a5a00]">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-            <div>
-              <b>Fattura bloccata</b> — è oltre le 8 del piano gratuito. Puoi aprirla e consultarla, ma non modificarla, inviarla, scaricarla o duplicarla.{' '}
+          <Avviso
+            gravita="errore"
+            sotto={
               <Link href={PRO_LOCK_HREF} style={{ fontWeight: 600, textDecoration: 'underline' }}>
                 Torna a Pro per sbloccarla
               </Link>
-            </div>
-          </div>
+            }
+          >
+            <b>Fattura bloccata</b>: è oltre le 8 del piano gratuito. Puoi aprirla e consultarla, ma non modificarla, inviarla, scaricarla o duplicarla.
+          </Avviso>
         </div>
       )}
 
@@ -790,13 +792,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             liberi, ma chi supera il residuo lo deve sapere PRIMA di provare a
             trasmettere, non dall'errore dopo). */}
         {notaOltreResiduo && (
-          <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#8a6a2f]" style={{ lineHeight: 1.5 }}>
-            <b>Questa nota supera il residuo stornabile.</b>{' '}
-            Sulla fattura d&rsquo;origine restano da stornare{' '}
-            <b>€&nbsp;{notaOltreResiduo.residuo.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>{' '}
-            (totale meno le altre note attive): con questi importi la trasmissione
-            allo SdI verrà bloccata. Riduci le voci della nota entro il residuo.
-          </div>
+          <Avviso
+            gravita="attenzione"
+            icon={<AlertTriangle size={16} />}
+            sotto={<>Sulla fattura d&rsquo;origine restano da stornare <b style={{ fontWeight: 600 }}>€&nbsp;{notaOltreResiduo.residuo.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b> (totale meno le altre note attive): con questi importi la trasmissione allo SdI verrà bloccata. Riduci le voci della nota entro il residuo.</>}
+          >
+            <b>Questa nota supera il residuo stornabile.</b>
+          </Avviso>
         )}
 
         {/* ── BANNER DI STATO (pagata/annullata) — IN CIMA (richiesta Eli
@@ -804,13 +806,17 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             PRIMA del documento, non dopo — stava in fondo, sotto il foglio e
             il preventivo collegato. */}
         {(doc.status === 'accepted' || doc.status === 'rejected') && (
-          <div className="rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
-            {doc.status === 'accepted'
-              ? 'Fattura pagata — nessuna modifica consentita.'
+          <Avviso
+            gravita={doc.status === 'accepted' ? 'ok' : 'errore'}
+            sotto={doc.status === 'accepted'
+              ? <>Se l&rsquo;incasso è sbagliato: «Segna come non pagata».</>
               : canReactivate
-                ? 'Fattura annullata. Puoi riattivarla (torna in bozza) finché non è stata trasmessa allo SdI.'
-                : 'Fattura annullata e già trasmessa allo SdI: per correggerla serve una nota di credito.'}
-          </div>
+                ? 'Puoi riattivarla (torna in bozza) finché non è stata trasmessa allo SdI.'
+                : 'Già trasmessa allo SdI: per correggerla serve una nota di credito.'}
+          >
+            <b>{doc.status === 'accepted' ? 'Fattura pagata' : 'Fattura annullata'}</b>
+            {doc.status === 'accepted' ? ' — non si modifica più.' : ''}
+          </Avviso>
         )}
 
         {/* ── BANNER MODIFICATO dopo l'invio (C2) — IN ALTO (richiesta Eli
@@ -820,22 +826,20 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             bloccato dal server (trigger 057 / guardia SdI) e il bottone
             fallirebbe per sempre. */}
         {doc.updated_after_send_at && doc.status !== 'accepted' && !sdiTransmitted && (
-          <div className="rounded-lg border border-[#e2d7f4] bg-[#f6f2fc] px-4 py-3 text-sm">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#ddd0f4] px-2.5 py-1 text-[13px] font-bold text-[#161616]">
-              <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
-              Modificata — cliente non avvisato
-            </span>
-            <p className="mt-2 text-[#3f3d36]">
-              Documento aggiornato il{' '}
-              {new Date(doc.updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo
-              l&rsquo;invio al cliente. Chi riapre il link vede già la versione aggiornata, ma il
-              cliente non ha ricevuto alcuna comunicazione: si consiglia di inviare nuovamente
-              la fattura.
-            </p>
-            <div className="mt-2">
-              <RestoreVersionButton documentId={id} docType={doc.doc_type} />
-            </div>
-          </div>
+          <Avviso
+            gravita="attenzione"
+            icon={<AlertTriangle size={16} />}
+            sotto={
+              <>
+                Aggiornata il {new Date(doc.updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo l&rsquo;invio. Chi riapre il link vede già la versione nuova, ma nessuno l&rsquo;ha avvisato: rimandagliela.
+                <div className="mt-2">
+                  <RestoreVersionButton documentId={id} docType={doc.doc_type} />
+                </div>
+              </>
+            }
+          >
+            <b>Modificata — il cliente non lo sa</b>
+          </Avviso>
         )}
 
         {/* ── MOBILE: IL FOGLIO (mockup B «Foglio», Eli 25 ago) — in lettura il
@@ -1183,15 +1187,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         {/* Se la card SdI è montata, il promemoria vive LÌ (feedback Eli
             26 lug): questo banner resta solo come ripiego quando la
             fatturazione elettronica in app è spenta. */}
-        {!sdiProps && !isDraft && !isCancelled && !sdiTransmitted && (
-          <div className={`${editing ? 'hidden lg:flex' : 'flex'} items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-xs text-[#b0863e]`}>
-            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-            <span>
-              Questo documento non sostituisce la fattura elettronica. Ricordati di trasmetterla tramite SdI
-              (cassetto fiscale o commercialista).
-            </span>
-          </div>
-        )}
+        {/* ⚠️ Il ripiego «non sostituisce la fattura elettronica» (FIX-7bis)
+            è stato TOLTO il 5 set: Eli l'aveva già tolto dalla card SdI il
+            26 ago, e la stessa frase come banner a SdI spento era il terzo
+            modo di dirla — lo dicono il ⓘ della card e le FAQ. */}
 
         {/* Link al preventivo di origine (desktop — su mobile è la card "Preventivo collegato" in cima) */}
         <div className="hidden lg:block">
@@ -1244,13 +1243,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         ) : (
           // Nota di credito senza riferimento: è un problema fiscale, non un
           // collegamento mancante — senza, lo SdI non sa cosa si sta stornando.
-          <div className="flex items-start gap-2 rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#b0863e]">
-            <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-            <span>
-              Questa nota di credito non è collegata a nessuna fattura: così non si
-              può trasmettere. Creala di nuovo dalla fattura da stornare.
-            </span>
-          </div>
+          <Avviso gravita="errore" sotto="Creala di nuovo dalla fattura da stornare.">
+            <b>Nota di credito senza fattura collegata</b>: così non si può trasmettere.
+          </Avviso>
         )}
         </div>
 
@@ -1301,11 +1296,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* Form fattura — su mobile visibile solo con ?edit=1 (e non per accepted/rejected) */}
         {sdiTransmitted ? (
-          <div className="hidden lg:block rounded-lg border border-[#e8d6ad] bg-[#f5e9d0] px-4 py-3 text-sm text-[#8a6a2f]">
-            {isNotaCredito
-              ? 'Questa nota di credito è stata trasmessa allo SdI: non è più modificabile.'
-              : 'Questa fattura è stata trasmessa allo SdI: non è più modificabile. Per correggerla usa la nota di credito, qui sopra.'}
-          </div>
+          <Avviso gravita="info" desktopOnly sotto={isNotaCredito ? undefined : 'Per correggerla usa la nota di credito, qui sopra.'}>
+            <b>{isNotaCredito ? 'Nota di credito trasmessa allo SdI' : 'Fattura trasmessa allo SdI'}</b>: non è più modificabile.
+          </Avviso>
         ) : (
         <div
           className={editing ? undefined : 'hidden lg:block'}

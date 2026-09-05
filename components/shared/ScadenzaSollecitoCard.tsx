@@ -8,6 +8,7 @@ import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency, formatDocNumber } from '@/lib/utils'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
 import { PosticipaSollecito } from './PosticipaSollecito'
+import { Avviso } from '@/components/shared/Avviso'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -302,11 +303,8 @@ export function ScadenzaSollecitoCard({
         <PosticipaSollecito documentId={documentId} snoozeUntil={snoozeUntil} remindersOff={remindersOff} docType={docType} />
 
         {error && (
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{ marginTop: 10, fontSize: 12, color: '#b05656', background: '#f5dede', borderRadius: 8, padding: '6px 10px' }}
-          >
-            {error}
+          <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10 }}>
+            <Avviso gravita="errore" dentro role="alert">{error}</Avviso>
           </div>
         )}
       </div>
