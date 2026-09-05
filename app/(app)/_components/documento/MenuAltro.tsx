@@ -4,7 +4,7 @@
 // MenuAltro — il «⋯» della pagina del documento: un foglio dal basso con
 // le azioni secondarie (mockup A, Eli 5 set 2026). Tutto ciò che non è
 // «il passo successivo» sta qui: sollecito, annulla, collega, archivia,
-// elimina, e i due ripieghi «segna accettato a voce / rifiutato».
+// elimina, e i due ripieghi «segna accettato / rifiutato».
 //
 // ⚠️ In PORTAL su <body> (regola B.2): un fixed dentro la pagina verrebbe
 // ritagliato. Le righe sono i componenti-azione GIÀ esistenti vestiti da

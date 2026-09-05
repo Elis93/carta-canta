@@ -101,7 +101,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <b>Segna come non pagata</b>{' '}(più discreto: serve solo a correggere).
       <br /><br />
       Tutto il resto sta nel menu <b>⋯</b>: sollecito, annulla, collega a un preventivo, scheda
-      lavoro, archivia, elimina — e sul preventivo i due ripieghi <b>Segna accettato a voce</b>{' '}/{' '}
+      lavoro, archivia, elimina — e sul preventivo i due ripieghi <b>Segna accettato</b>{' '}/{' '}
       <b>Segna rifiutato</b>, per il cliente che risponde al telefono invece che dal link. Sotto, le
       tendine (Cliente, Fattura elettronica, Foto, Collegati, Cronologia) e in fondo{' '}
       <b>Elimina</b>.</>,
@@ -235,7 +235,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <b>Invia al cliente</b>: l&rsquo;app ti avvisa che era rifiutato e, alla conferma, lo riporta{' '}
       <b>Inviato</b>{' '}— il link del cliente torna attivo, può accettarlo di nuovo e la validità
       riparte. Se invece il cliente ti dice a voce che ha <b>cambiato idea</b>, sul preventivo
-      rifiutato apri il menu <b>⋯</b>{' '}e tocca <b>Segna accettato a voce</b>: registra
+      rifiutato apri il menu <b>⋯</b>{' '}e tocca <b>Segna accettato</b>: registra
       l&rsquo;accettazione senza rimandare nulla.
       Il rifiuto ti arriva anche nella <b>campanella</b>{' '}in Home, oltre che per email, e ogni
       passaggio resta scritto in cronologia.</>,
@@ -503,7 +503,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       fattura.
       <br /><br />
       Se il cliente ti risponde a voce, puoi segnarlo tu: apri il preventivo, nel menu{' '}
-      <b>⋯</b>{' '}tocca <b>Segna accettato a voce</b>{' '}e scegli quale proposta ha
+      <b>⋯</b>{' '}tocca <b>Segna accettato</b>{' '}e scegli quale proposta ha
       accettato. Se sbagli, <b>Riporta in bozza</b>{' '}(sempre nel menu ⋯) e tornano
       disponibili tutte.</>,
   },

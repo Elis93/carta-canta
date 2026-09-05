@@ -782,12 +782,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     mai il link: fuori dalla pagina, come chiesto da Eli. */}
                 {(doc.status === 'sent' || doc.status === 'viewed') && !freeLocked && (
                   <div data-keep-open>
-                    <MobileStatusChips documentId={id} chipBase={rigaMenu} aVoce />
+                    <MobileStatusChips documentId={id} chipBase={rigaMenu} />
                   </div>
                 )}
                 {doc.status === 'rejected' && !freeLocked && (
                   <div data-keep-open>
-                    <MobileStatusChips documentId={id} chipBase={rigaMenu} only="accepted" aVoce />
+                    <MobileStatusChips documentId={id} chipBase={rigaMenu} only="accepted" />
                   </div>
                 )}
                 {/* Riporta in bozza — SOLO accettazione manuale: mai se il

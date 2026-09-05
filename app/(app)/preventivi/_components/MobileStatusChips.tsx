@@ -13,11 +13,9 @@ interface MobileStatusChipsProps {
       l'unico esito ancora registrabile è il ripensamento del cliente
       (Eli 25 ago: «cambiare idea dopo il rifiuto e accettarlo»). */
   only?: 'accepted'
-  /** Nel menu «⋯» (pagina A): «Segna accettato a voce» — è il ripiego per il cliente che risponde al telefono. */
-  aVoce?: boolean
 }
 
-export function MobileStatusChips({ documentId, chipBase, only, aVoce }: MobileStatusChipsProps) {
+export function MobileStatusChips({ documentId, chipBase, only }: MobileStatusChipsProps) {
   const router = useRouter()
   // ⚠️ Non basta sapere CHE si sta caricando: con due proposte la rotella
   // compariva su entrambi i tasti (Eli, 9 ago — stesso difetto del rinvio
@@ -120,7 +118,7 @@ export function MobileStatusChips({ documentId, chipBase, only, aVoce }: MobileS
         {loading === 'accepted'
           ? <Loader2 size={18} className="animate-spin" style={{ color: '#2f8a63' }} />
           : <Check size={18} style={{ color: '#2f8a63' }} />}
-        {aVoce ? 'Segna accettato a voce' : 'Segna accettato'}
+        Segna accettato
       </button>
       {only !== 'accepted' && (
         <button
