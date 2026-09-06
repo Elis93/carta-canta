@@ -716,7 +716,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                       title: doc.title ?? null,
                       status: doc.status,
                       client_email: client?.email ?? null,
-                      // Stesso predicato FES di status route / RiportaInBozza:
+                      // Stesso predicato FES di status route / SegnaNonAccettato:
                       // firma O IP di accettazione = prova del cliente.
                       signedProof: !!(doc.signer_name || doc.accepted_ip),
                     }}

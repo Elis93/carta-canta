@@ -225,7 +225,7 @@ export async function POST(
   }
 
   // ── Cronologia: l'accettazione del cliente resta scritta (Eli 26 ago,
-  // gemella del rifiuto): senza questa voce, un «Riporta in bozza» faceva
+  // gemella del rifiuto): senza questa voce, un «Segna come non accettato» faceva
   // sparire dalla storia QUANDO il cliente aveva accettato (e con quale
   // proposta). Best-effort.
   await logAccettazioneCliente(admin, doc.id, {

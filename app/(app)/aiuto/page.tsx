@@ -504,8 +504,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <br /><br />
       Se il cliente ti risponde a voce, puoi segnarlo tu: apri il preventivo, nel menu{' '}
       <b>⋯</b>{' '}tocca <b>Segna accettato</b>{' '}e scegli quale proposta ha
-      accettato. Se sbagli, <b>Riporta in bozza</b>{' '}(sempre nel menu ⋯) e tornano
-      disponibili tutte.</>,
+      accettato. Se sbagli, <b>Segna come non accettato</b>{' '}(sempre nel menu ⋯): il
+      preventivo torna in attesa, il cliente può ancora rispondere dal link e tornano
+      disponibili tutte le proposte.</>,
   },
   {
     q: 'Cosa fa «Ordina: Scadenza vicina»?',

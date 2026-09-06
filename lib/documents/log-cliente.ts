@@ -65,7 +65,7 @@ export async function logRifiutoCliente(
   await appendVoce(supabase, documentId, { type: 'client_rejected', reason: reason ?? null })
 }
 
-/** Accettazione dal link pubblico: resta anche dopo un «Riporta in bozza». */
+/** Accettazione dal link pubblico: resta anche dopo un «Segna come non accettato». */
 export async function logAccettazioneCliente(
   supabase: unknown,
   documentId: string,

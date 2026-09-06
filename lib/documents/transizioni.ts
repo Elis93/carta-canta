@@ -66,7 +66,7 @@ export function spiegaTransizioneRifiutata(
     return 'Questa fattura è già pagata. Per correggere, usa «Segna come non pagata»: azzera l’incasso e la riporta in bozza.'
   }
   if (kind === 'preventivo' && da === 'accepted') {
-    return 'Questo preventivo è già accettato. Per riaprirlo usa «Riporta in bozza» (disponibile solo se l’avevi segnato accettato tu, non se l’ha firmato il cliente).'
+    return 'Questo preventivo è già accettato. Per annullare usa «Segna come non accettato»: torna in attesa (disponibile solo se l’avevi segnato accettato tu, non se l’ha firmato il cliente).'
   }
   if (kind === 'fattura' && da === 'rejected') {
     return 'Questa fattura è annullata. Per rimetterla in circolo usa «Riattiva»: torna in bozza, modificabile e reinviabile.'

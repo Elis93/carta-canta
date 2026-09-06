@@ -69,8 +69,8 @@ export function MobileStatusChips({ documentId, chipBase, only }: MobileStatusCh
           Questo preventivo ne ha più d&rsquo;una. Scegli quella che il cliente ha
           accettato: il <b style={{ color: '#55534b' }}>totale</b>{' '}diventa quello di
           quella proposta, ed è la sola che finisce in fattura. L&rsquo;altra resta
-          scritta nel preventivo: se sbagli, <b style={{ color: '#55534b' }}>Riporta in
-          bozza</b>{' '}e tornano disponibili tutte e due.
+          scritta nel preventivo: se sbagli, <b style={{ color: '#55534b' }}>Segna come non
+          accettato</b>{' '}(nel menu ⋯): torna in attesa e tornano disponibili tutte e due.
         </p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {scelta.map((t) => (

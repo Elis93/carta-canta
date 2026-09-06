@@ -15,7 +15,7 @@ import { StatusBadge } from '../_components/StatusBadge'
 import { StatusChangeDropdown, LOCKED_TRANSITIONS } from '../_components/StatusChangeDropdown'
 import { ConvertiFatturaButton } from '../_components/ConvertiFatturaButton'
 import { ApriLavoroButton } from '../_components/ApriLavoroButton'
-import { RiportaInBozzaButton } from '../_components/RiportaInBozzaButton'
+import { SegnaNonAccettatoButton } from '../_components/SegnaNonAccettatoButton'
 import { AnteprimaButton } from '../_components/AnteprimaButton'
 import { AccontoCard } from '../_components/AccontoCard'
 import { WorkPhotosCard } from '../_components/WorkPhotosCard'
@@ -137,7 +137,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   // Le aperture del cliente restano SEMPRE in cronologia, anche se il
   // documento torna in bozza (Eli 3 ago notte: "è la storia di quel
   // documento, nulla si cancella") — prima il gate status!=='draft' le
-  // faceva sparire dopo un "Riporta in bozza".
+  // faceva sparire dopo un «Segna come non accettato».
   const views = viewsRaw
 
   // Conversazione col cliente (messaggi dalla pagina pubblica + risposte).
@@ -790,10 +790,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                     <MobileStatusChips documentId={id} chipBase={rigaMenu} only="accepted" />
                   </div>
                 )}
-                {/* Riporta in bozza — SOLO accettazione manuale: mai se il
-                    cliente ha accettato dal link (prova FES) o con fattura. */}
+                {/* Segna come non accettato (torna in attesa) — SOLO accettazione
+                    manuale: mai se il cliente ha accettato dal link (prova FES)
+                    o con fattura. */}
                 {doc.status === 'accepted' && !fatturaOrigin && !doc.signer_name && doc.accepted_ip == null && !freeLocked && (
-                  <RiportaInBozzaButton documentId={id} triggerStyle={rigaMenu} />
+                  <SegnaNonAccettatoButton documentId={id} triggerStyle={rigaMenu} />
                 )}
                 {linkedLavoroId ? (
                   <RigaMenu icon={<Hammer size={18} />} href={`/lavori/${linkedLavoroId}`}>Apri la scheda lavoro</RigaMenu>
@@ -1078,11 +1079,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !linkedLavoroId && (
               <ApriLavoroButton documentId={id} />
             )}
-            {/* Riporta in bozza — solo accettazione manuale, senza fattura
-                collegata. Bloccato su Free oltre gli 8 (riaprirebbe alla
-                modifica un documento in sola lettura). */}
+            {/* Segna come non accettato (torna in attesa) — solo accettazione
+                manuale, senza fattura collegata. Bloccato su Free oltre gli 8
+                (riaprirebbe un documento in sola lettura). */}
             {doc.status === 'accepted' && doc.doc_type !== 'fattura' && !fatturaOrigin && !doc.signer_name && doc.accepted_ip == null && !freeLocked && (
-              <RiportaInBozzaButton documentId={id} />
+              <SegnaNonAccettatoButton documentId={id} />
             )}
           </div>
         </div>

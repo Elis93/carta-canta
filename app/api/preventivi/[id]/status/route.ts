@@ -17,11 +17,14 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   // "Riapri (torna a Inviato)" dal dropdown — senza questa chiave il bottone
   // esisteva ma la PATCH rispondeva sempre 409.
   expired:  ['sent'],
-  // "Riporta in bozza" (22 lug 2026): SOLO per accettazioni MANUALI
-  // ("Segna accettato" per errore) — guardie più sotto: mai se il cliente
-  // ha accettato/firmato dalla pagina pubblica (signer_name/accepted_ip =
-  // prova FES da non distruggere) e mai con una fattura collegata.
-  accepted: ['draft'],
+  // «Segna come non accettato» (Eli 5 set 2026, prima «Riporta in bozza»
+  // dal 22 lug): un «Segna accettato» fatto per ERRORE si annulla e il
+  // preventivo torna IN ATTESA (Inviato), non in bozza — il link del cliente
+  // resta valido e lui può ancora rispondere. SOLO accettazioni MANUALI:
+  // guardie più sotto — mai se il cliente ha accettato/firmato dalla pagina
+  // pubblica (signer_name/accepted_ip = prova FES da non distruggere) e mai
+  // con una fattura collegata.
+  accepted: ['sent'],
 }
 
 export async function PATCH(
@@ -44,7 +47,7 @@ export async function PATCH(
   // Carica documento — RLS garantisce già che solo i workspace_members lo vedano
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, status, workspace_id, validity_days, doc_type, signer_name, accepted_ip, document_log')
+    .select('id, status, workspace_id, validity_days, doc_type, signer_name, accepted_ip, document_log, expires_at')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle()
@@ -112,9 +115,9 @@ export async function PATCH(
 
   // Downgrade Pro→Free: su un documento in sola lettura (oltre gli 8) restano
   // consentite SOLO le registrazioni di esito (segna accettato/rifiutato/
-  // scaduto = contabilità), non le RIATTIVAZIONI: «Riporta in bozza» (→draft,
-  // riaprirebbe alla modifica) e «Riapri» (→sent, un nuovo invio) scavalcherebbero
-  // il blocco. La UI le nasconde già; qui si chiude il varco dell'API diretta.
+  // scaduto = contabilità), non le RIATTIVAZIONI: «Segna come non accettato»
+  // e «Riapri» (→sent, il link torna vivo) scavalcherebbero il blocco. La UI
+  // le nasconde già; qui si chiude il varco dell'API diretta.
   if (body.status === 'draft' || body.status === 'sent') {
     const { data: ws } = await supabase
       .from('workspaces').select('plan').eq('id', doc.workspace_id).maybeSingle()
@@ -123,12 +126,15 @@ export async function PATCH(
     }
   }
 
-  // ── "Riporta in bozza" da accettato: SOLO accettazioni manuali ──
-  const unaccepting = doc.status === 'accepted' && body.status === 'draft'
+  // ── «Segna come non accettato» da accettato: SOLO accettazioni manuali ──
+  // Torna a `sent` (in attesa), NON a `draft`: l'artigiano ha sbagliato un
+  // tocco, non vuole riscrivere il preventivo — e il cliente deve poterlo
+  // ancora accettare dal suo link (la pagina pubblica accetta sent/viewed).
+  const unaccepting = doc.status === 'accepted' && body.status === 'sent'
   if (unaccepting) {
     // Questa route serve i PREVENTIVI: una fattura 'accepted' (= pagata)
-    // non si riporta in bozza da qui (ha il suo flusso con azzeramento
-    // dei dati di pagamento).
+    // non si annulla da qui (ha il suo flusso con azzeramento dei dati di
+    // pagamento).
     if (doc.doc_type !== 'preventivo') {
       return NextResponse.json({ error: 'Operazione non disponibile per questo documento' }, { status: 409 })
     }
@@ -140,7 +146,7 @@ export async function PATCH(
         { status: 409 }
       )
     }
-    // Fattura collegata (anche in bozza): riportare il preventivo in bozza
+    // Fattura collegata (anche in bozza): annullare l'accettazione
     // lascerebbe una fattura che nasce da un documento non più accettato.
     // Guardia di coerenza → FAIL-CLOSED: se la verifica stessa fallisce
     // non si procede (review 22 lug B1).
@@ -158,13 +164,14 @@ export async function PATCH(
     }
     if (linkedFattura) {
       return NextResponse.json(
-        { error: 'C’è una fattura collegata a questo preventivo: eliminala (o scollegala) prima di riportarlo in bozza.' },
+        { error: 'C’è una fattura collegata a questo preventivo: eliminala (o scollegala) prima di segnarlo come non accettato.' },
         { status: 409 }
       )
     }
-    // Lavoro con rapportino FIRMATO collegato (review 25 lug M4): riportare in
-    // bozza riaprirebbe voci e prezzi sotto un rapportino già firmato dal
-    // cliente (che mostra foto e ore di questo documento). Tollerante pre-053.
+    // Lavoro con rapportino FIRMATO collegato (review 25 lug M4): rimettere
+    // in attesa un preventivo sotto un rapportino già firmato dal cliente
+    // (che mostra foto e ore di questo documento) contraddirebbe la prova.
+    // Tollerante pre-053.
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 049/053 non ancora in types/database.ts
       const { data: signedLavoro } = await (supabase as any)
@@ -176,7 +183,7 @@ export async function PATCH(
         .limit(1)
       if (Array.isArray(signedLavoro) && signedLavoro.length > 0) {
         return NextResponse.json(
-          { error: 'Il lavoro aperto da questo preventivo ha un rapportino firmato dal cliente: il preventivo non si può più riportare in bozza.' },
+          { error: 'Il lavoro aperto da questo preventivo ha un rapportino firmato dal cliente: l’accettazione non si può più annullare.' },
           { status: 409 }
         )
       }
@@ -185,14 +192,25 @@ export async function PATCH(
     // Update DEDICATO e condizionato sullo stato (anti-race con un "Converti
     // in fattura" concorrente, review 22 lug B2): se un'altra richiesta ha
     // già mosso lo stato, qui 0 righe → 409.
+    // Scadenza: se nel frattempo è passata, si rinnova come nel «Riapri»
+    // (un termine consumato non è un invito a rispondere: il cron la
+    // notte stessa lo marcherebbe scaduto e il link sarebbe morto). Se è
+    // ancora valida non si tocca — niente giorni regalati.
+    const exp = doc.expires_at ? new Date(doc.expires_at as string).getTime() : NaN
+    const scadenzaPassata = !Number.isFinite(exp) || exp <= Date.now()
+    const nonAccettatoPatch: { status: 'sent'; accepted_at: null; expires_at?: string } = { status: 'sent', accepted_at: null }
+    if (scadenzaPassata) {
+      const giorni = Number(doc.validity_days) > 0 ? Math.floor(Number(doc.validity_days)) : 30
+      nonAccettatoPatch.expires_at = new Date(Date.now() + giorni * 24 * 60 * 60 * 1000).toISOString()
+    }
     const { data: reverted, error: revErr } = await supabase
       .from('documents')
-      .update({ status: 'draft', accepted_at: null })
+      .update(nonAccettatoPatch)
       .eq('id', id)
       .eq('status', 'accepted')
       .select('id')
     if (revErr) {
-      console.error('[preventivi/status] riporta in bozza fallito:', revErr)
+      console.error('[preventivi/status] segna come non accettato fallito:', revErr)
       return NextResponse.json({ error: 'Errore nel salvataggio' }, { status: 500 })
     }
     if (!reverted || reverted.length === 0) {
@@ -200,12 +218,12 @@ export async function PATCH(
     }
 
     // ── La scelta della proposta si ANNULLA ─────────────────────────────
-    // Eli, 9 ago: *"se seleziono Base e poi riporto in bozza, devono tornare
+    // Eli, 9 ago: *"se seleziono Base e poi annullo, devono tornare
     // disponibili entrambe le opzioni"*. Le voci ci sono ancora (non le
     // cancelliamo più): qui si toglie l'etichetta e si rimettono i totali
     // sulla proposta di riferimento — la **Base**, che è la cifra con cui il
     // preventivo vale finché nessuno ha scelto (decisione 19 lug).
-    // Tollerante pre-041: senza la colonna, il ritorno in bozza resta valido.
+    // Tollerante pre-041: senza la colonna, il ritorno in attesa resta valido.
     let tierAnnullato: string | null = null
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 041 non ancora in types/database.ts
@@ -251,7 +269,7 @@ export async function PATCH(
 
     // Azzera l'eventuale ACCONTO registrato sull'accettazione (M1 review 22
     // lug, gemello del riattiva-fattura): senza, l'acconto resterebbe
-    // invisibile in bozza ma contato nelle Entrate del Bilancio, e
+    // invisibile sul documento in attesa ma contato nelle Entrate del Bilancio, e
     // riapparirebbe stantio alla ri-accettazione. Best-effort, tollerante
     // pre-migration 038.
     const resetPatch = {
@@ -265,12 +283,12 @@ export async function PATCH(
     } as any
     const { error: resetErr } = await supabase.from('documents').update(resetPatch).eq('id', id)
     if (resetErr && !isMissingColumnError(resetErr)) {
-      console.error('[preventivi/status] azzeramento acconto al riporta-in-bozza non riuscito:', resetErr)
+      console.error('[preventivi/status] azzeramento acconto al segna-non-accettato non riuscito:', resetErr)
     }
 
     // La cronologia registra anche QUALE proposta è stata annullata.
     await appendLog('unaccepted', tierAnnullato ? { tier: tierAnnullato } : undefined)
-    return NextResponse.json({ success: true, status: 'draft' })
+    return NextResponse.json({ success: true, status: 'sent' })
   }
 
   // "Segna come Accettato" MANUALE su un preventivo a più proposte (review 25
@@ -404,7 +422,7 @@ export async function PATCH(
       // ⚠️ Le voci dell'ALTRA proposta NON si cancellano (Eli, 9 ago: *"se
       // seleziono Base e poi riporto in bozza, devono tornare disponibili
       // entrambe le opzioni"*). Prima le rimuovevo — e il testo del selettore
-      // prometteva «se sbagli puoi riportarlo in bozza», una promessa che una
+      // prometteva «se sbagli puoi annullare», una promessa che una
       // cancellazione non può mantenere. Restano dov'erano: a cambiare sono
       // `accepted_tier` e i totali, ed è quello che rende reversibile la scelta.
       // È la CONVERSIONE IN FATTURA a tenere solo la proposta accettata.

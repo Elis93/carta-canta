@@ -127,7 +127,7 @@ export async function POST(
 
   // ── Una sola proposta nella FATTURA ─────────────────────────────────────
   // ⚠️ Il preventivo tiene le voci di TUTTE le proposte anche dopo la scelta
-  // (così «Riporta in bozza» le ridà entrambe — Eli, 9 ago), e la funzione SQL
+  // (così «Segna come non accettato» le ridà entrambe — Eli, 9 ago), e la funzione SQL
   // le copia tutte. Se non si sfoltisse qui, la fattura nascerebbe con Base +
   // Premium SOMMATE: un importo che non esiste in nessuno scenario.
   // Tollerante pre-041 e best-effort sul recupero: se qualcosa non torna si

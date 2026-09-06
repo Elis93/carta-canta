@@ -298,7 +298,7 @@ export default async function LavoroDetailPage({
 
         {/* ── Il passo successivo, a lavoro FINITO: il navy sotto la testata. ──
             Converti in fattura (solo col preventivo ACCETTATO e senza fattura
-            già fatta — riportato in bozza, la conversione verrebbe rifiutata),
+            già fatta — segnato come non accettato, la conversione verrebbe rifiutata),
             altrimenti il rapportino di fine lavoro (apre la sua tendina). */}
         {puoConvertire && documentId && (
           <div>

@@ -13,7 +13,7 @@ export interface DocumentLogEntry {
   // 3 ago sera (Eli: "la cronologia deve contenere ogni minima azione, anche
   // di ritorno indietro e poi avanti"): le transizioni MANUALI dei preventivi
   // ora scrivono una voce propria — marked_accepted/marked_rejected/
-  // marked_expired ("Segna come…"), unaccepted (Riporta in bozza),
+  // marked_expired ("Segna come…"), unaccepted (Segna come non accettato),
   // reopened (Riapri da rifiutato/scaduto).
   type: 'modified' | 'restored' | 'resent' | 'payment' | 'payment_reset' | 'cancelled' | 'reactivated'
     | 'marked_accepted' | 'marked_rejected' | 'marked_expired' | 'unaccepted' | 'reopened'
@@ -205,7 +205,7 @@ export function DocumentTimeline({
   }
 
   // Le accettazioni MANUALI hanno voci di log proprie dal 3 ago (sopravvivono
-  // anche al "Riporta in bozza"): l'evento derivato da accepted_at si mostra
+  // anche al «Segna come non accettato»): l'evento derivato da accepted_at si mostra
   // solo se non c'è già la voce di log (documenti vecchi) o se ad accettare
   // è stato il CLIENTE (la pagina pubblica non scrive log).
   const hasMarkedAcceptedLog = documentLog.some((e) => e.type === 'marked_accepted')
@@ -219,7 +219,7 @@ export function DocumentTimeline({
   const hasSaldoLog = isFattura && documentLog.some((e) => e.type === 'payment' && e.kind === 'saldo')
   // Dal 26 ago la pagina pubblica scrive la SUA voce (client_accepted): se c'è,
   // l'evento derivato sarebbe un doppione — e la voce di log sopravvive anche
-  // al «Riporta in bozza», che azzera accepted_at.
+  // al «Segna come non accettato», che azzera accepted_at.
   const hasClientAcceptedLog = documentLog.some((e) => e.type === 'client_accepted')
   if (acceptedAt && !hasClientAcceptedLog && (acceptedByClient || !hasMarkedAcceptedLog) && !hasSaldoLog) {
     events.push({
@@ -377,7 +377,7 @@ export function DocumentTimeline({
         icon: <CheckCircle2 className="size-3" />,
         label: 'Segnato come accettato da te',
         // La proposta la dice la VOCE DI LOG, non lo stato corrente: dopo un
-        // «Riporta in bozza» l'etichetta corrente non c'è più, ma la storia
+        // «Segna come non accettato» l'etichetta corrente non c'è più, ma la storia
         // di quel giorno resta vera.
         detail: entry.tier ? `Proposta ${TIER_LABEL[entry.tier as TierKey] ?? entry.tier}` : (acceptedTierLabel ? `Proposta ${acceptedTierLabel}` : undefined),
         badgeBg: '#d4efe2', badgeColor: '#2f8a63',
@@ -424,7 +424,7 @@ export function DocumentTimeline({
       events.push({
         key: `unaccepted-${i}`,
         icon: <RotateCcw className="size-3" />,
-        label: 'Riportato in bozza (accettazione annullata)',
+        label: 'Segnato come non accettato — torna in attesa',
         detail: entry.tier
           ? `La proposta ${TIER_LABEL[entry.tier as TierKey] ?? entry.tier} non è più quella scelta: tornano disponibili tutte.`
           : undefined,
