@@ -353,7 +353,17 @@ i testi dell'app è un giro a sé, da fare su richiesta.
 - ✅ **Terzo giro di revisione** (5 ago, "ricontrolla ancora una volta"): la revisione ha ribaltato l'esito del giro precedente. **La chiusura dell'archivio foto non era davvero avvenuta**: era rimasta la vecchia regola "le foto le può leggere chiunque", e le regole si sommano — con la chiave pubblica del sito si poteva sfogliare e scaricare le foto di tutti gli artigiani. Chiuso (migration 069, verificata su un database vero). Corretti anche: l'IBAN si poteva cambiare **scavalcando l'avviso email** (ora un guardiano nel database lo impedisce — migration 070); l'avviso non guardava le **note di pagamento**, dove si può scrivere un IBAN diverso; "Esci da tutti i dispositivi" **falliva in silenzio**; le foto sparivano senza dirlo dal rapportino che il cliente firma; e i documenti caricavano il carattere **da Google** (indirizzo IP del cliente a Google, ora il carattere è nostro).
   ⚠️ **Lezione da tenere**: una misura di sicurezza non è "fatta" perché il collaudo dal telefono sembra a posto. Qui il collaudo passava perché toccava l'unico canale davvero chiuso.
 
-### Collaudo Eli 5 set 2026 (pagina documento A)
+### Collaudo Eli 6 set 2026 (sei feedback)
+
+- ✅ **Una P.IVA (o CF) per un solo ACCOUNT** — «non può essere registrata due volte la stessa partita IVA», riferito alla registrazione con due account (non alla rubrica clienti, che ha già l'avviso di doppione e resta un avviso). Controllo server in onboarding e Impostazioni › Fiscale + indice unico parziale (migration 087, esclusi gli account cancellati). Messaggio: «già associata a un altro account… accedi con quello».
+- ✅ **Ogni segnaposto-suggerimento inizia con «esempio:»** («ogni volta che c'è un suggerimento, davanti ci deve essere la parola esempio:»); dove lo spazio non basta resta «es.» o un esempio più corto (misurato col font vero a 16px: provincia/CAP, IBAN, nota del richiamo). La voce del preventivo: «esempio: rifacimento bagno». I segnaposto che sono etichette o formati («Cerca…», «0,00», «000000») non cambiano.
+- ✅ **Copy formale nei campi**: «Metti il titolo» → «Inserire qui il titolo» (preventivo, fattura, lavoro); «Metti…/Scrivi tu…» → «Inserisci…/Indica…» nei messaggi.
+- ❌ **Cliente come prima card del preventivo** — proposto da Eli, poi TOLTO da lei stessa il 6 set («riguardo al punto 2, togliamolo»): l'ordine Titolo → Cliente resta.
+- 🔄 **Liste: cerca + pillole + Archivio/Cestino/Ordina in un riquadro unico** — «insieme ma comunque separati»: mockup `Liste in un riquadro` (un riquadro, tre gruppi divisi da un filetto; Archivio e Ordina restano ai due capi — decisione 9 ago). In attesa del suo ok.
+- 🔄 **Termine dei lavori sul preventivo** — ok di Eli ai «giorni dalla conferma»; piano in `PROGETTO_TERMINE_LAVORI.md` (migration 088, PDF, pagina cliente, scheda lavoro, default in Impostazioni); riga per l'avvocato (clausola contrattuale). In attesa del via.
+- ✅ Home senza appuntamenti: «Aggiungi il tuo **prossimo** appuntamento» (non «primo»).
+
+## Collaudo Eli 5 set 2026 (pagina documento A)
 - ✅ Sul preventivo le chip «Segna accettato / Segna rifiutato» NON stanno in pagina: l'esito lo dà il cliente dal link. Restano nel menu ⋯ come ripiego per chi risponde al telefono, con l'etichetta secca «Segna accettato» (niente «a voce»).
 - ✅ **Un «Segna accettato» fatto a mano per sbaglio si annulla con «Segna come non accettato», che rimette il preventivo IN ATTESA (Inviato) — mai in bozza.** Eli: «deve poterlo rimettere in attesa e non in bozza». Solo per accettazioni manuali; quelle firmate dal cliente non si annullano.
 

@@ -35,7 +35,7 @@ const TOURS: Record<string, MiniTour> = {
     pathPrefix: '/impostazioni/generale',
     steps: [{
       selector: '#ragione_sociale',
-      title: 'Scrivi qui la ragione sociale',
+      title: 'Inserisci qui la ragione sociale',
       desc: 'Comparirà in testa a preventivi e fatture. Quando hai fatto, tocca <b>Salva</b> in fondo alla pagina.',
     }],
   },

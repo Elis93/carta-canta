@@ -20,6 +20,8 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Anche la scheda del Lavoro è riordinata: in testata (navy, come la Home) il titolo, il cliente e il cantiere, lo stato e i tre numeri — preventivato, speso, margine. Sotto, le ore in un riquadro solo, col timer dentro (Avvia · Ferma), le ore a mano e «Correggi il totale». A lavoro finito, subito sotto la testata, il tasto navy «Converti in fattura» (o il rapportino). Il resto è a tendine: Rapportino, Spese, Foto, Collegati, Richiama il cliente e «Stato e dettagli», dove i campi si salvano da soli mentre scrivi — via il tasto «Salva modifiche».',
       'Tutti gli avvisi dell’app — «fattura pagata», «preventivo scaduto», il conto alla rovescia dello SdI, i limiti del piano gratuito — hanno ora la stessa veste: una card bianca con un filetto colorato a sinistra e un’icona. Il testo resta scuro e leggibile; il colore dice solo quanto è urgente: verde è una buona notizia, ambra una scadenza o una cosa da fare, rosso un blocco, blu un’informazione.',
       'Sotto ogni avviso, quando serve, c’è una riga in grigio con cosa fare: il comando da usare o il collegamento giusto.',
+      'I campi vuoti dicono cosa scriverci con un esempio, e ogni esempio inizia con «esempio:» (nella voce del preventivo: «esempio: rifacimento bagno»), così un suggerimento non si confonde con un valore già scritto. Dove lo spazio è poco resta «es.».',
+      'Una P.IVA (o un codice fiscale) può essere associata a un solo account: se provi a registrarla su un secondo account, l’app lo dice e ti rimanda a quello esistente.',
     ],
   },
   {

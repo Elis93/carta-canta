@@ -207,7 +207,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
     <input
       value={title}
       onChange={(e) => setTitle(e.target.value)}
-      placeholder="Metti il titolo (es. Rifacimento bagno)"
+      placeholder="Inserire qui il titolo"
       maxLength={120}
       style={lavId ? fieldStyle : { width: '100%', border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, fontWeight: title.trim() ? 600 : 400, color: '#161616', fontFamily: 'inherit' }}
     />
@@ -267,7 +267,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
           e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'
         }}
         ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = Math.max(96, el.scrollHeight) + 'px' } }}
-        placeholder={'Materiali usati, ore, cose da ricordare…\n(private: il cliente non le vede)'}
+        placeholder={'esempio: materiali usati, ore, cose da ricordare\n(private: il cliente non le vede)'}
         style={{ ...fieldStyle, minHeight: 96, resize: 'none', overflow: 'hidden', lineHeight: 1.6, fontSize: 13 }}
       />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>

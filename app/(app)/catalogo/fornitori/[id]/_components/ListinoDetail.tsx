@@ -63,7 +63,7 @@ export function ListinoDetail({ list, items, ai }: {
   const [infoPending, startInfo] = useTransition()
 
   function saveInfo() {
-    if (!name.trim()) { setInfoError('Metti il nome del fornitore.'); return }
+    if (!name.trim()) { setInfoError('Inserisci il nome del fornitore.'); return }
     // Stessa validazione di NuovoListinoForm: senza questo il server
     // risponderebbe con un errore Zod non tradotto.
     const m = markup.trim() === '' ? null : parseImportoIt(markup)
@@ -212,7 +212,7 @@ export function ListinoDetail({ list, items, ai }: {
   function saveItem() {
     if (!fDesc.trim()) { setItemError('La descrizione è obbligatoria.'); return }
     const c = parseImportoIt(fCost)
-    if (!Number.isFinite(c) || c < 0) { setItemError('Metti un costo valido.'); return }
+    if (!Number.isFinite(c) || c < 0) { setItemError('Inserisci un costo valido.'); return }
     setItemError(null)
     startItem(async () => {
       const fd = new FormData()
@@ -276,7 +276,7 @@ export function ListinoDetail({ list, items, ai }: {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
                 <label style={LABEL}>Il tuo ricarico %</label>
-                <input inputMode="decimal" value={markup} onChange={(e) => setMarkup(e.target.value.replace(/[^\d.,]/g, ''))} placeholder="es. 25" style={FIELD} />
+                <input inputMode="decimal" value={markup} onChange={(e) => setMarkup(e.target.value.replace(/[^\d.,]/g, ''))} placeholder="esempio: 25" style={FIELD} />
               </div>
               <div>
                 <label style={LABEL}>Valido fino al</label>

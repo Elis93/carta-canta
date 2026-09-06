@@ -61,7 +61,7 @@ export function AccontoDefaultField({
   }, [])
 
   const unita = tipo === 'percent' ? '%' : '€'
-  const esempio = tipo === 'percent' ? '30' : '500'
+  const esempio = tipo === 'percent' ? 'esempio: 30' : 'esempio: 500'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

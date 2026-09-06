@@ -211,7 +211,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             id="piva_input"
             value={piva}
             onChange={(e) => setPiva(e.target.value)}
-            placeholder="12345678901"
+            placeholder="esempio: 12345678901"
             maxLength={16}
             style={fieldStyle}
           />
@@ -250,7 +250,7 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             value={hourlyCost}
             onChange={(e) => setHourlyCost(e.target.value.replace(/[^\d.,]/g, ''))}
             inputMode="decimal"
-            placeholder="es. 35"
+            placeholder="esempio: 35"
             maxLength={8}
             style={fieldStyle}
           />

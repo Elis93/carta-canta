@@ -178,7 +178,7 @@ export function RichiamoCard({ lavoroId, recallAt, recallNote, documentId, bare 
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Nota (es. manutenzione caldaia annuale)"
+            placeholder="Nota (esempio: caldaia annuale)"
             maxLength={300}
             disabled={pending}
             style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, fontFamily: 'inherit', color: '#161616', background: '#fff', marginTop: 8 }}

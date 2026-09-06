@@ -392,7 +392,7 @@ export function VociTable({
                     del tutorial marca questo riquadro (F16) */}
                 <div data-tour="voce-mic" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', minWidth: 0 }}>
                   <textarea
-                    placeholder="Descrizione voce…"
+                    placeholder="esempio: rifacimento bagno"
                     value={voce.description}
                     rows={1}
                     required
@@ -582,7 +582,7 @@ export function VociTable({
                     il placeholder basta). data-tour="voce-mic": tutorial F16. */}
                 <div data-tour="voce-mic" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '9px 12px' }}>
                   <textarea
-                    placeholder="Descrizione voce…"
+                    placeholder="esempio: rifacimento bagno"
                     value={voce.description}
                     rows={1}
                     className="bg-transparent placeholder:text-muted-foreground focus-visible:outline-none resize-none overflow-hidden leading-normal"

@@ -26,9 +26,9 @@ import { createNotaDebitoAction } from '@/lib/actions/documents'
 
 const MOTIVI = [
   { v: 'extra',    label: 'Lavoro in più concordato', hint: 'Durante il lavoro è stato aggiunto qualcosa che nella fattura non c’era. Aggiungi solo le voci NUOVE.' },
-  { v: 'importo',  label: 'Importo o quantità sbagliati', hint: 'Avevi fatturato meno del dovuto (prezzo o quantità troppo bassi). Metti solo la differenza.' },
+  { v: 'importo',  label: 'Importo o quantità sbagliati', hint: 'Avevi fatturato meno del dovuto (prezzo o quantità troppo bassi). Indica solo la differenza.' },
   { v: 'iva',      label: 'IVA applicata per difetto', hint: 'Aliquota sbagliata in fattura: qui integri l’imposta mancante. Se non sei sicuro, sentì prima il commercialista.' },
-  { v: 'altro',    label: 'Altro', hint: 'Scrivi tu la causale nel documento prima di inviarlo.' },
+  { v: 'altro',    label: 'Altro', hint: 'Indica la causale nel documento prima di inviarlo.' },
 ] as const
 
 export function NotaDebitoButton({ documentId, triggerStyle }: { documentId: string; triggerStyle?: React.CSSProperties }) {

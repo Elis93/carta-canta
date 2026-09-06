@@ -256,7 +256,7 @@ export function QuickCreateClientDialog({
                 name="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Mario"
+                placeholder="esempio: Mario"
                 autoFocus
                 disabled={isPending}
               />
@@ -265,7 +265,7 @@ export function QuickCreateClientDialog({
                 name="surname"
                 value={surname}
                 onChange={(e) => setSurname(e.target.value)}
-                placeholder="Rossi"
+                placeholder="esempio: Rossi"
                 disabled={isPending}
               />
             </div>
@@ -284,7 +284,7 @@ export function QuickCreateClientDialog({
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setContactError(null) }}
-                placeholder="mario@esempio.it"
+                placeholder="esempio: cliente@dominio.it"
                 disabled={isPending}
                 aria-invalid={contactError ? true : undefined}
               />
@@ -294,7 +294,7 @@ export function QuickCreateClientDialog({
                 type="tel"
                 value={phone}
                 onChange={(e) => { setPhone(e.target.value); setContactError(null) }}
-                placeholder="+39 333 1234567"
+                placeholder="esempio: +39 333 1234567"
                 disabled={isPending}
                 aria-invalid={contactError ? true : undefined}
               />
@@ -313,7 +313,7 @@ export function QuickCreateClientDialog({
                 id="qc-piva-cf"
                 value={pivaCf}
                 onChange={(e) => setPivaCf(e.target.value.toUpperCase())}
-                placeholder="es. 12345678901"
+                placeholder="esempio: 12345678901"
                 maxLength={16}
                 className="uppercase"
                 disabled={isPending}

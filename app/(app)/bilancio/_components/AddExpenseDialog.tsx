@@ -253,7 +253,7 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId, triggerStyle }:
             {category === CUSTOM_VALUE && (
               <input
                 name="category_custom"
-                placeholder="Nome categoria (es. Noleggio, Smaltimento)"
+                placeholder="esempio: noleggio, smaltimento"
                 maxLength={40}
                 autoComplete="off"
                 style={{ ...fieldStyle, marginTop: 8 }}
@@ -299,7 +299,7 @@ export function AddExpenseDialog({ lavori = [], defaultLavoroId, triggerStyle }:
               <input
                 id="expense-description"
                 name="description"
-                placeholder="Es. Piastrelle cantiere Rossi"
+                placeholder="esempio: piastrelle cantiere Rossi"
                 required
                 autoComplete="off"
                 value={description}

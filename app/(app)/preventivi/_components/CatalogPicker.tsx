@@ -607,7 +607,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                   value={createName}
                   onChange={(e) => setCreateName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreate() } }}
-                  placeholder="es. Posa piastrelle"
+                  placeholder="esempio: posa piastrelle"
                   autoFocus
                   disabled={createPending}
                   style={campoInput}
@@ -669,7 +669,7 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
                   id="qcc-cat"
                   value={createCategory}
                   onChange={(e) => setCreateCategory(e.target.value)}
-                  placeholder="es. Manodopera"
+                  placeholder="esempio: manodopera"
                   disabled={createPending}
                   style={campoInput}
                 />

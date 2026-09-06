@@ -198,7 +198,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
                 id="nome"
                 name="nome"
                 type="text"
-                placeholder="Mario"
+                placeholder="esempio: Mario"
                 autoComplete="given-name"
                 required
                 disabled={disabled}
@@ -211,7 +211,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
                 id="cognome"
                 name="cognome"
                 type="text"
-                placeholder="Rossi"
+                placeholder="esempio: Rossi"
                 autoComplete="family-name"
                 required
                 disabled={disabled}
@@ -228,7 +228,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
             id="email"
             name="email"
             type="email"
-            placeholder="mario@esempio.it"
+            placeholder="esempio: nome@dominio.it"
             autoComplete="email"
             required
             disabled={disabled}
@@ -267,7 +267,7 @@ export function SignupForm({ defaultRefCode }: SignupFormProps) {
               id="ref_code"
               name="ref_code"
               type="text"
-              placeholder="es. AB3X7Z"
+              placeholder="esempio: AB3X7Z"
               autoComplete="off"
               defaultValue={defaultRefCode ?? ''}
               disabled={disabled}

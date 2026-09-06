@@ -528,6 +528,16 @@ avviso nel momento della pubblicazione?
 ⚠️ **L'informativa privacy è già stata aggiornata** con questa informazione (5 ago): meglio
 dichiarare un trattamento che facciamo davvero che ometterlo. Resta da far confermare il testo.
 
+⏭️ **Da aggiungere (annotato 6 set 2026) — termine dei lavori scritto sul preventivo.**
+Eli vuole un campo «Tempi di esecuzione: entro N giorni dalla conferma del preventivo» (piano in
+`PROGETTO_TERMINE_LAVORI.md`, non ancora costruito). Un termine scritto su un preventivo che il
+cliente accetta è una **clausola contrattuale** (art. 1183 c.c. e seguenti): se l'artigiano sfora,
+il cliente può contestare. Nell'app il campo resterà vuoto di default e la frase dirà
+«indicativamente … salvo imprevisti o cause non dipendenti dall'impresa». Da chiedergli: ① la
+frase basta a qualificare il termine come indicativo, o serve altro? ② va aggiunta una riga nelle
+condizioni generali del documento? ③ conviene tenere il campo facoltativo (come previsto) o
+sconsigliarlo del tutto?
+
 ⏭️ **Da aggiungere alla prossima rigenerazione del dossier avvocato** (annotato 6 ago):
 **cookie e statistiche d'uso.** Rileggendo i vecchi appunti GDPR è venuto fuori che PostHog
 (lo strumento che conta quali funzioni vengono usate) era **attivo in produzione ma non

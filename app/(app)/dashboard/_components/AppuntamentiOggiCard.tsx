@@ -38,7 +38,7 @@ export function AppuntamentiOggiCard({ agenda, style }: { agenda: TodayAgenda; s
                 <Plus size={15} />
               </span>
               <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: '#2b2b2b' }}>
-                Aggiungi il tuo primo appuntamento
+                Aggiungi il tuo prossimo appuntamento
               </span>
               <ChevronRight size={16} style={{ color: '#c2c1bd', flexShrink: 0 }} aria-hidden />
             </Link>

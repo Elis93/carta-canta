@@ -681,6 +681,18 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       timer non sono contate qui, perché non sono soldi usciti dal conto: le trovi nella scheda del lavoro.</>,
   },
   {
+    id: 'piva-gia-registrata',
+    q: 'L’app dice che la mia P.IVA è già associata a un altro account: perché?',
+    parole: ['partita iva', 'p.iva', 'piva', 'codice fiscale', 'già registrata', 'due account', 'doppio account', 'registrazione'],
+    a: <>Una P.IVA (o un codice fiscale) può stare su <b>un solo account</b>{' '}Carta Canta:
+      è l&rsquo;identità fiscale dell&rsquo;attività, e due account con la stessa avrebbero due numerazioni
+      di fatture per la stessa partita. Se il messaggio compare durante la configurazione o in{' '}
+      <VaiA a="impFiscale">Dati fiscali</VaiA>, quella P.IVA è già su un altro account: <b>accedi con quello</b>{' '}
+      (dalla pagina di accesso puoi anche recuperare la password). Se non lo riconosci, scrivi a
+      supporto@cartacanta.app. L&rsquo;avviso di doppione sui <b>clienti</b>{' '}in rubrica è un&rsquo;altra cosa:
+      lì è solo un promemoria e puoi comunque salvare.</>,
+  },
+  {
     q: 'Ho perso il telefono o temo che qualcuno sia entrato nel mio account: cosa faccio?',
     parole: ['impronta', 'password', 'sicurezza', 'rubato', 'accesso', 'blocco'],
     a: <>Vai in <VaiA a="sicurezza" />{' '}e tocca <b>Esci da tutti i dispositivi</b>:

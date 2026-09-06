@@ -29,7 +29,7 @@ import { createNotaCreditoAction } from '@/lib/actions/documents'
 const MOTIVI = [
   { v: 'errore',  label: 'Errore nella fattura', hint: 'Importi, voci o dati sbagliati fin dall’inizio. Per recuperare l’IVA hai un anno dalla fattura: prima la fai, meglio è.' },
   { v: 'accordo', label: 'Accordo col cliente',   hint: 'Sconto concordato dopo, lavoro ridotto, reso. Anche qui: un anno dall’operazione.' },
-  { v: 'altro',   label: 'Altro',                 hint: 'Lavoro annullato o contratto saltato, sconto già previsto nel contratto: qui il limite dell’anno non c’è. Scrivi tu la causale prima di inviarla.' },
+  { v: 'altro',   label: 'Altro',                 hint: 'Lavoro annullato o contratto saltato, sconto già previsto nel contratto: qui il limite dell’anno non c’è. Indica la causale prima di inviarla.' },
 ] as const
 
 export function NotaCreditoButton({ documentId, triggerStyle }: { documentId: string; triggerStyle?: React.CSSProperties }) {

@@ -92,7 +92,7 @@ export function ImpostazioniTeam({ ownerEmail, ownerName, members, canInvite, ma
                 id="team-email"
                 name="email"
                 type="email"
-                placeholder="collaboratore@esempio.it"
+                placeholder="esempio: collaboratore@dominio.it"
                 required
                 disabled={!canInvite || formPending}
               />

@@ -104,6 +104,49 @@ export async function getWorkspace() {
 }
 
 // ============================================================
+// P.IVA UNICA PER ACCOUNT (feedback Eli 6 set 2026 + migration 087)
+// ============================================================
+// Il campo `piva` del workspace accetta P.IVA (11 cifre) o codice fiscale
+// (16 caratteri): è l'identità fiscale dell'artigiano, e due account attivi
+// non possono condividerla. Qui il pre-controllo (messaggio pulito, e vale
+// anche PRIMA che la 087 sia applicata); l'indice unico parziale della 087
+// è la rete per i salvataggi concorrenti, tradotta in `isPivaDuplicata`.
+// ⚠️ Con l'ADMIN client: la RLS mostra all'utente solo il PROPRIO workspace,
+// quindi col client di sessione un doppione sarebbe invisibile per costruzione.
+// Gli account cancellati (deleted_at) non contano: la P.IVA resta scritta sul
+// workspace congelato per i 10 anni fiscali, ma chi si reiscrive deve poter
+// riusare la propria.
+const PIVA_DUPLICATA_MESSAGE =
+  'Questa P.IVA (o codice fiscale) è già associata a un altro account Carta Canta. Se è la tua, accedi con quell\'account; se non lo riconosci, scrivi a supporto@cartacanta.app.'
+
+function normalizzaPiva(v: string | null | undefined): string | null {
+  const s = (v ?? '').trim().toUpperCase()
+  return s ? s : null
+}
+
+/** true = già usata da un ALTRO account attivo · false = libera · null = non verificabile (errore di rete) */
+async function pivaGiaUsata(piva: string, workspaceId: string): Promise<boolean | null> {
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('workspaces')
+      .select('id')
+      .ilike('piva', piva) // ilike senza jolly = uguaglianza case-insensitive (i valori storici possono essere minuscoli)
+      .neq('id', workspaceId)
+      .is('deleted_at', null)
+      .limit(1)
+    if (error) return null
+    return (data?.length ?? 0) > 0
+  } catch {
+    return null
+  }
+}
+
+function isPivaDuplicata(error: { code?: string; message?: string } | null): boolean {
+  return !!error && error.code === '23505' && /piva_unica/.test(error.message ?? '')
+}
+
+// ============================================================
 // AGGIORNA DATI GENERALI WORKSPACE (Step 1 onboarding)
 // ============================================================
 export async function updateWorkspaceData(
@@ -186,10 +229,17 @@ export async function updateWorkspaceData(
       ? { deposit_default_type: parsed.data.deposit_default_type, deposit_default_value: parsed.data.deposit_default_value }
       : { deposit_default_type: null, deposit_default_value: null }
 
+  const pivaNorm = normalizzaPiva(parsed.data.piva)
+  if (pivaNorm) {
+    const usata = await pivaGiaUsata(pivaNorm, workspace.id)
+    if (usata === true) return { error: PIVA_DUPLICATA_MESSAGE }
+    // null (verifica non riuscita): si prosegue, l'indice 087 fa da rete
+  }
+
   const payload = {
     ragione_sociale: parsed.data.ragione_sociale,
     fiscal_regime: parsed.data.fiscal_regime,
-    piva: parsed.data.piva || null,
+    piva: pivaNorm,
     ...(hasAtecoFields && { ateco_codes: parsed.data.ateco_codes }),
     phone: parsed.data.phone || null,
     indirizzo: parsed.data.indirizzo || null,
@@ -220,6 +270,7 @@ export async function updateWorkspaceData(
     ;({ error } = await supabase.from('workspaces').update(senzaAcconto).eq('id', workspace.id))
   }
 
+  if (isPivaDuplicata(error)) return { error: PIVA_DUPLICATA_MESSAGE }
   if (error) return { error: 'Errore nel salvataggio. Riprova.' }
 
   revalidatePath('/(app)', 'layout')
@@ -416,11 +467,17 @@ export async function updateWorkspaceFiscal(
 
   if (!workspace) return { error: 'Workspace non trovato.' }
 
+  const pivaFiscale = parsed.data.piva !== undefined ? normalizzaPiva(parsed.data.piva) : undefined
+  if (pivaFiscale) {
+    const usata = await pivaGiaUsata(pivaFiscale, workspace.id)
+    if (usata === true) return { error: PIVA_DUPLICATA_MESSAGE }
+  }
+
   const { error } = await supabase
     .from('workspaces')
     .update({
       fiscal_regime:    parsed.data.fiscal_regime,
-      ...(parsed.data.piva !== undefined && { piva: parsed.data.piva || null }),
+      ...(pivaFiscale !== undefined && { piva: pivaFiscale }),
       ateco_codes:      parsed.data.ateco_codes,
       invoice_prefix:   parsed.data.invoice_prefix || '',
       bollo_auto:       parsed.data.bollo_auto ?? true,
@@ -429,6 +486,7 @@ export async function updateWorkspaceFiscal(
     })
     .eq('id', workspace.id)
 
+  if (isPivaDuplicata(error)) return { error: PIVA_DUPLICATA_MESSAGE }
   if (error) return { error: 'Errore nel salvataggio.' }
 
   // Pilota automatico SdI (colonna 080) — update separato e TOLLERANTE, e

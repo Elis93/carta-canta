@@ -635,7 +635,7 @@ export function SdiCard({
                 id="sdi-dest"
                 value={dest}
                 onChange={(e) => setDest(e.target.value.toUpperCase())}
-                placeholder="Es. M5UXCR1"
+                placeholder="esempio: M5UXCR1"
                 maxLength={7}
                 autoComplete="off"
                 spellCheck={false}
@@ -648,7 +648,7 @@ export function SdiCard({
                 id="sdi-pec"
                 value={pec}
                 onChange={(e) => setPec(e.target.value)}
-                placeholder="Es. cliente@pec.it"
+                placeholder="esempio: cliente@pec.it"
                 autoComplete="off"
                 spellCheck={false}
                 style={fieldStyle}

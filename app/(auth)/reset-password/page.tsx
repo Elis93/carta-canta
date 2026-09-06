@@ -71,7 +71,7 @@ function ResetPasswordForm() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="mario@esempio.it"
+                placeholder="esempio: nome@dominio.it"
                 autoComplete="email"
                 required
                 disabled={isPending}

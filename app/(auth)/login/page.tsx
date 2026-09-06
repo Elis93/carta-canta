@@ -66,7 +66,7 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
         id="email"
         name="email"
         type="email"
-        placeholder="mario@esempio.it"
+        placeholder="esempio: nome@dominio.it"
         autoComplete="email"
         required
         disabled={isPending}

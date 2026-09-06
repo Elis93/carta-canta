@@ -7,7 +7,7 @@ import { HomeCardFootLink } from './HomeSectionLink'
 // Gli appuntamenti della giornata, leggeri ma utili: ora + titolo + cliente.
 // Tocco sulla riga → dettaglio (sopralluogo/lavoro); il piede → /calendario.
 // 18 lug sera (Eli): la card compare SEMPRE — se l'agenda è vuota del tutto
-// invita ad aggiungere il primo appuntamento; se oggi è libero ma c'è altro
+// invita ad aggiungere il prossimo appuntamento; se oggi è libero ma c'è altro
 // in agenda, lo dice senza fronzoli.
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
@@ -32,7 +32,7 @@ export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?
               <Plus size={15} />
             </span>
             <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#161616' }}>
-              Aggiungi il tuo primo appuntamento
+              Aggiungi il tuo prossimo appuntamento
             </span>
             <ChevronRight size={16} style={{ color: '#c2c1bd', flexShrink: 0 }} aria-hidden />
           </Link>

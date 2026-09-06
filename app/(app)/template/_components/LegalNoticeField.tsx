@@ -70,7 +70,7 @@ export function LegalNoticeField({ value, onChange, hint }: LegalNoticeFieldProp
         name="legal_notice"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Es. Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014…"
+        placeholder="esempio: Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014…"
         rows={4}
       />
       {hint && (

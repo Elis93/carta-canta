@@ -122,7 +122,7 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
         <input
           id="ragione_sociale"
           name="ragione_sociale"
-          placeholder="Edil Demo srl"
+          placeholder="esempio: Edil Rossi srl"
           required
           autoFocus
           style={fieldBox}
@@ -160,7 +160,7 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
         <input
           id="piva"
           name="piva"
-          placeholder="01234567890"
+          placeholder="esempio: 01234567890"
           maxLength={16}
           style={fieldBox}
         />
@@ -172,7 +172,7 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
 
         <div style={{ height: 14 }} />
         <div style={fieldLabel}>Indirizzo</div>
-        <input id="indirizzo" name="indirizzo" placeholder="Via Roma 1" style={fieldBox} />
+        <input id="indirizzo" name="indirizzo" placeholder="esempio: Via Roma 1" style={fieldBox} />
 
         <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -180,7 +180,7 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
             <input
               id="citta"
               name="citta"
-              placeholder="Milano"
+              placeholder="esempio: Milano"
               value={citta}
               onChange={(e) => onCittaChange(e.target.value)}
               style={fieldBox}
@@ -191,7 +191,7 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
             <input
               id="provincia"
               name="provincia"
-              placeholder="MI"
+              placeholder="es. MI"
               maxLength={2}
               value={provincia}
               onChange={(e) => onProvinciaChange(e.target.value)}
@@ -203,7 +203,7 @@ function Step1({ onSuccess }: { onSuccess: () => void }) {
             <input
               id="cap"
               name="cap"
-              placeholder="20100"
+              placeholder="es. 20100"
               maxLength={5}
               value={cap}
               onChange={(e) => onCapChange(e.target.value)}

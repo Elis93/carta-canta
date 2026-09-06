@@ -616,7 +616,7 @@ export function SendEmailDialog({
                       onSelectClient={handleSelectClient}
                       allClients={allClients}
                       field="name"
-                      placeholder="Mario"
+                      placeholder="esempio: Mario"
                       disabled={loading}
                       autoFocus
                     />
@@ -628,7 +628,7 @@ export function SendEmailDialog({
                     </Label>
                     <Input
                       id="send-lastname"
-                      placeholder="Rossi"
+                      placeholder="esempio: Rossi"
                       value={clientLastName}
                       onChange={(e) => updateLastName(e.target.value)}
                       disabled={loading}
@@ -669,7 +669,7 @@ export function SendEmailDialog({
                   onSelectClient={handleSelectClient}
                   allClients={allClients}
                   field="email"
-                  placeholder="cliente@esempio.it"
+                  placeholder="esempio: cliente@dominio.it"
                   disabled={loading}
                 />
               ) : clientEmail ? (
@@ -685,7 +685,7 @@ export function SendEmailDialog({
                 <Input
                   id="send-to"
                   type="email"
-                  placeholder="cliente@esempio.it"
+                  placeholder="esempio: cliente@dominio.it"
                   value={to}
                   onChange={(e) => updateTo(e.target.value)}
                   disabled={loading}

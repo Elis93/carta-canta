@@ -114,7 +114,7 @@ export function RapportinoCard({ data, bare = false }: { data: RapportinoData; /
               e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'
             }}
             ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = Math.max(96, el.scrollHeight) + 'px' } }}
-            placeholder={'Cosa è stato fatto, materiali installati, raccomandazioni…\n(questo testo lo vede e lo firma il cliente)'}
+            placeholder={'esempio: cosa è stato fatto, materiali installati, raccomandazioni\n(questo testo lo vede e lo firma il cliente)'}
             maxLength={4000}
             style={{
               width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px',

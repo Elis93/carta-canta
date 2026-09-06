@@ -560,7 +560,7 @@ export function MobilePublicCard({
             </div>
             <input
               type="text"
-              placeholder="Mario Rossi"
+              placeholder="esempio: Mario Rossi"
               value={signerName}
               onChange={(e) => { setSignerName(e.target.value); setAcceptError(null) }}
               disabled={acceptLoading}
@@ -661,7 +661,7 @@ export function MobilePublicCard({
               Motivo
             </div>
             <textarea
-              placeholder="Es. prezzo troppo alto, ho scelto un altro fornitore…"
+              placeholder="esempio: prezzo troppo alto, ho scelto un altro fornitore…"
               value={reason}
               onChange={(e) => { setReason(e.target.value); setDeclineError(null) }}
               disabled={declineLoading}

@@ -121,7 +121,7 @@ export function AcceptModal({
             </Label>
             <Input
               id="signer-name"
-              placeholder="Mario Rossi"
+              placeholder="esempio: Mario Rossi"
               value={signerName}
               onChange={(e) => { setSignerName(e.target.value); setError(null) }}
               disabled={loading}

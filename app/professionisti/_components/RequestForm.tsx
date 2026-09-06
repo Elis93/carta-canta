@@ -133,10 +133,10 @@ export function RequestForm({ workspaceId, publicName }: { workspaceId: string; 
       <p style={{ fontSize: 11, color: '#767676', marginTop: 5 }}>Basta un recapito: email o cellulare.</p>
 
       <label style={{ ...fieldLabel, marginTop: 12 }} htmlFor="rq-city">Comune</label>
-      <input id="rq-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Es. Verona" maxLength={80} style={fieldStyle} />
+      <input id="rq-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="esempio: Verona" maxLength={80} style={fieldStyle} />
 
       <label style={{ ...fieldLabel, marginTop: 12 }} htmlFor="rq-message">Che lavoro ti serve? <span style={{ color: '#b08d3e' }}>*</span></label>
-      <textarea id="rq-message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Es. sostituzione caldaia, perdita in bagno…" rows={4} maxLength={2000} style={{ ...fieldStyle, resize: 'none' }} />
+      <textarea id="rq-message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="esempio: sostituzione caldaia, perdita in bagno" rows={4} maxLength={2000} style={{ ...fieldStyle, resize: 'none' }} />
 
       {/* Preferenza di appuntamento (066): giorno + fascia. Solo preferenza. */}
       <label style={{ ...fieldLabel, marginTop: 12 }}>Quando preferiresti?</label>

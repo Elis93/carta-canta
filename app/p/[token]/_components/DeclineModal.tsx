@@ -75,7 +75,7 @@ export function DeclineModal({
           </Label>
           <Textarea
             id="decline-reason"
-            placeholder="Es. il prezzo è fuori budget, abbiamo scelto un altro fornitore…"
+            placeholder="esempio: il prezzo è fuori budget, abbiamo scelto un altro fornitore…"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             disabled={loading}

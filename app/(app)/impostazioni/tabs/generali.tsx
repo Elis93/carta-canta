@@ -158,7 +158,7 @@ export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
               name="phone"
               type="tel"
               defaultValue={workspace.phone ?? ''}
-              placeholder="es. +39 333 1234567"
+              placeholder="esempio: +39 333 1234567"
               style={fieldStyle}
             />
           </div>
@@ -169,7 +169,7 @@ export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
               id="indirizzo"
               name="indirizzo"
               defaultValue={workspace.indirizzo ?? ''}
-              placeholder="Via Roma 1"
+              placeholder="esempio: Via Roma 1"
               style={fieldStyle}
             />
           </div>
@@ -180,7 +180,7 @@ export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
               <input
                 id="citta"
                 name="citta"
-                placeholder="Milano"
+                placeholder="esempio: Milano"
                 value={citta}
                 onChange={(e) => onCittaChange(e.target.value)}
                 style={fieldStyle}

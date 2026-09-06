@@ -206,7 +206,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               onChange={(e) => setName(e.target.value)}
               onBlur={(e) => setFieldError('name', e.target.value)}
               autoFocus={mode === 'create'}
-              placeholder="Mario"
+              placeholder="esempio: Mario"
               style={{ ...fieldBoxStyle, ...(fieldErrors.name ? { borderColor: '#ef4444' } : {}) }}
             />
             {fieldErrors.name && (
@@ -220,7 +220,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
               name="surname"
               value={surname}
               onChange={(e) => setSurname(e.target.value)}
-              placeholder="Rossi"
+              placeholder="esempio: Rossi"
               style={fieldBoxStyle}
             />
           </div>
@@ -236,7 +236,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onBlur={(e) => setFieldError('email', e.target.value)}
-            placeholder="mario@esempio.it"
+            placeholder="esempio: cliente@dominio.it"
             style={{ ...fieldBoxStyle, ...(fieldErrors.email ? { borderColor: '#eab308' } : {}) }}
           />
           {fieldErrors.email && (
@@ -253,7 +253,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="+39 333 1234567"
+            placeholder="esempio: +39 333 1234567"
             style={fieldBoxStyle}
           />
         </div>
@@ -277,7 +277,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             value={pivaCf}
             onChange={(e) => { setPivaCf(e.target.value.toUpperCase()); setPivaCfErr('') }}
             onBlur={(e) => setPivaCfErr(validatePivaCf(e.target.value))}
-            placeholder="es. 12345678901"
+            placeholder="esempio: 12345678901"
             maxLength={16}
             style={{ ...fieldBoxStyle, ...(pivaCfErr ? { borderColor: '#eab308' } : {}) }}
           />
@@ -333,7 +333,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
                 name="codice_destinatario"
                 value={codDest}
                 onChange={(e) => setCodDest(e.target.value.toUpperCase())}
-                placeholder="es. M5UXCR1"
+                placeholder="esempio: M5UXCR1"
                 maxLength={7}
                 style={fieldBoxStyle}
               />
@@ -350,7 +350,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
                 inputMode="email"
                 value={pecCli}
                 onChange={(e) => setPecCli(e.target.value)}
-                placeholder="es. azienda@pec.it"
+                placeholder="esempio: azienda@pec.it"
                 style={fieldBoxStyle}
               />
             </div>
@@ -370,7 +370,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             name="indirizzo"
             value={indirizzo}
             onChange={(e) => setIndirizzo(e.target.value)}
-            placeholder="Via Roma 1"
+            placeholder="esempio: Via Roma 1"
             style={fieldBoxStyle}
           />
         </div>
@@ -382,7 +382,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             <Input
               id="citta"
               name="citta"
-              placeholder="Milano"
+              placeholder="esempio: Milano"
               value={citta}
               onChange={(e) => onCittaChange(e.target.value)}
               style={fieldBoxStyle}
@@ -430,7 +430,7 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
             name="paese"
             value={paese}
             onChange={(e) => setPaese(e.target.value)}
-            placeholder="Italia"
+            placeholder="esempio: Italia"
             style={fieldBoxStyle}
           />
         </div>

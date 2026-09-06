@@ -132,7 +132,7 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
             name="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="es. Sostituzione rubinetto"
+            placeholder="esempio: sostituzione rubinetto"
             style={fieldStyle}
             required
           />
@@ -144,7 +144,7 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
             name="category"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            placeholder="es. Idraulica"
+            placeholder="esempio: idraulica"
             style={fieldStyle}
           />
         </div>
@@ -246,7 +246,7 @@ export function CatalogItemForm({ item, onDone }: CatalogItemFormProps) {
           inputMode="decimal"
           value={unitCost}
           style={fieldStyle}
-          placeholder="es. 40,00"
+          placeholder="esempio: 40,00"
           onChange={(e) => setUnitCost(e.target.value)}
           onBlur={() => {
             if (unitCost.trim() === '') { setUnitCost(''); return }

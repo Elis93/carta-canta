@@ -117,7 +117,7 @@ export function AccountantCard() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleInvite() }}
-          placeholder="email@studio.it"
+          placeholder="esempio: email@studio.it"
           autoComplete="off"
           disabled={pending}
           style={fieldStyle}

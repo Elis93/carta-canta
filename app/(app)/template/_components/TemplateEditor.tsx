@@ -389,7 +389,7 @@ export function TemplateEditor({
             <textarea
               value={legalNotice}
               onChange={(e) => setLegalNotice(e.target.value)}
-              placeholder="Es. Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014…"
+              placeholder="esempio: Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014…"
               rows={3}
               style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#161616', resize: 'vertical', fontFamily: 'inherit' }}
             />
@@ -409,7 +409,7 @@ export function TemplateEditor({
             name="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="es. Template professionale"
+            placeholder="esempio: Template professionale"
             style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#161616', background: '#fff' }}
           />
         </div>
@@ -473,7 +473,7 @@ export function TemplateEditor({
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="es. Template professionale"
+              placeholder="esempio: Template professionale"
             />
           </div>
 
@@ -762,7 +762,7 @@ export function TemplateEditor({
                     id="number_format"
                     name="number_format"
                     defaultValue={defaultValues?.number_format ?? ''}
-                    placeholder="es. INV-{NUM}/{YEAR}"
+                    placeholder="esempio: INV-{NUM}/{YEAR}"
                     disabled
                   />
                   <p className="text-xs text-muted-foreground">

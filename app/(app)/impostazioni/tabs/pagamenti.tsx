@@ -115,7 +115,7 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
         <input
           name="payment_iban"
           defaultValue={ws.payment_iban ?? ''}
-          placeholder="IT60 X054 2811 1010 0000 0123 456"
+          placeholder="es. IT60X0542811101000000123456"
           autoComplete="off"
           spellCheck={false}
           style={{ ...fieldStyle, textTransform: 'uppercase' }}
@@ -125,7 +125,7 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
         <input
           name="payment_iban_holder"
           defaultValue={ws.payment_iban_holder ?? ''}
-          placeholder="Es. Mario Bianchi Impianti"
+          placeholder="esempio: Mario Bianchi Impianti"
           autoComplete="off"
           style={fieldStyle}
         />
@@ -138,7 +138,7 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
         <input
           name="payment_paypal_url"
           defaultValue={ws.payment_paypal_url ?? ''}
-          placeholder="paypal.me/tuonome"
+          placeholder="esempio: paypal.me/tuonome"
           autoComplete="off"
           spellCheck={false}
           style={fieldStyle}
@@ -178,7 +178,7 @@ export function ImpostazioniPagamenti({ workspace }: { workspace: Workspace }) {
         <textarea
           name="payment_notes"
           defaultValue={ws.payment_notes ?? ''}
-          placeholder="Accetto anche contanti in cantiere."
+          placeholder="esempio: accetto anche contanti in cantiere"
           rows={2}
           maxLength={300}
           style={{ ...fieldStyle, resize: 'none' }}

@@ -178,10 +178,10 @@ export function ClientMessages({
                   onChange={(e) => setText(e.target.value)}
                   placeholder={
                     docType === 'preventivo'
-                      ? 'Es. Buongiorno, quando potrebbe iniziare i lavori?'
+                      ? 'esempio: Buongiorno, quando potrebbe iniziare i lavori?'
                       : docType === 'fattura'
-                        ? 'Es. Buongiorno, le confermo il pagamento entro venerdì.'
-                        : 'Es. Buongiorno, ho una domanda su questo documento.'
+                        ? 'esempio: Buongiorno, le confermo il pagamento entro venerdì.'
+                        : 'esempio: Buongiorno, ho una domanda su questo documento.'
                   }
                   rows={4}
                   maxLength={1000}

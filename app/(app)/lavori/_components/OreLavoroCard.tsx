@@ -193,7 +193,7 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost, c
                 onChange={(e) => setEditValue(e.target.value.replace(/[^\d.,]/g, ''))}
                 inputMode="decimal"
                 autoFocus
-                placeholder="Totale ore (es. 3)"
+                placeholder="Totale ore (esempio: 3)"
                 disabled={pending}
                 style={{ ...fieldStyle, border: '1px solid #c9a44c' }}
               />
@@ -227,7 +227,7 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost, c
                 value={manualHours}
                 onChange={(e) => setManualHours(e.target.value.replace(/[^\d.,-]/g, ''))}
                 inputMode="decimal"
-                placeholder="Ore (es. 1,5)"
+                placeholder="Ore (esempio: 1,5)"
                 disabled={pending}
                 style={fieldStyle}
               />

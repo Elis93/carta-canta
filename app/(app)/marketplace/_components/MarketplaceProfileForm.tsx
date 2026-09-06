@@ -152,13 +152,13 @@ export function MarketplaceProfileForm({
         <div style={{ height: 1, background: '#eee', margin: '13px -15px' }} />
 
         <label style={fieldLabel} htmlFor="mk-name">Nome pubblico</label>
-        <input id="mk-name" name="public_name" defaultValue={defaults.public_name} placeholder="Es. Idraulica Rossi" maxLength={80} style={fieldStyle} />
+        <input id="mk-name" name="public_name" defaultValue={defaults.public_name} placeholder="esempio: Idraulica Rossi" maxLength={80} style={fieldStyle} />
 
         {/* Il suggerimento sta nel punto ⓘ (Eli, 11 ago) */}
         <SpiegaCampo etichetta="Mestiere e servizi" style={{ ...fieldLabel, marginTop: 13 }}>
           Elenca anche i servizi che offri: i clienti ti trovano cercando una sola di queste parole (es. &ldquo;serbatoi&rdquo;).
         </SpiegaCampo>
-        <input id="mk-trade" name="trade" defaultValue={defaults.trade} placeholder="Es. Idraulico · pulizia serbatoi · cisterne" maxLength={80} style={fieldStyle} />
+        <input id="mk-trade" name="trade" defaultValue={defaults.trade} placeholder="esempio: idraulico · serbatoi · cisterne" maxLength={80} style={fieldStyle} />
         {/* Mestieri comuni: un tocco li aggiunge al campo (feedback Eli 22 lug #5) */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
           {['Imbianchino', 'Elettricista', 'Idraulico', 'Muratore', 'Falegname', 'Piastrellista', 'Fabbro', 'Giardiniere'].map((t) => (
@@ -188,7 +188,7 @@ export function MarketplaceProfileForm({
         <div style={{ display: 'flex', gap: 9, marginTop: 13 }}>
           <div style={{ flex: 2, minWidth: 0 }}>
             <label style={fieldLabel} htmlFor="mk-city">Comune</label>
-            <input id="mk-city" name="city" defaultValue={defaults.city} placeholder="Es. Verona" maxLength={80} style={fieldStyle} />
+            <input id="mk-city" name="city" defaultValue={defaults.city} placeholder="esempio: Verona" maxLength={80} style={fieldStyle} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <label style={fieldLabel} htmlFor="mk-radius">Raggio (km)</label>
@@ -197,7 +197,7 @@ export function MarketplaceProfileForm({
         </div>
 
         <label style={{ ...fieldLabel, marginTop: 13 }} htmlFor="mk-phone">Telefono</label>
-        <input id="mk-phone" name="phone" defaultValue={defaults.phone} placeholder="Es. 045 812 3456" maxLength={30} style={fieldStyle} />
+        <input id="mk-phone" name="phone" defaultValue={defaults.phone} placeholder="esempio: 045 812 3456" maxLength={30} style={fieldStyle} />
 
         {/* ── Contatti mostrati ai clienti (064, decisione Eli: opt-in, spenti
             di default — il modulo richiesta resta sempre il canale di base) ── */}
@@ -226,7 +226,7 @@ export function MarketplaceProfileForm({
               name="public_email"
               type="email"
               defaultValue={defaults.public_email}
-              placeholder="Es. info@tuaimpresa.it"
+              placeholder="esempio: info@tuaimpresa.it"
               maxLength={120}
               style={{ ...fieldStyle, marginTop: 4 }}
             />
@@ -237,7 +237,7 @@ export function MarketplaceProfileForm({
         </div>
 
         <label style={{ ...fieldLabel, marginTop: 13 }} htmlFor="mk-bio">Presentazione</label>
-        <textarea id="mk-bio" name="bio" defaultValue={defaults.bio} placeholder="Es. Impianti e riparazioni da 15 anni. Intervento entro 24 ore in città." rows={3} maxLength={400} style={{ ...fieldStyle, resize: 'none' }} />
+        <textarea id="mk-bio" name="bio" defaultValue={defaults.bio} placeholder="esempio: impianti e riparazioni da 15 anni. Intervento entro 24 ore in città." rows={3} maxLength={400} style={{ ...fieldStyle, resize: 'none' }} />
       </div>
 
       {/* Esiti verifica automatica */}

@@ -1266,7 +1266,7 @@ export function PreventivoForm({
           <input
             id="title"
             name="title"
-            placeholder="Metti il titolo"
+            placeholder="Inserire qui il titolo"
             value={titleValue}
             onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
             style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, fontWeight: titleValue ? 600 : 400, color: '#161616' }}
@@ -1647,7 +1647,7 @@ export function PreventivoForm({
               <Textarea
                 id="notes"
                 name="notes"
-                placeholder="Condizioni, note aggiuntive…"
+                placeholder="esempio: condizioni di pagamento, note aggiuntive"
                 value={notesValue}
                 className="resize-none overflow-hidden"
                 style={{ minHeight: '40px', fontSize: 15, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
@@ -1677,7 +1677,7 @@ export function PreventivoForm({
               <Textarea
                 id="internal_notes"
                 name="internal_notes"
-                placeholder="Appunti personali, costi, margini…"
+                placeholder="esempio: appunti personali, costi, margini"
                 value={internalNotesValue}
                 className="resize-none overflow-hidden"
                 style={{ minHeight: '40px', fontSize: 15, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 36px 11px 12px' }}
@@ -1898,7 +1898,7 @@ export function PreventivoForm({
               </Select>
               {paymentTerms === 'Personalizzati' && (
                 <Textarea
-                  placeholder="Scrivi tu le condizioni: appariranno sul preventivo…"
+                  placeholder="Inserire le condizioni: appariranno sul preventivo"
                   value={paymentTermsCustom}
                   className="resize-none overflow-hidden"
                   style={{ minHeight: '40px', fontSize: 15, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px' }}

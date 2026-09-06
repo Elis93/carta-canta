@@ -33,7 +33,7 @@ export function NuovoListinoForm() {
   const [pending, startTransition] = useTransition()
 
   function handleCreate() {
-    if (!name.trim()) { setError('Metti il nome del fornitore.'); return }
+    if (!name.trim()) { setError('Inserisci il nome del fornitore.'); return }
     const m = markup.trim() === '' ? null : parseImportoIt(markup)
     if (m != null && (!Number.isFinite(m) || m < 0 || m > 500)) {
       setError('Il ricarico deve essere tra 0 e 500%.')
@@ -74,12 +74,12 @@ export function NuovoListinoForm() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
           <label htmlFor="nl-name" style={LABEL}>Fornitore</label>
-          <input id="nl-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="es. Idrotermica Rossi" style={FIELD} autoFocus />
+          <input id="nl-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="esempio: Idrotermica Rossi" style={FIELD} autoFocus />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
             <label htmlFor="nl-markup" style={LABEL}>Il tuo ricarico %</label>
-            <input id="nl-markup" inputMode="decimal" value={markup} onChange={(e) => setMarkup(e.target.value.replace(/[^\d.,]/g, ''))} placeholder="25" style={FIELD} />
+            <input id="nl-markup" inputMode="decimal" value={markup} onChange={(e) => setMarkup(e.target.value.replace(/[^\d.,]/g, ''))} placeholder="esempio: 25" style={FIELD} />
           </div>
           <div>
             <label htmlFor="nl-valid" style={LABEL}>Valido fino al</label>

@@ -289,7 +289,7 @@ export function FatturaForm({
           <input
             id="title"
             name="title"
-            placeholder="Metti il titolo"
+            placeholder="Inserire qui il titolo"
             style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, color: '#161616', fontFamily: 'inherit' }}
           />
           <input type="hidden" name="doc_number" value={docNumber} />
@@ -372,13 +372,13 @@ export function FatturaForm({
           {/* Note pubbliche */}
           <div>
             <div style={FIELD_LABEL}>Note (visibili al cliente)</div>
-            <textarea id="notes" name="notes" placeholder="Condizioni, note aggiuntive…" rows={2} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
+            <textarea id="notes" name="notes" placeholder="esempio: condizioni di pagamento, note aggiuntive" rows={2} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
           </div>
 
           {/* Note interne */}
           <div>
             <div style={FIELD_LABEL}>Note interne (non visibili al cliente)</div>
-            <textarea id="internal_notes" name="internal_notes" placeholder="Appunti personali, costi, margini…" rows={2} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
+            <textarea id="internal_notes" name="internal_notes" placeholder="esempio: appunti personali, costi, margini" rows={2} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
           </div>
 
           {/* Sottotitolo blocco 2: le condizioni del pagamento */}

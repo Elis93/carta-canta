@@ -269,7 +269,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
     // che precede l'upload delle FOTO resta libero (in cantiere si parte
     // spesso dalle foto, e una foto È già un'informazione).
     if (!client && !address.trim()) {
-      setError('Metti almeno il cliente o l\u2019indirizzo del cantiere: senza, il sopralluogo poi non si ritrova.')
+      setError('Inserisci almeno il cliente o l\u2019indirizzo del cantiere: senza, il sopralluogo poi non si ritrova.')
       return
     }
     setError(null)
@@ -456,7 +456,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
             e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'
           }}
           ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = Math.max(128, el.scrollHeight) + 'px' } }}
-          placeholder={'Misure… (es. parete 3,20 × 2,60 m)\nMateriali… (es. 2 rubinetti € 45 cad.)\nOre previste… (es. 6 h a € 30/h)'}
+          placeholder={'Misure (esempio: parete 3,20 × 2,60 m)\nMateriali (esempio: 2 rubinetti € 45 cad.)\nOre previste (esempio: 6 h a € 30/h)'}
           style={{ ...fieldStyle, minHeight: 128, resize: 'none', overflow: 'hidden', lineHeight: 1.6, fontSize: 13 }}
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
