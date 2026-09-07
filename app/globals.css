@@ -365,6 +365,33 @@
     text-align: center;
   }
 
+  /* LISTE IN UN RIQUADRO (Eli, 6-7 set: «cerca, tutti ecc., ordina devono
+     essere in un riquadro unico così che si capisca che il riquadro sotto
+     sia dei preventivi creati» — «insieme ma comunque separati»). Un solo
+     riquadro bianco sopra la lista, con TRE gruppi divisi da un filetto:
+     cerca · pillole di stato · Archivio/Cestino + Ordina. Dentro, la barra
+     delle tab perde il suo riquadro bianco bordato (bianco su bianco: due
+     cornici una dentro l'altra) e diventa una striscia crema; la pillola
+     attiva resta NAVY come deciso il 18 lug («più visibili»). */
+  .cc-lista-riquadro {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: var(--cc-shadow);
+    padding: 12px 13px 10px;
+    margin-bottom: 14px;
+  }
+  .cc-lista-riquadro .cc-tabs.cc-filter-scroll {
+    background: #f6f4ee;
+    border-color: #e6e1d5;
+    box-shadow: none;
+    margin: 0;
+  }
+  .cc-lista-hr {
+    height: 1px;
+    background: #e6e1d5;
+    margin: 12px 0;
+  }
+
   /* Scheda con ombra standard */
   .cc-card {
     background-color: #ffffff;

@@ -359,8 +359,8 @@ i testi dell'app è un giro a sé, da fare su richiesta.
 - ✅ **Ogni segnaposto-suggerimento inizia con «esempio:»** («ogni volta che c'è un suggerimento, davanti ci deve essere la parola esempio:»); dove lo spazio non basta resta «es.» o un esempio più corto (misurato col font vero a 16px: provincia/CAP, IBAN, nota del richiamo). La voce del preventivo: «esempio: rifacimento bagno». I segnaposto che sono etichette o formati («Cerca…», «0,00», «000000») non cambiano.
 - ✅ **Copy formale nei campi**: «Metti il titolo» → «Inserire qui il titolo» (preventivo, fattura, lavoro); «Metti…/Scrivi tu…» → «Inserisci…/Indica…» nei messaggi.
 - ❌ **Cliente come prima card del preventivo** — proposto da Eli, poi TOLTO da lei stessa il 6 set («riguardo al punto 2, togliamolo»): l'ordine Titolo → Cliente resta.
-- 🔄 **Liste: cerca + pillole + Archivio/Cestino/Ordina in un riquadro unico** — «insieme ma comunque separati»: mockup `Liste in un riquadro` (un riquadro, tre gruppi divisi da un filetto; Archivio e Ordina restano ai due capi — decisione 9 ago). In attesa del suo ok.
-- 🔄 **Termine dei lavori sul preventivo** — ok di Eli ai «giorni dalla conferma»; piano in `PROGETTO_TERMINE_LAVORI.md` (migration 088, PDF, pagina cliente, scheda lavoro, default in Impostazioni); riga per l'avvocato (clausola contrattuale). In attesa del via.
+- ✅ **Liste: cerca + pillole + Archivio/Cestino/Ordina in un riquadro unico** (7 set, implementato) — «insieme ma comunque separati»: un riquadro bianco, tre gruppi divisi da un filetto; cerca e barra delle pillole su fondo crema dentro la card; Archivio e Ordina restano ai due capi (decisione 9 ago); la pillola attiva resta navy (18 lug). Solo mobile, desktop invariato.
+- 🔄 **Termine dei lavori sul preventivo** — ok di Eli ai «giorni dalla conferma» e via libera del 7 set («procedi con il resto»); piano in `PROGETTO_TERMINE_LAVORI.md` (migration 088, PDF, pagina cliente, scheda lavoro, default in Impostazioni); riga per l'avvocato (clausola contrattuale).
 - ✅ Home senza appuntamenti: «Aggiungi il tuo **prossimo** appuntamento» (non «primo»).
 
 ## Collaudo Eli 5 set 2026 (pagina documento A)

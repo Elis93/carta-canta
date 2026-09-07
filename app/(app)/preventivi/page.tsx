@@ -14,6 +14,7 @@ import { SortSelect } from './_components/SortSelect'
 import { ListPager } from '../_components/ListPager'
 import { ArchivioToggle } from '../_components/ArchivioToggle'
 import { CestinoToggle } from '../_components/CestinoToggle'
+import { ListaRiquadro } from '../_components/ListaRiquadro'
 import { CestinoInline } from '../_components/CestinoInline'
 import { BackButton } from '@/components/shared/BackButton'
 import { checkFreeBlock, FREE_DOC_LIMIT } from '@/lib/free-trial'
@@ -499,13 +500,12 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
       {/* ── FILTRI ── */}
       <div className="mb-4">
-        {/* Mobile: search sopra i tab */}
-        <div className="mb-3 lg:hidden">
-          <SearchBar placeholder="Cerca numero, cliente, voce…" paramName="q" />
-        </div>
-
-        {/* Tab di stato — stile pill (classi cc-tabs / cc-tab / cc-tab-active) */}
-        <div className="cc-tabs cc-filter-scroll" style={{ marginTop: 16, marginBottom: 2 }}>
+        {/* Tab di stato — stile pill (cc-tabs / cc-tab / cc-tab-active). Renderizzate
+            due volte: dentro il riquadro su mobile (margine 0) e da sole su desktop. */}
+        <ListaRiquadro
+          cerca={<SearchBar placeholder="Cerca numero, cliente, voce…" paramName="q" tono="card" />}
+          tabs={
+            <div className="cc-tabs cc-filter-scroll" style={{ margin: 0 }}>
           {STATUS_TABS.map((tab) => {
             const isActive = (status ?? '') === tab.value
             return (
@@ -519,6 +519,36 @@ export default async function PreventiviPage({ searchParams }: Props) {
               </Link>
             )
           })}
+            </div>
+          }
+          comandi={
+            <div className="flex flex-wrap items-center gap-2">
+          {archivioOk && <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} />}
+          <CestinoToggle base="/preventivi" attivo={false} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px' }}>
+            <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
+            <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
+            <SortSelect currentSort={sort} />
+          </div>
+            </div>
+          }
+        />
+        <div className="hidden lg:block">
+          <div className="cc-tabs cc-filter-scroll" style={{ marginTop: 16, marginBottom: 2 }}>
+          {STATUS_TABS.map((tab) => {
+            const isActive = (status ?? '') === tab.value
+            return (
+              <Link
+                key={tab.value}
+                href={tab.value ? `/preventivi?status=${tab.value}` : '/preventivi'}
+                className={isActive ? 'cc-tab-active' : 'cc-tab'}
+                style={{ textDecoration: 'none', display: 'block' }}
+              >
+                {tab.label}
+              </Link>
+            )
+          })}
+          </div>
         </div>
 
         {/* Hint una-tantum (progressive disclosure, 2 ago): chi ha già scritto
@@ -531,24 +561,6 @@ export default async function PreventiviPage({ searchParams }: Props) {
           </div>
         )}
 
-        {/* ⚠️ DUE superfici SEPARATE, non una barra sola (Eli, 9 ago: *"perché
-            la sezione archivio è diventata un tutt'uno con l'Ordina? erano e
-            devono essere separate"*). L'8 agosto le avevo unite per togliere
-            una superficie bianca dalla pila prima della lista: ma sono due
-            cose diverse — «Archivio» cambia COSA vedi, «Ordina» cambia in che
-            ORDINE lo vedi. Dentro lo stesso riquadro sembravano un comando
-            solo. `flexWrap` + `marginLeft:auto`: quando non ci stanno affiancate
-            (schermo stretto, «Testo grande») «Ordina» scende su una riga propria
-            allineata a destra, invece di far sbordare la pagina. */}
-        <div className="flex flex-wrap items-center gap-2 lg:hidden" style={{ margin: '14px 0' }}>
-          {archivioOk && <ArchivioToggle base="/preventivi" attivo={soloArchiviati} q={q} sort={sortParam} />}
-          <CestinoToggle base="/preventivi" attivo={false} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', background: '#fff', border: '1px solid #e7e7ea', borderRadius: 11, padding: '7px 11px', boxShadow: '0 1px 2px rgba(20,20,40,.05)' }}>
-            <ArrowUpDown size={15} style={{ color: 'var(--cc-text-2)' }} />
-            <span style={{ fontSize: 13, color: 'var(--cc-text-2)' }}>Ordina:</span>
-            <SortSelect currentSort={sort} />
-          </div>
-        </div>
 
         {/* Desktop: Cerca + Filtra + Ordina in una riga */}
         <div className="hidden lg:flex items-center gap-2 flex-wrap mt-3">

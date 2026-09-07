@@ -11,6 +11,9 @@ interface SearchBarProps {
   className?: string
   onSearch?: (value: string) => void  // callback alternativa all'URL
   defaultValue?: string
+  /** 'card' = dentro un riquadro bianco (liste, 7 set): campo su fondo crema
+   *  senza ombra, altrimenti bianco su bianco sparirebbe. */
+  tono?: 'card'
 }
 
 export function SearchBar({
@@ -19,6 +22,7 @@ export function SearchBar({
   className,
   onSearch,
   defaultValue = '',
+  tono,
 }: SearchBarProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -80,7 +84,9 @@ export function SearchBar({
         value={value}
         onChange={handleChange}
         placeholder={placeholder}
-        className="pl-9 pr-8 h-11 rounded-xl border-[#e6e6e6] bg-white shadow-[0_1px_2px_rgba(20,20,40,.04)] placeholder:text-sm"
+        className={tono === 'card'
+          ? 'pl-9 pr-8 h-11 rounded-xl border-[#e6e1d5] bg-[#f6f4ee] shadow-none placeholder:text-sm'
+          : 'pl-9 pr-8 h-11 rounded-xl border-[#e6e6e6] bg-white shadow-[0_1px_2px_rgba(20,20,40,.04)] placeholder:text-sm'}
       />
       {value && (
         <button
