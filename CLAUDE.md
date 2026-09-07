@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 7 settembre 2026** (087+088 applicate · [BUG] 2FA dopo «Esci»+login · poi i **quattro mockup di riordino** (artifact «Riordino di settembre») con le scelte di Eli: ① form ok · ② 4 livelli di testo, grigio non nero · ③ tendine col riepilogo grigio a destra + eccezioni colorate · ④ sopralluoghi variante B — implementazione a tranche: **✅ tranche 1 (Home + tendine)**, **✅ tranche 2 (form)**, ⏭️ tranche 3 (sopralluoghi)).
+> **Ultima sessione: 7 settembre 2026** (087+088 applicate · [BUG] 2FA dopo «Esci»+login · poi i **quattro mockup di riordino** (artifact «Riordino di settembre») con le scelte di Eli: ① form ok · ② 4 livelli di testo, grigio non nero · ③ tendine col riepilogo grigio a destra + eccezioni colorate · ④ sopralluoghi variante B — implementazione a tranche: **✅ tranche 1 (Home + tendine)**, **✅ tranche 2 (form)**, **✅ tranche 3 (sopralluoghi)** — tutte e tre in produzione, da collaudare sul telefono).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -28,6 +28,15 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### ✅ 7 set (5) — RIORDINO, tranche 3: la LISTA SOPRALLUOGHI senza sigle (variante B del mockup)
+Eli sul mockup: «4 B». `app/(app)/sopralluoghi/page.tsx`, solo la riga della lista (testata, cerca, «Prossimi appuntamenti», vuoto e cestino invariati).
+- **Via il cerchio con le iniziali** (`initials()`: prime due lettere del cliente o del titolo → «GG», «S2», «MR»; due sopralluoghi dello stesso cliente erano identici). **Via la pillola «Bozza»** (un sopralluogo non si invia: «bozza» non voleva dire niente) e la pillola «Preventivo creato».
+- **La riga, coi 4 livelli di testo**: riga 1 = **cliente · indirizzo del cantiere** (`cc-t-main`, ellissi) e a destra **«3 foto»** in Georgia (`cc-t-num` + `cc-t-sub`) o «solo appunti»; riga 2 = appuntamento («gio 12 set · 09:00») · «aggiornato 2 giorni fa»; riga 3 = **lo stato in parole**: «Preventivo 012/2026 creato» verde 600 oppure «Da trasformare in preventivo» grigio. **Filetto a sinistra**: verde = preventivo creato · oro = foto da lavorare · grigio = solo appunti (stesso segno di «Lavoro in corso» in Home).
+- ⚠️ **Il titolo automatico non si mostra** («Lavoro 05.09 Giorgio G.» ripete il cliente; `isTitoloAutomatico` riconosce `Lavoro DD.MM…` e `Sopralluogo…`): resta sul sopralluogo e passa al preventivo che ne nasce, come prima. Un **titolo scritto a mano** prende invece il posto del cliente in riga 1, e cliente · indirizzo scendono in riga 2.
+- **Il numero del preventivo creato** viene da una **query a sé, tollerante** su `documents(id, doc_number)` per i soli `document_id` della pagina (best-effort: senza, la riga dice «Preventivo creato»). Nessuna migration.
+- ⚠️ **Non verificata in Chromium** (pagina server con Supabase): la geometria è quella del mockup B verificato (0 sbordi a 390/360/320 e zoom 1.15) — le righe sono flex con ellissi come nella replica. **Da collaudare sul telefono**: sopralluogo con preventivo creato (verde + numero), con foto senza preventivo (oro), solo appunti (grigio), titolo scritto a mano, cliente lungo + indirizzo lungo.
+- FAQ: nessuna descrive la riga della lista (verificato con grep) → nessuna toccata; la voce /novita di fine agosto («il titolo ha tutta la riga per sé») resta come storia; nuova voce /novita del 7 set. Lint: l'unico `error` del file (`new Date()` nel render, `todayKey`) è pre-esistente. tsc+build+**781**+smoke · scan 0.
 
 ### ✅ 7 set (4) — RIORDINO, tranche 2: NUOVO PREVENTIVO / NUOVA FATTURA in quattro sezioni, voce a tre campi, menu «Aggiungi voce»
 Eli sul mockup: «1 ok». Implementato su `PreventivoForm` (create+edit, preventivo/fattura/NC) e `FatturaForm` (Nuova fattura), desktop compreso (il form è lo stesso).

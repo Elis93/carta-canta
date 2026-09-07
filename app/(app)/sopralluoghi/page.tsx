@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Search, CheckCircle2, ChevronRight, CalendarDays, Navigation } from 'lucide-react'
+import { Plus, Search, ChevronRight, CalendarDays, Navigation } from 'lucide-react'
+import { formatDocNumber } from '@/lib/utils'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { BackButton } from '@/components/shared/BackButton'
 import { CestinoToggle } from '../_components/CestinoToggle'
@@ -47,9 +48,10 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' , timeZone: 'Europe/Rome' }).replace('.', '')
 }
 
-function initials(row: SopralluogoRow): string {
-  const source = [row.clients?.name, row.clients?.surname].filter(Boolean).join(' ') || row.title
-  return source.split(/\s+/).slice(0, 2).map((w) => w[0] ?? '').join('').toUpperCase() || 'S'
+/** Titolo dato dall'app («Lavoro 05.09 Giorgio G.», «Sopralluogo 2»): in
+    lista non si mostra, ripete il cliente. Uno scritto a mano sì. */
+function isTitoloAutomatico(title: string): boolean {
+  return /^(Lavoro \d{2}\.\d{2}\b|Sopralluogo\b)/.test(title.trim())
 }
 
 export default async function SopralluoghiPage({
@@ -139,6 +141,18 @@ export default async function SopralluoghiPage({
     agendaRows = (agendaData ?? []) as SopralluogoRow[]
   } catch { /* migration 041 non ancora applicata → lista vuota */ }
 
+  // Il numero del preventivo nato dal sopralluogo («Preventivo 012/2026
+  // creato», 7 set): una query a sé, tollerante — senza, la riga dice solo
+  // «Preventivo creato».
+  const docNumbers = new Map<string, string | null>()
+  const docIds = rows.map((r) => r.document_id).filter((x): x is string => !!x)
+  if (docIds.length > 0) {
+    try {
+      const { data } = await supabase.from('documents').select('id, doc_number').in('id', docIds)
+      for (const d of data ?? []) docNumbers.set(d.id, d.doc_number)
+    } catch { /* best-effort */ }
+  }
+
   // Appuntamenti di oggi e futuri (ora italiana), dal più vicino
   const dayKey = (x: Date) => x.toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
   const todayKey = dayKey(new Date())
@@ -216,51 +230,57 @@ export default async function SopralluoghiPage({
       )}
 
       {rows.length > 0 ? (
-        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px' }}>
+        /* ── Variante B del mockup «Riordino di settembre» (scelta Eli 7 set):
+           via il cerchio con le iniziali («GG», «S2» non dicevano niente e due
+           sopralluoghi dello stesso cliente erano identici). Riga 1 = cliente ·
+           indirizzo del cantiere (o il titolo scritto a mano) con le foto in
+           Georgia a destra; riga 2 = appuntamento · aggiornato; riga 3 = lo
+           stato in parole. Il filetto a sinistra dice lo stato a colpo
+           d'occhio: verde = preventivo creato · oro = foto da lavorare ·
+           grigio = solo appunti. Stessi quattro livelli di testo della Home. */
+        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 0' }}>
           {rows.map((row, idx) => {
             const clientName = [row.clients?.name, row.clients?.surname].filter(Boolean).join(' ')
             const nPhotos = photoCounts.get(row.id) ?? 0
-            const subParts = [
-              row.scheduled_at ? `📅 ${fmtAppointment(row.scheduled_at)}` : null,
+            const manuale = !isTitoloAutomatico(row.title)
+            const titolo = manuale ? row.title : (clientName || 'Senza cliente')
+            const sotto = [
+              manuale ? (clientName || 'Senza cliente') : null,
               row.address,
-              nPhotos > 0 ? `${nPhotos} foto` : (row.notes ? 'solo testo' : null),
-              timeAgo(row.updated_at),
-            ].filter(Boolean)
+            ].filter(Boolean).join(' · ')
+            const riga1 = sotto && !manuale ? `${titolo} · ${sotto}` : titolo
+            const riga2 = [
+              row.scheduled_at ? fmtAppointment(row.scheduled_at) : null,
+              manuale && sotto ? sotto : null,
+              `aggiornato ${timeAgo(row.updated_at)}`,
+            ].filter(Boolean).join(' · ')
+            const numero = row.document_id ? docNumbers.get(row.document_id) : null
+            const stato = row.document_id
+              ? `Preventivo ${numero ? formatDocNumber(numero) : ''} creato`.replace('  ', ' ')
+              : 'Da trasformare in preventivo'
+            const filetto = row.document_id ? '#2f8a63' : nPhotos > 0 ? '#c9a44c' : '#c9c7c0'
             return (
               <Link
                 key={row.id}
                 href={`/sopralluoghi/${row.id}`}
-                style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '12px 0', borderBottom: idx < rows.length - 1 ? '0.5px solid #eee' : 'none', textDecoration: 'none', color: 'inherit' }}
+                style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 15px', borderBottom: idx < rows.length - 1 ? '1px solid #ededea' : 'none', textDecoration: 'none', color: 'inherit' }}
               >
-                <span style={{ width: 36, height: 36, borderRadius: '50%', background: '#f2f2f5', color: '#55534b', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {initials(row)}
-                </span>
-                {/* Il badge NON sta più accanto al testo (Eli 20 ago, foto:
-                    «descrizioni che non si leggono» — la pillola a larghezza
-                    fissa rubava ~120px a titolo e descrizione, che si
-                    troncavano dopo poche lettere). Riga 1 = titolo a tutta
-                    larghezza; riga 2 = pillola + dettagli, che possono andare
-                    a capo (max 2 righe) invece di sparire nei puntini. */}
+                <span aria-hidden style={{ position: 'absolute', left: 0, top: 14, bottom: 14, width: 2, borderRadius: 2, background: filetto }} />
                 <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {row.title}{clientName ? ` — ${clientName}` : ' — Senza cliente'}
-                  </span>
-                  <span style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '3px 8px', marginTop: 3 }}>
-                    {row.document_id ? (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, border: '1px solid #bce3d2', color: '#2f8a63', borderRadius: 999, padding: '2px 8px', fontSize: 10.5, fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' }}>
-                        <CheckCircle2 size={11} /> Preventivo creato
+                  <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+                    <span className="cc-t-main" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{riga1}</span>
+                    {nPhotos > 0 ? (
+                      <span className="cc-t-num" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+                        {nPhotos} <span className="cc-t-sub">foto</span>
                       </span>
-                    ) : (
-                      <span style={{ border: '1px solid #e3e3e6', color: 'var(--cc-muted)', borderRadius: 999, padding: '2px 8px', fontSize: 10.5, fontWeight: 600, flexShrink: 0 }}>
-                        Bozza
-                      </span>
-                    )}
-                    <span style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.4, minWidth: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                      {subParts.join(' · ')}
-                    </span>
+                    ) : row.notes ? (
+                      <span className="cc-t-sub" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>solo appunti</span>
+                    ) : null}
                   </span>
+                  <span className="cc-t-sub" style={{ display: 'block', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{riga2}</span>
+                  <span className={row.document_id ? 'cc-t-sub-strong' : 'cc-t-sub'} style={{ display: 'block', marginTop: 2, color: row.document_id ? '#2f8a63' : undefined, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stato}</span>
                 </span>
-                <ChevronRight size={16} style={{ color: '#c2c1bd', flexShrink: 0 }} />
+                <ChevronRight size={16} style={{ color: '#c2c1bd', flexShrink: 0, marginTop: 2 }} />
               </Link>
             )
           })}
