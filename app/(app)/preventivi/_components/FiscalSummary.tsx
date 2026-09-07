@@ -21,9 +21,13 @@ interface FiscalSummaryProps {
   tierLabel?: string | null
   /** Le altre proposte, per vedere i due totali senza cambiare linguetta. */
   altreProposte?: Array<{ label: string; total: number }>
+  /** Riordino 7 set: il titolo «Riepilogo» sta FUORI dalla card (SezioneForm). */
+  hideTitle?: boolean
+  /** Il Margine come riga in fondo alla card (MargineBox bare). */
+  margineSlot?: React.ReactNode
 }
 
-export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventivo', discountSlot, tierLabel, altreProposte }: FiscalSummaryProps) {
+export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventivo', discountSlot, tierLabel, altreProposte, hideTitle = false, margineSlot }: FiscalSummaryProps) {
   // Calcolo real-time client-side (solo per display — server ricalcola al salvataggio)
   const itemsForCalc = voci.map((v) => ({
     id: v.id ?? '',
@@ -68,18 +72,18 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
 
   return (
     <div className="cc-card-md" style={{ padding: '14px 15px' }}>
-      <div className="flex items-center justify-between mb-4">
-        {/* Stessa veste della testata «Note, foto e condizioni» (Eli 26 ago:
-            «facciamo Riepilogo uguale a Note»): 13/600 .07em uppercase #6f6d64. */}
-        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>
-          {tierLabel ? `Riepilogo — proposta ${tierLabel}` : 'Riepilogo'}
-        </span>
-        {docNumber && (
-          <span className="text-xs font-mono text-muted-foreground">
-            #{docNumber}
+      {!hideTitle && (
+        <div className="flex items-center justify-between mb-4">
+          <span className="cc-section-label" style={{ marginBottom: 0 }}>
+            {tierLabel ? `Riepilogo — proposta ${tierLabel}` : 'Riepilogo'}
           </span>
-        )}
-      </div>
+          {docNumber && (
+            <span className="text-xs font-mono text-muted-foreground">
+              #{docNumber}
+            </span>
+          )}
+        </div>
+      )}
       {/* ── Lista voci LIVE (2 ago sera, Eli: "nel riepilogo voglio vedere le
           voci aggiunte, così controllo al volo descrizioni e prezzi") ──
           Si aggiorna a ogni modifica: stessa fonte dei totali qui sotto. */}
@@ -239,6 +243,7 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
           )}
 
       </div>
+      {margineSlot}
     </div>
   )
 }

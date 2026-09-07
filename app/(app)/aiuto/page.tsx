@@ -26,7 +26,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
   // Solo se la funzione AI è attiva in produzione (flag)
   ...(AI_ATTIVA ? [{
     q: 'Posso creare il preventivo dalle foto?',
-    a: <>Sì: in un nuovo preventivo apri <b>Opzioni</b> nella card delle voci e tocca <b>Dalle foto</b>: scatti fino a 6 foto
+    a: <>Sì: in un nuovo preventivo tocca <b>Aggiungi voce</b> e poi <b>Dalle foto</b>: scatti fino a 6 foto
       del lavoro e l&rsquo;AI propone le voci. I prezzi vengono{' '}
       <b>solo dal tuo catalogo</b>, mai inventati; le pillole sotto ogni voce ti dicono cosa resta
       da inserire. Controlla sempre prima di inviare.</>,
@@ -40,7 +40,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <b>descrizione, prezzo, unità e IVA</b>{' '}— dal listino entra anche il costo, per il tuo
       margine privato. Sono solo una scorciatoia: puoi <b>ignorarli</b>{' '}e continuare a scrivere,
       non cambiano niente da soli. Se il catalogo è vuoto non compare nulla: si riempie da{' '}
-      <VaiA a="catalogo" />{' '}o col tasto <b>Da catalogo</b>{' '}sotto le voci.</>,
+      <VaiA a="catalogo" />{' '}o da <b>Aggiungi voce › Dal catalogo o dai listini</b>{' '}sotto le voci.</>,
   },
   {
     q: 'Le voci che scrivo finiscono nel catalogo?',
@@ -57,7 +57,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
     a: <>Sì. Il <b>costo</b>{' '}(quanto paghi tu) si segna sulle voci del <b>Catalogo</b>{' '}e arriva
       nel documento <b>da solo</b>{' '}quando scegli una voce dal catalogo, dai listini o dai
       suggerimenti mentre scrivi — nella card della voce non c&rsquo;è un campo da compilare.
-      Sopra il riepilogo compare allora il riquadro <b>Margine · solo tu lo vedi</b>: aprendolo
+      In fondo al <b>Riepilogo</b>{' '}compare allora la riga <b>Margine · solo tu lo vedi</b>: aprendola
       trovi una riga per voce con il costo (che puoi <b>correggere o completare</b>{' '}lì) e il
       margine. Li vedi <b>solo tu</b>: non compaiono mai su documenti, pagine o email viste dal
       cliente. Con <b>Pro</b>, in{' '}
@@ -263,8 +263,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
     id: 'termine-lavori',
     q: 'Posso scrivere sul preventivo entro quando finisco i lavori?',
     parole: ['termine', 'tempi', 'esecuzione', 'fine lavori', 'giorni dalla conferma', 'quando finisco', 'consegna', 'durata'],
-    a: <>Sì. Nel preventivo, nella sezione <b>Note, foto e condizioni</b>, c&rsquo;è il campo{' '}
-      <b>Tempi di esecuzione (giorni dalla conferma)</b>: scrivi per esempio 30 e sul documento
+    a: <>Sì. Nel preventivo, nella sezione <b>Condizioni e allegati</b>, c&rsquo;è la riga{' '}
+      <b>Tempi di esecuzione</b>{' '}(giorni dalla conferma): scrivi per esempio 30 e sul documento
       compare <i>&laquo;indicativamente entro 30 giorni dalla conferma del preventivo, salvo
       imprevisti o cause non dipendenti dall&rsquo;impresa&raquo;</i> — nel PDF, sulla pagina
       del cliente e nel riepilogo. Sono giorni di calendario: per sei settimane scrivi 42.
@@ -439,7 +439,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <br /><br />
       Nel «valore del lavoro» ci sta tutto ciò che non è quel bene: manodopera,
       materiali, e anche tapparelle, zanzariere e grate, che si contano a parte
-      rispetto all&rsquo;infisso. Tu spunti <b>«È un bene significativo»</b>{' '}sulla voce,
+      rispetto all&rsquo;infisso. Tu apri <b>Sconto · bene significativo</b>{' '}sotto i campi della voce e spunti{' '}<b>«È un bene significativo»</b>,
       il resto lo fa l&rsquo;app: divide la riga in due e scrive in fattura il valore del
       bene, come chiede la legge. La spunta compare solo se non sei in forfettario e la
       voce è al 10%.</>,
@@ -825,7 +825,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
   {
     q: 'Come calcolo metri quadri, piastrelle o vernice?',
     parole: ['mq', 'metri', 'righello', 'quantita', 'calcolo', 'pittura'],
-    a: <>Dentro il preventivo, su ogni voce c&rsquo;è <b>Calcola quantità</b>: scrivi le misure e il
+    a: <>Dentro il preventivo, su ogni voce aperta trovi <b>Calcola quantità</b>{' '}(sotto «Sconto · calcola quantità»): scrivi le misure e il
       risultato entra da solo nella quantità (con l&rsquo;unità giusta). Nel <b>sopralluogo</b>,
       negli Appunti, c&rsquo;è <b>Calcola una misura</b>: il calcolo resta salvato col risultato,
       lo tocchi per rimodificarlo e passa nelle Note interne del preventivo. Lo stesso strumento

@@ -4,13 +4,12 @@ import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { runAction } from '@/lib/run-action'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Plus, X, Trash2, Save, Send, AlertCircle, Hash, CheckCircle2, Info, ChevronDown, BadgePercent, Camera, Wand2, Images, Lock, SlidersHorizontal, Eye, EyeOff } from 'lucide-react'
+import { Loader2, X, Save, Send, AlertCircle, Hash, CheckCircle2, Camera, Wand2, Images, Lock, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { usePhotoLightbox, ZoomHotspot } from '@/components/shared/PhotoLightbox'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -23,9 +22,12 @@ import { FiscalSummary } from './FiscalSummary'
 import { DiscountField } from './DiscountField'
 import { MargineBox } from './MargineBox'
 import { VociTable } from './VociTable'
-import { AiImportButton } from './AiImportButton'
 import { createDocumentAction, saveDraftAction } from '@/lib/actions/documents'
 import { roundFiscale, calcolaDocumento } from '@/lib/fiscal/calcoli'
+import { SezioneForm } from '@/components/shared/SezioneForm'
+import { RigaTendina } from '@/components/shared/RigaTendina'
+import { AiImportModal } from './AiImportModal'
+import type { AddVoceAction } from './VociTable'
 import { totaliPerProposta } from '@/lib/documents/proposte'
 import { giorniAllaScadenza } from '@/lib/fornitori/listino'
 import { ResendReminderDialog } from './ResendReminderDialog'
@@ -252,12 +254,6 @@ export function PreventivoForm({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultClient])
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
-  // Tendina "Opzioni" della card Voci (feedback Eli 2 ago): AI e proposte
-  // raccolte in un pannello chiuso di default — il form resta pulito.
-  const [vociOptsOpen, setVociOptsOpen] = useState(false)
-  // 2 ago sera (Eli): con tante voci la card si deve poter CHIUDERE al volo.
-  // Solo visivo (className hidden): lo stato delle voci resta montato.
-  const [vociCardOpen, setVociCardOpen] = useState(true)
   const [voci, setVoci] = useState<VoceItem[]>(
     defaultValues?.document_items && defaultValues.document_items.length > 0
       ? defaultValues.document_items.map((item) => ({
@@ -436,19 +432,33 @@ export function PreventivoForm({
   // Testata minimal (2 ago): pannello di modifica del numero, aperto dal chip
   const [numEditOpen, setNumEditOpen] = useState(false)
 
-  // M1: "Altre opzioni" — aperto di default in edit mode se ci sono valori non-standard
-  const [altreOpzioniOpen, setAltreOpzioniOpen] = useState(() => {
-    // In create mode: aperto se c'è un prefill (es. richiesta marketplace), così si vede
-    if (mode !== 'edit') return !!(initialTitle || initialInternalNotes)
-    return (
-      !!(defaultValues?.notes) ||
-      !!(defaultValues?.internal_notes) ||
-      !!(defaultValues?.bonus_edilizio) ||
-      !!_existingDepositType ||
-      _isCustomPayment ||
-      (defaultValues?.payment_terms ?? '30 giorni') !== '30 giorni'
-    )
+  // ── Righe a tendina di «Condizioni e allegati» (riordino 7 set): si apre
+  // solo quella che serve. Di default TUTTE chiuse; in create si aprono le
+  // note se c'è un prefill (richiesta dalla vetrina), in edit le righe con
+  // un valore non standard — così ciò che è stato cambiato si vede subito.
+  const [righeAperte, setRigheAperte] = useState<Set<string>>(() => {
+    const aperte = new Set<string>()
+    if (mode !== 'edit') {
+      if (initialInternalNotes) aperte.add('note-interne')
+      return aperte
+    }
+    if (defaultValues?.notes) aperte.add('note')
+    if (defaultValues?.internal_notes) aperte.add('note-interne')
+    if (_existingDepositType) aperte.add('acconto')
+    if (_isCustomPayment || (defaultValues?.payment_terms ?? '30 giorni') !== '30 giorni') aperte.add('pagamento')
+    return aperte
   })
+  const toggleRiga = (id: string) => setRigheAperte((prev) => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
+  // Template controllato (prima `defaultValue`): serve al riepilogo della riga.
+  const [templateId, setTemplateId] = useState<string>(
+    ((defaultValues as Record<string, unknown> | undefined)?.template_id as string | undefined)
+    ?? defaultTemplateId
+    ?? '__classico__'
+  )
 
   // ── Numero documento (controllato) ────────────────────────
   // FIX-22: in create mode per i preventivi non pre-popa il numero (assegnato all'invio).
@@ -922,6 +932,50 @@ export function PreventivoForm({
 
   // ── Opzioni a livelli: voci della proposta attiva + gestione tier ──
   const optionsActive = isPreventivo && optionsOn
+
+  // ── I valori «già letti» a destra delle righe di Condizioni e allegati ──
+  const vociCompilate = voci.filter((v) => v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0).length
+  const riepiloghi = {
+    note: notesValue.trim() ? (notesValue.trim().length > 42 ? `${notesValue.trim().slice(0, 42)}…` : notesValue.trim()) : 'nessuna',
+    noteInterne: internalNotesValue.trim() ? 'scritte · solo per te' : 'nessuna',
+    foto: attachedPhotos.length === 0
+      ? 'nessuna'
+      : `${attachedPhotos.length} foto · ${visiblePhotos.size === 0 ? 'nascoste al cliente' : visiblePhotos.size === attachedPhotos.length ? 'visibili al cliente' : `${visiblePhotos.size} visibili al cliente`}`,
+    acconto: depositAttivo && depositValue.trim()
+      ? (depositType === 'percent' ? `${depositValue}% alla conferma` : `€ ${depositValue} alla conferma`)
+      : 'nessuno',
+    validita: `${validityDays || 30} giorni`,
+    tempi: workDays.trim() ? `${workDays} giorni dalla conferma` : 'non indicati',
+    pagamento: paymentTerms === 'Personalizzati' ? 'personalizzati' : paymentTerms,
+    template: templateId === '__classico__'
+      ? 'Classico'
+      : (templates.find((t) => t.id === templateId)?.name ?? 'Classico'),
+  }
+
+  // ── Le strade con l'AI nel menu «Aggiungi voce» (riordino 7 set): erano un
+  // blocco crema in cima alla card Voci, dietro la pillola «Opzioni». Le
+  // condizioni di comparsa sono le stesse di allora: flag acceso, foto e note
+  // solo in create/bozza, «Da un testo» Pro. ──
+  const bozzaOCreate = mode === 'create' || defaultValues?.status === 'draft'
+  const [aiTextOpen, setAiTextOpen] = useState(false)
+  const addVoceActions: AddVoceAction[] = AI_VOCI_ENABLED
+    ? [
+        ...(bozzaOCreate ? [{
+          key: 'ai-foto', label: aiPhotoExtracting ? 'Leggo le foto…' : 'Dalle foto', hint: 'con l’AI: preventivo scritto a mano, elenco di materiali, listino',
+          icon: aiPhotoExtracting ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />,
+          onClick: () => photoInputRef.current?.click(), disabled: aiPhotoExtracting, tourId: 'ai-foto',
+        }] : []),
+        isProPlan
+          ? { key: 'ai-testo', label: 'Da un PDF o da un testo', hint: 'con l’AI', icon: <Wand2 size={16} />, onClick: () => setAiTextOpen(true) }
+          : { key: 'ai-testo', label: 'Da un PDF o da un testo', hint: 'con l’AI · funzione Pro', icon: <Lock size={16} />, href: '/abbonamento' },
+        ...((bozzaOCreate && (internalNotesValue ?? '').trim().length >= 5) ? [{
+          key: 'ai-note', label: aiExtracting ? 'Sto leggendo le note…' : 'Dalle note che hai scritto', hint: 'con l’AI',
+          icon: aiExtracting ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />,
+          onClick: () => { void handleAiExtractVoci() }, disabled: aiExtracting,
+        }] : []),
+      ]
+    : [{ key: 'ai', label: 'Dalle foto o da un testo', hint: 'con l’AI · in arrivo', icon: <Wand2 size={16} />, disabled: true }]
+  const addVoceNote = AI_VOCI_ENABLED ? 'Con l’AI i prezzi vengono solo dal tuo catalogo, mai inventati. Controlla sempre prima di inviare.' : undefined
   const activeVoci = optionsActive
     ? voci.filter((v) => (v.option_tier ?? 'base') === activeTier)
     : voci
@@ -1215,6 +1269,23 @@ export function PreventivoForm({
       inert={isReadOnly || undefined}
       style={isReadOnly ? { opacity: 0.55 } : undefined}
     >
+      {/* Input nascosto per «Dalle foto» del menu Aggiungi voce e modale
+          «Da un PDF o da un testo» (AiImportModal): vivono qui perché il menu
+          sta dentro VociTable, i gestori qui. */}
+      {AI_VOCI_ENABLED && bozzaOCreate && (
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          multiple
+          style={{ display: 'none' }}
+          onChange={(e) => { void handleAiExtractPhotos(e.target.files); e.target.value = '' }}
+        />
+      )}
+      {AI_VOCI_ENABLED && isProPlan && (
+        <AiImportModal open={aiTextOpen} onClose={() => setAiTextOpen(false)} onConfirm={handleAiItems} />
+      )}
       {/* Hidden: items, client, bonus, vat default */}
       <input type="hidden" name="items_json" value={serializeVoci(voci)} />
       {/* Foto allegate dal form: percorsi storage → collegati dal server alla creazione */}
@@ -1265,15 +1336,18 @@ export function PreventivoForm({
           su mobile un target più alto del viewport rende il ritaglio del
           tutorial invisibile). Le voci sotto restano leggibili grazie
           all'overlay più tenue impostato nel TourController. */}
-      <div className="space-y-4">
-      {/* ── Testata minimal (2 ago, mockup approvato): titolo leggero + numero
-          nudo, niente sezione con etichette. 2 ago sera (Eli): il numero è in
-          Georgia e si modifica SUL POSTO — al tocco il chip diventa un campo,
-          si cambiano le cifre lì, Invio o tocco fuori e torna chip. Vale in
-          creazione preventivo, modifica preventivo e modifica fattura. Unica
-          eccezione: la CREAZIONE fattura (FatturaForm) resta informativa,
-          perché lì il numero lo assegna la sequenza fiscale (B.3). ── */}
-      <div className="cc-card-md" style={{ padding: '6px 15px' }}>
+      {/* ══ RIORDINO 7 set 2026 (mockup approvato da Eli): QUATTRO SEZIONI con
+          l'etichetta FUORI dalla card, come in Home — Intestazione · Voci ·
+          Condizioni e allegati · Riepilogo. Prima: testata + Cliente + una card
+          Voci che conteneva anche AI e proposte + una tendina «Note, foto e
+          condizioni» con nove campi in fila (Eli: «tutto in una sola card,
+          difficile capire dove inizia uno e finisce l'altro»). ══ */}
+
+      {/* ── 1. Intestazione: titolo + numero, poi il cliente. data-tour="cliente"
+          sta sulla CARD (un target più alto del viewport rende il ritaglio del
+          tutorial invisibile su mobile). ── */}
+      <SezioneForm label="Intestazione">
+      <div data-tour="cliente" className="cc-card-md" style={{ padding: '6px 15px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <input
             id="title"
@@ -1337,18 +1411,9 @@ export function PreventivoForm({
             value={docNumber.trim() === (nextDocNumber ?? '').trim() ? '' : docNumber}
           />
         )}
-      </div>
 
-      <div data-tour="cliente" className="cc-card-md" style={{ padding: '15px 15px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div className="cc-section-label" style={{ marginBottom: 0 }}>
-          Cliente
-        </div>
-
-        {/* Il numero fattura si corregge dal chip in testata (2 ago):
-            il vecchio campo qui dentro è stato rimosso. */}
-
-        {/* ── Cliente — sempre visibile ── */}
-        <div className="space-y-1.5">
+        <div style={{ borderTop: '1px solid #ededea', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span className="cc-section-label" style={{ marginBottom: 0 }}>Cliente</span>
           <ClientAutocomplete
             value={selectedClient}
             onChange={(c: ClientHit | null) => {
@@ -1366,192 +1431,11 @@ export function PreventivoForm({
           />
         </div>
       </div>
+      </SezioneForm>
 
-      {/* ── Card 2: Voci ─────────────────────────────────────── */}
-      {/* padding: 0 → l'header (15px) e le righe (15px) danno il rientro; così titolo e
-          riquadri sono allineati a 15px come le card Cliente/Altre opzioni, e la linea
-          divisoria sotto il titolo va a tutta larghezza. */}
+      {/* ── 2. Voci ── */}
+      <SezioneForm label={isNota ? 'Voci della nota' : 'Voci'} right={`${vociCompilate} ${vociCompilate === 1 ? 'voce' : 'voci'}`}>
       <div className="cc-card-md" style={{ overflow: 'hidden', padding: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', borderBottom: vociCardOpen ? '0.5px solid var(--cc-border-color)' : 'none' }}>
-          <button
-            type="button"
-            onClick={() => setVociCardOpen((o) => !o)}
-            aria-expanded={vociCardOpen}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', minWidth: 0 }}
-          >
-            <div className="cc-section-label" style={{ marginBottom: 0 }}>{isNota ? 'Voci nota di credito' : docType === 'fattura' ? 'Voci fattura' : 'Voci preventivo'}</div>
-            {!vociCardOpen && (
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)' }}>
-                · {voci.filter((v) => v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0).length} voci
-              </span>
-            )}
-            <ChevronDown size={17} style={{ color: '#55534b', flexShrink: 0, transition: 'transform .15s', transform: vociCardOpen ? 'rotate(180deg)' : 'none' }} />
-          </button>
-          {vociCardOpen && <button
-            type="button"
-            onClick={() => setVociOptsOpen((o) => !o)}
-            aria-expanded={vociOptsOpen}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: vociOptsOpen ? '#f2f2f4' : '#fff', border: '1px solid #e3e3e6', borderRadius: 999, padding: '5px 11px', fontSize: 12, fontWeight: 600, color: '#1a1a2e', cursor: 'pointer', fontFamily: 'inherit' }}
-          >
-            <SlidersHorizontal size={12} />
-            Opzioni
-            <ChevronDown size={13} style={{ transition: 'transform .15s', transform: vociOptsOpen ? 'rotate(180deg)' : 'none' }} />
-          </button>}
-        </div>
-        {/* Corpo della card: nascosto (non smontato) quando la card è chiusa */}
-        <div className={vociCardOpen ? undefined : 'hidden'}>
-        {/* ── Tendina "Opzioni" (feedback Eli 2 ago, rifinita): l'AI in cima —
-            "Da un testo" e "Dalle foto" sono DUE STRADE della stessa funzione,
-            affiancate e vestite uguali; "Proponi più opzioni" sotto, separato.
-            Chiusa di default: la vede solo chi la usa. ── */}
-        {vociOptsOpen && (
-          <div style={{ padding: '12px 15px', borderBottom: '0.5px solid var(--cc-border-color)', background: '#fbfaf7' }}>
-            <div className="cc-section-label" style={{ marginBottom: 8 }}>Compila le voci con l&rsquo;AI</div>
-            {AI_VOCI_ENABLED ? (
-              <>
-                {/* #8 (Eli 14 ago): dire COSA caricare e A COSA SERVE — prima i
-                    tasti «Dalle foto/note» non lo spiegavano. */}
-                {/* Copy asciugata (Eli 25 ago sera: «più chiara e concisa, non
-                    menzioniamo le note»). Il tasto «Dalle note» resta e si
-                    spiega da sé quando compare. */}
-                <p style={{ fontSize: 11.5, color: 'var(--cc-muted)', margin: '0 2px 10px', lineHeight: 1.5 }}>
-                  <b>Fotografa</b>{' '}un preventivo scritto a mano, un elenco di materiali o un
-                  listino (JPG, PNG o HEIC), oppure carica un{' '}<b>PDF</b>{' '}con «Da un testo»:
-                  l&rsquo;app legge e ti propone le voci già compilate, da controllare e correggere.
-                </p>
-                {(mode === 'create' || defaultValues?.status === 'draft') && (
-                  <input
-                    ref={photoInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    multiple
-                    style={{ display: 'none' }}
-                    onChange={(e) => { void handleAiExtractPhotos(e.target.files); e.target.value = '' }}
-                  />
-                )}
-                <div style={{ display: 'grid', gridTemplateColumns: (mode === 'create' || defaultValues?.status === 'draft') ? '1fr 1fr' : '1fr', gap: 8 }}>
-                  <AiImportButton
-                    tile
-                    isProPlan={isProPlan}
-                    onItemsExtracted={handleAiItems}
-                  />
-                  {(mode === 'create' || defaultValues?.status === 'draft') && (
-                    <button
-                      type="button"
-                      data-tour="ai-foto"
-                      onClick={() => photoInputRef.current?.click()}
-                      disabled={aiPhotoExtracting}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                        width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
-                        color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 8px',
-                        cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box', opacity: aiPhotoExtracting ? 0.65 : 1,
-                      }}
-                    >
-                      {aiPhotoExtracting ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
-                      {aiPhotoExtracting ? 'Leggo le foto…' : 'Dalle foto'}
-                    </button>
-                  )}
-                </div>
-                {(mode === 'create' || defaultValues?.status === 'draft') && (internalNotesValue ?? '').trim().length >= 5 && (
-                  <button
-                    type="button"
-                    onClick={() => void handleAiExtractVoci()}
-                    disabled={aiExtracting}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                      width: '100%', border: '1px solid #e8d6ad', borderRadius: 11, background: '#fdf9ef',
-                      color: '#b0863e', fontSize: 13, fontWeight: 600, padding: '11px 8px', marginTop: 8,
-                      cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box', opacity: aiExtracting ? 0.65 : 1,
-                    }}
-                  >
-                    {aiExtracting ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />}
-                    {aiExtracting ? 'Sto leggendo le note…' : 'Dalle note che hai scritto'}
-                  </button>
-                )}
-                {/* ⚠️ TOLTO «Usa le N foto già caricate» (Eli, 12 ago). Quelle
-                    sono le FOTO DEL LAVORO — lo stato del cantiere, il prima e
-                    il dopo — non il materiale da cui ricavare le voci del
-                    preventivo. Offrirle qui mescolava due cose diverse e
-                    invitava a un'estrazione che non poteva funzionare. «Dalle
-                    foto» resta: lì le foto le sceglie l'artigiano sul momento.
-                    Il gestore `handleAiExtractLinkedPhotos` e la prop
-                    `linkedPhotoCount` restano nel file, non più usati: rimettere
-                    il tasto in fila è poche righe. */}
-                <p style={{ fontSize: 11, color: 'var(--cc-muted)', margin: '8px 2px 0', lineHeight: 1.5 }}>
-                  Prezzi solo dal tuo catalogo, mai inventati. Controlla sempre prima di inviare.
-                </p>
-              </>
-            ) : (
-              <AiImportButton
-                isProPlan={isProPlan}
-                onItemsExtracted={handleAiItems}
-              />
-            )}
-            {isPreventivo && (
-              <div style={{ borderTop: '0.5px solid #e8e6e0', marginTop: 12, paddingTop: 12 }}>
-            {/* ⑥ Downgrade Pro→Free: un preventivo creato con Pro può avere già
-                DUE proposte. Su Free le proposte restano modificabili (i primi 8
-                restano usabili così come sono — decisione Eli) e i totali/voci si
-                conservano tutti (serializeVoci manda l'intero array). Ma il
-                toggle «Passa a Pro» accanto alle linguette attive era fuorviante:
-                sembrava che le proposte fossero spente. Qui, quando ci sono già
-                proposte attive e il piano è Free, lo si sostituisce con una nota
-                che dice la verità: restano modificabili, crearne di nuove è Pro. */}
-            {!isProPlan && optionsActive ? (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.5 }}>
-                <span aria-hidden style={{ flexShrink: 0 }}>🔒</span>
-                <div>
-                  Questo preventivo ha <b style={{ color: '#161616' }}>due proposte</b> (Base e Premium): restano modificabili e il cliente può ancora sceglierle. Creare nuove proposte è una funzione Pro.{' '}
-                  <Link href="/abbonamento" style={{ fontWeight: 600, color: 'var(--cc-navy)', textDecoration: 'underline' }}>
-                    Torna a Pro
-                  </Link>
-                </div>
-              </div>
-            ) : (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 500, color: '#161616' }}>
-                  Proponi più opzioni
-                  {!isProPlan && (
-                    <span style={{ background: '#f5e9d0', color: '#b0863e', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em' }}>
-                      🔒 PRO
-                    </span>
-                  )}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.4 }}>
-                  Il cliente sceglie tra Base e Premium
-                </div>
-              </div>
-              {isProPlan ? (
-                <Switch
-                  checked={optionsOn}
-                  className="data-[state=checked]:bg-[#c9a44c]"
-                  onCheckedChange={(on) => (on ? enableOptions() : disableOptions())}
-                />
-              ) : (
-                <Link href="/abbonamento" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-navy)', textDecoration: 'none', flexShrink: 0 }}>
-                  Passa a Pro
-                </Link>
-              )}
-            </div>
-            )}
-              </div>
-            )}
-          </div>
-        )}
-        {/* ══ Fascia "Stai compilando la proposta" (mockup approvato 7 ago) ══
-            ⚠️ Prima le linguette stavano DENTRO la card delle voci: sembravano
-            comandare solo quelle. Poi si scorreva, la barra usciva dallo
-            schermo, e margine e riepilogo arrivavano senza nessun segnale di
-            chi li governasse (Eli: "non si capisce che cliccando su premium
-            anche la parte sotto cambia").
-            Tre segnali insieme: ① la fascia è una sezione a sé e DICE cosa fa;
-            ② resta appesa in alto mentre si scorre, così il comando è sempre a
-            schermo; ③ ogni sezione governata si firma («Riepilogo · Base»).
-            ⚠️ `position: sticky` va sul contenitore, non sul figlio, e serve
-            uno sfondo pieno: senza, il testo che scorre si legge attraverso. */}
         {optionsActive && (
           <div
             style={{
@@ -1607,54 +1491,102 @@ export function PreventivoForm({
           // «Importa da preventivo». Il primo gesto è scegliere il cliente,
           // non scrivere: la tastiera si apre quando la si chiede.
           autoFocusFirst={false}
+          addActions={addVoceActions}
+          addNote={addVoceNote}
         />
-        {/* 18 lug (Eli): niente più "salva la bozza e poi allega" — le foto
-            si allegano direttamente qui sotto, in Altre opzioni. */}
-        </div>{/* /corpo card Voci (vociCardOpen) */}
       </div>
-      </div>{/* /wrapper data-tour="cliente" */}
+      {/* «Proponi due versioni» sotto la card (solo preventivo): era dentro la
+          tendina «Opzioni» insieme all'AI. Con le proposte già attive su Free
+          resta la nota onesta (downgrade Pro→Free, ⑥). */}
+      {isPreventivo && (
+        <div style={{ margin: '10px 2px 0' }}>
+            {!isProPlan && optionsActive ? (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.5 }}>
+                <span aria-hidden style={{ flexShrink: 0 }}>🔒</span>
+                <div>
+                  Questo preventivo ha <b style={{ color: '#161616' }}>due proposte</b> (Base e Premium): restano modificabili e il cliente può ancora sceglierle. Creare nuove proposte è una funzione Pro.{' '}
+                  <Link href="/abbonamento" style={{ fontWeight: 600, color: 'var(--cc-navy)', textDecoration: 'underline' }}>
+                    Torna a Pro
+                  </Link>
+                </div>
+              </div>
+            ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 500, color: '#161616' }}>
+                  Proponi più opzioni
+                  {!isProPlan && (
+                    <span style={{ background: '#f5e9d0', color: '#b0863e', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em' }}>
+                      🔒 PRO
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.4 }}>
+                  Il cliente sceglie tra Base e Premium
+                </div>
+              </div>
+              {isProPlan ? (
+                <Switch
+                  checked={optionsOn}
+                  className="data-[state=checked]:bg-[#c9a44c]"
+                  onCheckedChange={(on) => (on ? enableOptions() : disableOptions())}
+                />
+              ) : (
+                <Link href="/abbonamento" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-navy)', textDecoration: 'none', flexShrink: 0 }}>
+                  Passa a Pro
+                </Link>
+              )}
+            </div>
+            )}
+        </div>
+      )}
+      </SezioneForm>
 
-      {/* ── Card 3: Altre opzioni ────────────────────────────── */}
-      <div className="cc-card-md" style={{ padding: '4px 15px' }}>
-        <button
-          type="button"
-          onClick={() => setAltreOpzioniOpen(v => !v)}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            width: '100%', padding: '13px 0', background: 'none', border: 'none',
-            cursor: 'pointer', textAlign: 'left',
-          }}
-        >
-          {/* 2 ago sera (scelta Eli): "Altre opzioni" non diceva niente → il
-              titolo elenca il contenuto. In edit (e nelle fatture) la sezione
-              Foto non c'è → "Note e condizioni". */}
-          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>
-            {mode === 'create' ? 'Note, foto e condizioni' : 'Note e condizioni'}
-          </span>
-          <ChevronDown
-            size={19}
-            style={{
-              color: 'var(--cc-text-3)',
-              transform: altreOpzioniOpen ? 'rotate(180deg)' : 'none',
-              transition: 'transform 0.2s',
-            }}
-          />
-        </button>
+      {/* ── Avvisi listino fornitore: sotto le voci a cui si riferiscono ── */}
+      {/* ── Avvisi listino fornitore (Fase 2, pilastro D) ────── */}
+      {/* SCADUTO: costi non più veri → margine. Vale anche sulle FATTURE
+          (una fattura duplicata da un vecchio preventivo eredita quei costi). */}
+      {listinoScaduto && (
+        <div style={{ background: '#fdf9ef', border: '1px solid #e8d6ad', borderRadius: 12, padding: '11px 13px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <AlertCircle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 2 }} />
+            <div style={{ flex: 1, fontSize: 13, color: '#6b5626', lineHeight: 1.5 }}>
+              Il listino di <b>{listinoScaduto.name}</b>{' '}è <b>scaduto</b>: i costi delle voci prese da lì potrebbero non essere più quelli veri. Ricontrolla i prezzi o rinnova il listino{isPreventivo ? ' prima di inviare' : ''}.
+            </div>
+          </div>
+        </div>
+      )}
+      {/* IN SCADENZA prima della validità: solo preventivi, con «Allinea». */}
+      {listinoInScadenza && (
+        <div style={{ background: '#fdf9ef', border: '1px solid #e8d6ad', borderRadius: 12, padding: '11px 13px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <AlertCircle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 2 }} />
+            <div style={{ flex: 1, fontSize: 13, color: '#6b5626', lineHeight: 1.5 }}>
+              I prezzi del fornitore <b>{listinoInScadenza.name}</b> valgono ancora <b>{listinoInScadenza.giorni === 1 ? '1 giorno' : `${listinoInScadenza.giorni} giorni`}</b>, ma il preventivo vale {validityDays} giorni: il cliente potrebbe accettare quando i tuoi costi sono già cambiati.
+            </div>
+          </div>
+          {listinoInScadenza.giorni >= 1 && (
+            <button
+              type="button"
+              onClick={() => { setValidityDays(String(listinoInScadenza.giorni)); markDirty() }}
+              style={{ marginTop: 9, width: '100%', minHeight: 40, border: '1px solid #e0c98f', borderRadius: 10, background: '#fff', color: '#8a6a2f', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Allinea: preventivo valido {listinoInScadenza.giorni === 1 ? '1 giorno' : `${listinoInScadenza.giorni} giorni`}
+            </button>
+          )}
+        </div>
+      )}
 
-        {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente unmount.
-            F11: linea sottile tra un'opzione e l'altra (prima erano tutte unite) */}
-        <div className={altreOpzioniOpen ? 'divide-y divide-[#f0f0f0] pb-3 [&>*]:py-4 [&>*:first-child]:pt-1' : 'hidden'}>
 
-          {/* Sottotitolo blocco 1 (2 ago, mockup approvato): prima le cose che scrivi.
-              2 ago sera (Eli): "un po' più grandi" → 13px. In edit niente sezione
-              Foto → il sottotitolo dice solo "Note". */}
-          <div><span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>{mode === 'create' ? 'Note e foto' : 'Note'}</span></div>
-
+      {/* ── 3. Condizioni e allegati: UNA riga a tendina per cosa, col valore
+          già leggibile a destra. Si apre solo quella da cambiare. I campi
+          restano nel DOM anche da chiusi (hidden): viaggiano nella submit. ── */}
+      <SezioneForm label={mode === 'create' ? 'Condizioni e allegati' : 'Note e condizioni'}>
+      <div className="cc-card-md" style={{ padding: '0 15px' }}>
+        <RigaTendina id="note" label="Note al cliente" summary={riepiloghi.note} open={righeAperte.has('note')} onToggle={() => toggleRiga('note')}>
+          <div style={{ paddingTop: 2 }}>
           {/* Note pubbliche */}
           <div className="space-y-2">
-            <Label htmlFor="notes" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              Note <span>(visibili al cliente)</span>
-            </Label>
             <div className="relative">
               <Textarea
                 id="notes"
@@ -1680,11 +1612,13 @@ export function PreventivoForm({
             </div>
           </div>
 
+
+          </div>
+        </RigaTendina>
+        <RigaTendina id="note-interne" label="Note interne" summary={riepiloghi.noteInterne} open={righeAperte.has('note-interne')} onToggle={() => toggleRiga('note-interne')}>
+          <div style={{ paddingTop: 2 }}>
           {/* Note interne */}
           <div className="space-y-2">
-            <Label htmlFor="internal_notes" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              Note interne <span>(non visibili al cliente)</span>
-            </Label>
             <div className="relative">
               <Textarea
                 id="internal_notes"
@@ -1710,14 +1644,14 @@ export function PreventivoForm({
             </div>
           </div>
 
-          {/* Foto lavoro allegate SUBITO dal form (richiesta Eli 18 lug: niente
-              più "salva la bozza e poi allega"). Solo in creazione: sulle bozze
-              c'è già la card «Foto lavoro» nel dettaglio. */}
+
+            <p className="cc-t-sub" style={{ margin: '6px 0 0' }}>Solo per te: il cliente non le vede.</p>
+          </div>
+        </RigaTendina>
+        {mode === 'create' && (
+          <RigaTendina id="foto" label="Foto" summary={riepiloghi.foto} open={righeAperte.has('foto')} onToggle={() => toggleRiga('foto')}>
           {mode === 'create' && (
             <div className="space-y-2">
-              <Label style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                Foto lavoro {attachedPhotos.length > 0 && <span style={{ letterSpacing: 0, textTransform: 'none' }}>({attachedPhotos.length})</span>}
-              </Label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 {attachedPhotos.map((path, i) => (
                   <div key={path} style={{ position: 'relative', height: 76, borderRadius: 10, overflow: 'hidden', background: '#f2f2f5' }}>
@@ -1805,15 +1739,13 @@ export function PreventivoForm({
             </div>
           )}
 
-          {/* Sottotitolo blocco 2: le condizioni del documento */}
-          <div><span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Condizioni</span></div>
 
-          {/* Acconto + validità + pagamento + bonus */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* ── Acconto alla conferma (solo preventivi) ── */}
+          </RigaTendina>
+        )}
+        {isPreventivo && (
+          <RigaTendina id="acconto" label="Acconto" summary={riepiloghi.acconto} open={righeAperte.has('acconto')} onToggle={() => toggleRiga('acconto')}>
             {isPreventivo && (
               <div className="space-y-2">
-                <Label style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Acconto</Label>
                 <div className="flex items-center gap-3">
                   <Switch
                     id="deposit-toggle"
@@ -1872,10 +1804,12 @@ export function PreventivoForm({
                 )}
               </div>
             )}
+
+          </RigaTendina>
+        )}
+        <RigaTendina id="validita" label={isPreventivo ? 'Validità' : 'Scadenza pagamento'} summary={riepiloghi.validita} open={righeAperte.has('validita')} onToggle={() => toggleRiga('validita')}>
+          <p className="cc-t-sub" style={{ margin: '0 0 6px' }}>{isPreventivo ? 'Il preventivo vale (giorni)' : 'Da pagare entro (giorni)'}</p>
             <div className="space-y-1.5">
-              <Label htmlFor="validity_days" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                {!isPreventivo ? 'Scadenza pagamento (giorni)' : 'Il preventivo vale (giorni)'}
-              </Label>
               <Input
                 id="validity_days"
                 name="validity_days"
@@ -1887,11 +1821,13 @@ export function PreventivoForm({
                 style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 15 }}
               />
             </div>
+
+        </RigaTendina>
+        {isPreventivo && (
+          <RigaTendina id="tempi" label="Tempi di esecuzione" summary={riepiloghi.tempi} open={righeAperte.has('tempi')} onToggle={() => toggleRiga('tempi')}>
+            <p className="cc-t-sub" style={{ margin: '0 0 6px' }}>Giorni dalla conferma</p>
             {isPreventivo && (
               <div className="space-y-1.5">
-                <Label htmlFor="work_days" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Tempi di esecuzione (giorni dalla conferma)
-                </Label>
                 <Input
                   id="work_days"
                   name="work_days"
@@ -1909,8 +1845,11 @@ export function PreventivoForm({
                 </p>
               </div>
             )}
+
+          </RigaTendina>
+        )}
+        <RigaTendina id="pagamento" label="Pagamento" summary={riepiloghi.pagamento} open={righeAperte.has('pagamento')} onToggle={() => toggleRiga('pagamento')}>
             <div className="space-y-1.5">
-              <Label htmlFor="payment_terms" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Termini di pagamento</Label>
               {/* Hidden: invia il valore computato (custom text se Personalizzati) */}
               <input
                 type="hidden"
@@ -1951,24 +1890,14 @@ export function PreventivoForm({
                 </p>
               )}
             </div>
-            {/* ⚠️ La spunta «Bonus edilizio» è stata TOLTA dalla UI (collaudo
-                17 ago: «toglierla come spunta del tutto»). Lo stato e l'hidden
-                input restano: i documenti vecchi che l'avevano conservano il
-                valore (bonusAttivo nasce dal dato esistente e viene rimandato
-                invariato); i nuovi nascono senza. */}
-          </div>
 
-          {/* Template — in fondo: si sceglie una volta e poi non si tocca più
-              (2 ago; il link "Gestisci i template" è già in Altro). */}
+        </RigaTendina>
+        <RigaTendina id="template" label="Template" summary={riepiloghi.template} open={righeAperte.has('template')} onToggle={() => toggleRiga('template')} last>
           <div className="space-y-1.5">
-            <Label htmlFor="template_id" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Template</Label>
               <Select
                 name="template_id"
-                defaultValue={
-                  ((defaultValues as Record<string, unknown> | undefined)?.template_id as string | undefined)
-                  ?? defaultTemplateId
-                  ?? '__classico__'
-                }
+                value={templateId}
+                onValueChange={(v) => { setTemplateId(v); markDirty() }}
               >
                 <SelectTrigger style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 15, height: 'auto' }}>
                   <SelectValue placeholder="Default (Classico)" />
@@ -1992,61 +1921,13 @@ export function PreventivoForm({
                 </p>
               )}
           </div>
-        </div>
+
+        </RigaTendina>
       </div>
+      </SezioneForm>
 
-      {/* ── Margine privato (F1 listino fornitore): compare solo se almeno
-             una voce ha un costo; con le proposte attive segue la proposta
-             in vista, come il riepilogo. 🔒 mai al cliente (B.2). ────── */}
-      {/* ── Avvisi listino fornitore (Fase 2, pilastro D) ────── */}
-      {/* SCADUTO: costi non più veri → margine. Vale anche sulle FATTURE
-          (una fattura duplicata da un vecchio preventivo eredita quei costi). */}
-      {listinoScaduto && (
-        <div style={{ background: '#fdf9ef', border: '1px solid #e8d6ad', borderRadius: 12, padding: '11px 13px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-            <AlertCircle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 2 }} />
-            <div style={{ flex: 1, fontSize: 13, color: '#6b5626', lineHeight: 1.5 }}>
-              Il listino di <b>{listinoScaduto.name}</b>{' '}è <b>scaduto</b>: i costi delle voci prese da lì potrebbero non essere più quelli veri. Ricontrolla i prezzi o rinnova il listino{isPreventivo ? ' prima di inviare' : ''}.
-            </div>
-          </div>
-        </div>
-      )}
-      {/* IN SCADENZA prima della validità: solo preventivi, con «Allinea». */}
-      {listinoInScadenza && (
-        <div style={{ background: '#fdf9ef', border: '1px solid #e8d6ad', borderRadius: 12, padding: '11px 13px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-            <AlertCircle size={15} style={{ color: '#b0863e', flexShrink: 0, marginTop: 2 }} />
-            <div style={{ flex: 1, fontSize: 13, color: '#6b5626', lineHeight: 1.5 }}>
-              I prezzi del fornitore <b>{listinoInScadenza.name}</b> valgono ancora <b>{listinoInScadenza.giorni === 1 ? '1 giorno' : `${listinoInScadenza.giorni} giorni`}</b>, ma il preventivo vale {validityDays} giorni: il cliente potrebbe accettare quando i tuoi costi sono già cambiati.
-            </div>
-          </div>
-          {listinoInScadenza.giorni >= 1 && (
-            <button
-              type="button"
-              onClick={() => { setValidityDays(String(listinoInScadenza.giorni)); markDirty() }}
-              style={{ marginTop: 9, width: '100%', minHeight: 40, border: '1px solid #e0c98f', borderRadius: 10, background: '#fff', color: '#8a6a2f', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              Allinea: preventivo valido {listinoInScadenza.giorni === 1 ? '1 giorno' : `${listinoInScadenza.giorni} giorni`}
-            </button>
-          )}
-        </div>
-      )}
-
-      <MargineBox
-        voci={activeVoci}
-        discountPct={discountPct}
-        discountFixed={discountFixed}
-        tierLabel={optionsActive ? OPTION_TIER_LABELS[activeTier] : null}
-        // Dal 17 ago (Eli) il costo si corregge dentro la card Margine: si
-        // aggiorna per _key sull'INTERA lista (con le proposte attive le chiavi
-        // restano uniche fra i tier, le altre proposte non si toccano).
-        onUpdateVoce={(key, updates) => {
-          setVoci((prev) => prev.map((v) => (v._key === key ? { ...v, ...updates } : v)))
-          markDirty()
-        }}
-      />
-
-      {/* ── Riepilogo fiscale (con slot sconto integrato) ────── */}
+      {/* ── 4. Riepilogo (col Margine come ultima riga, 🔒 mai al cliente) ── */}
+      <SezioneForm label={optionsActive ? `Riepilogo · proposta ${OPTION_TIER_LABELS[activeTier]}` : 'Riepilogo'}>
       <FiscalSummary
         voci={activeVoci}
         fiscalOpts={fiscalOpts}
@@ -2066,7 +1947,25 @@ export function PreventivoForm({
             />
           </div>
         }
+              hideTitle
+        margineSlot={
+          <MargineBox
+            bare
+        voci={activeVoci}
+        discountPct={discountPct}
+        discountFixed={discountFixed}
+        tierLabel={optionsActive ? OPTION_TIER_LABELS[activeTier] : null}
+        // Dal 17 ago (Eli) il costo si corregge dentro la card Margine: si
+        // aggiorna per _key sull'INTERA lista (con le proposte attive le chiavi
+        // restano uniche fra i tier, le altre proposte non si toccano).
+        onUpdateVoce={(key, updates) => {
+          setVoci((prev) => prev.map((v) => (v._key === key ? { ...v, ...updates } : v)))
+          markDirty()
+        }}
       />
+        }
+      />
+      </SezioneForm>
 
       {/* ── Ritenuta del condominio (081) ────────────────────────
           ⚠️ Solo sulle FATTURE e mai ai forfettari: la ritenuta la opera il

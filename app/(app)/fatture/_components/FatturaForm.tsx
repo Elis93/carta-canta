@@ -4,11 +4,8 @@ import Link from 'next/link'
 import { useState, useActionState, useEffect, useRef, useCallback } from 'react'
 import { QuickCreateClientDialog } from '@/components/shared/QuickCreateClientDialog'
 import type { ClientHit as QuickClientHit } from '@/components/shared/QuickCreateClientDialog'
-import { Hash, Loader2, AlertCircle, Send, ChevronDown, Plus, X, BadgePercent } from 'lucide-react'
-import { Switch } from '@/components/ui/switch'
+import { Hash, Loader2, AlertCircle, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -22,6 +19,8 @@ import type { FiscalOptions } from '@/types/index'
 import { RitenutaCondominio } from '@/app/(app)/preventivi/_components/RitenutaCondominio'
 import { ReverseCharge } from '@/app/(app)/preventivi/_components/ReverseCharge'
 import { UNIT_VALUES } from '@/lib/constants/units'
+import { SezioneForm } from '@/components/shared/SezioneForm'
+import { RigaTendina } from '@/components/shared/RigaTendina'
 
 type ClientHit = {
   id: string
@@ -166,8 +165,19 @@ export function FatturaForm({
   const [vatRateDefault, setVatRateDefault] = useState<number | null>(null)
   // Traccia quale bottone ha avviato la submit (per mostrare lo spinner solo su quello)
   const [pendingIntent, setPendingIntent] = useState<'save' | 'send' | null>(null)
-  // M1: "Altre opzioni" — sempre chiuso alla creazione (FatturaForm è sempre create mode)
-  const [altreOpzioniOpen, setAltreOpzioniOpen] = useState(false)
+  // ── Righe a tendina di «Note e condizioni» (riordino 7 set): tutte
+  // chiuse alla creazione; si apre solo quella da cambiare. I campi sono
+  // controllati per mostrare il valore a destra da chiusi.
+  const [righeAperte, setRigheAperte] = useState<Set<string>>(() => new Set())
+  const toggleRiga = (id: string) => setRigheAperte((prev) => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
+  const [notes, setNotes] = useState('')
+  const [internalNotes, setInternalNotes] = useState('')
+  const [validityDays, setValidityDays] = useState('30')
+  const [templateId, setTemplateId] = useState<string>(defaultTemplateId ?? '__classico__')
 
   const [state, formAction, isPending] = useActionState(createInvoiceAction, null)
 
@@ -223,16 +233,17 @@ export function FatturaForm({
     doc_type: 'fattura',
   }
 
+  const vociCompilate = voci.filter((v) => v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0).length
+  const riepiloghi = {
+    note: notes.trim() ? (notes.trim().length > 42 ? `${notes.trim().slice(0, 42)}…` : notes.trim()) : 'nessuna',
+    noteInterne: internalNotes.trim() ? 'scritte · solo per te' : 'nessuna',
+    validita: `${validityDays || 30} giorni`,
+    pagamento: paymentTerms,
+    template: templateId === '__classico__' ? 'Classico' : (templates.find((t) => t.id === templateId)?.name ?? 'Classico'),
+  }
+
   // ── Stili pixel-perfect (mockup 06) ──
   const CARD_SHADOW = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
-  const SECTION_LABEL: React.CSSProperties = {
-    fontSize: 13, fontWeight: 600, letterSpacing: '.07em',
-    textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12,
-  }
-  const FIELD_LABEL: React.CSSProperties = {
-    fontSize: 12, fontWeight: 600, letterSpacing: '.05em',
-    textTransform: 'uppercase', color: 'var(--cc-muted)', marginBottom: 7,
-  }
   const FIELD_BOX: React.CSSProperties = {
     border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px',
     fontSize: 14, color: '#161616', width: '100%', boxSizing: 'border-box',
@@ -281,10 +292,12 @@ export function FatturaForm({
         </div>
       )}
 
-      {/* ── Testata minimal (2 ago, allineata al preventivo): titolo leggero +
-          numero nudo. Per le fatture il numero NON si tocca (numerazione
-          fiscale, B.3): chip grigio informativo. ── */}
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '6px 15px', marginBottom: 14 }}>
+      {/* ══ RIORDINO 7 set 2026 — stessa struttura del preventivo: QUATTRO
+          SEZIONI con l'etichetta fuori dalla card (Intestazione · Voci ·
+          Note e condizioni · Riepilogo). Per le fatture il numero NON si tocca
+          (numerazione fiscale, B.3): chip grigio informativo. ══ */}
+      <SezioneForm label="Intestazione">
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '6px 15px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <input
             id="title"
@@ -302,23 +315,20 @@ export function FatturaForm({
             </span>
           )}
         </div>
-      </div>
 
-      {/* ── Card 1: Cliente ──────────────────────────────────────── */}
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '15px 15px', marginBottom: 14 }}>
-        <div style={SECTION_LABEL}>Cliente</div>
+        <div style={{ borderTop: '1px solid #ededea', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span className="cc-section-label" style={{ marginBottom: 0 }}>Cliente</span>
         <ClientAutocomplete
           value={selectedClient}
           onChange={(c: ClientHit | null) => setSelectedClient(c)}
           onCreateNew={() => setQuickCreateOpen(true)}
         />
-      </div>
-
-      {/* ── Card 2: Voci ──────────────────────────────────────────── */}
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, overflow: 'hidden', marginBottom: 14 }}>
-        <div style={{ padding: '15px 15px 12px' }}>
-          <div style={{ ...SECTION_LABEL, marginBottom: 0 }}>Voci fattura</div>
         </div>
+      </div>
+      </SezioneForm>
+
+      <SezioneForm label="Voci" right={`${vociCompilate} ${vociCompilate === 1 ? 'voce' : 'voci'}`}>
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, overflow: 'hidden' }}>
         <VociTable
           voci={voci}
           onChange={setVoci}
@@ -335,64 +345,24 @@ export function FatturaForm({
           autoFocusFirst={false}
         />
       </div>
+      </SezioneForm>
 
-      {/* ── Card 3: Altre opzioni ─────────────────────────────────── */}
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '4px 15px 15px', marginBottom: 14 }}>
-        <button
-          type="button"
-          onClick={() => setAltreOpzioniOpen(v => !v)}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            width: '100%', padding: '13px 0', background: 'none', border: 'none',
-            cursor: 'pointer', textAlign: 'left',
-          }}
-        >
-          {/* 2 ago sera (scelta Eli): titolo che elenca il contenuto — qui
-              niente foto, quindi "Note e condizioni". */}
-          <span style={{ ...SECTION_LABEL, marginBottom: 0 }}>Note e condizioni</span>
-          <ChevronDown
-            size={18}
-            style={{
-              color: 'var(--cc-muted)',
-              transform: altreOpzioniOpen ? 'rotate(180deg)' : 'none',
-              transition: 'transform 0.2s',
-            }}
-          />
-        </button>
-
-        {/* I campi restano nel DOM anche quando chiusi — hidden via className, niente
-            unmount. 2 ago sera (Eli, "organizziamo anche l'Altro delle fatture"):
-            stessi due blocchi del preventivo — «Note» e «Condizioni», divisori tra
-            le voci, Template in fondo (il link "Gestisci i template" è già in Altro). */}
-        <div className={altreOpzioniOpen ? 'divide-y divide-[#f0f0f0] pb-3 [&>*]:py-4 [&>*:first-child]:pt-1' : 'hidden'}>
-
-          {/* Sottotitolo blocco 1: le cose che scrivi */}
-          <div><span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Note</span></div>
-
-          {/* Note pubbliche */}
-          <div>
-            <div style={FIELD_LABEL}>Note (visibili al cliente)</div>
-            <textarea id="notes" name="notes" placeholder="esempio: condizioni di pagamento, note aggiuntive" rows={2} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
-          </div>
-
-          {/* Note interne */}
-          <div>
-            <div style={FIELD_LABEL}>Note interne (non visibili al cliente)</div>
-            <textarea id="internal_notes" name="internal_notes" placeholder="esempio: appunti personali, costi, margini" rows={2} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
-          </div>
-
-          {/* Sottotitolo blocco 2: le condizioni del pagamento */}
-          <div><span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: '#b08d3e' }}>Condizioni</span></div>
-
-          {/* Scadenza pagamento (giorni) */}
-          <div>
-            <div style={FIELD_LABEL}>Scadenza pagamento (giorni)</div>
-            <input id="validity_days" name="validity_days" type="number" min="1" max="365" defaultValue={30} style={{ ...FIELD_BOX, color: '#161616' }} />
-          </div>
-
-          {/* Termini di pagamento */}
-          <div>
-            <div style={FIELD_LABEL}>Termini di pagamento</div>
+      {/* ── Note e condizioni: una riga a tendina per cosa, valore a destra.
+          I campi restano nel DOM da chiusi (hidden): viaggiano nella submit. ── */}
+      <SezioneForm label="Note e condizioni">
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '0 15px' }}>
+        <RigaTendina id="note" label="Note al cliente" summary={riepiloghi.note} open={righeAperte.has('note')} onToggle={() => toggleRiga('note')}>
+          <textarea id="notes" name="notes" placeholder="esempio: condizioni di pagamento, note aggiuntive" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
+        </RigaTendina>
+        <RigaTendina id="note-interne" label="Note interne" summary={riepiloghi.noteInterne} open={righeAperte.has('note-interne')} onToggle={() => toggleRiga('note-interne')}>
+          <textarea id="internal_notes" name="internal_notes" placeholder="esempio: appunti personali, costi, margini" rows={2} value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} style={{ ...FIELD_BOX, color: '#161616', resize: 'vertical' }} />
+          <p className="cc-t-sub" style={{ margin: '6px 0 0' }}>Solo per te: il cliente non le vede.</p>
+        </RigaTendina>
+        <RigaTendina id="validita" label="Scadenza pagamento" summary={riepiloghi.validita} open={righeAperte.has('validita')} onToggle={() => toggleRiga('validita')}>
+          <p className="cc-t-sub" style={{ margin: '0 0 6px' }}>Da pagare entro (giorni)</p>
+          <input id="validity_days" name="validity_days" type="number" min="1" max="365" value={validityDays} onChange={(e) => setValidityDays(e.target.value)} style={{ ...FIELD_BOX, color: '#161616' }} />
+        </RigaTendina>
+        <RigaTendina id="pagamento" label="Pagamento" summary={riepiloghi.pagamento} open={righeAperte.has('pagamento')} onToggle={() => toggleRiga('pagamento')}>
             <Select name="payment_terms" value={paymentTerms} onValueChange={setPaymentTerms}>
               <SelectTrigger style={{ ...FIELD_BOX, height: 'auto' }} className="w-full [&>span]:truncate">
                 <SelectValue />
@@ -406,16 +376,10 @@ export function FatturaForm({
             {dueDateHint(paymentTerms, docDate) && (
               <div style={HELP_TEXT}>{dueDateHint(paymentTerms, docDate)}</div>
             )}
-          </div>
 
-          {/* ⚠️ Spunta «Bonus edilizio» TOLTA dalla UI (collaudo 17 ago, come
-              nel preventivo). Stato e hidden input restano: i documenti vecchi
-              conservano il valore, i nuovi nascono senza. */}
-
-          {/* Template — in fondo, come nel preventivo */}
-          <div>
-            <div style={FIELD_LABEL}>Template</div>
-            <Select name="template_id" defaultValue={defaultTemplateId ?? '__classico__'}>
+        </RigaTendina>
+        <RigaTendina id="template" label="Template" summary={riepiloghi.template} open={righeAperte.has('template')} onToggle={() => toggleRiga('template')} last>
+            <Select name="template_id" value={templateId} onValueChange={setTemplateId}>
               <SelectTrigger style={{ ...FIELD_BOX, height: 'auto' }} className="w-full [&>span]:truncate">
                 <SelectValue placeholder="Default (Classico)" />
               </SelectTrigger>
@@ -433,9 +397,10 @@ export function FatturaForm({
                 <Link href="/abbonamento" style={{ color: 'var(--cc-navy)', fontWeight: 600 }}>Torna a Pro per usarli.</Link>
               </p>
             )}
-          </div>
-        </div>
+
+        </RigaTendina>
       </div>
+      </SezioneForm>
 
       {/* Quando il pannello sconto è chiuso, invia comunque i valori correnti */}
       {!discountOpen && (
@@ -445,24 +410,8 @@ export function FatturaForm({
         </>
       )}
 
-      {/* Margine complessivo, sopra il riepilogo come nel preventivo (feedback
-          Eli 6 ago: "se per ogni voce ho un ricarico del 15%, poi del 20%,
-          voglio sapere nel riepilogo finale quanto è la percentuale totale").
-          C'era solo sul preventivo: sulla fattura, che è il documento su cui si
-          incassa davvero, mancava. 🔒 Resta privato: non entra in nessuna
-          superficie vista dal cliente (regola B.2). */}
-      <MargineBox
-        voci={voci}
-        discountPct={discountPct}
-        discountFixed={discountFixed}
-        // Dal 17 ago (Eli) il costo si vede e si corregge qui, non più nella
-        // card della voce.
-        onUpdateVoce={(key, updates) =>
-          setVoci((prev) => prev.map((v) => (v._key === key ? { ...v, ...updates } : v)))
-        }
-      />
 
-      {/* ── Riepilogo fiscale (con slot sconto integrato, come nel preventivo) ── */}
+      <SezioneForm label="Riepilogo">
       <FiscalSummary
         voci={voci}
         fiscalOpts={fiscalOpts}
@@ -475,7 +424,22 @@ export function FatturaForm({
             open={discountOpen} setOpen={setDiscountOpen}
           />
         }
+              hideTitle
+        margineSlot={
+          <MargineBox
+            bare
+        voci={voci}
+        discountPct={discountPct}
+        discountFixed={discountFixed}
+        // Dal 17 ago (Eli) il costo si vede e si corregge qui, non più nella
+        // card della voce.
+        onUpdateVoce={(key, updates) =>
+          setVoci((prev) => prev.map((v) => (v._key === key ? { ...v, ...updates } : v)))
+        }
       />
+        }
+      />
+      </SezioneForm>
 
       {/* ── Ritenuta del condominio (081) ─────────────────────────
           ⚠️ MAI ai forfettari: sono esenti (art. 1 c.67 L. 190/2014) e il

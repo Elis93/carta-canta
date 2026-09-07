@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Plus, Trash2, ChevronRight, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, ChevronRight, ChevronUp, ChevronDown, PenLine, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { parseImportoIt } from '@/lib/utils'
@@ -76,9 +76,28 @@ function NumericInput({ value, onChange, locale, ...rest }: NumericInputProps) {
   )
 }
 
+/** Una voce del menu «Aggiungi voce» che arriva dal form (foto/PDF/note
+    con l'AI): il form ha i gestori, la tabella il posto dove mostrarli. */
+export interface AddVoceAction {
+  key: string
+  label: string
+  /** Riga grigia sotto l'etichetta («con l'AI»). */
+  hint?: string
+  icon?: React.ReactNode
+  onClick?: () => void
+  /** In alternativa a onClick: un link (es. «Passa a Pro»). */
+  href?: string
+  disabled?: boolean
+  tourId?: string
+}
+
 interface VociTableProps {
   voci: VoceItem[]
   onChange: (voci: VoceItem[]) => void
+  /** Voci in più nel menu «Aggiungi voce», dopo «Scrivi» e «Dal catalogo». */
+  addActions?: AddVoceAction[]
+  /** Nota in fondo al menu (es. «Prezzi solo dal tuo catalogo…»). */
+  addNote?: string
   fiscalRegime: 'forfettario' | 'ordinario' | 'minimi'
   defaultVatRate?: number | null
   vatRates: number[]
@@ -195,6 +214,8 @@ export function VociTable({
   vatRates,
   units,
   autoFocusFirst = false,
+  addActions,
+  addNote,
 }: VociTableProps) {
   const showVat = fiscalRegime !== 'forfettario'
 
@@ -344,10 +365,45 @@ export function VociTable({
   }
 
   function addVoce() {
+    // Se l'ultima riga è ancora vuota non se ne aggiunge un'altra: si apre
+    // quella (una riga vuota dimenticata bloccava il salvataggio, 2 ago).
+    const last = voci[voci.length - 1]
+    if (last && last.description.trim() === '' && (last.unit_price ?? 0) === 0 && (last.quantity ?? 0) === 0) {
+      setOpenKey(last._key)
+      return
+    }
     const nv = newVoce(voci.length)
     setOpenKey(nv._key)
     onChange([...voci, nv])
   }
+
+  // ── Menu «Aggiungi voce» (riordino 7 set): scrivi · catalogo/listini ·
+  // le strade con l'AI che arrivano dal form. Prima l'AI stava in un blocco
+  // crema dentro la card e il catalogo era un tasto a parte: due posti per
+  // la stessa domanda («da dove prendo la voce?»).
+  const [addOpen, setAddOpen] = useState(false)
+  const [catalogOpen, setCatalogOpen] = useState(false)
+  const addMenuRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!addOpen) return
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) setAddOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setAddOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('touchstart', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('touchstart', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [addOpen])
+
+  // ── «Sconto e altro» della voce aperta (mobile): chiusa di default, così
+  // la voce chiede TRE campi (quantità con l'unità, prezzo, IVA). Si apre da
+  // sola se la voce ha già uno sconto o la marcatura del bene significativo.
+  const [extraState, setExtraState] = useState<Record<string, boolean>>({})
 
   return (
     <div>
@@ -609,57 +665,60 @@ export function VociTable({
                   />
                 </div>
 
-                {/* Campi numerici. ⚠️ Su mobile gli input sono a 16px REALI
-                    (regola anti-zoom iPhone in globals.css, non i 13px inline):
-                    con Unità a 90px la Q.tà tagliava le quantità con decimali
-                    del "Calcola quantità" (es. "402,25" → "402,2…", Eli 17 lug).
-                    Unità stretta + più fr alla Q.tà + padding ridotti. Il 📐
-                    (Calcola quantità) vive DENTRO il campo Q.tà (variante B). */}
-                {/* ⚠️ DUE RIGHE, non quattro colonne più una. Con showVat i
-                    campi erano cinque dentro una griglia di QUATTRO colonne:
-                    l'IVA finiva a capo, da sola, e per giunta nella colonna
-                    dell'Unità larga 62px — «22%» si leggeva «22'» (foto di Eli,
-                    12 ago). Ora: «quanto e a che prezzo» sulla prima riga,
-                    «sconto e IVA» sulla seconda. Nessun campo tagliato e una
-                    lettura che segue il ragionamento. */}
-                {/* ⚠️ La colonna Unità è 96px, non 62: le unità più lunghe
-                    dell'elenco sono «servizio» e «a corpo», e a 62px si
-                    leggeva «ser» (foto di Eli, 12 ago). Q.tà e Prezzo restano
-                    larghi a sufficienza — «1.250,00» entra comodo. */}
-                <div className="cc-voce-nums grid gap-1.5 items-start grid-cols-[96px_1fr_1fr]">
-                  <div className="space-y-1">
-                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Unità</span>
-                    <Select
-                      value={voce.unit}
-                      onValueChange={(v) => updateVoce(voce._key, { unit: v })}
-                    >
-                      <SelectTrigger className="w-full truncate" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 13, height: 40, boxSizing: 'border-box' }}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {units.map((u) => (
-                          <SelectItem key={u} value={u}>{u}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* ── TRE campi (riordino 7 set, mockup ok di Eli): Quantità
+                    con l'UNITÀ dentro il campo, Prezzo, IVA. Sconto, calcolo
+                    della quantità e bene significativo stanno sotto «Sconto e
+                    altro ⌄». Prima erano sei campi su due righe (più la spunta).
+                    ⚠️ La Quantità ha una riga TUTTA SUA: misurato in Chromium sul
+                    componente vero, in una riga a tre colonne la pillola
+                    dell'unità («a corpo», 79px) lasciava al numero 37px a 390
+                    e 2px a 320 — «402,25» non ci stava. Sotto, Prezzo e IVA.
+                    ⚠️ Su mobile gli input sono a 16px REALI (regola anti-zoom
+                    iPhone in globals.css). */}
+                {(() => {
+                  const ivaEffettiva = voce.vat_rate ?? defaultVatRate ?? 22
+                  const beneVisibile = fiscalRegime !== 'forfettario' && ivaEffettiva === 10
+                  const extraOpen = extraState[voce._key] ?? (voce.discount_pct != null || voce.bene_significativo === true)
+                  // Corto per stare su una riga con «Elimina» (misurato: con tre voci
+                  // si troncava): il calcolo della quantità sta comunque dentro.
+                  const extraLabel = beneVisibile ? 'Sconto · bene significativo' : 'Sconto · calcola quantità'
+                  return (
+                    <>
+                <div className="space-y-2">
                   <div className="space-y-1">
                     <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      Q.tà <span style={{ color: ORO }}>*</span>
+                      Quantità <span style={{ color: ORO }}>*</span>
                     </span>
                     <div className="relative">
                       <NumericInput
                         value={voce.quantity}
                         onChange={(n) => updateVoce(voce._key, { quantity: n })}
-                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 26px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 84px 0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
                       />
-                      <span className="absolute right-0.5 top-1/2 -translate-y-1/2">
-                        <CalcQuantitaButton iconOnly onResult={(v, u) =>
-                          updateVoce(voce._key, u && units.includes(u) ? { quantity: v, unit: u } : { quantity: v })
-                        } />
+                      {/* L'unità come pillola DENTRO il campo (mockup 7 set):
+                          «1 [a corpo ⌄]». Una Select vera, non testo. */}
+                      <span className="absolute right-1 top-1/2 -translate-y-1/2" style={{ maxWidth: 80 }}>
+                        <Select
+                          value={voce.unit}
+                          onValueChange={(v) => updateVoce(voce._key, { unit: v })}
+                        >
+                          <SelectTrigger
+                            aria-label="Unità di misura"
+                            className="[&>span]:truncate"
+                            style={{ height: 30, minHeight: 30, borderRadius: 8, border: 'none', background: '#f2f0ea', padding: '0 6px 0 9px', fontSize: 12, color: '#6f6d64', gap: 3, boxShadow: 'none', maxWidth: 80 }}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {units.map((u) => (
+                              <SelectItem key={u} value={u}>{u}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </span>
                     </div>
                   </div>
+                  <div className="grid gap-1.5 items-start" style={{ gridTemplateColumns: showVat ? '1fr 88px' : '1fr' }}>
                   <div className="space-y-1">
                     <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Prezzo <span style={{ color: ORO }}>*</span>
@@ -669,36 +728,9 @@ export function VociTable({
                         locale
                         value={voce.unit_price}
                         onChange={(n) => updateVoce(voce._key, { unit_price: n })}
-                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
+                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
                       />
                       <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">€</span>
-                    </div>
-                  </div>
-                  {/* ⚠️ Sconto e IVA sulla seconda riga (Eli, 12 ago) — le celle
-                      vivono in un UNICO contenitore griglia: a 3 colonne il
-                      disegno è Unità·Q.tà·Prezzo / Sconto·IVA, in «Testo
-                      grande» (cc-large, 2 colonne) il flusso accoppia da sé
-                      Prezzo e Sconto sulla stessa riga invece di lasciarli
-                      orfani uno sopra l'altro (foto di Eli, 17 ago). Il campo
-                      Costo che chiudeva la riga è traslocato in MargineBox. */}
-                  <div className="space-y-1">
-                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sconto</span>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        placeholder="—"
-                        value={voce.discount_pct ?? ''}
-                        onChange={(e) => {
-                          const n = e.target.value ? parseFloat(e.target.value) : null
-                          updateVoce(voce._key, { discount_pct: n !== null && !isNaN(n) ? n : null })
-                        }}
-                        onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
-                        style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 40, boxSizing: 'border-box' }}
-                      />
-                      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">%</span>
                     </div>
                   </div>
                   {showVat && (
@@ -719,7 +751,7 @@ export function VociTable({
                             : { vat_rate: rate, bene_significativo: false })
                         }}
                       >
-                        <SelectTrigger className="w-full" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 10px', fontSize: 13, height: 40, boxSizing: 'border-box' }}>
+                        <SelectTrigger className="w-full" style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -733,36 +765,89 @@ export function VociTable({
                       </Select>
                     </div>
                   )}
-                  {/* Cestino nella cella LIBERA in coda alla riga Sconto·IVA
-                      (Eli 20 ago: «accanto al riquadro IVA non c'è mai nulla —
-                      mettiamoci il cestino, così non serve una riga dedicata»).
-                      Lontano dalla testata di chiusura (niente tocchi di
-                      striscio) e con l'«Annulla» del toast come rete.
-                      In forfettario (senza IVA) uno spaziatore lo tiene
-                      comunque nell'ultima colonna, sotto il Prezzo. */}
-                  {!showVat && <div aria-hidden />}
-                  <div className="space-y-1" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                    <span aria-hidden style={{ fontSize: 11, display: 'block', visibility: 'hidden' }}>·</span>
-                    <button
-                      type="button"
-                      onClick={() => removeVoce(voce._key)}
-                      aria-label={`Elimina voce ${idx + 1}`}
-                      style={{ width: 52, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #edd9d6', borderRadius: 10, background: '#fdf8f7', color: '#a5564e', cursor: 'pointer', boxSizing: 'border-box' }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
                   </div>
                 </div>
+
+                {/* Riga di servizio: «Sconto e altro ⌄» a sinistra, «Elimina» a
+                    destra (la parola al posto del cestino — 7 set). L'annulla
+                    del toast resta come rete. */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => setExtraState((prev) => ({ ...prev, [voce._key]: !extraOpen }))}
+                    aria-expanded={extraOpen}
+                    className="cc-t-sub"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', minWidth: 0, textAlign: 'left' }}
+                  >
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{extraLabel}</span>
+                    <ChevronDown size={14} style={{ flexShrink: 0, transform: extraOpen ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeVoce(voce._key)}
+                    aria-label={`Elimina voce ${idx + 1}`}
+                    className="cc-t-sub-strong"
+                    style={{ color: '#b05656', background: 'none', border: 'none', padding: '4px 0 4px 8px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+                  >
+                    Elimina
+                  </button>
+                </div>
+
+                {extraOpen && (
+                  <div style={{ marginTop: 8, paddingTop: 10, borderTop: '1px solid #f0efe9' }}>
+                    <div className="grid gap-1.5 items-start grid-cols-[1fr_1fr]">
+                      <div className="space-y-1">
+                        <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block' }}>Sconto sulla voce</span>
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            placeholder="—"
+                            value={voce.discount_pct ?? ''}
+                            onChange={(e) => {
+                              const n = e.target.value ? parseFloat(e.target.value) : null
+                              updateVoce(voce._key, { discount_pct: n !== null && !isNaN(n) ? n : null })
+                            }}
+                            onKeyDown={(e) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
+                            style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '0 18px 0 8px', fontSize: 13, height: 44, boxSizing: 'border-box' }}
+                          />
+                          <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">%</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block' }}>Metri quadri, piastrelle…</span>
+                        <div style={{ height: 44, display: 'flex', alignItems: 'center' }}>
+                          {/* «Usa» imposta quantità E unità (mq/mc/lt/pz), così
+                              un'area non diventa «13,86 pz». */}
+                          <CalcQuantitaButton onResult={(v, u) =>
+                            updateVoce(voce._key, u && units.includes(u) ? { quantity: v, unit: u } : { quantity: v })
+                          } />
+                        </div>
+                      </div>
+                    </div>
+                    {beneVisibile && (
+                      <div style={{ marginTop: 8 }}>
+                        <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
+                      </div>
+                    )}
+                  </div>
+                )}
+                    </>
+                  )
+                })()}
                 {/* ⚠️ Niente Costo e niente ricarico qui (Eli, 12 e 17 ago):
                     vivono solo nella card Margine più sotto (MargineBox). */}
               </div>
               )}
 
-              {/* La spunta «bene significativo» resta su mobile-aperta e desktop */}
+              {/* La spunta «bene significativo» su desktop; su mobile sta dentro
+                  «Sconto e altro» della voce aperta (7 set). */}
               {fiscalRegime !== 'forfettario'
                 && (voce.vat_rate ?? defaultVatRate ?? 22) === 10
                 && (
-                  <div className={voce._key === openKey ? undefined : 'hidden lg:block'}>
+                  <div className="hidden lg:block">
                     <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
                   </div>
                 )}
@@ -772,12 +857,67 @@ export function VociTable({
         })}
       </div>
 
-      {/* Footer aggiungi */}
-      <div className="px-[15px] py-3 border-t" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button type="button" onClick={addVoce} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a2e', fontWeight: 500, fontSize: 14, padding: 0 }}>
-          <Plus size={18} /> Aggiungi voce
-        </button>
+      {/* ── «Aggiungi voce ⌄» (riordino 7 set): UN tasto con dentro tutte le
+          strade — scrivi, catalogo/listini, foto/PDF/note con l'AI. Prima il
+          catalogo era un tasto a parte e l'AI un blocco crema in cima alla
+          card (dietro «Opzioni»). Il menu si apre sotto il tasto, dentro la
+          card: niente portal, si chiude col tocco fuori o con Esc. */}
+      <div className="px-[15px] py-3 border-t">
+        <div ref={addMenuRef} style={{ position: 'relative' }}>
+          <button
+            type="button"
+            onClick={() => setAddOpen((o) => !o)}
+            aria-expanded={addOpen}
+            aria-haspopup="menu"
+            style={{ width: '100%', height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #1a1a2e', borderRadius: 12, background: '#fff', color: '#1a1a2e', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            <Plus size={18} /> Aggiungi voce
+            <ChevronDown size={15} style={{ transform: addOpen ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+          </button>
+          {addOpen && (
+            <div role="menu" style={{ marginTop: 8, background: '#fff', border: '1px solid #e6e1d5', borderRadius: 12, boxShadow: '0 8px 24px -10px rgba(20,20,40,.25)', padding: '4px 0' }}>
+              {([
+                { key: 'scrivi', label: 'Scrivi una voce', icon: <PenLine size={16} />, onClick: addVoce },
+                { key: 'catalogo', label: 'Dal catalogo o dai listini', icon: <BookOpen size={16} />, onClick: () => setCatalogOpen(true) },
+                ...(addActions ?? []),
+              ] as AddVoceAction[]).map((a, i) => {
+                const inner = (
+                  <>
+                    <span style={{ width: 20, display: 'inline-flex', justifyContent: 'center', color: '#1a1a2e', flexShrink: 0 }}>{a.icon}</span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span className="cc-t-main" style={{ display: 'block' }}>{a.label}</span>
+                      {a.hint && <span className="cc-t-sub" style={{ display: 'block', marginTop: 1 }}>{a.hint}</span>}
+                    </span>
+                  </>
+                )
+                const rowStyle: React.CSSProperties = { width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 13px', background: 'none', border: 'none', borderTop: i === 0 ? 'none' : '1px solid #f0f0f0', cursor: a.disabled ? 'default' : 'pointer', fontFamily: 'inherit', textAlign: 'left', textDecoration: 'none', opacity: a.disabled ? 0.55 : 1 }
+                if (a.href) {
+                  return <a key={a.key} href={a.href} role="menuitem" data-tour={a.tourId} style={rowStyle}>{inner}</a>
+                }
+                return (
+                  <button
+                    key={a.key}
+                    type="button"
+                    role="menuitem"
+                    data-tour={a.tourId}
+                    disabled={a.disabled}
+                    onClick={() => { setAddOpen(false); a.onClick?.() }}
+                    style={rowStyle}
+                  >
+                    {inner}
+                  </button>
+                )
+              })}
+              {addNote && (
+                <p className="cc-t-sub" style={{ margin: 0, padding: '8px 13px 6px', borderTop: '1px solid #f0f0f0', lineHeight: 1.45 }}>{addNote}</p>
+              )}
+            </div>
+          )}
+        </div>
         <CatalogPicker
+          open={catalogOpen}
+          onOpenChange={setCatalogOpen}
+          hideTrigger
           onSelect={(item) => {
             const last = voci[voci.length - 1]
             const lastIsEmpty = !!last &&

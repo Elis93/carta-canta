@@ -51,14 +51,23 @@ interface CatalogPickerProps {
     /** Listino fornitore di origine (063) — per l'aggancio scadenza */
     supplier_list_id?: string | null
   }) => void
+  /** Apertura controllata (dal menu «Aggiungi voce», 7 set). */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  /** Senza il bottone «Da catalogo»: lo apre chi lo monta. */
+  hideTrigger?: boolean
 }
 
 // ── Listini fornitori (Fase 2) — tipi locali (tabelle 063 non nei types) ──
 type SupplierList = { id: string; name: string; markup_pct: number | null; valid_until: string | null }
 type SupplierItem = { id: string; list_id: string; code: string | null; description: string; unit: string; unit_cost: number }
 
-export function CatalogPicker({ onSelect }: CatalogPickerProps) {
-  const [open, setOpen]       = useState(false)
+export function CatalogPicker({ onSelect, open: openProp, onOpenChange, hideTrigger = false }: CatalogPickerProps) {
+  // Dal 7 set il picker si apre anche dal menu «Aggiungi voce» di VociTable:
+  // se `open` arriva da fuori è controllato (e il suo trigger si nasconde).
+  const [openState, setOpenState] = useState(false)
+  const open = openProp ?? openState
+  const setOpen = (v: boolean) => { setOpenState(v); onOpenChange?.(v) }
   const [view, setView]       = useState<'list' | 'create'>('list')
   const [tab, setTab]         = useState<'catalogo' | 'listini'>('catalogo')
   const [items, setItems]     = useState<CatalogItem[]>([])
@@ -275,12 +284,14 @@ export function CatalogPicker({ onSelect }: CatalogPickerProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true) }}>
-      <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm" className="gap-1.5 shrink-0">
-          <BookOpen className="size-4" />
-          Da catalogo
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button type="button" variant="outline" size="sm" className="gap-1.5 shrink-0">
+            <BookOpen className="size-4" />
+            Da catalogo
+          </Button>
+        </DialogTrigger>
+      )}
 
       <DialogContent className="sm:max-w-lg">
 

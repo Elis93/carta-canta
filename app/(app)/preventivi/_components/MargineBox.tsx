@@ -80,6 +80,7 @@ export function MargineBox({
   discountFixed,
   tierLabel,
   onUpdateVoce,
+  bare = false,
 }: {
   voci: VoceItem[]
   /** Sconto documento come stringhe grezze del form (stesse di fiscalOpts) */
@@ -97,6 +98,12 @@ export function MargineBox({
    * restano di sola lettura (compatibilità).
    */
   onUpdateVoce?: (key: string, updates: Partial<VoceItem>) => void
+  /**
+   * Riga a tendina DENTRO la card Riepilogo (riordino 7 set): niente riquadro
+   * viola a sé, etichetta viola a sinistra e cifra a destra come le altre
+   * righe del form. Senza, resta la card viola storica.
+   */
+  bare?: boolean
 }) {
   const [open, setOpen] = useState(false)
 
@@ -121,58 +128,10 @@ export function MargineBox({
     ? `${m.marginePct < 0 ? '−' : ''}${Math.abs(m.marginePct).toLocaleString('it-IT', { maximumFractionDigits: 1 })}% di margine`
     : null
 
-  return (
-    <div style={{ background: '#f6f4fb', border: '1px solid #dcd7ec', borderRadius: 12 }}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 7, width: '100%',
-          padding: '12px 13px', background: 'none', border: 'none', cursor: 'pointer',
-          fontFamily: 'inherit', textAlign: 'left',
-        }}
-      >
-        {/* ⚠️ DUE blocchi, non quattro elementi in fila (Eli, 9 ago: *"la freccia
-            per aprire il menu a tendina esce dalla sezione"*). Col nome della
-            proposta il titolo diventa «Margine · Premium · solo tu lo vedi»:
-            era `nowrap` e senza permesso di restringersi, quindi spingeva
-            fuori dal riquadro la cifra e la freccia. Ora il titolo VA A CAPO
-            dentro il suo blocco (`flex:1, minWidth:0`) e cifra e freccia
-            stanno in un blocco che non si restringe mai. */}
-        <span style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
-          <Lock size={12} style={{ color: VIOLA, flexShrink: 0 }} />
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: VIOLA, lineHeight: 1.35 }}>
-            Margine{tierLabel ? ` · ${tierLabel}` : ''} · solo tu lo vedi
-          </span>
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-          {/* Euro sopra, % sotto — allineati a destra (colonna) */}
-          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: valColor, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
-              {fmtEuro(m.margineFinale)}
-            </span>
-            {pctStr && (
-              <span style={{ fontSize: 11.5, fontWeight: 600, color: negative ? ROSSO : '#6a6488', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', marginTop: 1 }}>
-                {pctStr}
-              </span>
-            )}
-          </span>
-          {/* 2 ago (Eli): la freccia era piccola e "quasi invisibile" a filo del
-              bordo → più grande, viola pieno come il titolo */}
-          <ChevronDown
-            size={19}
-            strokeWidth={2.4}
-            style={{ color: VIOLA, flexShrink: 0, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}
-          />
-        </span>
-      </button>
-
-      {/* 2 ago (Eli): "la stessa informazione ripetuta 3 volte" — il totale
-          sta GIÀ nell'intestazione (sempre visibile): il dettaglio mostra la
-          COMPOSIZIONE, una riga per voce col suo margine + lo sconto. */}
-      {open && (
-        <div style={{ borderTop: '1px solid #e4dff2', padding: '9px 13px 12px' }}>
+  // Il dettaglio aperto (una riga per voce col costo) è lo stesso nei due
+  // vestiti: card viola storica e riga «bare» nel Riepilogo.
+  const margineDettaglio = (
+        <div style={{ borderTop: bare ? 'none' : '1px solid #e4dff2', padding: bare ? '2px 0 6px' : '9px 13px 12px' }}>
           {/* Dal 17 ago (Eli) il COSTO si vede e si corregge QUI, non pi\u00F9 nella
               card della voce: una riga per voce con descrizione, campo costo e
               margine. Il costo arriva da solo da catalogo/listini; qui lo si
@@ -229,7 +188,84 @@ export function MargineBox({
             {m.marginePct == null && m.vociSenzaCosto > 0 ? ' La % compare quando ogni voce ha un costo.' : ''}
           </p>
         </div>
-      )}
+  )
+
+  if (bare) {
+    return (
+      <div style={{ borderTop: '1px solid #ededea', marginTop: 10, paddingTop: 4 }}>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+        >
+          <Lock size={12} style={{ color: VIOLA, flexShrink: 0 }} />
+          <span className="cc-section-label" style={{ marginBottom: 0, color: VIOLA, flexShrink: 0 }}>
+            Margine{tierLabel ? ` · ${tierLabel}` : ''}
+          </span>
+          <span className="cc-t-sub" style={{ flex: 1, minWidth: 0, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <b style={{ fontWeight: 600, color: valColor, fontVariantNumeric: 'tabular-nums' }}>{fmtEuro(m.margineFinale)}</b>
+            {m.marginePct != null ? ` · ${m.marginePct < 0 ? '−' : ''}${Math.abs(m.marginePct).toLocaleString('it-IT', { maximumFractionDigits: 0 })}%` : ''}
+            {' · solo tu lo vedi'}
+          </span>
+          <ChevronDown size={18} style={{ color: '#1a1a2e', flexShrink: 0, transition: 'transform .18s', transform: open ? 'rotate(180deg)' : 'none' }} />
+        </button>
+        {open && margineDettaglio}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ background: '#f6f4fb', border: '1px solid #dcd7ec', borderRadius: 12 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+          padding: '12px 13px', background: 'none', border: 'none', cursor: 'pointer',
+          fontFamily: 'inherit', textAlign: 'left',
+        }}
+      >
+        {/* ⚠️ DUE blocchi, non quattro elementi in fila (Eli, 9 ago: *"la freccia
+            per aprire il menu a tendina esce dalla sezione"*). Col nome della
+            proposta il titolo diventa «Margine · Premium · solo tu lo vedi»:
+            era `nowrap` e senza permesso di restringersi, quindi spingeva
+            fuori dal riquadro la cifra e la freccia. Ora il titolo VA A CAPO
+            dentro il suo blocco (`flex:1, minWidth:0`) e cifra e freccia
+            stanno in un blocco che non si restringe mai. */}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
+          <Lock size={12} style={{ color: VIOLA, flexShrink: 0 }} />
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: VIOLA, lineHeight: 1.35 }}>
+            Margine{tierLabel ? ` · ${tierLabel}` : ''} · solo tu lo vedi
+          </span>
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+          {/* Euro sopra, % sotto — allineati a destra (colonna) */}
+          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: valColor, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+              {fmtEuro(m.margineFinale)}
+            </span>
+            {pctStr && (
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: negative ? ROSSO : '#6a6488', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', marginTop: 1 }}>
+                {pctStr}
+              </span>
+            )}
+          </span>
+          {/* 2 ago (Eli): la freccia era piccola e "quasi invisibile" a filo del
+              bordo → più grande, viola pieno come il titolo */}
+          <ChevronDown
+            size={19}
+            strokeWidth={2.4}
+            style={{ color: VIOLA, flexShrink: 0, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}
+          />
+        </span>
+      </button>
+
+      {/* 2 ago (Eli): "la stessa informazione ripetuta 3 volte" — il totale
+          sta GIÀ nell'intestazione (sempre visibile): il dettaglio mostra la
+          COMPOSIZIONE, una riga per voce col suo margine + lo sconto. */}
+      {open && margineDettaglio}
     </div>
   )
 }
