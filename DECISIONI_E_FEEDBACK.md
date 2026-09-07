@@ -54,6 +54,9 @@ i testi dell'app è un giro a sé, da fare su richiesta.
 - **Valutazione tecnica completa** (aree e file da toccare): vedi handoff CLAUDE.md «12 ago (17)».
 - Materia con risvolti commerciali/legali (claim, non «gratis per sempre») → prima di rilasciare, coerenza con B.0.
 
+### Verifica in due passaggi (2FA): il codice si chiede SOLO al login, mai a ogni riapertura (decisione Eli, 7 set 2026)
+Eli, dopo aver attivato il 2FA, chiudeva e riapriva l'app senza che il codice venisse chiesto. Proposte tre strade (solo al login · a ogni riapertura col timeout del blocco · a ogni riapertura sempre): **scelta «Solo al login (com'è ora)»**. Quindi: il codice a 6 cifre si chiede dopo «Esci» o su un telefono nuovo; per ogni riapertura resta il **blocco con impronta o password** (Account › Sicurezza), come nelle app di banca e posta. La FAQ 2FA lo dice già. ⚠️ Il bug vero dello stesso giorno era un altro: dopo «Esci» + nuovo login il codice non veniva chiesto (fattori stantii nei cookie, auth-js #589) — chiuso il 7 set, handoff in CLAUDE.md.
+
 ### Marca da bollo: sui preventivi NO, sulla nota di credito SÌ (decisione Eli, 11 ago 2026 — su ricerca fonti)
 - ✅ **Il preventivo non porta la marca da bollo** (non è un documento fiscale ex art. 13 tariffa DPR 642/1972; non è prassi dei gestionali — «se non si fa, non facciamolo»). I 2 € arrivano alla conversione in fattura, e una FAQ spiega la differenza di totale.
 - ✅ **La nota di credito porta il SUO bollo** sopra 77,47 € in forfettario, automatico come sulla fattura (art. 13: «…o accreditamenti»; la guida AdE esclude dal calcolo solo TD16-TD19 → la TD04 finisce nell'Elenco A comunque). Il bollo della fattura stornata non si recupera, e nel tetto dello storno si confrontano sempre le BASI (totale − bollo), mai i totali col bollo.
