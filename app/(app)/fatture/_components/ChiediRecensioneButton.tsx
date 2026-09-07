@@ -82,7 +82,7 @@ export function ChiediRecensioneButton({
         etichetta={
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
             <Star size={15} style={{ color: '#b08d3e' }} />
-            <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>
               Chiedi una recensione
             </span>
           </span>

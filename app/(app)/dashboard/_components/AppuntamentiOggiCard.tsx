@@ -37,7 +37,7 @@ export function AppuntamentiOggiCard({ agenda, style }: { agenda: TodayAgenda; s
               <span style={{ width: 26, height: 26, borderRadius: '50%', background: '#f3ede0', color: '#b0863e', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Plus size={15} />
               </span>
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: '#2b2b2b' }}>
+              <span className="cc-t-main" style={{ flex: 1 }}>
                 Aggiungi il tuo prossimo appuntamento
               </span>
               <ChevronRight size={16} style={{ color: '#c2c1bd', flexShrink: 0 }} aria-hidden />
@@ -47,7 +47,7 @@ export function AppuntamentiOggiCard({ agenda, style }: { agenda: TodayAgenda; s
               href="/calendario"
               style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 0', textDecoration: 'none' }}
             >
-              <span style={{ flex: 1, fontSize: 13.5, color: 'var(--cc-muted)' }}>Nessun impegno oggi.</span>
+              <span className="cc-t-sub" style={{ flex: 1 }}>Nessun impegno oggi.</span>
               <ChevronRight size={16} style={{ color: '#c2c1bd', flexShrink: 0 }} aria-hidden />
             </Link>
           )}
@@ -73,10 +73,10 @@ export function AppuntamentiOggiCard({ agenda, style }: { agenda: TodayAgenda; s
                   href="/calendario"
                   style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit', padding: '6px 0' }}
                 >
-                  <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 15, fontWeight: 400, color: '#2b2b2b', flexShrink: 0 }}>
+                  <span className="cc-t-num" style={{ flexShrink: 0 }}>
                     {romeTime(ev.scheduled_at)}
                   </span>
-                  <span style={{ flex: 1, minWidth: 0, fontSize: 14.5, fontWeight: 500, color: '#2b2b2b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span className="cc-t-main" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {clientName || ev.title}
                   </span>
                 </Link>

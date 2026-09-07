@@ -22,9 +22,9 @@ const cardStyle: React.CSSProperties = {
   padding: '15px 15px',
 }
 const sectionLabelStyle: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 12,
   fontWeight: 600,
-  letterSpacing: '.07em',
+  letterSpacing: '.06em',
   textTransform: 'uppercase',
   color: '#6f6d64',
   marginBottom: 12,

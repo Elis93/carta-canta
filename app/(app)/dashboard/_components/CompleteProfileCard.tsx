@@ -47,8 +47,8 @@ export function CompleteProfileCard({ items }: { items: ProfileItem[] }) {
     <div style={{ margin: '18px 15px 0', background: '#fff', borderRadius: 12, boxShadow: '0 1px 2px rgba(20,20,40,.04), 0 6px 16px -8px rgba(20,20,40,.13)', borderLeft: '3px solid #c9a44c', padding: '13px 14px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: '#2b2b2b' }}>Completa il tuo profilo</span>
-        <span style={{ fontSize: 12, fontWeight: 600, color: '#b08d3e', whiteSpace: 'nowrap' }}>{done} di {total} fatto</span>
+        <span className="cc-t-main" style={{ flex: 1 }}>Completa il tuo profilo</span>
+        <span className="cc-t-sub-strong" style={{ color: '#b0863e', whiteSpace: 'nowrap' }}>{done} di {total} fatto</span>
         <button
           type="button"
           onClick={dismiss}
@@ -68,7 +68,7 @@ export function CompleteProfileCard({ items }: { items: ProfileItem[] }) {
       <div style={{ marginTop: 6 }}>
         {items.map((item) => (
           item.done ? (
-            <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', fontSize: 14, color: 'var(--cc-muted)' }}>
+            <div key={item.key} className="cc-t-sub" style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0' }}>
               <CheckCircle2 size={17} style={{ color: '#2f8a63', flexShrink: 0 }} />
               {item.label}
             </div>
@@ -81,7 +81,8 @@ export function CompleteProfileCard({ items }: { items: ProfileItem[] }) {
                 // che mostrano ESATTAMENTE dove agire) — vedi MiniTourController
                 try { sessionStorage.setItem('cc_minitour', `${item.key}:${Date.now()}`) } catch { /* noop */ }
               }}
-              style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#161616', textDecoration: 'none' }}
+              className="cc-t-main"
+              style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', textDecoration: 'none' }}
             >
               <span style={{ width: 17, height: 17, borderRadius: '50%', border: '1.5px solid #d7d4cb', flexShrink: 0 }} />
               <span style={{ flex: 1 }}>{item.label}</span>
@@ -92,7 +93,7 @@ export function CompleteProfileCard({ items }: { items: ProfileItem[] }) {
       </div>
 
       {/* Perché serve */}
-      <div style={{ fontSize: 13, color: 'var(--cc-muted)', lineHeight: 1.45, marginTop: 4 }}>
+      <div className="cc-t-sub" style={{ lineHeight: 1.45, marginTop: 4 }}>
         Servono per i tuoi documenti e per farti contattare dai clienti.
       </div>
     </div>

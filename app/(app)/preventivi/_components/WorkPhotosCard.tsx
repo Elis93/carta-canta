@@ -174,14 +174,14 @@ export function WorkPhotosCard({
           aria-expanded={open}
           style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, marginBottom: open ? (photos.length > 0 ? 12 : 8) : 0, cursor: 'pointer', fontFamily: 'inherit', minHeight: 28 }}
         >
-          <span style={{ flex: 1, textAlign: 'left', fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>Foto lavoro</span>
-          <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>{photos.length > 0 ? `${photos.length} foto` : 'nessuna'}</span>
+          <span style={{ flex: 1, textAlign: 'left', fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>Foto lavoro</span>
+          <span className="cc-t-sub">{photos.length > 0 ? `${photos.length} foto` : 'nessuna'}</span>
           <ChevronDown size={18} style={{ color: '#1a1a2e', flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }} />
         </button>
       ) : (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: photos.length > 0 ? 12 : 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>Foto lavoro</span>
-          {photos.length > 0 && <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>{photos.length} foto</span>}
+          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>Foto lavoro</span>
+          {photos.length > 0 && <span className="cc-t-sub">{photos.length} foto</span>}
         </div>
       )}
       {open && (<>

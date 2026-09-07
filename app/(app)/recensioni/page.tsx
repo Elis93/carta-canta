@@ -106,7 +106,7 @@ export default async function RecensioniPage() {
 
           {/* Medie per domanda */}
           <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
               Media per domanda
             </div>
             {QUESTIONS.map((q, i) => {
@@ -125,7 +125,7 @@ export default async function RecensioniPage() {
 
           {/* Ultime recensioni */}
           <div style={{ margin: '13px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
               Ultime recensioni
             </div>
             {reviews.slice(0, 20).map((r, i) => {

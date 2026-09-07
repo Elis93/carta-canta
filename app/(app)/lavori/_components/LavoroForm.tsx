@@ -33,7 +33,7 @@ import { LAVORO_STATUS_META, LAVORO_STATUS_ORDER, type LavoroStatus } from './la
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 const cardStyle: React.CSSProperties = { background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }
-const secLabel: React.CSSProperties = { fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }
+const secLabel: React.CSSProperties = { fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }
 const fieldLabel: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 5 }
 const fieldStyle: React.CSSProperties = {
   width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px',

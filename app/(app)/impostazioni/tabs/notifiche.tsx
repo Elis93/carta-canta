@@ -122,7 +122,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
       )}
 
       <div style={cardStyle}>
-        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 5 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 5 }}>
           Notifiche preventivi
         </div>
         <div style={{ fontSize: 12, color: '#767676', lineHeight: 1.45, marginBottom: 13 }}>
@@ -172,7 +172,7 @@ export function ImpostazioniNotifiche({ initialPrefs }: ImpostazioniNotifichePro
 
       {/* ── Notifiche in app (campanella in Home) ── */}
       <div style={{ ...cardStyle, marginTop: 14 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 5 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 5 }}>
           Notifiche in app
         </div>
         <div style={{ fontSize: 12, color: '#767676', lineHeight: 1.45, marginBottom: 13 }}>

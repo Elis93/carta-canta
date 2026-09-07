@@ -93,7 +93,9 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
   // documento («Preventivo 023/2026») scende sotto, piccolo, con la scadenza
   // colorata. Un filetto verticale a sinistra dà l'urgenza a colpo d'occhio.
   const scaduto = /^scadut/i.test(doc.expiresLabel)
-  const urgColor = scaduto ? '#a5564e' : '#a5793a'
+  // Rosso e ambra degli avvisi (Avviso.tsx): un solo rosso e una sola ambra
+  // nell'app (7 set), non più le due tinte «di card» #a5564e/#a5793a.
+  const urgColor = scaduto ? '#b05656' : '#b0863e'
   // Abbreviato (variante B, Eli 20 ago): la riga ora convive coi tasti.
   const docLabel = `${kind === 'fattura' ? 'Fatt.' : 'Prev.'} ${doc.numberLabel ?? '—'}`
   const mainLabel = doc.clientName?.trim() || `${kind === 'fattura' ? 'Fattura' : 'Preventivo'} ${doc.numberLabel ?? '—'}`
@@ -115,10 +117,10 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
           di «Lavoro in corso» (Eli 20 ago: «stessa identica posizione»). */}
       <span aria-hidden style={{ position: 'absolute', left: -15, top: 2, bottom: 2, width: 2, borderRadius: 2, background: urgColor }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
-        <span style={{ fontSize: 15, fontWeight: 500, color: '#2b2b2b', minWidth: 0, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+        <span className="cc-t-main" style={{ minWidth: 0, lineHeight: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {mainLabel}
         </span>
-        <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 16, fontWeight: 400, color: '#2b2b2b', whiteSpace: 'nowrap', flexShrink: 0 }}>
+        <span className="cc-t-num" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
           {formatCurrency(doc.total ?? 0)}
         </span>
       </div>
@@ -130,7 +132,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           {(doc.clientName?.trim() || doc.isModified) && (
-            <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div className="cc-t-sub" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {doc.clientName?.trim() ? docLabel : null}
               {doc.isModified && (
                 <>
@@ -154,7 +156,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
               )}
             </div>
           )}
-          <div style={{ fontSize: 12.5, fontWeight: 600, color: urgColor, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div className="cc-t-sub-strong" style={{ color: urgColor, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {doc.expiresLabel}
           </div>
         </div>
@@ -210,7 +212,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
 
       {/* Pannello ⓘ «Modificato» — a tutta larghezza, sotto la riga */}
       {doc.isModified && infoOpen && (
-        <div onClick={(e) => e.stopPropagation()} style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '10px 12px', marginTop: 7, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '10px 12px', marginTop: 7, fontSize: 13, color: '#3f3d36', lineHeight: 1.55 }}>
           <p style={{ margin: 0, fontWeight: 600, color: '#161616' }}>Cosa vuol dire &laquo;Modificato&raquo;?</p>
           <p style={{ margin: '6px 0 0' }}>
             Hai cambiato qualcosa dopo averlo mandato al cliente: importi, voci o
@@ -239,7 +241,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
 /** Nessun documento dentro la finestra di preavviso: si dice, non si nasconde. */
 function VuotoBlock({ kind }: { kind: 'preventivo' | 'fattura' }) {
   return (
-    <div style={{ fontSize: 13.5, color: 'var(--cc-muted)' }}>
+    <div className="cc-t-sub">
       {kind === 'fattura'
         ? 'Nessuna fattura in imminente scadenza.'
         : 'Nessun preventivo in imminente scadenza.'}

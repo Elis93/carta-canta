@@ -514,15 +514,16 @@ export function DocumentTimeline({
           marginBottom: open ? 12 : 0,
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
-          Cronologia{' '}
-          <span style={{ fontWeight: 500, letterSpacing: 0, textTransform: 'none', color: 'var(--cc-muted)' }}>
-            · {events.length} {events.length === 1 ? 'evento' : 'eventi'}
-          </span>
+        {/* Regola unica delle tendine (Eli 7 set): il conteggio sta a DESTRA,
+            13 grigio, come i riepiloghi di Cliente/Foto/Collegati — non più
+            dentro il titolo. */}
+        <span className="cc-section-label" style={{ marginBottom: 0, flexShrink: 0 }}>Cronologia</span>
+        <span className="cc-t-sub" style={{ flex: 1, minWidth: 0, textAlign: 'right', margin: '0 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {events.length} {events.length === 1 ? 'evento' : 'eventi'}
         </span>
         <ChevronDown
-          className="size-4"
-          style={{ color: '#6f6d64', flex: '0 0 auto', transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}
+          size={18}
+          style={{ color: '#1a1a2e', flex: '0 0 auto', transition: 'transform .18s', transform: open ? 'rotate(180deg)' : 'none' }}
         />
       </button>
       {open && events.map((ev, i) => {

@@ -61,7 +61,7 @@ export default async function RichiestePage() {
 
       {requests.length > 0 ? (
         <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', padding: '10px 0 2px' }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', padding: '10px 0 2px' }}>
             Dal marketplace
           </div>
           {requests.map((r, i) => (

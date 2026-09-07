@@ -328,7 +328,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       è il canale dell&rsquo;Agenzia delle Entrate che riceve la fattura elettronica e la
       recapita al cliente.
       <br /><br />
-      Dalla card <b>Fattura elettronica (SdI)</b>{' '}sulla fattura la trasmetti con un
+      Dalla card <b>Fattura elettronica</b>{' '}sulla fattura la trasmetti con un
       tocco. Dopo l&rsquo;invio arriva l&rsquo;esito: <b>Consegnata</b>{' '}(tutto a posto)
       oppure <b>Scartata</b>{' '}(c&rsquo;è un dato da correggere: sistemi e reinvii entro{' '}
       <b>5 giorni</b>, con lo stesso numero e la stessa data).
@@ -355,7 +355,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       cliente paga, registralo tu sulla fattura («Segna pagata», o l&rsquo;acconto) — il
       conteggio può partire solo dalle date che l&rsquo;app conosce.
       Finché resta <b>bozza</b>{' '}nessun conteggio parte. Per non fartelo
-      tenere a mente, sulla fattura la card <b>Fattura elettronica (SdI)</b>{' '}mostra il{' '}
+      tenere a mente, sulla fattura la card <b>Fattura elettronica</b>{' '}mostra il{' '}
       <b>conto alla rovescia</b>{' '}— «Da trasmettere entro il … · mancano N giorni» — e
       negli ultimi 3 giorni ti arriva anche la notifica in campanella. E con la{' '}
       <b>trasmissione automatica</b>{' '}attiva non devi nemmeno pensarci: la fattura
@@ -377,7 +377,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
     a: <>Sì, ed è <b>accesa di partenza</b>: quando confermi una fattura (il primo invio al
       cliente o «Segna pagata»), la trasmissione allo SdI viene <b>programmata dopo 24 ore</b>.
       Un avviso te lo dice nel momento stesso, e sulla fattura la card{' '}
-      <b>Fattura elettronica (SdI)</b>{' '}mostra giorno e ora della partenza in un riquadro
+      <b>Fattura elettronica</b>{' '}mostra giorno e ora della partenza in un riquadro
       azzurro.
       <br /><br />
       Vuoi fermarla? Nel riquadro c&rsquo;è il tasto <b>Annulla</b>: ferma la partenza
@@ -976,7 +976,7 @@ export default async function AiutoPage({
 
       {/* FAQ */}
       <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 4 }}>
           <MessageCircleQuestion size={15} /> Domande frequenti
         </div>
         {/* Con più di trenta domande, scorrerle tutte è il motivo per cui uno

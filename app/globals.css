@@ -421,6 +421,17 @@
     margin-bottom: 11px;
   }
 
+  /* I QUATTRO LIVELLI DI TESTO dentro le card (Eli 7 set 2026: «al massimo
+     3 o 4, da associare a tutte le pagine»). ① .cc-section-label qui sopra ·
+     ② riga principale · ③ testo secondario (riepiloghi a destra delle
+     tendine, date, dettagli) · ④ cifra. Uno stato colorato usa ③ con peso
+     600 e il SOLO colore della gravità (rosso #b05656 · ambra #b0863e ·
+     verde #2f8a63). Niente fontSize inline dove c'è una di queste classi. */
+  .cc-t-main { font-size: 14px; font-weight: 500; color: #2b2b2b; }
+  .cc-t-sub { font-size: 13px; font-weight: 400; color: #6f6d64; }
+  .cc-t-sub-strong { font-size: 13px; font-weight: 600; }
+  .cc-t-num { font-family: Georgia, 'Times New Roman', serif; font-size: 17px; font-weight: 400; color: #2b2b2b; }
+
   /* Testata di pagina (feedback estetico Eli 14 lug): il titolo nel serif del
      marchio (stesso font del logo "Carta Canta") + riga oro che stacca la
      fascia dal contenuto. Rende le pagine riconoscibili, meno anonime. */

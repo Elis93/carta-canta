@@ -120,7 +120,7 @@ export function MarketplaceProfileForm({
   return (
     <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
-        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }}>
           Marketplace
         </div>
 
@@ -243,7 +243,7 @@ export function MarketplaceProfileForm({
       {/* Esiti verifica automatica */}
       {checks && (
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 8 }}>
             Verifica automatica
           </div>
           {checks.map((c, i) => (

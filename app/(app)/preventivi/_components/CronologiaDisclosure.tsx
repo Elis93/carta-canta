@@ -26,7 +26,7 @@ export function CronologiaDisclosure({ count, children }: { count: number; child
           marginBottom: open ? 12 : 0,
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>
           Cronologia{' '}
           <span style={{ fontWeight: 500, letterSpacing: 0, textTransform: 'none', color: 'var(--cc-muted)' }}>
             · {count} {count === 1 ? 'evento' : 'eventi'}

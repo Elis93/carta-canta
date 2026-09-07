@@ -59,9 +59,9 @@ export function CardTendina({
         aria-expanded={open}
         style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, marginBottom: open ? 10 : 0, cursor: 'pointer', fontFamily: 'inherit', minHeight: 28 }}
       >
-        <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>{label}</span>
+        <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>{label}</span>
         {!open && summary != null && (
-          <span style={{ flex: 1, minWidth: 0, textAlign: 'right', fontSize: 13.5, fontWeight: 600, color: '#161616', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span className="cc-t-sub" style={{ flex: 1, minWidth: 0, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {summary}
           </span>
         )}

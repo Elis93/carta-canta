@@ -98,7 +98,7 @@ export function MonthAgenda({ weeks, monthParam, todayKey, byDay, defaultSelecte
       </div>
 
       {/* ── Appuntamenti del giorno selezionato ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: selected === todayKey ? '#b0863e' : '#6f6d64', margin: '16px 2px 7px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: selected === todayKey ? '#b0863e' : '#6f6d64', margin: '16px 2px 7px' }}>
         <CalendarDays size={14} /> {dayLabel(selected, todayKey)}
       </div>
 

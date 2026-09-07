@@ -26,9 +26,9 @@ export function LavoroInCorsoCard({ id, title, style }: { id: string; title: str
         <span aria-hidden style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 2, borderRadius: 2, background: '#2f8a63' }} />
         <Link
           href={`/lavori/${id}`}
+          className="cc-t-main"
           style={{
-            flex: 1, minWidth: 0, padding: '6px 0 6px 6px', textDecoration: 'none',
-            fontSize: 14.5, fontWeight: 500, color: '#2b2b2b', lineHeight: 1.3,
+            flex: 1, minWidth: 0, padding: '6px 0 6px 6px', textDecoration: 'none', lineHeight: 1.3,
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}
         >

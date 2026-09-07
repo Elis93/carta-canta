@@ -71,7 +71,7 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
       <div className="flex items-center justify-between mb-4">
         {/* Stessa veste della testata «Note, foto e condizioni» (Eli 26 ago:
             «facciamo Riepilogo uguale a Note»): 13/600 .07em uppercase #6f6d64. */}
-        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>
           {tierLabel ? `Riepilogo — proposta ${tierLabel}` : 'Riepilogo'}
         </span>
         {docNumber && (

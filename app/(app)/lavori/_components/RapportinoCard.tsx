@@ -18,7 +18,7 @@ import { saveRapportoAction } from '@/lib/actions/lavori'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
-const secLabel: React.CSSProperties = { fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }
+const secLabel: React.CSSProperties = { fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }
 
 export interface RapportinoData {
   lavoroId: string

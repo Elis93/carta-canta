@@ -15,7 +15,7 @@
 // ============================================================
 
 import { useEffect, useState, useTransition } from 'react'
-import { MessageSquare, Loader2, Send, Mail, AlertTriangle, ChevronDown } from 'lucide-react'
+import { Loader2, Send, Mail, AlertTriangle, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { runAction } from '@/lib/run-action'
 import { sendOwnerMessageAction } from '@/lib/actions/messaggi'
@@ -78,24 +78,25 @@ export function MessaggiCard({
 
   return (
     <div id={anchorId} style={anchorId ? { scrollMarginTop: 80 } : undefined}>
+      {/* Testata = la regola unica delle tendine (Eli 7 set): etichetta a
+          sinistra, riepilogo 13 grigio a destra; «da rispondere» è l'unica
+          cosa colorata (ambra), perché chiede un'azione. Il nome del cliente
+          non sta più nel titolo: c'è già nella card Cliente. */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="cc-section-label"
-        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, marginBottom: open ? 8 : 0, cursor: 'pointer', fontFamily: 'inherit', minHeight: 32 }}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, marginBottom: open ? 8 : 0, cursor: 'pointer', fontFamily: 'inherit', minHeight: 28 }}
       >
-        <MessageSquare className="size-3.5" style={{ color: '#6a44b5', flexShrink: 0 }} />
-        <span style={{ flex: 1, textAlign: 'left' }}>
-          Messaggi{clientName ? ` con ${clientName}` : ' col cliente'} · {messages.length}
+        <span className="cc-section-label" style={{ marginBottom: 0, flexShrink: 0 }}>Messaggi</span>
+        <span
+          className={attesa ? 'cc-t-sub-strong' : 'cc-t-sub'}
+          style={{ flex: 1, minWidth: 0, textAlign: 'right', color: attesa ? '#b0863e' : undefined, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        >
+          {messages.length}{attesa ? ' · da rispondere' : ''}
         </span>
-        {attesa && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#b0863e', background: '#f5e9d0', borderRadius: 7, padding: '2px 7px', letterSpacing: 0 }}>
-            da rispondere
-          </span>
-        )}
         <ChevronDown
-          size={19}
+          size={18}
           style={{ color: '#1a1a2e', flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }}
         />
       </button>

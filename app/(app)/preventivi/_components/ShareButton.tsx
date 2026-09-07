@@ -182,7 +182,7 @@ export function ShareButton({
     if (!avvisoSdi) return
     toast.info('Da oggi hai 12 giorni per trasmetterla allo SdI', {
       // ⚠️ «card SdI» e non «card Fattura elettronica»: sulla nota di
-      // credito la card si intitola «Nota di credito elettronica (SdI)».
+      // credito la card si intitola «Nota di credito elettronica».
       description: avvisoSdi === 'auto'
         ? 'Trasmissione automatica attiva: parte da sola tra 24 ore, non devi fare niente. La gestisci (o la annulli) dalla card SdI del documento.'
         : 'La trasmetti tu dalla card SdI del documento: il conto alla rovescia è lì a ricordartelo.',

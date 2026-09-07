@@ -1628,7 +1628,7 @@ export function PreventivoForm({
           {/* 2 ago sera (scelta Eli): "Altre opzioni" non diceva niente → il
               titolo elenca il contenuto. In edit (e nelle fatture) la sezione
               Foto non c'è → "Note e condizioni". */}
-          <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>
             {mode === 'create' ? 'Note, foto e condizioni' : 'Note e condizioni'}
           </span>
           <ChevronDown

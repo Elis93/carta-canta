@@ -34,7 +34,7 @@ const LABEL: React.CSSProperties = {
   fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '.05em',
   textTransform: 'uppercase', display: 'block', marginBottom: 5,
 }
-const secLabel: React.CSSProperties = { fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }
+const secLabel: React.CSSProperties = { fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }
 
 const fmtEur = (v: number) => `${v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
 const dateIt = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })

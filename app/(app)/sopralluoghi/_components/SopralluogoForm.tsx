@@ -35,7 +35,7 @@ const cardStyle: React.CSSProperties = {
   background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px',
 }
 const secLabel: React.CSSProperties = {
-  fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10,
+  fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10,
 }
 const fieldStyle: React.CSSProperties = {
   width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px',

@@ -99,7 +99,7 @@ export function RichiamoCard({ lavoroId, recallAt, recallNote, documentId, bare 
         etichetta={bare ? 'Promemoria di manutenzione' : 'Richiama il cliente'}
         style={bare
           ? { fontSize: 12.5, fontWeight: 500, color: 'var(--cc-muted)', marginBottom: 10 }
-          : { fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}
+          : { fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 12 }}
       >
         Per manutenzioni e controlli periodici (caldaia, condizionatori…): alla data scelta ti
         arriva un promemoria nella campanella della Home.

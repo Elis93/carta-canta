@@ -757,11 +757,11 @@ export default async function DashboardPage() {
             <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#b0863e', flexShrink: 0 }}>
               Gratuito
             </span>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: 'var(--cc-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span className="cc-t-sub" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               <b style={{ fontWeight: 500, color: '#2b2b2b' }}>{freeTrialStatus.docsUsed}/{FREE_DOC_LIMIT}</b> preventivi ·{' '}
               <b style={{ fontWeight: 500, color: '#2b2b2b' }}>{freeInvoiceStatus?.docsUsed ?? 0}/{FREE_INVOICE_LIMIT}</b> fatture
             </span>
-            <Link href="/abbonamento" style={{ fontSize: 12.5, fontWeight: 600, color: '#b0863e', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            <Link href="/abbonamento" className="cc-t-sub-strong" style={{ color: '#b0863e', textDecoration: 'none', whiteSpace: 'nowrap' }}>
               Pro →
             </Link>
           </div>
@@ -844,10 +844,10 @@ export default async function DashboardPage() {
                     }}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div className="cc-t-main" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {lav.title ?? 'Lavoro'}{lavClient ? ` · ${lavClient}` : ''}
                       </div>
-                      <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2 }}>
+                      <div className="cc-t-sub" style={{ marginTop: 2 }}>
                         {isNew ? 'Lavoro creato' : 'Lavoro aggiornato'} il {new Date(lav.updated_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', timeZone: 'Europe/Rome' }).replace('.', '')}
                       </div>
                     </div>
@@ -893,10 +893,10 @@ export default async function DashboardPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {/* CLIENTE prima del numero (Eli, 19 ago: il nome si deve
                         leggere in chiaro) */}
-                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--cc-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div className="cc-t-main" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {clientName ? `${clientName} · ` : ''}{displayLabel}
                     </div>
-                    <div style={{ fontSize: 13, color: 'var(--cc-muted)', marginTop: 2 }}>
+                    <div className="cc-t-sub" style={{ marginTop: 2 }}>
                       {formatCurrency(doc.total ?? 0)}
                     </div>
                   </div>
@@ -913,7 +913,7 @@ export default async function DashboardPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 0', gap: 12, textAlign: 'center' }}>
               <FileText size={32} style={{ color: 'var(--cc-muted)', opacity: 0.4 }} />
-              <p style={{ margin: 0, fontSize: 14, color: 'var(--cc-muted)' }}>Nessun preventivo ancora.</p>
+              <p className="cc-t-sub" style={{ margin: 0 }}>Nessun preventivo ancora.</p>
               <Button asChild size="sm">
                 <Link href="/preventivi/nuovo">
                   <Plus />

@@ -219,7 +219,7 @@ export default async function CalendarioPage({
       {/* Lavori in corso (senza orario) */}
       {inCorso.length > 0 && (
         <div style={{ margin: '16px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '12px 15px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 8 }}>
             <Hammer size={14} /> Lavori in corso
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>

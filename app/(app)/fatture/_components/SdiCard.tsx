@@ -14,6 +14,16 @@ import { Send, Loader2, CheckCircle2, AlertTriangle, Clock, Crown, Download, Ref
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { riferimentoTrasmissione, termineTrasmissione, scadenzaLabel } from '@/lib/sdi/termini'
+
+/** «19 set»: la data breve per la testata chiusa, dove lo spazio è quello
+    che resta accanto all'etichetta (la forma lunga «19 settembre» resta
+    dentro la card). */
+function scadenzaBreve(scadenza: string): string {
+  const [y, m, g] = scadenza.split('-').map(Number)
+  return new Date(Date.UTC(y!, (m ?? 1) - 1, g ?? 1))
+    .toLocaleDateString('it-IT', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+    .replace('.', '')
+}
 import { spiegaErroreSdi } from '@/lib/sdi/errori-comuni'
 import { annullaTrasmissioneAutomaticaAction } from '@/lib/actions/documents'
 import { Avviso } from '@/components/shared/Avviso'
@@ -322,56 +332,62 @@ export function SdiCard({
   const erroreSpiegato = sdiStatus === 'scartata' ? spiegaErroreSdi(sdiError) : null
 
   // Stato in UNA riga per la testata della tendina chiusa.
-  const riepilogoChiuso = sdiStatus === 'scartata' ? 'Scartata — da correggere'
+  const riepilogoChiuso = sdiStatus === 'scartata' ? 'Scartata'
     : sdiStatus === 'consegnata' ? 'Consegnata'
-    : sdiStatus === 'inviata' ? 'Inviata — attendo esito'
+    : sdiStatus === 'inviata' ? 'Inviata, attendo esito'
     : sdiStatus === 'mancata_consegna' ? 'Emessa'
     : termine?.fuoriTermine ? 'Termine superato'
     : pilotaVisibile ? 'Parte da sola'
-    : termine ? `Entro il ${scadenzaLabel(termine.scadenza)}`
+    : termine ? `entro il ${scadenzaBreve(termine.scadenza)}`
     : 'Da trasmettere'
-  const riepilogoColore = sdiStatus === 'scartata' || termine?.fuoriTermine ? '#b05656'
+  // null = nessuna urgenza → grigio 13 come gli altri riepiloghi.
+  const riepilogoColore: string | null = sdiStatus === 'scartata' || termine?.fuoriTermine ? '#b05656'
     : sdiStatus === 'consegnata' ? '#2f8a63'
     : (termine && termine.giorniRimasti <= 3) ? '#b0863e'
-    : '#55534b'
+    : null
 
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: cardOpen ? 8 : 0 }}>
-        {/* ⚠️ L'etichetta è lunga (211px misurati, 272 sulla nota di credito) e
-            NON può stare su una riga con lo stato: sommata a chevron e ⓘ sborda
-            dai 330px interni della card — era il chevron tagliato visto da Eli.
-            Quindi: riga 1 = etichetta + comandi (l'etichetta può andare a capo),
-            riga 2 = lo stato, che ha così tutta la larghezza. */}
-        <button
-          type="button"
-          onClick={() => setCardOpen((v) => !v)}
-          aria-expanded={cardOpen}
-          style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', minHeight: 28, textAlign: 'left' }}
-        >
-          <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
-            {isNotaCredito ? 'Nota di credito elettronica (SdI)' : 'Fattura elettronica (SdI)'}
+      {/* Testata = la regola unica delle tendine (Eli 7 set): etichetta a
+          sinistra, stato a DESTRA in 13 grigio — colorato (peso 600) SOLO se
+          è uno stato che chiede attenzione: rosso scartata/fuori termine,
+          ambra negli ultimi 3 giorni, verde consegnata. L'etichetta perde
+          «(SdI)» e il ⓘ scende nella card aperta: senza, i 330px interni
+          non bastavano per lo stato sulla stessa riga (era il chevron
+          tagliato del 26 ago, poi lo stato su una riga propria). */}
+      <button
+        type="button"
+        onClick={() => setCardOpen((v) => !v)}
+        aria-expanded={cardOpen}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', minHeight: 28, textAlign: 'left', marginBottom: cardOpen ? 8 : 0 }}
+      >
+        <span className="cc-section-label" style={{ marginBottom: 0, flexShrink: 0 }}>
+          {isNotaCredito ? 'Nota di credito elettronica' : 'Fattura elettronica'}
+        </span>
+        {!cardOpen ? (
+          <span
+            className={riepilogoColore ? 'cc-t-sub-strong' : 'cc-t-sub'}
+            style={{ flex: 1, minWidth: 0, textAlign: 'right', color: riepilogoColore ?? undefined, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          >
+            {riepilogoChiuso}
           </span>
-          <ChevronDown size={18} style={{ color: '#1a1a2e', flexShrink: 0, transform: cardOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }} />
-        </button>
-        <button
-          type="button"
-          onClick={() => { setCardOpen(true); setInfoOpen((o) => !o) }}
-          aria-expanded={infoOpen}
-          aria-label="Cosa significa la trasmissione SdI"
-          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '50%', border: '1px solid #d9d7d0', background: infoOpen ? '#f2f2f4' : '#fff', color: '#6f6d64', cursor: 'pointer', padding: 0, flexShrink: 0 }}
-        >
-          <Info size={13} />
-        </button>
-      </div>
-
-      {!cardOpen && (
-        <p style={{ margin: '4px 0 0', fontSize: 12.5, fontWeight: 600, color: riepilogoColore, lineHeight: 1.4 }}>
-          {riepilogoChiuso}
-        </p>
-      )}
+        ) : <span style={{ flex: 1 }} />}
+        <ChevronDown size={18} style={{ color: '#1a1a2e', flexShrink: 0, transform: cardOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }} />
+      </button>
 
       {cardOpen && (<>
+      {/* Il ⓘ vive qui dal 7 set (prima in testata): chi apre la card per
+          trasmettere lo trova subito, e la testata chiusa resta libera per
+          lo stato. */}
+      <button
+        type="button"
+        onClick={() => setInfoOpen((o) => !o)}
+        aria-expanded={infoOpen}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, margin: '0 0 10px', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, color: '#6f6d64' }}
+      >
+        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: '50%', border: '1px solid #d9d7d0', background: infoOpen ? '#f2f2f4' : '#fff', color: '#6f6d64' }}><Info size={12} /></span>
+        {infoOpen ? 'Chiudi la spiegazione' : 'Cosa significa la trasmissione SdI'}
+      </button>
 
       {/* ⚠️ Dal 26 ago la pillola PROVA/COLLAUDO non sta più nella testata (rubava
           la riga al chevron e allo stato): questa riga è l'UNICO avviso che

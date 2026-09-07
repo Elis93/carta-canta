@@ -139,7 +139,7 @@ export function OreLavoroCard({ lavoroId, minutes, timerStartedAt, hourlyCost, c
 
   return (
     <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 15px' }}>
-      <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.07em', textTransform: 'uppercase', color: '#6f6d64' }}>
+      <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64' }}>
         Ore di lavoro
       </div>
 
