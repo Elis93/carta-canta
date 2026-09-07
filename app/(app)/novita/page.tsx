@@ -24,6 +24,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'I campi vuoti dicono cosa scriverci con un esempio, e ogni esempio inizia con «esempio:» (nella voce del preventivo: «esempio: rifacimento bagno»), così un suggerimento non si confonde con un valore già scritto. Dove lo spazio è poco resta «es.».',
       'Sul preventivo puoi indicare i tempi di esecuzione in giorni dalla conferma (campo «Tempi di esecuzione», facoltativo, nella sezione Note, foto e condizioni). Sul documento compare «indicativamente entro N giorni dalla conferma, salvo imprevisti»; quando il cliente accetta diventa «Lavori entro il …», e la stessa data compare in testata nella scheda Lavoro. Un valore di partenza si imposta in Impostazioni › Generale.',
       'Una P.IVA (o un codice fiscale) può essere associata a un solo account: se provi a registrarla su un secondo account, l’app lo dice e ti rimanda a quello esistente.',
+      'Verifica in due passaggi: dopo «Esci» e un nuovo login il codice dell’app Authenticator ora viene chiesto sempre. Prima, in alcuni casi, la sessione non «vedeva» il fattore attivo e lasciava entrare con la sola password. Resta com’era il resto: chiudere e riaprire l’app non è un login, quindi il codice non si richiede; per proteggere ogni apertura c’è il blocco con impronta.',
     ],
   },
   {

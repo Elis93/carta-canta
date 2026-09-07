@@ -17,6 +17,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRecoveryCode } from '@/lib/actions/mfa'
 import { markActive } from '@/lib/biometric/local'
 import { UnlockVeil } from '@/components/security/UnlockVeil'
+import { aalDalToken } from '@/lib/mfa/aal'
 
 export default function MfaChallengePage() {
   const router = useRouter()
@@ -31,19 +32,23 @@ export default function MfaChallengePage() {
 
   // Al montaggio: trova il fattore TOTP verificato. Se non c'è (o la sessione è
   // già a aal2), qui non c'è niente da fare → torna alla dashboard.
+  // ⚠️ Stessa decisione del layout (app), sugli stessi dati FRESCHI (7 set):
+  // `listFactors()` passa da `getUser()` (rete, mai la copia nei cookie) e il
+  // livello corrente viene dal claim `aal` del token. Se qui si usasse ancora
+  // `getAuthenticatorAssuranceLevel()` (cookie stantii → nextLevel aal1) questa
+  // pagina rimanderebbe in dashboard, il layout qui, e così via: un LOOP.
   useEffect(() => {
     let alive = true
     ;(async () => {
       const supabase = createClient()
-      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      const [{ data: factorsData }, { data: sessionData }] = await Promise.all([
+        supabase.auth.mfa.listFactors(),
+        supabase.auth.getSession(),
+      ])
       if (!alive) return
-      if (!aal || aal.currentLevel === 'aal2' || aal.nextLevel !== 'aal2') {
-        router.replace('/dashboard')
-        return
-      }
-      const { data } = await supabase.auth.mfa.listFactors()
-      const totp = (data?.totp ?? []).find((f) => f.status === 'verified')
-      if (!totp) { router.replace('/dashboard'); return }
+      const totp = (factorsData?.totp ?? []).find((f) => f.status === 'verified')
+      const aal = aalDalToken(sessionData.session?.access_token)
+      if (!totp || aal !== 'aal1') { router.replace('/dashboard'); return }
       setFactorId(totp.id)
       setReady(true)
       setTimeout(() => codeRef.current?.focus(), 100)

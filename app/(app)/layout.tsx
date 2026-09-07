@@ -11,6 +11,7 @@ import { AppLock } from '@/components/security/AppLock'
 import { LockVeil } from '@/components/security/LockVeil'
 import { BiometricPrompt } from '@/components/security/BiometricPrompt'
 import { NavTracker } from '@/components/shared/NavTracker'
+import { aalDalToken, haTotpVerificato, mfaDaChiedere } from '@/lib/mfa/aal'
 
 // ── Avvio in STREAMING (feedback Eli 17 lug: "6 secondi di splash, senza
 // nemmeno lo spinner") ─────────────────────────────────────────────────
@@ -70,14 +71,22 @@ async function AppLayoutInner({
   // ── Verifica in due passaggi (2FA): se l'utente ha il 2FA attivo ma NON l'ha
   // completato in questa sessione, va alla schermata di verifica. Riguarda SOLO
   // chi ha abilitato il 2FA (raggio d'azione limitato agli opt-in).
-  // ⚠️ FAIL-OPEN: se la lettura dell'AAL fallisce o è ambigua NON blocchiamo
-  // nessuno — un bug qui non deve chiudere fuori gli utenti; al massimo il 2FA
-  // non viene imposto. Il `redirect()` sta FUORI dal try/catch: lancia
-  // NEXT_REDIRECT, che il catch non deve mai inghiottire.
+  // ⚠️ NON si usa più `mfa.getAuthenticatorAssuranceLevel()` (7 set 2026): senza
+  // JWT esplicito legge i fattori dalla copia dell'utente salvata NEI COOKIE, che
+  // dopo «Esci» + nuovo login può essere stantia → `nextLevel: aal1` → il codice
+  // non veniva mai chiesto (issue supabase/auth-js #589, il collaudo di Eli).
+  // Ora: fattori FRESCHI dal `getUser()` già fatto per il workspace (`/user`,
+  // GoTrue li carica con le associazioni) + claim `aal` del token corrente.
+  // ⚠️ FAIL-OPEN: dato mancante o illeggibile → nessun blocco — un bug qui non
+  // deve chiudere fuori gli utenti; al massimo il 2FA non viene imposto. Il
+  // `redirect()` sta FUORI dal try/catch: lancia NEXT_REDIRECT, che il catch
+  // non deve mai inghiottire.
   let mfaPending = false
   try {
-    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-    mfaPending = !!aal && aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2'
+    if (haTotpVerificato(user.factors)) {
+      const { data: { session } } = await supabase.auth.getSession()
+      mfaPending = mfaDaChiedere({ factors: user.factors, aal: aalDalToken(session?.access_token) })
+    }
   } catch { /* fail-open: nessun blocco */ }
   if (mfaPending) redirect('/mfa')
 
