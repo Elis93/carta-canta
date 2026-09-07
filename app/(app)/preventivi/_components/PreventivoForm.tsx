@@ -125,6 +125,9 @@ interface PreventivoFormProps {
   docType?: 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito'
   /** Validità di default dal workspace (usata in create mode come default del campo) */
   defaultValidityDays?: number
+  /** Termine dei lavori proposto dalle Impostazioni (088) — SOLO sui preventivi nuovi;
+   *  in modifica comanda ciò che è scritto sul documento (anche il vuoto). */
+  defaultWorkDays?: number | null
   /** Cliente pre-selezionato (es. da ?client_id= nell'URL o da "Usa come modello") */
   defaultClient?: { id: string; name: string; email: string | null; phone: string | null; piva: string | null } | null
   /** N. di foto già caricate sul preventivo (dal sopralluogo): abilita il bottone
@@ -202,6 +205,7 @@ export function PreventivoForm({
   defaultDeposit = null,
   docType = 'preventivo',
   defaultValidityDays,
+  defaultWorkDays,
   defaultClient = null,
   initialTitle,
   initialInternalNotes,
@@ -299,6 +303,14 @@ export function PreventivoForm({
   const [validityDays, setValidityDays] = useState<string>(
     String(defaultValues?.validity_days ?? defaultValidityDays ?? 30)
   )
+  // Termine dei lavori (088): «entro N giorni dalla conferma». Vuoto = non
+  // indicato (B.0: chi non lo compila non promette nulla). Il default delle
+  // Impostazioni vale solo sui preventivi NUOVI.
+  const [workDays, setWorkDays] = useState<string>(() => {
+    const suDoc = (defaultValues as { work_days?: number | null } | undefined)?.work_days
+    if (suDoc != null) return String(suDoc)
+    return mode === 'create' && defaultWorkDays ? String(defaultWorkDays) : ''
+  })
 
   const [discountPct, setDiscountPct] = useState<string>(
     defaultValues?.discount_pct != null ? String(defaultValues.discount_pct) : ''
@@ -1875,6 +1887,28 @@ export function PreventivoForm({
                 style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 15 }}
               />
             </div>
+            {isPreventivo && (
+              <div className="space-y-1.5">
+                <Label htmlFor="work_days" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  Tempi di esecuzione (giorni dalla conferma)
+                </Label>
+                <Input
+                  id="work_days"
+                  name="work_days"
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  max="365"
+                  placeholder="esempio: 30"
+                  value={workDays}
+                  onChange={(e) => { setWorkDays(e.target.value); markDirty() }}
+                  style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 15 }}
+                />
+                <p className="text-[12px]" style={{ color: '#767676' }}>
+                  Facoltativo. Se lo indichi, sul preventivo compare «indicativamente entro N giorni dalla conferma, salvo imprevisti»; dopo l&rsquo;accettazione diventa una data.
+                </p>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="payment_terms" style={{ fontSize: 12, fontWeight: 600, color: 'var(--cc-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Termini di pagamento</Label>
               {/* Hidden: invia il valore computato (custom text se Personalizzati) */}

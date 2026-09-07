@@ -1,3 +1,4 @@
+import { terminePrevisto } from '@/lib/documents/termine-lavori'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
@@ -190,6 +191,9 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
 
   // ── Helper formattazione (mobile read view) ──
   const euro = (n: number) => `€\u00A0${Number(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2  })}`
+  // Termine dei lavori (088): solo preventivi; select('*') → pre-088 la colonna
+  // manca e il riepilogo è null. Frase dal modulo puro.
+  const termineLavori = doc.doc_type === 'preventivo' ? terminePrevisto(doc as { work_days?: number | null; accepted_at?: string | null }) : null
   const fmtShort = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' , timeZone: 'Europe/Rome' })
   const fmtLong = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' , timeZone: 'Europe/Rome' })
 
@@ -733,6 +737,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             {doc.expires_at && (
               <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', marginTop: 11 }}>Valido fino al {fmtLong(doc.expires_at)}</div>
             )}
+            {termineLavori && (
+              <div style={{ fontSize: 12.5, color: termineLavori.dataFine ? '#161616' : 'var(--cc-muted)', fontWeight: termineLavori.dataFine ? 600 : 400, marginTop: 6, lineHeight: 1.45 }}>
+                {termineLavori.dataFine ? termineLavori.testo : `Tempi di esecuzione: ${termineLavori.testo.charAt(0).toLowerCase()}${termineLavori.testo.slice(1)}`}
+              </div>
+            )}
           </div>
 
           {/* Didascalia SECCA (Eli 26 ago: via «dal link apre anche il documento
@@ -1110,6 +1119,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               </>
             )}
           </p>
+          {termineLavori && (
+            <p className="text-sm mt-1" style={{ color: termineLavori.dataFine ? '#161616' : undefined, fontWeight: termineLavori.dataFine ? 600 : 400 }}>
+              {termineLavori.dataFine ? termineLavori.testo : `Tempi di esecuzione: ${termineLavori.testo.charAt(0).toLowerCase()}${termineLavori.testo.slice(1)}`}
+            </p>
+          )}
         </div>
 
         {/* ── PROMEMORIA QUOTA FREE (desktop) ── */}

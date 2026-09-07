@@ -7,6 +7,7 @@
 import type { Database } from '@/types/database'
 import { calcolaDocumento, riepilogoIva } from '@/lib/fiscal/calcoli'
 import { stripPrefissoLegacy } from '@/lib/utils'
+import { terminePrevisto } from '@/lib/documents/termine-lavori'
 import { espandiBeniSignificativi, dettaglioBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 
 type DocumentRow     = Database['public']['Tables']['documents']['Row']
@@ -664,6 +665,18 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     : null
 
   const legalLines = [legalNotice, reverseNotice, ritenutaNotice, beniNotice].filter(Boolean) as string[]
+
+  // ── Termine dei lavori (088) — SOLO preventivi ─────────────────────────────
+  // Riga propria, in evidenza rispetto alle note legali (è una clausola che il
+  // cliente deve leggere): prima dell'accettazione la dicitura contrattuale,
+  // dopo «Lavori entro il {data}». La frase viene dal modulo puro: una sola
+  // fonte per PDF, pagina del cliente e foglio interno.
+  const termine = doc.doc_type === 'preventivo' ? terminePrevisto(doc as { work_days?: number | null; accepted_at?: string | null }) : null
+  const termineHtml = termine ? `
+    <div style="margin-top:20px;border-top:1px solid #f0f0f0;padding-top:10px;">
+      <div style="font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:5px;">Tempi di esecuzione</div>
+      <p style="font-size:16px;color:#555;line-height:1.6;margin:0;">${escHtml(termine.dataFine ? `${termine.testo} (${termine.giorni} ${termine.giorni === 1 ? 'giorno' : 'giorni'} dalla conferma).` : termine.testo)}</p>
+    </div>` : ''
   const legalHtml = legalLines.length ? `
     <div style="margin-top:20px;border-top:1px solid #f0f0f0;padding-top:10px;">
       ${legalLines.map((l) => `<p style="font-size:17px;color:#b3b1ab;line-height:1.5;">${escHtml(l)}</p>`).join('\n      ')}
@@ -881,6 +894,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           </div>`}
 
           ${depositHtml}
+          ${termineHtml}
           ${paymentHtml}
           ${legalHtml}
         </div>
@@ -1023,6 +1037,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           </div>`}
 
           ${depositHtml}
+          ${termineHtml}
           ${paymentHtml}
           ${legalHtml}
         </div>
@@ -1170,6 +1185,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           </div>`}
 
           ${depositHtml}
+          ${termineHtml}
           ${paymentHtml}
           ${legalHtml}
         </div>
@@ -1306,6 +1322,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           </div>`}
 
           ${depositHtml}
+          ${termineHtml}
           ${paymentHtml}
           ${legalHtml}
         </div>

@@ -19,6 +19,7 @@ function makeTestData(overrides: Partial<PdfDocumentData> = {}): PdfDocumentData
       internal_notes: null,
       document_language: 'it-IT',
       validity_days: 30,
+      work_days: null,
       payment_terms: '30 giorni',
       currency: 'EUR',
       exchange_rate: '1.000000' as unknown as number,

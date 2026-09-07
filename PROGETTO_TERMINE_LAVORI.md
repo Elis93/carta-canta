@@ -1,7 +1,7 @@
 # PROGETTO — Termine dei lavori sul preventivo («entro N giorni dalla conferma»)
 
 > Richiesta di Eli, 6 set 2026 (feedback n. 6): *«Inserire in preventivo quando è previsto il termine dei lavori (tipo 30 giorni da conferma preventivo)»*. Scelta sua: **giorni dalla conferma**, non una data fissa (una data scritta prima che il cliente accetti invecchia da sola).
-> Stato: **PIANO, nessun codice**. Si implementa al via di Eli, in un giro suo. Migration prevista: **088** (la 087 è la P.IVA unica).
+> Stato: **✅ IMPLEMENTATO il 7 set 2026** (via libera di Eli: «migration fatta, procedi con il resto»). Migration **088** (`088_termine_lavori.sql`, validata su PG16, da applicare). Scostamenti dal piano: la frase NON porta l'etichetta dentro (ogni superficie mette «Tempi di esecuzione» come titolo — nel PDF usciva due volte); nel PDF è una **sezione propria** sopra «Come pagare» e le note legali (stessa veste), non una riga nella fascia dati (che a 4 celle si schiacciava); il cambio del termine su un preventivo inviato accende «Modificato» (è una clausola). Il resto come sotto.
 
 ## 1. Cosa esiste oggi (verificato nel codice)
 - Nessun campo per i tempi di esecuzione. `validity_days`/`expires_at` sono la **validità dell'offerta** (altro orologio, altra riga «Valido fino al»): non si toccano.

@@ -260,6 +260,28 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       deve cambiare importo perché hai toccato un&rsquo;impostazione.</>,
   },
   {
+    id: 'termine-lavori',
+    q: 'Posso scrivere sul preventivo entro quando finisco i lavori?',
+    parole: ['termine', 'tempi', 'esecuzione', 'fine lavori', 'giorni dalla conferma', 'quando finisco', 'consegna', 'durata'],
+    a: <>Sì. Nel preventivo, nella sezione <b>Note, foto e condizioni</b>, c&rsquo;è il campo{' '}
+      <b>Tempi di esecuzione (giorni dalla conferma)</b>: scrivi per esempio 30 e sul documento
+      compare <i>&laquo;indicativamente entro 30 giorni dalla conferma del preventivo, salvo
+      imprevisti o cause non dipendenti dall&rsquo;impresa&raquo;</i> — nel PDF, sulla pagina
+      del cliente e nel riepilogo. Sono giorni di calendario: per sei settimane scrivi 42.
+      <br /><br />
+      Quando il cliente accetta, la frase diventa una data:{' '}
+      <b>Lavori entro il &hellip;</b>, contata dal giorno dell&rsquo;accettazione. La stessa
+      data la ritrovi in testata nella <b>scheda Lavoro</b>, in rosso se è passata e il lavoro
+      non è ancora finito.
+      <br /><br />
+      Il campo è <b>facoltativo</b>{' '}e parte vuoto: se non lo compili, il preventivo non promette
+      nessun termine. È una clausola dell&rsquo;accordo col cliente, per questo la frase dice
+      &laquo;indicativamente&raquo; e fa salvi gli imprevisti. Se vuoi un valore già pronto su
+      ogni preventivo nuovo, impostalo in <VaiA a="impGenerale" />, campo{' '}
+      <b>Tempi di esecuzione</b>: vale solo per i preventivi che crei da lì in avanti.
+      Le fatture non lo portano: una fattura non promette tempi.</>,
+  },
+  {
     q: 'Come faccio una nota di credito?',
     parole: ['nota di credito', 'storno', 'stornare', 'td04', 'rimborso', 'ho sbagliato la fattura'],
     a: <>Apri la fattura da stornare: se è stata <b>trasmessa allo SdI</b>, al posto di

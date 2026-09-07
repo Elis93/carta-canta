@@ -20,7 +20,7 @@ function makeData(): PdfDocumentData {
       id: 'doc-1', workspace_id: 'ws-1', client_id: 'client-1',
       template_snapshot: null, doc_type: 'preventivo', status: 'draft',
       doc_number: '2026/001', title: 'Impianto', notes: null, internal_notes: null,
-      document_language: 'it-IT', validity_days: 30, payment_terms: null,
+      document_language: 'it-IT', validity_days: 30, payment_terms: null, work_days: null,
       currency: 'EUR', exchange_rate: '1.000000' as unknown as number,
       subtotal: 850, discount_pct: null, discount_fixed: null,
       tax_amount: 0, bollo_amount: 2, total: 852, vat_rate_default: null,

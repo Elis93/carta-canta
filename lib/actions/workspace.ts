@@ -1,5 +1,6 @@
 'use server'
 
+import { normalizzaWorkDays } from '@/lib/documents/termine-lavori'
 import { revalidatePath } from 'next/cache'
 import { sendSecurityAlert } from '@/lib/security/alert'
 import { logSecurityEvent } from '@/lib/security/events'
@@ -47,6 +48,8 @@ const WorkspaceDataSchema = z.object({
     .min(1, 'La validità deve essere almeno 1 giorno')
     .max(365, 'La validità non può superare 365 giorni')
     .default(30),
+  // Termine dei lavori proposto sui preventivi nuovi (088): '' = nessuno.
+  work_days_default: z.string().optional(),
   // Giorni di preavviso della card "In scadenza" in Home (073)
   scadenza_alert_days: z.coerce
     .number()
@@ -215,6 +218,8 @@ export async function updateWorkspaceData(
   // campo: senza la guardia, ogni salvataggio da lì riporterebbe il valore al
   // default cancellando in silenzio la scelta dell'artigiano.
   const hasScadenzaField = formData.get('scadenza_alert_days') !== null
+  // ⚠️ Stessa guardia per il termine dei lavori (088): l'onboarding non ha il campo.
+  const hasWorkDaysField = formData.get('work_days_default') !== null
   // ⚠️ Stessa cautela di ATECO e preavviso: l'ONBOARDING usa questa action
   // senza questi campi. Senza la guardia, ogni salvataggio da lì azzererebbe
   // in silenzio l'acconto di default scelto dall'artigiano.
@@ -248,6 +253,7 @@ export async function updateWorkspaceData(
     provincia: parsed.data.provincia || null,
     validity_days: parsed.data.validity_days,
     ...(hasScadenzaField && { scadenza_alert_days: parsed.data.scadenza_alert_days }),
+    ...(hasWorkDaysField && { work_days_default: normalizzaWorkDays(parsed.data.work_days_default) }),
     ...(hasAccontoFields && accontoPayload),
   }
 
@@ -260,6 +266,13 @@ export async function updateWorkspaceData(
     const { scadenza_alert_days: _omit, ...senzaPreavviso } = payload
     void _omit
     ;({ error } = await supabase.from('workspaces').update(senzaPreavviso).eq('id', workspace.id))
+  }
+
+  // Tollerante pre-088, stessa ragione.
+  if (error && hasWorkDaysField && isMissingColumnError(error)) {
+    const { work_days_default: _w, ...senzaTermine } = payload
+    void _w
+    ;({ error } = await supabase.from('workspaces').update(senzaTermine).eq('id', workspace.id))
   }
 
   // Tollerante pre-077, stessa ragione: senza le colonne dell'acconto non si

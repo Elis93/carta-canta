@@ -530,10 +530,10 @@ dichiarare un trattamento che facciamo davvero che ometterlo. Resta da far confe
 
 ⏭️ **Da aggiungere (annotato 6 set 2026) — termine dei lavori scritto sul preventivo.**
 Eli vuole un campo «Tempi di esecuzione: entro N giorni dalla conferma del preventivo» (piano in
-`PROGETTO_TERMINE_LAVORI.md`, non ancora costruito). Un termine scritto su un preventivo che il
+`PROGETTO_TERMINE_LAVORI.md`, **costruito il 7 set 2026** — migration 088). Un termine scritto su un preventivo che il
 cliente accetta è una **clausola contrattuale** (art. 1183 c.c. e seguenti): se l'artigiano sfora,
-il cliente può contestare. Nell'app il campo resterà vuoto di default e la frase dirà
-«indicativamente … salvo imprevisti o cause non dipendenti dall'impresa». Da chiedergli: ① la
+il cliente può contestare. Nell'app il campo è vuoto di default e la frase ESATTA che compare (PDF, pagina del cliente, riepilogo) è:
+«Tempi di esecuzione — Indicativamente entro N giorni dalla conferma del preventivo, salvo imprevisti o cause non dipendenti dall'impresa.»; dopo l'accettazione «Lavori entro il {data} (N giorni dalla conferma).» Da chiedergli: ① la
 frase basta a qualificare il termine come indicativo, o serve altro? ② va aggiunta una riga nelle
 condizioni generali del documento? ③ conviene tenere il campo facoltativo (come previsto) o
 sconsigliarlo del tutto?

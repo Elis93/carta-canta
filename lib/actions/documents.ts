@@ -16,6 +16,7 @@ import { isFreePlan } from '@/lib/plan/gate'
 import { isDocFreeLocked, DOC_LOCKED_MESSAGE } from '@/lib/plan/free-lock'
 import { normalizzaTesto } from '@/lib/documents/suggerimenti-voce'
 import { isMissingColumnError } from '@/lib/supabase/errors'
+import { normalizzaWorkDays } from '@/lib/documents/termine-lavori'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { DOC_NUMBER_RE, formatNotaCreditoNumber, formatNotaDebitoNumber } from '@/lib/documents/numero'
 import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, baseStornabile, importoRitenuta, TOLLERANZA_STORNO } from '@/lib/documents/storno'
@@ -247,6 +248,32 @@ async function applyFiscaliExtra(
   }
 }
 
+// ── Termine dei lavori (088), scrittura TOLLERANTE ──────────────────────────
+// «Tempi di esecuzione: entro N giorni dalla conferma» (Eli, 6 set). Solo
+// preventivi. Stessa forma di applyFiscaliExtra: la colonna può non esistere
+// ancora (deploy prima della migration) e il documento deve salvarsi lo stesso.
+// null = «non indicato»: chi non compila il campo non promette nulla (B.0).
+async function applyWorkDays(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  documentId: string,
+  workDays: number | null,
+): Promise<void> {
+  const { error } = await supabase.from('documents').update({ work_days: workDays }).eq('id', documentId)
+  if (error && !isMissingColumnError(error)) {
+    console.error('[applyWorkDays] scrittura 088 fallita:', error.message)
+  }
+}
+
+// Lettura del termine attuale (088), tollerante: colonna assente → null.
+async function leggiWorkDays(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  documentId: string,
+): Promise<number | null> {
+  const { data, error } = await supabase.from('documents').select('work_days').eq('id', documentId).maybeSingle()
+  if (error || !data) return null
+  return normalizzaWorkDays((data as { work_days?: number | null }).work_days)
+}
+
 // Il listino di una voce (063): si persiste solo se è un UUID plausibile —
 // spazzatura dal client diventa null, mai un errore di salvataggio.
 const sanitizeSupplierListId = (v?: string | null): string | null =>
@@ -370,6 +397,10 @@ const DocumentFormSchema = z.object({
   notes: z.string().nullable().optional(),
   internal_notes: z.string().nullable().optional(),
   validity_days: z.coerce.number().int().positive().default(30),
+  // Termine dei lavori (088): stringa del form, '' = non indicato → null.
+  // La validazione 1-365 la fa normalizzaWorkDays (fuori range → null, mai un errore
+  // che blocca il salvataggio: il campo è facoltativo per definizione).
+  work_days: z.string().optional(),
   payment_terms: z.string().default('30 giorni'),
   bonus_edilizio: z.string().optional(),
   // Acconti (migration 038): richiesta acconto alla conferma.
@@ -751,6 +782,9 @@ export async function createDocumentAction(
   await applyDepositAndOptions(supabase, doc.id, parseDepositFields(parsed.data), optionsCfg, {
     alwaysWriteDeposit: false, // insert appena creato: le colonne sono già null
   })
+  // Termine dei lavori (088) — solo se indicato: le colonne nascono null.
+  const workDaysCreate = normalizzaWorkDays(parsed.data.work_days)
+  if (workDaysCreate != null) await applyWorkDays(supabase, doc.id, workDaysCreate)
 
   // Inserisci voci
   // option_tier (041): passa attraverso calcolaDocumento (spread) — cast
@@ -1084,6 +1118,11 @@ export async function updateDocumentAction(
       reverse_charge: workspace.fiscal_regime !== 'forfettario' && parsed.data.reverse_charge === 'on',
     })
   }
+  // Termine dei lavori (088): solo preventivi, sempre riscritto (svuotare il
+  // campo deve togliere la promessa). Fatture e note non promettono tempi.
+  if (existingDoc.doc_type === 'preventivo') {
+    await applyWorkDays(supabase, documentId, normalizzaWorkDays(parsed.data.work_days))
+  }
   const depOptErr = await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
     workspaceId: workspace.id,
   })
@@ -1109,6 +1148,11 @@ export async function updateDocumentAction(
   const itemsChanged = wasAlreadySent
     && itemsSignature(originalItems ?? []) !== itemsSignature(fiscal.itemTotals)
 
+  // Termine dei lavori (088): cambiarlo su un documento inviato è una modifica
+  // che il cliente deve vedere (è una clausola) → accende «Modificato». Il
+  // valore attuale si legge con una query a sé, tollerante pre-088.
+  const workDaysChanged = wasAlreadySent && existingDoc.doc_type === 'preventivo'
+    && await leggiWorkDays(supabase, documentId) !== normalizzaWorkDays(parsed.data.work_days)
   const publicFieldsChanged = wasAlreadySent && (
     (parsed.data.title ?? '') !== (existingDoc.title ?? '') ||
     (parsed.data.notes ?? '') !== (existingDoc.notes ?? '') ||
@@ -1119,7 +1163,8 @@ export async function updateDocumentAction(
     (parsed.data.payment_terms ?? '30 giorni') !== (existingDoc.payment_terms ?? '30 giorni') ||
     (parsed.data.bonus_edilizio ?? '') !== (existingDoc.bonus_edilizio ?? '') ||
     Math.abs(fiscal.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001 ||
-    itemsChanged
+    itemsChanged ||
+    workDaysChanged
   )
 
   let retroSnapshot: { fields: Record<string, unknown>; items: unknown[] } | null = null
@@ -1439,6 +1484,11 @@ export async function saveDraftAction(
       reverse_charge: workspace.fiscal_regime !== 'forfettario' && parsed.data.reverse_charge === 'on',
     })
   }
+  // Termine dei lavori (088): solo preventivi, sempre riscritto (svuotare il
+  // campo deve togliere la promessa). Fatture e note non promettono tempi.
+  if (existingDoc.doc_type === 'preventivo') {
+    await applyWorkDays(supabase, documentId, normalizzaWorkDays(parsed.data.work_days))
+  }
   const depOptErr = await applyDepositAndOptions(supabase, documentId, parseDepositFields(parsed.data), optionsCfg, {
     workspaceId: workspace.id,
   })
@@ -1498,6 +1548,9 @@ export async function saveDraftAction(
     const itemsChangedDraft = fiscal.itemTotals.length > 0
       && itemsSignature(originalItemsForCompare ?? []) !== itemsSignature(fiscal.itemTotals)
 
+    // Termine dei lavori (088), stessa regola dell'update: vedi leggiWorkDays.
+    const workDaysChanged = existingDoc.doc_type === 'preventivo'
+      && await leggiWorkDays(supabase, documentId) !== normalizzaWorkDays(parsed.data.work_days)
     const publicFieldsChanged =
       (parsed.data.title ?? '') !== (existingDoc.title ?? '') ||
       (parsed.data.notes ?? '') !== (existingDoc.notes ?? '') ||
@@ -1509,7 +1562,8 @@ export async function saveDraftAction(
       (parsed.data.bonus_edilizio ?? '') !== (existingDoc.bonus_edilizio ?? '') ||
       (fiscal.itemTotals.length > 0 &&
         Math.abs(docTotals.total - ((existingDoc as Record<string, unknown>).total as number ?? 0)) > 0.001) ||
-      itemsChangedDraft
+      itemsChangedDraft ||
+      workDaysChanged
 
     const now = new Date().toISOString()
     const currentLog = Array.isArray(existingDoc.document_log) ? existingDoc.document_log as Array<{type: string; at: string}> : []
@@ -2426,6 +2480,12 @@ export async function duplicateDocumentAction(
     .single()
 
   if (insertErr || !newDoc) return { error: 'Errore durante la duplicazione' }
+  // Termine dei lavori (088): la copia di un preventivo lo porta con sé
+  // (stessa promessa, stesso cliente-tipo). Tollerante pre-088.
+  if (original.doc_type === 'preventivo') {
+    const wd = normalizzaWorkDays((original as { work_days?: number | null }).work_days)
+    if (wd != null) await applyWorkDays(supabase, newDoc.id, wd)
+  }
 
   // Duplica le voci — INCLUSO option_tier (041): senza, un preventivo a proposte
   // (Base/Premium) verrebbe copiato con TUTTE le voci appiattite in un'unica lista

@@ -287,6 +287,7 @@ export type Database = {
           updated_after_send_at: string | null
           updated_at: string | null
           validity_days: number | null
+          work_days: number | null
           vat_rate_default: number | null
           workspace_id: string
           document_log: Json
@@ -345,6 +346,7 @@ export type Database = {
           updated_after_send_at?: string | null
           updated_at?: string | null
           validity_days?: number | null
+          work_days?: number | null
           vat_rate_default?: number | null
           workspace_id: string
           document_log?: Json
@@ -403,6 +405,7 @@ export type Database = {
           updated_after_send_at?: string | null
           updated_at?: string | null
           validity_days?: number | null
+          work_days?: number | null
           vat_rate_default?: number | null
           workspace_id?: string
           document_log?: Json
@@ -745,6 +748,7 @@ export type Database = {
           ui_language: string
           updated_at: string | null
           validity_days: number
+          work_days_default: number | null
           scadenza_alert_days: number
           deposit_default_type: string | null
           sdi_auto_enabled: boolean
@@ -784,6 +788,7 @@ export type Database = {
           ui_language?: string
           updated_at?: string | null
           validity_days?: number
+          work_days_default?: number | null
           scadenza_alert_days?: number
           deposit_default_type?: string | null
           sdi_auto_enabled?: boolean
@@ -823,6 +828,7 @@ export type Database = {
           ui_language?: string
           updated_at?: string | null
           validity_days?: number
+          work_days_default?: number | null
           scadenza_alert_days?: number
           deposit_default_type?: string | null
           sdi_auto_enabled?: boolean

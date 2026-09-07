@@ -225,6 +225,24 @@ export function ImpostazioniGenerali({ workspace }: { workspace: Workspace }) {
             defaultValue={workspace.validity_days ?? 30}
             style={fieldStyle}
           />
+          {/* Termine dei lavori proposto sui preventivi NUOVI (088, Eli 6 set).
+              Vuoto = nessun default: chi non lo indica non promette nulla (B.0). */}
+          <SpiegaCampo etichetta="Tempi di esecuzione (giorni dalla conferma)" style={{ ...fieldLabelStyle, marginTop: 14 }}>
+            Proposto sui preventivi nuovi come &laquo;indicativamente entro N giorni dalla
+            conferma, salvo imprevisti&raquo;. Facoltativo: vuoto = nessun termine. Modificabile
+            nel singolo preventivo.
+          </SpiegaCampo>
+          <input
+            id="work_days_default"
+            name="work_days_default"
+            type="number"
+            inputMode="numeric"
+            min="1"
+            max="365"
+            placeholder="esempio: 30"
+            defaultValue={(workspace as { work_days_default?: number | null }).work_days_default ?? ''}
+            style={fieldStyle}
+          />
           {/* Preavviso della card "In scadenza" in Home (073, richiesta Eli 7 ago:
               "un artigiano può voler avere in home i documenti che scadono 5
               giorni prima"). Sta accanto alla validità perché sono la stessa

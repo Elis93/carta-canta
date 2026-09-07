@@ -22,6 +22,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Sotto ogni avviso, quando serve, c’è una riga in grigio con cosa fare: il comando da usare o il collegamento giusto.',
       'Nelle liste Preventivi e Fatture il cerca, le pillole di stato e i comandi Archivio · Cestino · Ordina stanno in un riquadro solo, in tre gruppi divisi da un filetto: sotto, le card sono i documenti. Su Fatture i due tasti «Da preventivo» e «Nuova fattura» restano sopra il riquadro.',
       'I campi vuoti dicono cosa scriverci con un esempio, e ogni esempio inizia con «esempio:» (nella voce del preventivo: «esempio: rifacimento bagno»), così un suggerimento non si confonde con un valore già scritto. Dove lo spazio è poco resta «es.».',
+      'Sul preventivo puoi indicare i tempi di esecuzione in giorni dalla conferma (campo «Tempi di esecuzione», facoltativo, nella sezione Note, foto e condizioni). Sul documento compare «indicativamente entro N giorni dalla conferma, salvo imprevisti»; quando il cliente accetta diventa «Lavori entro il …», e la stessa data compare in testata nella scheda Lavoro. Un valore di partenza si imposta in Impostazioni › Generale.',
       'Una P.IVA (o un codice fiscale) può essere associata a un solo account: se provi a registrarla su un secondo account, l’app lo dice e ti rimanda a quello esistente.',
     ],
   },

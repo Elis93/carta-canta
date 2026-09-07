@@ -1,9 +1,10 @@
+import { terminePrevisto, termineSuperato } from '@/lib/documents/termine-lavori'
 import { redirect, notFound } from 'next/navigation'
 import { ScrollToHash } from '@/components/shared/ScrollToHash'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { signPhotoPaths } from '@/lib/photos/signed-url'
 import Link from 'next/link'
-import { FileText, FileCheck2, ChevronRight, Hammer } from 'lucide-react'
+import { FileText, FileCheck2, ChevronRight, Hammer, CalendarClock } from 'lucide-react'
 import { CardTendina } from '@/components/shared/CardTendina'
 import { MenuAltro, RigaMenu } from '@/app/(app)/_components/documento/MenuAltro'
 import { btnNavyPieno, btnBianco } from '@/app/(app)/_components/documento/stili'
@@ -39,6 +40,8 @@ export default async function LavoroDetailPage({
   let defaults: LavoroDefaults | null = null
   let documentId: string | null = null
   let docInfo: { doc_number: string | null; doc_type: string; status: string | null } | null = null
+  // Termine dei lavori (088), DERIVATO dal preventivo d'origine: nessuna colonna sul lavoro.
+  let termineDoc: { work_days?: number | null; accepted_at?: string | null } | null = null
   let fattura: { id: string; doc_number: string | null } | null = null
   let workPhotos: WorkPhoto[] = []
   let preventivato: number | null = null
@@ -178,6 +181,14 @@ export default async function LavoroDetailPage({
       ])
       docInfo = doc ?? null
       preventivato = doc?.total != null ? Number(doc.total) : null
+      // Query A SÉ e tollerante (pre-088 la colonna manca: la select condivisa
+      // fallirebbe intera e si perderebbero anche numero e totale).
+      termineDoc = await supabase
+        .from('documents')
+        .select('work_days, accepted_at')
+        .eq('id', documentId)
+        .maybeSingle()
+        .then((r) => (r.data as { work_days?: number | null; accepted_at?: string | null } | null) ?? null, () => null)
       fattura = fatt ?? null
       workPhotos = (wp ?? []) as WorkPhoto[]
     }
@@ -218,6 +229,9 @@ export default async function LavoroDetailPage({
   const sottotitolo = [clientName || null, defaults?.address?.trim() || null].filter(Boolean).join(' · ')
   const statoLavoro = defaults?.status ?? 'da_iniziare'
   const finito = statoLavoro === 'finito' || statoLavoro === 'fatturato'
+  // Termine dei lavori (088) dal preventivo d'origine: rosso se passato e il lavoro non è finito.
+  const termineLavori = termineDoc ? terminePrevisto(termineDoc) : null
+  const termineScaduto = !finito && termineSuperato(termineLavori?.dataFine ?? null)
   const puoConvertire = !!documentId && !fattura && finito && docInfo?.status === 'accepted'
   const fmtGiorno = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', timeZone: 'Europe/Rome' }).replace('.', '')
   const rapportinoRiepilogo = rapportino
@@ -290,6 +304,13 @@ export default async function LavoroDetailPage({
         {preventivato == null && (
           <p style={{ fontSize: 11.5, color: 'rgba(228,226,232,.62)', margin: '8px 0 0', position: 'relative' }}>
             Il «preventivato» compare quando il lavoro nasce da un preventivo.
+          </p>
+        )}
+        {termineLavori?.dataFine && (
+          <p style={{ fontSize: 12, color: termineScaduto ? '#f0a6a6' : 'rgba(228,226,232,.8)', fontWeight: termineScaduto ? 600 : 400, margin: '10px 0 0', position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <CalendarClock size={14} aria-hidden />
+            Da concludere entro il {termineLavori.dataFine.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' })}
+            {termineScaduto ? ' — termine superato' : ''}
           </p>
         )}
       </div>

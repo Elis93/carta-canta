@@ -226,6 +226,7 @@ export default async function NuovoPreventivoPage({ searchParams }: Props) {
         isProPlan={workspace.plan !== 'free'}
         nextDocNumber={nextDocNumber}
         defaultValidityDays={workspace.validity_days ?? 30}
+        defaultWorkDays={(workspace as { work_days_default?: number | null }).work_days_default ?? null}
         defaultDeposit={accontoDefault}
         defaultClient={defaultClient}
         initialTitle={titolo?.slice(0, 120)}

@@ -338,6 +338,18 @@ export default async function PublicDocumentPage({ params }: Props) {
   // ── Acconto (Acconti — riga ambra sotto il totale) ─────────────────────
   const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100
   const totalNum = Number(doc.total ?? 0)
+  // Termine dei lavori (088) — query A SÉ e tollerante: la select principale
+  // è a colonne esplicite e una colonna assente (deploy prima della migration)
+  // farebbe fallire l'INTERA pagina del cliente. Colonna assente → null.
+  const workDays: number | null = isPreventivo
+    ? await admin
+        .from('documents')
+        .select('work_days')
+        .eq('id', doc.id)
+        .maybeSingle()
+        .then((r) => (r.data as { work_days?: number | null } | null)?.work_days ?? null, () => null)
+    : null
+
   const deposit = (() => {
     if (!depositRow || totalNum <= 0) return null
     // Acconto già incassato (fattura O preventivo) → "Acconto già ricevuto / Saldo".
@@ -576,6 +588,8 @@ export default async function PublicDocumentPage({ params }: Props) {
           paymentTerms={doc.payment_terms}
           expiresAt={doc.expires_at}
           notes={doc.notes}
+          workDays={workDays}
+          acceptedAt={doc.accepted_at ?? null}
           discountPct={doc.discount_pct}
           discountFixed={doc.discount_fixed}
           bolloAmount={doc.bollo_amount}

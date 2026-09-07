@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { CheckCircle2, Loader2, Check, X, PenLine, RotateCcw, FileText } from 'lucide-react'
 import { formatDocNumber } from '@/lib/utils'
+import { terminePrevisto } from '@/lib/documents/termine-lavori'
 
 interface Item {
   description: string | null
@@ -37,6 +38,9 @@ interface MobilePublicCardProps {
   expiresAt?: string | null
   /** Note visibili al cliente */
   notes?: string | null
+  /** Termine dei lavori (088): giorni dalla conferma; con acceptedAt diventa una data */
+  workDays?: number | null
+  acceptedAt?: string | null
   /** Sconto globale (per la riga Sconto nel riepilogo) */
   discountPct?: number | null
   discountFixed?: number | null
@@ -95,6 +99,8 @@ export function MobilePublicCard({
   paymentTerms,
   expiresAt,
   notes,
+  workDays,
+  acceptedAt,
   discountPct,
   discountFixed,
   bolloAmount,
@@ -104,6 +110,9 @@ export function MobilePublicCard({
   tierPicker,
   totalTierLabel,
 }: MobilePublicCardProps) {
+  // Termine dei lavori (088): solo preventivi. Frase dal modulo puro (una
+  // sola fonte con PDF e foglio interno).
+  const termine = isPreventivo ? terminePrevisto({ work_days: workDays ?? null, accepted_at: acceptedAt ?? null }) : null
   // ── Accept state ──────────────────────────────────────────────
   const [acceptOpen, setAcceptOpen] = useState(false)
   const [signerName, setSignerName] = useState(clientName ?? '')
@@ -423,7 +432,7 @@ export function MobilePublicCard({
       )}
 
       {/* ── Coda del foglio: scadenza (se non già nel chip), termini, note ── */}
-      {((expiresAt && !isActive) || paymentTerms || notes) && (
+      {((expiresAt && !isActive) || paymentTerms || notes || termine) && (
         <div style={{ background: '#fff', borderTop: '1px solid #eeece6', padding: '3px 16px 12px' }}>
           {expiresAt && !isActive && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '9px 0 0', fontSize: 12.5 }}>
@@ -431,6 +440,16 @@ export function MobilePublicCard({
                 {isPreventivo ? 'Valido fino al' : 'Scadenza pagamento'}
               </span>
               <span style={{ color: '#161616', fontWeight: 600, whiteSpace: 'nowrap' }}>{formatShortDate(expiresAt)}</span>
+            </div>
+          )}
+          {termine && (
+            <div style={{ padding: '9px 0 0', fontSize: 12.5, lineHeight: 1.5 }}>
+              <span style={{ color: '#6b6960' }}>Tempi di esecuzione</span>
+              <div style={{ color: '#161616', fontWeight: termine.dataFine ? 600 : 400 }}>
+                {termine.dataFine
+                  ? `${termine.testo} (${termine.giorni} ${termine.giorni === 1 ? 'giorno' : 'giorni'} dalla conferma)`
+                  : termine.testo}
+              </div>
             </div>
           )}
           {paymentTerms && (
