@@ -233,7 +233,10 @@ export function FatturaForm({
     doc_type: 'fattura',
   }
 
-  const vociCompilate = voci.filter((v) => v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0).length
+  // Una voce «compilata» ha una descrizione o un prezzo. ⚠️ NON la quantità:
+  // sulla fattura parte da 1 e una voce ancora vuota diceva «1 voce»
+  // (screenshot Eli, 8 set).
+  const vociCompilate = voci.filter((v) => v.description.trim() !== '' || (v.unit_price ?? 0) > 0).length
   const riepiloghi = {
     note: notes.trim() ? (notes.trim().length > 42 ? `${notes.trim().slice(0, 42)}…` : notes.trim()) : 'nessuna',
     noteInterne: internalNotes.trim() ? 'scritte · solo per te' : 'nessuna',
@@ -257,6 +260,7 @@ export function FatturaForm({
     <>
     <form
       action={formAction}
+      className="space-y-3"
       onSubmit={(e) => {
         const errors: string[] = []
         // Valida numero fattura
@@ -297,13 +301,13 @@ export function FatturaForm({
           Note e condizioni · Riepilogo). Per le fatture il numero NON si tocca
           (numerazione fiscale, B.3): chip grigio informativo. ══ */}
       <SezioneForm label="Intestazione">
-      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '6px 15px 14px' }}>
+      <div style={{ background: '#fff', borderRadius: 14, boxShadow: CARD_SHADOW, padding: '4px 15px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <input
             id="title"
             name="title"
             placeholder="Inserire qui il titolo"
-            style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, color: '#161616', fontFamily: 'inherit' }}
+            style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '8px 0', fontSize: 15, color: '#161616', fontFamily: 'inherit' }}
           />
           <input type="hidden" name="doc_number" value={docNumber} />
           {docNumber && (
@@ -316,7 +320,7 @@ export function FatturaForm({
           )}
         </div>
 
-        <div style={{ borderTop: '1px solid #ededea', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ borderTop: '1px solid #ededea', paddingTop: 9, display: 'flex', flexDirection: 'column', gap: 5 }}>
           <span className="cc-section-label" style={{ marginBottom: 0 }}>Cliente</span>
         <ClientAutocomplete
           value={selectedClient}

@@ -934,7 +934,10 @@ export function PreventivoForm({
   const optionsActive = isPreventivo && optionsOn
 
   // ── I valori «già letti» a destra delle righe di Condizioni e allegati ──
-  const vociCompilate = voci.filter((v) => v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0).length
+  // Una voce «compilata» ha una descrizione o un prezzo. ⚠️ NON la quantità:
+  // sulla fattura parte da 1 e una voce ancora vuota diceva «1 voce»
+  // (screenshot Eli, 8 set).
+  const vociCompilate = voci.filter((v) => v.description.trim() !== '' || (v.unit_price ?? 0) > 0).length
   const riepiloghi = {
     note: notesValue.trim() ? (notesValue.trim().length > 42 ? `${notesValue.trim().slice(0, 42)}…` : notesValue.trim()) : 'nessuna',
     noteInterne: internalNotesValue.trim() ? 'scritte · solo per te' : 'nessuna',
@@ -1260,7 +1263,7 @@ export function PreventivoForm({
       onSubmit={handleFormSubmit}
       onChange={markDirty}
       noValidate
-      className="space-y-4"
+      className="space-y-3"
       aria-disabled={isReadOnly || undefined}
       // Fase avanzata (#18): corpo del form sbiadito e INERT — blocca mouse E
       // tastiera (pointer-events:none da solo lasciava i campi editabili via
@@ -1347,7 +1350,7 @@ export function PreventivoForm({
           sta sulla CARD (un target più alto del viewport rende il ritaglio del
           tutorial invisibile su mobile). ── */}
       <SezioneForm label="Intestazione">
-      <div data-tour="cliente" className="cc-card-md" style={{ padding: '6px 15px 14px' }}>
+      <div data-tour="cliente" className="cc-card-md" style={{ padding: '4px 15px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <input
             id="title"
@@ -1355,7 +1358,7 @@ export function PreventivoForm({
             placeholder="Inserire qui il titolo"
             value={titleValue}
             onChange={(e) => { setTitleValue(e.target.value); markDirty() }}
-            style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15, fontWeight: titleValue ? 600 : 400, color: '#161616' }}
+            style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: '8px 0', fontSize: 15, fontWeight: titleValue ? 600 : 400, color: '#161616' }}
           />
           {/* 2 ago sera (Eli, "non si deve allargare"): STESSA scatola in
               entrambi gli stati — larghezza e altezza FISSE (122×30), contenuto
@@ -1412,7 +1415,7 @@ export function PreventivoForm({
           />
         )}
 
-        <div style={{ borderTop: '1px solid #ededea', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ borderTop: '1px solid #ededea', paddingTop: 9, display: 'flex', flexDirection: 'column', gap: 5 }}>
           <span className="cc-section-label" style={{ marginBottom: 0 }}>Cliente</span>
           <ClientAutocomplete
             value={selectedClient}

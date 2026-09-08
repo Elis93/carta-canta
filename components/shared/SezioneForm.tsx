@@ -17,7 +17,7 @@ export function SezioneForm({
 }) {
   return (
     <div data-tour={tourId}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, margin: '0 2px 8px' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, margin: '0 2px 6px' }}>
         <span className="cc-section-label" style={{ marginBottom: 0 }}>{label}</span>
         {right ? <span className="cc-t-sub" style={{ whiteSpace: 'nowrap' }}>{right}</span> : null}
       </div>

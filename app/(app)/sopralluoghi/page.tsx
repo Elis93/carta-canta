@@ -230,15 +230,15 @@ export default async function SopralluoghiPage({
       )}
 
       {rows.length > 0 ? (
-        /* ── Variante B del mockup «Riordino di settembre» (scelta Eli 7 set):
-           via il cerchio con le iniziali («GG», «S2» non dicevano niente e due
-           sopralluoghi dello stesso cliente erano identici). Riga 1 = cliente ·
-           indirizzo del cantiere (o il titolo scritto a mano) con le foto in
-           Georgia a destra; riga 2 = appuntamento · aggiornato; riga 3 = lo
-           stato in parole. Il filetto a sinistra dice lo stato a colpo
-           d'occhio: verde = preventivo creato · oro = foto da lavorare ·
-           grigio = solo appunti. Stessi quattro livelli di testo della Home. */
-        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 0' }}>
+        /* ── Variante B + rifiniture (mockup «Rifiniture del riordino», ok Eli
+           8 set): DUE righe per sopralluogo — riga 1 = cliente · indirizzo del
+           cantiere (o il titolo scritto a mano, con cliente e indirizzo di
+           seguito); riga 2 = lo stato in parole con accanto, in grigio,
+           l'appuntamento SE È NEL FUTURO (è quando serve saperlo), altrimenti
+           da quanto è fermo. Via «N foto» e «solo appunti» (Eli: «non la trovo
+           utile»): le foto le dice il filetto oro. Filetto: verde = preventivo
+           creato · oro = foto da lavorare · grigio = solo appunti. */
+        <div style={{ margin: '14px 15px 0', background: '#fff', borderRadius: 14, boxShadow: SH, padding: '3px 0' }}>
           {rows.map((row, idx) => {
             const clientName = [row.clients?.name, row.clients?.surname].filter(Boolean).join(' ')
             const nPhotos = photoCounts.get(row.id) ?? 0
@@ -248,37 +248,29 @@ export default async function SopralluoghiPage({
               manuale ? (clientName || 'Senza cliente') : null,
               row.address,
             ].filter(Boolean).join(' · ')
-            const riga1 = sotto && !manuale ? `${titolo} · ${sotto}` : titolo
-            const riga2 = [
-              row.scheduled_at ? fmtAppointment(row.scheduled_at) : null,
-              manuale && sotto ? sotto : null,
-              `aggiornato ${timeAgo(row.updated_at)}`,
-            ].filter(Boolean).join(' · ')
+            const riga1 = sotto ? `${titolo} · ${sotto}` : titolo
             const numero = row.document_id ? docNumbers.get(row.document_id) : null
             const stato = row.document_id
               ? `Preventivo ${numero ? formatDocNumber(numero) : ''} creato`.replace('  ', ' ')
               : 'Da trasformare in preventivo'
+            // Data accanto allo stato: l'appuntamento solo se deve ancora
+            // avvenire; un appuntamento passato è storia, conta da quanto è fermo.
+            const appuntamentoFuturo = row.scheduled_at && new Date(row.scheduled_at).getTime() > Date.now()
+            const dataRiga = appuntamentoFuturo ? fmtAppointment(row.scheduled_at!) : timeAgo(row.updated_at)
             const filetto = row.document_id ? '#2f8a63' : nPhotos > 0 ? '#c9a44c' : '#c9c7c0'
             return (
               <Link
                 key={row.id}
                 href={`/sopralluoghi/${row.id}`}
-                style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 15px', borderBottom: idx < rows.length - 1 ? '1px solid #ededea' : 'none', textDecoration: 'none', color: 'inherit' }}
+                style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 15px', borderBottom: idx < rows.length - 1 ? '1px solid #ededea' : 'none', textDecoration: 'none', color: 'inherit' }}
               >
-                <span aria-hidden style={{ position: 'absolute', left: 0, top: 14, bottom: 14, width: 2, borderRadius: 2, background: filetto }} />
+                <span aria-hidden style={{ position: 'absolute', left: 0, top: 11, bottom: 11, width: 2, borderRadius: 2, background: filetto }} />
                 <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                    <span className="cc-t-main" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{riga1}</span>
-                    {nPhotos > 0 ? (
-                      <span className="cc-t-num" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
-                        {nPhotos} <span className="cc-t-sub">foto</span>
-                      </span>
-                    ) : row.notes ? (
-                      <span className="cc-t-sub" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>solo appunti</span>
-                    ) : null}
+                  <span className="cc-t-main" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{riga1}</span>
+                  <span style={{ display: 'block', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span className={row.document_id ? 'cc-t-sub-strong' : 'cc-t-sub'} style={{ color: row.document_id ? '#2f8a63' : undefined }}>{stato}</span>
+                    <span className="cc-t-sub"> · {dataRiga}</span>
                   </span>
-                  <span className="cc-t-sub" style={{ display: 'block', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{riga2}</span>
-                  <span className={row.document_id ? 'cc-t-sub-strong' : 'cc-t-sub'} style={{ display: 'block', marginTop: 2, color: row.document_id ? '#2f8a63' : undefined, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stato}</span>
                 </span>
                 <ChevronRight size={16} style={{ color: '#c2c1bd', flexShrink: 0, marginTop: 2 }} />
               </Link>

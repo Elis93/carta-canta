@@ -425,7 +425,7 @@ export function VociTable({
         {voci.map((voce, idx) => {
           const lineTotal = voce.quantity * voce.unit_price * (1 - (voce.discount_pct ?? 0) / 100)
           return (
-            <div key={voce._key} className="px-[15px] py-3">
+            <div key={voce._key} className="px-[15px] py-2.5 lg:py-3">
               <div className="hidden lg:block">
                 <VoceBadges voce={voce} />
               </div>
@@ -636,13 +636,13 @@ export function VociTable({
 
                 {/* Descrizione con mic dentro — senza etichetta (variante A:
                     il placeholder basta). data-tour="voce-mic": tutorial F16. */}
-                <div data-tour="voce-mic" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '9px 12px' }}>
+                <div data-tour="voce-mic" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '10px 12px' }}>
                   <textarea
                     placeholder="esempio: rifacimento bagno"
                     value={voce.description}
                     rows={1}
                     className="bg-transparent placeholder:text-muted-foreground focus-visible:outline-none resize-none overflow-hidden leading-normal"
-                    style={{ flex: 1, minHeight: '36px', fontSize: 15, border: 'none', padding: 0 }}
+                    style={{ flex: 1, minHeight: '24px', fontSize: 15, border: 'none', padding: 0 }}
                     ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
                     onChange={(e) => {
                       e.target.style.height = 'auto'
@@ -665,16 +665,17 @@ export function VociTable({
                   />
                 </div>
 
-                {/* ── TRE campi (riordino 7 set, mockup ok di Eli): Quantità
-                    con l'UNITÀ dentro il campo, Prezzo, IVA. Sconto, calcolo
-                    della quantità e bene significativo stanno sotto «Sconto e
-                    altro ⌄». Prima erano sei campi su due righe (più la spunta).
-                    ⚠️ La Quantità ha una riga TUTTA SUA: misurato in Chromium sul
-                    componente vero, in una riga a tre colonne la pillola
-                    dell'unità («a corpo», 79px) lasciava al numero 37px a 390
-                    e 2px a 320 — «402,25» non ci stava. Sotto, Prezzo e IVA.
-                    ⚠️ Su mobile gli input sono a 16px REALI (regola anti-zoom
-                    iPhone in globals.css). */}
+                {/* ── TRE campi su UNA riga (rifiniture 8 set, mockup ok di Eli:
+                    «per quantità c'è uno spazio infinito… preferivo guadagnare
+                    spazio»): Quantità con l'UNITÀ dentro il campo attaccata al
+                    numero, Prezzo, IVA. Sconto, calcolo della quantità e bene
+                    significativo stanno sotto «Sconto · … ⌄».
+                    ⚠️ La riga è flex-wrap con basi minime: a 320px e in «Testo
+                    grande» l'IVA scende DA SOLA su una riga sotto, così al
+                    numero della Quantità restano sempre ≥40px («402,25» ci sta)
+                    — è il compromesso che risolve la misura del 7 set (pillola
+                    «a corpo» 79px che lasciava 2px al numero a 320) SENZA la
+                    riga intera. Non tornare a colonne fr fisse. */}
                 {(() => {
                   const ivaEffettiva = voce.vat_rate ?? defaultVatRate ?? 22
                   const beneVisibile = fiscalRegime !== 'forfettario' && ivaEffettiva === 10
@@ -684,9 +685,9 @@ export function VociTable({
                   const extraLabel = beneVisibile ? 'Sconto · bene significativo' : 'Sconto · calcola quantità'
                   return (
                     <>
-                <div className="space-y-2">
-                  <div className="space-y-1">
-                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'flex-start' }}>
+                  <div style={{ flex: '1.6 1 132px', minWidth: 0 }}>
+                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Quantità <span style={{ color: ORO }}>*</span>
                     </span>
                     <div className="relative">
@@ -718,9 +719,8 @@ export function VociTable({
                       </span>
                     </div>
                   </div>
-                  <div className="grid gap-1.5 items-start" style={{ gridTemplateColumns: showVat ? '1fr 88px' : '1fr' }}>
-                  <div className="space-y-1">
-                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ flex: '1 1 82px', minWidth: 0 }}>
+                    <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Prezzo <span style={{ color: ORO }}>*</span>
                     </span>
                     <div className="relative">
@@ -734,8 +734,8 @@ export function VociTable({
                     </div>
                   </div>
                   {showVat && (
-                    <div className="space-y-1">
-                      <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
+                    <div style={{ flex: '0 0 72px' }}>
+                      <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>IVA</span>
                       <Select
                         value={voce.vat_rate !== null ? String(voce.vat_rate) : '__default__'}
                         onValueChange={(v) => {
@@ -765,13 +765,12 @@ export function VociTable({
                       </Select>
                     </div>
                   )}
-                  </div>
                 </div>
 
                 {/* Riga di servizio: «Sconto e altro ⌄» a sinistra, «Elimina» a
                     destra (la parola al posto del cestino — 7 set). L'annulla
                     del toast resta come rete. */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 9 }}>
                   <button
                     type="button"
                     onClick={() => setExtraState((prev) => ({ ...prev, [voce._key]: !extraOpen }))}
@@ -862,14 +861,15 @@ export function VociTable({
           catalogo era un tasto a parte e l'AI un blocco crema in cima alla
           card (dietro «Opzioni»). Il menu si apre sotto il tasto, dentro la
           card: niente portal, si chiude col tocco fuori o con Esc. */}
-      <div className="px-[15px] py-3 border-t">
+      <div className="px-[15px] py-2.5 lg:py-3 border-t">
         <div ref={addMenuRef} style={{ position: 'relative' }}>
           <button
             type="button"
             onClick={() => setAddOpen((o) => !o)}
             aria-expanded={addOpen}
             aria-haspopup="menu"
-            style={{ width: '100%', height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #1a1a2e', borderRadius: 12, background: '#fff', color: '#1a1a2e', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+            className="h-[42px] lg:h-11"
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #1a1a2e', borderRadius: 12, background: '#fff', color: '#1a1a2e', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
           >
             <Plus size={18} /> Aggiungi voce
             <ChevronDown size={15} style={{ transform: addOpen ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
