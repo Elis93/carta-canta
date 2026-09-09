@@ -312,12 +312,18 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
             {campoNote}
           </div>
           {error && <p style={{ fontSize: 13, color: '#b05656', fontWeight: 500, margin: 0 }}>{error}</p>}
-          <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', margin: 0, lineHeight: 1.45, display: 'flex', alignItems: 'center', gap: 6 }}>
-            {autoState === 'saving' ? <><Loader2 size={13} className="animate-spin" /> Salvo…</>
-              : autoState === 'saved' ? <><Check size={13} style={{ color: '#2f8a63' }} /> Salvato</>
-              : autoState === 'dirty' ? 'Si salva da solo tra un attimo.'
-              : 'Si salva da solo mentre scrivi.'}
-          </p>
+          {/* Esito del salvataggio automatico: compare solo quando succede
+              qualcosa («Salvo…» / «Salvato» — la conferma resta: senza tasto
+              Salva è l'unico segnale che la modifica è andata a buon fine).
+              Le diciture esplicative «Si salva da solo…» sono state tolte
+              (Eli, 9 set: «credo non sia utile dirlo»). */}
+          {(autoState === 'saving' || autoState === 'saved') && (
+            <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', margin: 0, lineHeight: 1.45, display: 'flex', alignItems: 'center', gap: 6 }}>
+              {autoState === 'saving'
+                ? <><Loader2 size={13} className="animate-spin" /> Salvo…</>
+                : <><Check size={13} style={{ color: '#2f8a63' }} /> Salvato</>}
+            </p>
+          )}
         </div>
       </CardTendina>
     )

@@ -767,7 +767,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       segui il lavoro passo passo — da fare, in corso, finito, fatturato — con le ore, le
       spese, le foto e, in testata, <b>preventivato, speso e margine</b>. Lo stato e i
       dettagli (titolo, cliente, cantiere, note) sono nella tendina <b>Stato e dettagli</b>{' '}
-      in fondo, e si salvano da soli mentre scrivi.</>,
+      in fondo.</>,
   },
   {
     q: 'Come conto le ore passate in cantiere?',

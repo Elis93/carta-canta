@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { Button } from '@/components/ui/button'
-import { Inbox, Download, Plus, FileInput, ArrowUpDown, FileCheck2, FileMinus2, FilePlus2, AlertTriangle } from 'lucide-react'
+import { Inbox, Download, Plus, FileInput, ArrowUpDown, FileCheck2, FileMinus2, FilePlus2, AlertTriangle, X } from 'lucide-react'
 import { checkFreeBlock, FREE_INVOICE_LIMIT } from '@/lib/free-trial'
 import { AdvancedFilters } from '../preventivi/_components/AdvancedFilters'
 import { SearchBar } from '@/components/shared/SearchBar'
@@ -33,7 +33,7 @@ import { Avviso } from '@/components/shared/Avviso'
 export const metadata = { title: 'Fatture' }
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; sort?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; bozza?: string; page?: string }>
+  searchParams: Promise<{ q?: string; status?: string; sort?: string; date_from?: string; date_to?: string; amount_min?: string; amount_max?: string; bozza?: string; page?: string; incassate?: string }>
 }
 
 // Mapping keyword italiano → valore status (con prefisso per ricerca parziale)
@@ -73,7 +73,7 @@ const STATUS_EMPTY_LABELS: Record<string, string> = {
 }
 
 export default async function FatturePage({ searchParams }: Props) {
-  const { q, status, sort: sortParam, date_from, date_to, amount_min, amount_max, bozza, page: pageParam } = await searchParams
+  const { q, status, sort: sortParam, date_from, date_to, amount_min, amount_max, bozza, page: pageParam, incassate } = await searchParams
   const PAGE_SIZE = 20
   const requestedPage = Math.max(1, Math.floor(Number(pageParam)) || 1)
   // Preferenza di ordinamento: ?sort= nell'URL, altrimenti il cookie di sessione
@@ -91,6 +91,27 @@ export default async function FatturePage({ searchParams }: Props) {
   // SQL perché la paginazione conta le righe lato database; la sonda tiene in
   // piedi la lista finché la migration non è applicata.
   const soloArchiviati = status === 'archiviati'
+
+  // «Incassate nel mese» (?incassate=YYYY-MM, Eli 9 set): arriva dal riquadro
+  // «Fatturato di {mese}» della Home. Deve mostrare ESATTAMENTE le fatture che
+  // quel numero somma (regola dell'8 ago: un numero accanto a un collegamento
+  // promette quante cose ci sono dietro) → stessa regola della card: fatture
+  // pagate con data d'incasso (accepted_at, o updated_at per le righe storiche
+  // senza) dentro il mese, archiviate COMPRESE (la card non le esclude).
+  // La finestra usa new Date(y, m-1, 1) come startOfMonth della Home: stessa
+  // ora del server, stessi confini.
+  const incassateWin = (() => {
+    if (!incassate || !/^\d{4}-(0[1-9]|1[0-2])$/.test(incassate)) return null
+    const [iy, im] = incassate.split('-').map(Number)
+    const start = new Date(iy, im - 1, 1)
+    const end = new Date(iy, im, 1)
+    return {
+      start: start.toISOString(),
+      end: end.toISOString(),
+      label: start.toLocaleDateString('it-IT', { month: 'long', timeZone: 'Europe/Rome' }),
+    }
+  })()
+
   const archivioOk = await archivioDisponibile(supabase)
   // Indirizzo dell'archivio senza la migration (segnalibro, o la voce del
   // cerca): il filtro non si applicherebbe e si vedrebbe la lista INTERA
@@ -166,7 +187,7 @@ export default async function FatturePage({ searchParams }: Props) {
   // ⚠️ L'archivio nasconde dalla NAVIGAZIONE, non dalla RICERCA — gemella della
   // lista preventivi (Eli, 8 ago). Con una ricerca in corso i risultati
   // archiviati compaiono, con la loro etichetta.
-  if (archivioOk && !q) {
+  if (archivioOk && !q && !incassateWin) {
     query = soloArchiviati
       ? query.not('archived_at', 'is', null)
       : query.is('archived_at', null)
@@ -181,6 +202,17 @@ export default async function FatturePage({ searchParams }: Props) {
     query = query.in('status', ['sent', 'viewed', 'expired'])
   } else if (status && !soloArchiviati) {
     query = query.eq('status', status as 'draft' | 'accepted' | 'rejected')
+  }
+
+  // Filtro «incassate nel mese» (vedi incassateWin sopra): solo fatture vere
+  // (la card «Fatturato» non conta note di credito/debito), pagate, con
+  // l'incasso dentro la finestra. L'or replica il fallback della card:
+  // accepted_at quando c'è, altrimenti updated_at (righe storiche).
+  if (incassateWin) {
+    query = query
+      .eq('doc_type', 'fattura')
+      .eq('status', 'accepted')
+      .or(`and(accepted_at.gte.${incassateWin.start},accepted_at.lt.${incassateWin.end}),and(accepted_at.is.null,updated_at.gte.${incassateWin.start},updated_at.lt.${incassateWin.end})`)
   }
 
   if (q && q.length > 0) {
@@ -367,7 +399,7 @@ export default async function FatturePage({ searchParams }: Props) {
   // le fa comparire fuori dalla loro pillola. Stessa forma tollerante del
   // blocco SdI qui sopra — la select principale resta intatta.
   const archiviatiIds = new Set(
-    q && archivioOk && fatture && fatture.length > 0
+    (q || incassateWin) && archivioOk && fatture && fatture.length > 0
       ? await supabase
           .from('documents')
           .select('id')
@@ -552,6 +584,21 @@ export default async function FatturePage({ searchParams }: Props) {
 
       {/* ── FILTRI ── */}
       <div className="mb-4">
+        {/* Pillola del filtro mese (dal riquadro «Fatturato di {mese}» della
+            Home): dice cosa sta filtrando la lista e si toglie con un tocco —
+            la ✕ riporta a tutte le Pagate. */}
+        {incassateWin && (
+          <div style={{ marginBottom: 10 }}>
+            <Link
+              href="/fatture?status=accepted"
+              aria-label={`Togli il filtro: incassate a ${incassateWin.label}`}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#1a1a2e', color: '#f2ecdd', borderRadius: 999, padding: '7px 13px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+            >
+              Incassate a {incassateWin.label}
+              <X size={14} aria-hidden />
+            </Link>
+          </div>
+        )}
         {/* Tab di stato — stile pill (cc-tabs / cc-tab / cc-tab-active). Renderizzate
             due volte: dentro il riquadro su mobile (margine 0) e da sole su desktop. */}
         <ListaRiquadro
@@ -628,6 +675,8 @@ export default async function FatturePage({ searchParams }: Props) {
           <p className="text-muted-foreground text-sm">
             {q
               ? `Nessun risultato per "${q}"`
+              : incassateWin
+                ? `Nessuna fattura incassata a ${incassateWin.label}`
               : status
                 ? (STATUS_EMPTY_LABELS[status] ?? 'Nessuna fattura in questo stato')
                 : hasFilters

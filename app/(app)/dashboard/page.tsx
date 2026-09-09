@@ -601,8 +601,16 @@ export default async function DashboardPage() {
     .filter((d) => !idRinviati.has(d.id))
   const daIncassareTotale = fattureAperte.reduce((s, d) => s + (d.total ?? 0), 0)
 
-  // Testata navy (redesign 19-20 ago): mese in occhiello + data nel saluto
+  // Testata navy (redesign 19-20 ago): il mese vive nell'etichetta del
+  // riquadro Fatturato («Fatturato di settembre») — l'occhiello «SETTEMBRE:»
+  // sopra i tre riquadri è stato tolto (Eli, 9 set): faceva credere che TUTTI
+  // e tre i numeri fossero del mese, mentre «in scadenza» e «da incassare»
+  // contano tutto ciò che è ancora aperto, di qualsiasi mese (sua conferma).
   const meseLabel = now.toLocaleDateString('it-IT', { month: 'long', timeZone: 'Europe/Rome' })
+  // ?incassate=YYYY-MM per la lista Fatture: stesso mese di thisMonthStart
+  // (startOfMonth usa l'ora del server) — la lista ricostruisce la stessa
+  // finestra, così il numero sulla card e le righe dietro combaciano.
+  const meseParam = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const dataLabel = now.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Rome' })
   // Striscia del piano gratuito: entrambi i contatori (preventivi E fatture)
   const freeInvoiceStatus = isFree ? checkFreeBlock(workspace, 'fattura') : null
@@ -709,27 +717,29 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div style={{ position: 'relative', margin: '15px 2px 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(228,226,232,.5)' }}>
-            {meseLabel}:
-          </div>
-          <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9 }}>
-            <Link href="/fatture?status=accepted" style={{ background: 'rgba(255,255,255,.055)', border: '1px solid rgba(203,164,76,.2)', borderRadius: 13, padding: '10px 10px', minWidth: 0, textDecoration: 'none', display: 'block' }}>
-              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 17, fontWeight: 600, color: '#e6cf94', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+          {/* Tre riquadri: solo il Fatturato è un numero DEL MESE (e lo dice
+              nell'etichetta); gli altri due contano tutto l'aperto e aprono
+              le pagine che elencano esattamente quei documenti. Il tocco sul
+              Fatturato apre la lista Fatture già filtrata sulle incassate del
+              mese (?incassate=…), così numero e lista combaciano (Eli, 9 set). */}
+          <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9, marginTop: 15 }}>
+            <Link href={`/fatture?status=accepted&incassate=${meseParam}`} style={{ background: 'rgba(255,255,255,.055)', border: '1px solid rgba(203,164,76,.2)', borderRadius: 13, padding: '10px 10px', minWidth: 0, textDecoration: 'none', display: 'block' }}>
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 18, fontWeight: 600, color: '#e6cf94', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {euroCorto(paidFattureThisMonthValue)}
               </div>
-              <div style={{ fontSize: 10.5, fontWeight: 600, color: 'rgba(228,226,232,.62)', marginTop: 5, lineHeight: 1.25 }}>Fatturato</div>
+              <div style={{ fontSize: 11.5, fontWeight: 600, color: 'rgba(228,226,232,.62)', marginTop: 5, lineHeight: 1.25 }}>Fatturato di {meseLabel}</div>
             </Link>
             <Link href="/preventivi/scadenze" style={{ background: 'rgba(255,255,255,.055)', border: '1px solid rgba(203,164,76,.2)', borderRadius: 13, padding: '10px 10px', minWidth: 0, textDecoration: 'none', display: 'block' }}>
-              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 17, fontWeight: 600, color: '#f2ecdd', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 18, fontWeight: 600, color: '#f2ecdd', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {prevScadenzaCount}
               </div>
-              <div style={{ fontSize: 10.5, fontWeight: 600, color: 'rgba(228,226,232,.62)', marginTop: 5, lineHeight: 1.25 }}>Preventivi in scadenza</div>
+              <div style={{ fontSize: 11.5, fontWeight: 600, color: 'rgba(228,226,232,.62)', marginTop: 5, lineHeight: 1.25 }}>Preventivi in scadenza</div>
             </Link>
             <Link href="/fatture/scadenze" style={{ background: 'rgba(255,255,255,.055)', border: '1px solid rgba(203,164,76,.2)', borderRadius: 13, padding: '10px 10px', minWidth: 0, textDecoration: 'none', display: 'block' }}>
-              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 17, fontWeight: 600, color: '#e6cf94', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+              <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 18, fontWeight: 600, color: '#e6cf94', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {euroCorto(daIncassareTotale)}
               </div>
-              <div style={{ fontSize: 10.5, fontWeight: 600, color: 'rgba(228,226,232,.62)', marginTop: 5, lineHeight: 1.25 }}>Fatture da incassare</div>
+              <div style={{ fontSize: 11.5, fontWeight: 600, color: 'rgba(228,226,232,.62)', marginTop: 5, lineHeight: 1.25 }}>Fatture da incassare</div>
             </Link>
           </div>
         </div>
@@ -1056,7 +1066,7 @@ export default async function DashboardPage() {
             delta={suppressEarlyMonthDelta(now, deltaPaidFattureValue, paidFattureThisMonthValue)}
             icon={<FileText className="size-3.5" />}
             sub={`${now.toLocaleDateString('it-IT', { month: 'long' , timeZone: 'Europe/Rome' })} · vs mese scorso`}
-            href="/fatture?status=accepted"
+            href={`/fatture?status=accepted&incassate=${meseParam}`}
           />
           <Card className="h-full">
             <CardHeader className="pb-1 pt-4 px-4">
