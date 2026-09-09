@@ -13,6 +13,14 @@
 // imprevisti o cause non dipendenti dall'impresa». La frase è UNA, qui:
 // PDF, pagina del cliente e foglio interno la prendono da questo modulo.
 //
+// ⚠️ DECISIONE Eli (9 set 2026): la DATA calcolata (conferma + N giorni) NON
+// si mostra MAI da sola — tra il preventivo fatto e l'accettazione la
+// situazione può essere cambiata, e la data dovrà essere CONFERMATA
+// dall'artigiano all'accettazione (flusso futuro, non ancora costruito).
+// Anche dopo l'accettazione, ovunque resta la frase indicativa.
+// `dataFineLavori`/`fraseLavoriEntro`/`termineSuperato` restano qui, pure e
+// testate, riservate a quel flusso di conferma.
+//
 // Modulo PURO: niente Supabase, niente React. Testato.
 
 export const WORK_DAYS_MIN = 1
@@ -33,6 +41,8 @@ export function normalizzaWorkDays(v: unknown): number | null {
  * Senza conferma (preventivo non ancora accettato) o senza giorni → null.
  * Il conto è sui millisecondi (+N×24h): nessuna sorpresa sui cambi d'ora,
  * la formattazione in Europe/Rome la fa chi mostra la data.
+ * ⚠️ RISERVATA al futuro flusso di conferma (decisione Eli 9 set): oggi
+ * nessuna superficie mostra la data calcolata.
  */
 export function dataFineLavori(acceptedAt: string | Date | null | undefined, workDays: unknown): Date | null {
   const giorni = normalizzaWorkDays(workDays)
@@ -42,14 +52,16 @@ export function dataFineLavori(acceptedAt: string | Date | null | undefined, wor
   return new Date(base.getTime() + giorni * 24 * 60 * 60 * 1000)
 }
 
-/** Vero se la data di fine è passata rispetto a `now` (default: adesso). */
+/** Vero se la data di fine è passata rispetto a `now` (default: adesso).
+ *  ⚠️ Riservata al futuro flusso di conferma, come `dataFineLavori`. */
 export function termineSuperato(dataFine: Date | null, now: Date = new Date()): boolean {
   return !!dataFine && dataFine.getTime() < now.getTime()
 }
 
 /**
- * La dicitura contrattuale, prima dell'accettazione (una sola per tutta
- * l'app — PDF, pagina cliente, foglio interno). `giorni` già validato.
+ * La dicitura contrattuale (una sola per tutta l'app — PDF, pagina cliente,
+ * foglio interno), mostrata anche DOPO l'accettazione (decisione Eli 9 set:
+ * niente data calcolata). `giorni` già validato.
  * SENZA l'etichetta «Tempi di esecuzione»: la mette chi la mostra (nel PDF
  * è il titolo della sezione, e ripeterla nella frase la faceva uscire due volte).
  */
@@ -59,25 +71,23 @@ export function fraseTermineLavori(giorni: number): string {
 
 const FMT_LONG: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' }
 
-/** Dopo l'accettazione: «Lavori entro il 7 ottobre 2026». */
+/** «Lavori entro il 7 ottobre 2026» — ⚠️ riservata al futuro flusso di
+ *  conferma all'accettazione (decisione Eli 9 set): oggi nessuno la mostra. */
 export function fraseLavoriEntro(dataFine: Date): string {
   return `Lavori entro il ${dataFine.toLocaleDateString('it-IT', FMT_LONG)}`
 }
 
 /**
  * Riepilogo per chi deve mostrare il termine: null se il documento non ne ha
- * uno; altrimenti giorni + (se accettato) la data concreta e la frase giusta.
+ * uno; altrimenti i giorni e la frase indicativa — SEMPRE quella, anche a
+ * preventivo accettato (decisione Eli 9 set: la data va confermata
+ * dall'artigiano, mai calcolata e mostrata da sola).
  */
 export function terminePrevisto(doc: {
   work_days?: number | null
   accepted_at?: string | null
-}): { giorni: number; dataFine: Date | null; testo: string } | null {
+}): { giorni: number; testo: string } | null {
   const giorni = normalizzaWorkDays(doc.work_days)
   if (giorni == null) return null
-  const dataFine = dataFineLavori(doc.accepted_at ?? null, giorni)
-  return {
-    giorni,
-    dataFine,
-    testo: dataFine ? fraseLavoriEntro(dataFine) : fraseTermineLavori(giorni),
-  }
+  return { giorni, testo: fraseTermineLavori(giorni) }
 }

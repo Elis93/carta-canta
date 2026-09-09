@@ -26,6 +26,7 @@ import { createDocumentAction, saveDraftAction } from '@/lib/actions/documents'
 import { roundFiscale, calcolaDocumento } from '@/lib/fiscal/calcoli'
 import { SezioneForm } from '@/components/shared/SezioneForm'
 import { RigaTendina } from '@/components/shared/RigaTendina'
+import { CampoConUnita, CAMPO_UNITA_INPUT } from '@/components/shared/CampoConUnita'
 import { AiImportModal } from './AiImportModal'
 import type { AddVoceAction } from './VociTable'
 import { totaliPerProposta } from '@/lib/documents/proposte'
@@ -941,14 +942,18 @@ export function PreventivoForm({
   const riepiloghi = {
     note: notesValue.trim() ? (notesValue.trim().length > 42 ? `${notesValue.trim().slice(0, 42)}…` : notesValue.trim()) : 'nessuna',
     noteInterne: internalNotesValue.trim() ? 'scritte · solo per te' : 'nessuna',
+    // «al cliente» solo da aperta (Eli 9 set: i riepiloghi lunghi si troncano
+    // in «Testo grande» — «piuttosto accorciamo le frasi»).
     foto: attachedPhotos.length === 0
       ? 'nessuna'
-      : `${attachedPhotos.length} foto · ${visiblePhotos.size === 0 ? 'nascoste al cliente' : visiblePhotos.size === attachedPhotos.length ? 'visibili al cliente' : `${visiblePhotos.size} visibili al cliente`}`,
+      : `${attachedPhotos.length} foto · ${visiblePhotos.size === 0 ? 'nascoste' : visiblePhotos.size === attachedPhotos.length ? 'visibili' : `${visiblePhotos.size} visibili`}`,
     acconto: depositAttivo && depositValue.trim()
       ? (depositType === 'percent' ? `${depositValue}% alla conferma` : `€ ${depositValue} alla conferma`)
       : 'nessuno',
     validita: `${validityDays || 30} giorni`,
-    tempi: workDays.trim() ? `${workDays} giorni dalla conferma` : 'non indicati',
+    // Corto apposta (Eli 9 set: «10 giorni dalla confer» troncato da chiusa,
+    // anche in Testo grande): il «dalla conferma» lo dice la riga aperta.
+    tempi: workDays.trim() ? `${workDays} giorni` : 'non indicati',
     pagamento: paymentTerms === 'Personalizzati' ? 'personalizzati' : paymentTerms,
     template: templateId === '__classico__'
       ? 'Classico'
@@ -1150,6 +1155,13 @@ export function PreventivoForm({
     setOptionsOn(true)
     setActiveTier('base')
     markDirty()
+    // Il toggle sta SOTTO la card Voci: la fascia «Stai compilando la
+    // proposta» compare più in alto, fuori dallo schermo — senza scroll non
+    // ci si accorge che è comparsa (Eli 9 set). Doppio rAF: si parte a
+    // fascia dipinta.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.getElementById('fascia-proposta')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }))
   }
 
   function disableOptions() {
@@ -1441,10 +1453,11 @@ export function PreventivoForm({
       <div className="cc-card-md" style={{ overflow: 'hidden', padding: 0 }}>
         {optionsActive && (
           <div
+            id="fascia-proposta"
             style={{
               position: 'sticky', top: 0, zIndex: 20,
               background: '#f1ece2', borderBottom: '1px solid #e6dcc8',
-              padding: '10px 15px 11px',
+              padding: '10px 15px 11px', scrollMarginTop: 12,
             }}
           >
             <div style={{ fontSize: 12, fontWeight: 600, color: '#6f6d64', marginBottom: 8 }}>
@@ -1765,39 +1778,23 @@ export function PreventivoForm({
                 </div>
                 {depositAttivo && (
                   <div className="space-y-1.5">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                      <div style={{ display: 'flex', background: '#f2f2f4', borderRadius: 999, padding: 3, width: 110, flexShrink: 0 }}>
-                        {(['percent', 'amount'] as const).map((t) => (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => { setDepositType(t); markDirty() }}
-                            style={{
-                              flex: 1, textAlign: 'center', fontSize: 12, padding: '5px 0',
-                              borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                              background: depositType === t ? '#fff' : 'transparent',
-                              color: depositType === t ? '#1a1a2e' : '#55534b',
-                              fontWeight: depositType === t ? 600 : 400,
-                              boxShadow: depositType === t ? '0 1px 3px rgba(20,20,40,.12)' : 'none',
-                            }}
-                          >
-                            {t === 'percent' ? '%' : '€'}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="relative" style={{ width: 118 }}>
-                        <Input
-                          inputMode="decimal"
-                          value={depositValue}
-                          onChange={(e) => { setDepositValue(e.target.value.replace(/[^\d.,]/g, '')); markDirty() }}
-                          className="pr-7"
-                          style={{ width: 118, border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 28px 11px 12px', fontSize: 15 }}
-                        />
-                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                          {depositType === 'percent' ? '%' : '€'}
-                        </span>
-                      </div>
-                    </div>
+                    {/* Valore + unità nel controllo unico %/€ (CampoConUnita,
+                        proposta C — Eli 9 set): prima qui c'era la pillola
+                        tonda a striscia da 110px, diversa dallo Sconto. */}
+                    <CampoConUnita
+                      unita={depositType === 'percent' ? '%' : '€'}
+                      onUnitaChange={(u) => { setDepositType(u === '%' ? 'percent' : 'amount'); markDirty() }}
+                      ariaLabelUnita="Unità dell'acconto: percentuale o euro"
+                    >
+                      <input
+                        inputMode="decimal"
+                        value={depositValue}
+                        onChange={(e) => { setDepositValue(e.target.value.replace(/[^\d.,]/g, '')); markDirty() }}
+                        placeholder={depositType === 'percent' ? '0' : '0,00'}
+                        aria-label={depositType === 'percent' ? 'Acconto in percentuale' : 'Acconto in euro'}
+                        style={{ ...CAMPO_UNITA_INPUT, width: 72 }}
+                      />
+                    </CampoConUnita>
                     <p className="text-[12px]" style={{ color: '#767676', maxWidth: 320 }}>
                       {depositPreview
                         ? <>Su questo preventivo: <b style={{ color: '#55534b' }}>acconto {fmtEuro(depositPreview.acconto)} — saldo {fmtEuro(depositPreview.saldo)}</b>. Il cliente lo vedrà sotto il totale.</>
@@ -1844,7 +1841,7 @@ export function PreventivoForm({
                   style={{ border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 15 }}
                 />
                 <p className="text-[12px]" style={{ color: '#767676' }}>
-                  Facoltativo. Se lo indichi, sul preventivo compare «indicativamente entro N giorni dalla conferma, salvo imprevisti»; dopo l&rsquo;accettazione diventa una data.
+                  Facoltativo. Se lo indichi, sul preventivo compare «indicativamente entro N giorni dalla conferma, salvo imprevisti».
                 </p>
               </div>
             )}

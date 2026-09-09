@@ -445,11 +445,9 @@ export function MobilePublicCard({
           {termine && (
             <div style={{ padding: '9px 0 0', fontSize: 12.5, lineHeight: 1.5 }}>
               <span style={{ color: '#6b6960' }}>Tempi di esecuzione</span>
-              <div style={{ color: '#161616', fontWeight: termine.dataFine ? 600 : 400 }}>
-                {termine.dataFine
-                  ? `${termine.testo} (${termine.giorni} ${termine.giorni === 1 ? 'giorno' : 'giorni'} dalla conferma)`
-                  : termine.testo}
-              </div>
+              {/* Sempre la frase indicativa, anche ad accettazione avvenuta
+                  (decisione Eli 9 set: mai una data calcolata da sola). */}
+              <div style={{ color: '#161616' }}>{termine.testo}</div>
             </div>
           )}
           {paymentTerms && (

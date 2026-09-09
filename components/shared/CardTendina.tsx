@@ -19,6 +19,7 @@ export function CardTendina({
   summary,
   defaultOpen = false,
   anchorId,
+  lockOpen = false,
   children,
   style,
   className,
@@ -29,6 +30,10 @@ export function CardTendina({
   defaultOpen?: boolean
   /** Ancora per i deep-link: arrivando con #anchorId la card si apre da sola. */
   anchorId?: string
+  /** Se vero, la card APERTA non si può chiudere (es. «Prossimo intervento»
+   *  con l'appuntamento a metà — giorno senza ora, finding M4: il picker
+   *  deve restare visibile per correggere). Non forza l'apertura. */
+  lockOpen?: boolean
   children: React.ReactNode
   style?: React.CSSProperties
   className?: string
@@ -55,7 +60,7 @@ export function CardTendina({
     >
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((v) => (v && lockOpen ? v : !v))}
         aria-expanded={open}
         style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, marginBottom: open ? 10 : 0, cursor: 'pointer', fontFamily: 'inherit', minHeight: 28 }}
       >

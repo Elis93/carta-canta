@@ -737,9 +737,11 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             {doc.expires_at && (
               <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', marginTop: 11 }}>Valido fino al {fmtLong(doc.expires_at)}</div>
             )}
+            {/* Sempre la frase indicativa, anche ad accettazione avvenuta
+                (decisione Eli 9 set: mai una data calcolata da sola). */}
             {termineLavori && (
-              <div style={{ fontSize: 12.5, color: termineLavori.dataFine ? '#161616' : 'var(--cc-muted)', fontWeight: termineLavori.dataFine ? 600 : 400, marginTop: 6, lineHeight: 1.45 }}>
-                {termineLavori.dataFine ? termineLavori.testo : `Tempi di esecuzione: ${termineLavori.testo.charAt(0).toLowerCase()}${termineLavori.testo.slice(1)}`}
+              <div style={{ fontSize: 12.5, color: 'var(--cc-muted)', marginTop: 6, lineHeight: 1.45 }}>
+                {`Tempi di esecuzione: ${termineLavori.testo.charAt(0).toLowerCase()}${termineLavori.testo.slice(1)}`}
               </div>
             )}
           </div>
@@ -1120,8 +1122,8 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             )}
           </p>
           {termineLavori && (
-            <p className="text-sm mt-1" style={{ color: termineLavori.dataFine ? '#161616' : undefined, fontWeight: termineLavori.dataFine ? 600 : 400 }}>
-              {termineLavori.dataFine ? termineLavori.testo : `Tempi di esecuzione: ${termineLavori.testo.charAt(0).toLowerCase()}${termineLavori.testo.slice(1)}`}
+            <p className="text-sm mt-1">
+              {`Tempi di esecuzione: ${termineLavori.testo.charAt(0).toLowerCase()}${termineLavori.testo.slice(1)}`}
             </p>
           )}
         </div>

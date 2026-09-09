@@ -68,7 +68,7 @@ describe('le due frasi (una sola fonte per PDF, pagina cliente, foglio interno)'
     expect(f).toBe('Indicativamente entro 30 giorni dalla conferma del preventivo, salvo imprevisti o cause non dipendenti dall\'impresa.')
     expect(fraseTermineLavori(1)).toContain('entro 1 giorno dalla')
   })
-  it('dopo l\'accettazione: «Lavori entro il …» in Europe/Rome', () => {
+  it('fraseLavoriEntro (riservata al futuro flusso di conferma): Europe/Rome', () => {
     // 23:30 UTC del 6 ott = 7 ott a Roma (ora legale): la data mostrata è quella italiana
     expect(fraseLavoriEntro(new Date('2026-10-06T23:30:00.000Z'))).toBe('Lavori entro il 7 ottobre 2026')
   })
@@ -79,15 +79,14 @@ describe('terminePrevisto — il riepilogo per chi mostra il termine', () => {
     expect(terminePrevisto({ work_days: null, accepted_at: '2026-09-07T10:00:00.000Z' })).toBeNull()
     expect(terminePrevisto({})).toBeNull()
   })
-  it('non accettato → giorni + frase contrattuale, nessuna data', () => {
+  it('non accettato → giorni + frase contrattuale', () => {
     const t = terminePrevisto({ work_days: 30, accepted_at: null })
     expect(t?.giorni).toBe(30)
-    expect(t?.dataFine).toBeNull()
     expect(t?.testo).toContain('Indicativamente entro 30 giorni')
   })
-  it('accettato → la data concreta e «Lavori entro il …»', () => {
+  it('ANCHE accettato → sempre la frase indicativa, MAI la data (decisione Eli 9 set)', () => {
     const t = terminePrevisto({ work_days: 30, accepted_at: '2026-09-07T10:00:00.000Z' })
-    expect(t?.dataFine?.toISOString()).toBe('2026-10-07T10:00:00.000Z')
-    expect(t?.testo).toBe('Lavori entro il 7 ottobre 2026')
+    expect(t?.testo).toContain('Indicativamente entro 30 giorni')
+    expect(t?.testo).not.toContain('Lavori entro il')
   })
 })

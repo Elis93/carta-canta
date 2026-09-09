@@ -10,8 +10,9 @@
 //  1. le voci della tendina sono CORTE («Percentuale» / «Cifra fissa»): la
 //     dicitura lunga non ci stava nemmeno su una riga intera a 320px in
 //     «Testo grande» — misurato, non stimato;
-//  2. l'unità sta ALLA DESTRA del campo (**%** o **€**) e cambia con la
-//     scelta: senza, quel numero non ha significato;
+//  2. l'unità è la pillola-tendina DENTRO il campo (CampoConUnita, proposta C
+//     del 9 set — lo stesso controllo dello Sconto e dell'Acconto sul
+//     preventivo): cambiarla lì equivale a cambiare la scelta della tendina;
 //  3. con «Nessun acconto» il campo del valore sparisce, invece di restare lì
 //     a chiedere un numero che non serve.
 //
@@ -26,6 +27,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Avviso } from '@/components/shared/Avviso'
+import { CampoConUnita, CAMPO_UNITA_INPUT } from '@/components/shared/CampoConUnita'
 
 export function AccontoDefaultField({
   tipoIniziale,
@@ -60,8 +62,7 @@ export function AccontoDefaultField({
     return () => form.removeEventListener('reset', onReset)
   }, [])
 
-  const unita = tipo === 'percent' ? '%' : '€'
-  const esempio = tipo === 'percent' ? 'esempio: 30' : 'esempio: 500'
+  const esempio = tipo === 'percent' ? 'es. 30' : 'es. 500'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -86,7 +87,14 @@ export function AccontoDefaultField({
       </select>
 
       {tipo !== '' && (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 110px', minWidth: 0 }}>
+        // La pillola dell'unità cambia il TIPO (stessa scelta della tendina,
+        // detta in un altro modo): % = Percentuale, € = Cifra fissa.
+        <CampoConUnita
+          unita={tipo === 'percent' ? '%' : '€'}
+          onUnitaChange={(u) => setTipo(u === '%' ? 'percent' : 'fixed')}
+          ariaLabelUnita="Unità dell'acconto proposto: percentuale o euro"
+          style={{ flexShrink: 0 }}
+        >
           <input
             ref={valRef}
             id="deposit_default_value"
@@ -99,15 +107,9 @@ export function AccontoDefaultField({
             value={valore}
             onChange={(e) => setValore(e.target.value)}
             aria-label={tipo === 'percent' ? 'Percentuale dell’acconto' : 'Importo dell’acconto in euro'}
-            style={{ ...fieldStyle, flex: 1, minWidth: 0 }}
+            style={{ ...CAMPO_UNITA_INPUT, width: 86 }}
           />
-          <span
-            aria-hidden
-            style={{ fontSize: 17, fontWeight: 700, color: '#55534b', flexShrink: 0, width: 18, textAlign: 'center' }}
-          >
-            {unita}
-          </span>
-        </span>
+        </CampoConUnita>
       )}
       </div>
 

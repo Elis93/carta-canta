@@ -9,14 +9,14 @@
 // §B.2: gli overlay posizionati con getBoundingClientRect dentro un body
 // zoomato si disallineano senza il contro-zoom).
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { Bell } from 'lucide-react'
 import type { AppNotification } from '@/lib/notifications'
 import { NotificationList } from '@/app/(app)/notifiche/_components/NotificationList'
 import { applicaLetteLocali } from '@/lib/notifiche-lette-locali'
-import { useAnchorRect, useCloseOnOutsideMouseDown } from '@/components/shared/dropdown-portal'
+import { useAnchorRect } from '@/components/shared/dropdown-portal'
 
 export function NotificationBell({
   notifications,
@@ -44,9 +44,25 @@ export function NotificationBell({
     setUnread(applicaLetteLocali(notifications).filter((n) => !n.read).length)
   }, [notifications])
 
-  const close = useCallback(() => setOpen(false), [])
   const rect = useAnchorRect(btnRef, open)
-  useCloseOnOutsideMouseDown(open, close, [btnRef, panelRef])
+
+  // Chiusura al tocco fuori su POINTERDOWN, non sul mousedown del vecchio
+  // hook condiviso (Eli 9 set: «apro l'avatar con la campanella aperta e
+  // restano aperti tutti e due»). Il menu dell'avatar è un DropdownMenu Radix:
+  // sul pointerdown del suo trigger fa preventDefault, e il browser allora NON
+  // genera il mousedown di compatibilità → l'ascoltatore non scattava mai
+  // proprio in quel caso. pointerdown è l'evento sorgente e parte sempre
+  // (preventDefault non ne ferma la propagazione al document).
+  useEffect(() => {
+    if (!open) return
+    function onDown(e: PointerEvent) {
+      const t = e.target as Node
+      if (btnRef.current?.contains(t) || panelRef.current?.contains(t)) return
+      setOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
+  }, [open])
 
   // Esc chiude (tastiera fisica / tablet con tastiera).
   useEffect(() => {

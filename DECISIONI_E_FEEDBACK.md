@@ -54,6 +54,14 @@ i testi dell'app è un giro a sé, da fare su richiesta.
 - **Valutazione tecnica completa** (aree e file da toccare): vedi handoff CLAUDE.md «12 ago (17)».
 - Materia con risvolti commerciali/legali (claim, non «gratis per sempre») → prima di rilasciare, coerenza con B.0.
 
+### Termine dei lavori: MAI una data calcolata da sola — la frase resta indicativa anche dopo l'accettazione (decisione Eli, 9 set 2026)
+> *«evitiamo di dire la data di conclusione, deve essere confermata dall'artigiano all'accettazione del preventivo perché da quando fatto a quando accettato la situazione potrebbe essere cambiata»*
+**Bloccata.** Prima del 9 set, all'accettazione la frase «Indicativamente entro N giorni dalla conferma…» diventava «Lavori entro il {data}» (conferma + N×24h) su PDF, pagina del cliente, foglio interno e testata della scheda Lavoro. Ora **tutte e quattro le superfici mostrano SEMPRE la dicitura indicativa**, anche ad accettazione avvenuta: una scadenza secca è un impegno contrattuale e la decide l'artigiano, non un calcolo. La data potrà comparire solo con un **futuro flusso di conferma esplicita all'accettazione** (non ancora costruito — gli helper `dataFineLavori`/`fraseLavoriEntro` restano nel codice, testati, riservati a quel flusso). Annotato anche per l'avvocato in `COSE_DA_FARE_ELI.md §2`.
+
+### Controllo %/€ unico «proposta C» + «Prossimo intervento» card a sé (scelte Eli, 9 set 2026 — mockup «Stato, sconto e acconto»)
+- **%/€ = CampoConUnita** (`components/shared/CampoConUnita.tsx`): riquadro unico alto 44 col valore a sinistra e la **pillola-tendina dell'unità dentro il campo** (stesso schema dell'unità di misura nella Quantità della voce). Usato in Sconto del riepilogo, Acconto del preventivo e campo gemello in Impostazioni › Generale. Sostituisce la striscia grigia con mini-pillole e la pillola tonda a segmenti: per la stessa scelta esistevano due controlli diversi.
+- **Scheda Lavoro**: «Prossimo intervento» esce da «Stato e dettagli» e diventa una **card bianca a sé** (CardTendina, riepilogo «gio 12 set · 09:00» / «Nessuno»); dentro «Stato e dettagli» restano stato, titolo, cliente, cantiere e note, con etichette in tondo (non più maiuscole).
+
 ### Verifica in due passaggi (2FA): il codice si chiede SOLO al login, mai a ogni riapertura (decisione Eli, 7 set 2026)
 Eli, dopo aver attivato il 2FA, chiudeva e riapriva l'app senza che il codice venisse chiesto. Proposte tre strade (solo al login · a ogni riapertura col timeout del blocco · a ogni riapertura sempre): **scelta «Solo al login (com'è ora)»**. Quindi: il codice a 6 cifre si chiede dopo «Esci» o su un telefono nuovo; per ogni riapertura resta il **blocco con impronta o password** (Account › Sicurezza), come nelle app di banca e posta. La FAQ 2FA lo dice già. ⚠️ Il bug vero dello stesso giorno era un altro: dopo «Esci» + nuovo login il codice non veniva chiesto (fattori stantii nei cookie, auth-js #589) — chiuso il 7 set, handoff in CLAUDE.md.
 

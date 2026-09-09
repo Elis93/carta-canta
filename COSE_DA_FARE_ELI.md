@@ -533,7 +533,7 @@ Eli vuole un campo «Tempi di esecuzione: entro N giorni dalla conferma del prev
 `PROGETTO_TERMINE_LAVORI.md`, **costruito il 7 set 2026** — migration 088). Un termine scritto su un preventivo che il
 cliente accetta è una **clausola contrattuale** (art. 1183 c.c. e seguenti): se l'artigiano sfora,
 il cliente può contestare. Nell'app il campo è vuoto di default e la frase ESATTA che compare (PDF, pagina del cliente, riepilogo) è:
-«Tempi di esecuzione — Indicativamente entro N giorni dalla conferma del preventivo, salvo imprevisti o cause non dipendenti dall'impresa.»; dopo l'accettazione «Lavori entro il {data} (N giorni dalla conferma).» Da chiedergli: ① la
+«Tempi di esecuzione — Indicativamente entro N giorni dalla conferma del preventivo, salvo imprevisti o cause non dipendenti dall'impresa.» ⚠️ AGGIORNAMENTO 9 set 2026 (decisione Eli): la frase resta INDICATIVA anche dopo l'accettazione — l'app NON mostra mai una data calcolata («Lavori entro il {data}» è stato tolto da PDF, pagina cliente, riepilogo e scheda Lavoro); in futuro la data potrà comparire solo se l'artigiano la CONFERMA all'accettazione (flusso non ancora costruito). Da chiedergli: ① la
 frase basta a qualificare il termine come indicativo, o serve altro? ② va aggiunta una riga nelle
 condizioni generali del documento? ③ conviene tenere il campo facoltativo (come previsto) o
 sconsigliarlo del tutto?

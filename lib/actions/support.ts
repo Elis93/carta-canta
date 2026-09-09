@@ -49,5 +49,5 @@ export async function sendSupportMessageAction(messageRaw: string): Promise<Resu
   })
   if (!result.success) return { error: 'Invio non riuscito. Riprova, o scrivi a supporto@cartacanta.app.' }
 
-  return { success: 'Messaggio inviato. Ti rispondiamo entro 1 giorno lavorativo.' }
+  return { success: 'Messaggio inviato. Ti rispondiamo alla tua email.' }
 }

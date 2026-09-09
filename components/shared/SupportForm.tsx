@@ -33,7 +33,7 @@ export function SupportForm() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#eef7f1', border: '1px solid #cfe8da', borderRadius: 10, padding: '11px 13px', marginTop: 12 }}>
         <Check size={17} style={{ color: '#2f8a63', flexShrink: 0 }} />
         <span style={{ fontSize: 13, color: '#2f6a4f', lineHeight: 1.5 }}>
-          Messaggio inviato. Ti rispondiamo alla tua email entro 1 giorno lavorativo.
+          Messaggio inviato. Ti rispondiamo alla tua email.
         </span>
       </div>
     )

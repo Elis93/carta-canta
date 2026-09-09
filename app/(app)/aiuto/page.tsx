@@ -268,11 +268,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       compare <i>&laquo;indicativamente entro 30 giorni dalla conferma del preventivo, salvo
       imprevisti o cause non dipendenti dall&rsquo;impresa&raquo;</i> — nel PDF, sulla pagina
       del cliente e nel riepilogo. Sono giorni di calendario: per sei settimane scrivi 42.
-      <br /><br />
-      Quando il cliente accetta, la frase diventa una data:{' '}
-      <b>Lavori entro il &hellip;</b>, contata dal giorno dell&rsquo;accettazione. La stessa
-      data la ritrovi in testata nella <b>scheda Lavoro</b>, in rosso se è passata e il lavoro
-      non è ancora finito.
+      La frase resta la stessa anche dopo l&rsquo;accettazione: l&rsquo;app non trasforma mai
+      i giorni in una data precisa — tra il preventivo e la conferma la situazione può
+      essere cambiata, e una scadenza secca va concordata da te col cliente.
       <br /><br />
       Il campo è <b>facoltativo</b>{' '}e parte vuoto: se non lo compili, il preventivo non promette
       nessun termine. È una clausola dell&rsquo;accordo col cliente, per questo la frase dice
@@ -966,7 +964,7 @@ export default async function AiutoPage({
           </span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#161616' }}>Ti serve una mano?</div>
-            <div style={{ fontSize: 12, color: '#767676', marginTop: 1 }}>Scrivici da qui, rispondiamo entro 1 giorno lavorativo.</div>
+            <div style={{ fontSize: 12, color: '#767676', marginTop: 1 }}>Scrivici da qui: ti rispondiamo alla tua email.</div>
           </div>
         </div>
         <SupportForm />

@@ -2,12 +2,13 @@
 
 // ============================================================
 // LavoroForm — creazione Lavoro (pagina «Nuovo lavoro», col tasto «Crea
-// lavoro») e, su un lavoro ESISTENTE, la tendina «Stato e dettagli» della
-// scheda B (Eli 5 set 2026): le pillole dello stato e tutti i campi del
-// vecchio modulo — titolo, cliente, cantiere con «Naviga», prossimo
-// intervento, note — con il SALVATAGGIO AUTOMATICO: via il tasto «Salva
-// modifiche» a metà pagina. Da chiusa la testata riassume «In corso ·
-// cantiere · note», così si sa cosa c'è dentro senza aprirla.
+// lavoro») e, su un lavoro ESISTENTE, DUE card della scheda B: la tendina
+// «Stato e dettagli» (pillole dello stato + titolo, cliente, cantiere con
+// «Naviga», note) e — mockup approvato da Eli il 9 set — la tendina
+// «PROSSIMO INTERVENTO» come sezione bianca A SÉ, col riepilogo da chiusa
+// («Nessuno» oppure «gio 12 set · 09:00»). Salvataggio AUTOMATICO per
+// entrambe (stesso stato, stesso giro): via il tasto «Salva modifiche».
+// Da chiusa la testata riassume «In corso · cantiere · note».
 //
 // ⚠️ Auto-save: parte 900 ms dopo l'ultima modifica, MAI al primo render,
 // mai con l'appuntamento a metà (giorno senza ora — finding M4), e una
@@ -34,7 +35,10 @@ import { LAVORO_STATUS_META, LAVORO_STATUS_ORDER, type LavoroStatus } from './la
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 const cardStyle: React.CSSProperties = { background: '#fff', borderRadius: 14, boxShadow: SH, padding: '14px 15px' }
 const secLabel: React.CSSProperties = { fontSize: 12, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6f6d64', marginBottom: 10 }
-const fieldLabel: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: '#8a887f', marginBottom: 5 }
+// Etichette dei campi in «Stato e dettagli»: piccole e in TONDO (mockup 9 set,
+// come nei form del preventivo) — le MAIUSCOLE restano ai titoli delle card,
+// altrimenti tutto urla allo stesso volume e la card si legge male.
+const fieldLabelMin: React.CSSProperties = { display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginBottom: 4 }
 const fieldStyle: React.CSSProperties = {
   width: '100%', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px',
   fontSize: 14, fontFamily: 'inherit', color: '#161616', background: '#fff', boxSizing: 'border-box', outline: 'none',
@@ -46,6 +50,19 @@ function fmtAppuntamento(v: string): string {
   if (!m) return v
   const [, , mm, dd, hh, min] = m
   return `${dd}/${mm} · ${hh}:${min}`
+}
+
+/** "YYYY-MM-DDTHH:MM" → "gio 12 set · 09:00" per il riepilogo della card
+ *  «Prossimo intervento» (mockup 9 set). Il giorno della settimana si calcola
+ *  dai soli campi data (mai da new Date(stringa): niente sorprese di fuso). */
+function fmtAppuntamentoEsteso(v: string): string {
+  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/)
+  if (!m) return v
+  const [, y, mm, dd, hh, min] = m
+  const giorno = new Date(Number(y), Number(mm) - 1, Number(dd))
+    .toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })
+    .replace(/\./g, '')
+  return `${giorno} · ${hh}:${min}`
 }
 
 export interface LavoroDefaults {
@@ -232,7 +249,9 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
         style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
         aria-expanded={openAppt}
       >
-        <span style={{ ...(lavId ? fieldLabel : secLabel), marginBottom: 0, flexShrink: 0 }}>Prossimo intervento</span>
+        {/* Solo «Nuovo lavoro»: su un lavoro esistente il Prossimo intervento
+            è una CardTendina a sé (mockup 9 set), non questo blocco. */}
+        <span style={{ ...secLabel, marginBottom: 0, flexShrink: 0 }}>Prossimo intervento</span>
         {!openAppt && (
           <span style={{ flex: 1, minWidth: 0, textAlign: 'right', fontSize: 13, fontWeight: 500, color: 'var(--cc-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {scheduledAt ? fmtAppuntamento(scheduledAt) : 'Nessuno · tocca per fissarlo'}
@@ -267,7 +286,9 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
           e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'
         }}
         ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = Math.max(96, el.scrollHeight) + 'px' } }}
-        placeholder={'esempio: materiali usati, ore, cose da ricordare\n(private: il cliente non le vede)'}
+        // «private: il cliente non le vede» è uscito dal segnaposto (mockup
+        // 9 set): sta accanto all'etichetta, così resta visibile anche mentre scrivi.
+        placeholder="esempio: materiali usati, ore, cose da ricordare"
         style={{ ...fieldStyle, minHeight: 96, resize: 'none', overflow: 'hidden', lineHeight: 1.6, fontSize: 13 }}
       />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
@@ -281,51 +302,69 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
     </>
   )
 
-  // ── LAVORO ESISTENTE: tendina «Stato e dettagli» con salvataggio automatico ──
+  // ── LAVORO ESISTENTE: DUE card — «Stato e dettagli» e, a sé, «Prossimo
+  //    intervento» (mockup 9 set: «va a parte in una sua sezione bianca»).
+  //    Stesso componente e stesso stato: l'auto-save copre entrambe. ──
   if (lavId) {
     const riepilogo = [
       LAVORO_STATUS_META[status].label,
       address.trim() ? 'cantiere' : null,
       notes.trim() ? 'note' : null,
-      scheduledAt ? 'intervento' : null,
     ].filter(Boolean).join(' · ')
+    // Esito dell'auto-save: compare solo quando succede qualcosa («Salvo…» /
+    // «Salvato» — senza tasto Salva è l'unico segnale che la modifica è
+    // registrata). Le diciture «Si salva da solo…» sono state tolte (Eli 9 set).
+    const esitoAutoSave = (autoState === 'saving' || autoState === 'saved') && (
+      <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', margin: 0, lineHeight: 1.45, display: 'flex', alignItems: 'center', gap: 6 }}>
+        {autoState === 'saving'
+          ? <><Loader2 size={13} className="animate-spin" /> Salvo…</>
+          : <><Check size={13} style={{ color: '#2f8a63' }} /> Salvato</>}
+      </p>
+    )
     return (
-      <CardTendina label="Stato e dettagli" summary={riepilogo} anchorId="dettagli">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {pilloleStato}
-          <div>
-            <span style={fieldLabel}>Titolo</span>
-            {campoTitolo}
+      <>
+        <CardTendina label="Stato e dettagli" summary={riepilogo} anchorId="dettagli">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {pilloleStato}
+            <div>
+              <span style={fieldLabelMin}>Titolo</span>
+              {campoTitolo}
+            </div>
+            <div>
+              <span style={fieldLabelMin}>Cliente</span>
+              <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
+            </div>
+            <div>
+              <span style={fieldLabelMin}>Indirizzo del cantiere</span>
+              <AddressAutocomplete value={address} onChange={setAddress} placeholder="esempio: Via Roma 12, Milano" maxLength={200} style={fieldStyle} />
+              {naviga}
+            </div>
+            <div>
+              <span style={fieldLabelMin}>Note di cantiere <span style={{ color: '#9a988f' }}>· private, il cliente non le vede</span></span>
+              {campoNote}
+            </div>
+            {error && <p style={{ fontSize: 13, color: '#b05656', fontWeight: 500, margin: 0 }}>{error}</p>}
+            {esitoAutoSave}
           </div>
-          <div>
-            <span style={fieldLabel}>Cliente</span>
-            <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
-          </div>
-          <div>
-            <span style={fieldLabel}>Indirizzo del cantiere</span>
-            <AddressAutocomplete value={address} onChange={setAddress} placeholder="Indirizzo del cantiere" maxLength={200} style={fieldStyle} />
-            {naviga}
-          </div>
-          {prossimoIntervento}
-          <div>
-            <span style={fieldLabel}>Note di cantiere</span>
-            {campoNote}
-          </div>
-          {error && <p style={{ fontSize: 13, color: '#b05656', fontWeight: 500, margin: 0 }}>{error}</p>}
-          {/* Esito del salvataggio automatico: compare solo quando succede
-              qualcosa («Salvo…» / «Salvato» — la conferma resta: senza tasto
-              Salva è l'unico segnale che la modifica è andata a buon fine).
-              Le diciture esplicative «Si salva da solo…» sono state tolte
-              (Eli, 9 set: «credo non sia utile dirlo»). */}
-          {(autoState === 'saving' || autoState === 'saved') && (
-            <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', margin: 0, lineHeight: 1.45, display: 'flex', alignItems: 'center', gap: 6 }}>
-              {autoState === 'saving'
-                ? <><Loader2 size={13} className="animate-spin" /> Salvo…</>
-                : <><Check size={13} style={{ color: '#2f8a63' }} /> Salvato</>}
-            </p>
-          )}
-        </div>
-      </CardTendina>
+        </CardTendina>
+        {/* lockOpen con l'appuntamento a metà (giorno senza ora, finding M4):
+            il picker deve restare visibile per correggere — l'auto-save nel
+            frattempo resta in pausa (guardia apptIncomplete). */}
+        <CardTendina
+          label="Prossimo intervento"
+          summary={scheduledAt ? fmtAppuntamentoEsteso(scheduledAt) : 'Nessuno'}
+          lockOpen={apptIncomplete}
+        >
+          <AppointmentPicker
+            value={scheduledAt}
+            onChange={setScheduledAt}
+            onIncompleteChange={setApptIncomplete}
+            excludeKind="lavoro"
+            excludeId={lavId}
+          />
+          {esitoAutoSave && <div style={{ marginTop: 10 }}>{esitoAutoSave}</div>}
+        </CardTendina>
+      </>
     )
   }
 
@@ -344,7 +383,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
         <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
         {/* Suggerimenti INTERNI degli indirizzi già usati (Eli 20 ago). */}
         <div style={{ marginTop: 10 }}>
-          <AddressAutocomplete value={address} onChange={setAddress} placeholder="Indirizzo del cantiere" maxLength={200} style={fieldStyle} />
+          <AddressAutocomplete value={address} onChange={setAddress} placeholder="esempio: Via Roma 12, Milano" maxLength={200} style={fieldStyle} />
         </div>
         {naviga}
       </div>
@@ -356,7 +395,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
 
       {/* Note di cantiere */}
       <div style={cardStyle}>
-        <div style={secLabel}>Note di cantiere</div>
+        <div style={secLabel}>Note di cantiere <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400, color: '#9a988f' }}>· private, il cliente non le vede</span></div>
         {campoNote}
       </div>
 

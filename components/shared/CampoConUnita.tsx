@@ -1,0 +1,65 @@
+'use client'
+
+// ============================================================
+// CampoConUnita — IL controllo %/€ dell'app (proposta C del mockup «Stato,
+// sconto e acconto», scelta di Eli il 9 set 2026): un riquadro unico alto 44
+// col valore a sinistra e la PILLOLA-TENDINA dell'unità dentro il campo a
+// destra — lo stesso schema dell'unità di misura nella Quantità della voce
+// (approvato l'8 set). Il tocco sulla pillola apre la scelta % / €.
+//
+// PERCHÉ: per la stessa scelta %/€ esistevano DUE controlli diversi (striscia
+// grigia con mini-pillole 32×30 nello Sconto · pillola tonda 110px
+// nell'Acconto) con misure scoordinate e l'attiva «bianca in rilievo» che si
+// leggeva poco. Ora il controllo è UNO, qui: Sconto nel Riepilogo, Acconto
+// del preventivo e campo gemello in Impostazioni › Generale.
+//
+// Il CAMPO lo passa il chiamante come children (ognuno ha il suo input, coi
+// suoi name/ref/sanitizzazioni): deve essere SENZA bordo — il bordo è del
+// riquadro. La Select è quella vera di shadcn vestita da pillola (mai testo
+// finto: tastiera e screen reader gratis), come nella Quantità.
+// ============================================================
+
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+export type Unita = '%' | '€'
+
+/** Stile-base per l'input dentro il riquadro: il chiamante lo estende. */
+export const CAMPO_UNITA_INPUT: React.CSSProperties = {
+  width: 56, height: '100%', boxSizing: 'border-box', textAlign: 'right',
+  border: 'none', outline: 'none', padding: '0 4px 0 12px', fontSize: 16,
+  fontWeight: 500, background: 'transparent', fontFamily: 'inherit', minWidth: 0,
+}
+
+export function CampoConUnita({
+  unita,
+  onUnitaChange,
+  ariaLabelUnita,
+  children,
+  style,
+}: {
+  unita: Unita
+  onUnitaChange: (u: Unita) => void
+  /** Es. «Unità dello sconto: percentuale o euro». */
+  ariaLabelUnita: string
+  /** L'input del valore (senza bordo: il bordo è del riquadro). */
+  children: React.ReactNode
+  style?: React.CSSProperties
+}) {
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, border: '1px solid #e3e3e6', borderRadius: 11, background: '#fff', height: 44, padding: '0 5px 0 0', boxSizing: 'border-box', ...style }}>
+      {children}
+      <Select value={unita} onValueChange={(v) => onUnitaChange(v as Unita)}>
+        <SelectTrigger
+          aria-label={ariaLabelUnita}
+          style={{ height: 32, minHeight: 32, borderRadius: 8, border: '1px solid #e6e1d5', background: '#f4f3ef', padding: '0 7px 0 9px', fontSize: 13, fontWeight: 600, color: '#55534b', gap: 3, boxShadow: 'none', flexShrink: 0 }}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="%">%</SelectItem>
+          <SelectItem value="€">€</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}

@@ -380,7 +380,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           <AddressAutocomplete
             value={address}
             onChange={setAddress}
-            placeholder="Indirizzo del cantiere"
+            placeholder="esempio: Via Roma 12, Milano"
             maxLength={200}
             style={fieldStyle}
           />

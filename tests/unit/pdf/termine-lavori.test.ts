@@ -3,7 +3,8 @@ import { buildPdfHtml } from '@/lib/pdf/template'
 import { makeTestData } from './fixture'
 
 // Termine dei lavori (088): la riga «Tempi di esecuzione» esce in TUTTI e 4 i
-// preset, solo sui preventivi, solo se indicato; accettato → data concreta.
+// preset, solo sui preventivi, solo se indicato. SEMPRE la frase indicativa,
+// anche ad accettazione avvenuta (decisione Eli 9 set: mai la data calcolata).
 const PRESETS = ['classico', 'bold', 'tecnico', 'elegante'] as const
 
 describe('PDF — termine dei lavori', () => {
@@ -19,10 +20,11 @@ describe('PDF — termine dei lavori', () => {
       expect(html.split('Tempi di esecuzione').length - 1).toBe(1)
       expect(html).toContain('Indicativamente entro 30 giorni dalla conferma del preventivo, salvo imprevisti o cause non dipendenti dall&#39;impresa.')
     })
-    it(`${preset}: accettato → «Lavori entro il …» con la data (Europe/Rome)`, () => {
+    it(`${preset}: ANCHE accettato → la stessa dicitura indicativa, mai la data`, () => {
       const d = makeTestData({ preset, work_days: 30, accepted_at: '2026-09-07T10:00:00.000Z', status: 'accepted' })
       const html = buildPdfHtml(d)
-      expect(html).toContain('Lavori entro il 7 ottobre 2026 (30 giorni dalla conferma).')
+      expect(html).toContain('Indicativamente entro 30 giorni dalla conferma del preventivo')
+      expect(html).not.toContain('Lavori entro il')
     })
   }
   it('su una FATTURA il termine non esce mai, anche se la colonna è valorizzata', () => {
