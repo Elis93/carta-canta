@@ -2,7 +2,8 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 8 settembre 2026** (le **rifiniture del riordino**, dal collaudo di Eli sulle tre tranche del 7 set: «spazi tra le righe… distanze esagerate… per quantità c'è uno spazio infinito» → mockup «Rifiniture del riordino» approvato («ok per tutte le proposte») → implementate: voce a UNA riga Quantità·Prezzo·IVA, aria dimezzata nei form, «1 voce» bugiardo corretto, lista sopralluoghi a DUE righe senza «N foto»/«solo appunti» — in produzione, da collaudare sul telefono).
+> **Ultima sessione: 9 settembre 2026** (Home, riga appuntamenti: la cornetta AL POSTO della matita quando il cliente ha il telefono — prima le rifiniture dell'8 set, sotto).
+> **Sessione precedente: 8 settembre 2026** (le **rifiniture del riordino**, dal collaudo di Eli sulle tre tranche del 7 set: «spazi tra le righe… distanze esagerate… per quantità c'è uno spazio infinito» → mockup «Rifiniture del riordino» approvato («ok per tutte le proposte») → implementate: voce a UNA riga Quantità·Prezzo·IVA, aria dimezzata nei form, «1 voce» bugiardo corretto, lista sopralluoghi a DUE righe senza «N foto»/«solo appunti» — in produzione, da collaudare sul telefono).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
 > **Dove sta cosa:** decisioni di prodotto e feedback → `DECISIONI_E_FEEDBACK.md` · azioni manuali di Eli → `COSE_DA_FARE_ELI.md` · sicurezza → `SICUREZZA.md` + `AUDIT_COPERTURA_SICUREZZA.md` · collaudi → `TEST_DA_FARE_ELI.md` · cancelli pre-lancio → `PRIMA_DEL_LANCIO.md`.
@@ -28,6 +29,12 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### ✅ 9 set — Home, appuntamenti: la CORNETTA al posto della matita (se c'è il telefono)
+Eli: «in home, nei 3 tasti per sopralluogo, se c'è il numero di telefono del cliente, al posto del tasto modifica, far aprire la cornetta per chiamare il cliente».
+- **`AppuntamentiOggiCard`**: i tasti della riga passano da «Naviga · Chiama · matita» (fino a tre) a **Naviga (se c'è l'indirizzo) + UN tasto in alternativa**: la **cornetta** (`tel:`) se il cliente ha il telefono in rubrica, altrimenti la **matita** che apre il sopralluogo/lavoro. ⚠️ Con il telefono presente l'accesso diretto in modifica dalla Home non c'è più — è la richiesta esplicita («al posto del tasto modifica»); il corpo della riga apre comunque l'agenda e il sopralluogo resta apribile dalla sua lista. Commento di testa aggiornato.
+- FAQ: «Come funzionano appuntamenti e agenda?» diceva «…chiamare il cliente e la matita per aprirlo» → riscritta («se il telefono non è in rubrica, al posto della cornetta c'è la matita»). /novita e guide: nessuna descrive i tasti della riga → nessuna toccata.
+- tsc+build+**781**+smoke 28/28 · scan 0/67. ⚠️ Da collaudare sul telefono: appuntamento con cliente CON telefono (Naviga + cornetta), senza telefono (Naviga + matita), senza niente (solo matita).
 
 ### ✅ 8 set — RIFINITURE del riordino (mockup «Rifiniture del riordino», ok di Eli su tutte le proposte)
 Eli, con 3 screenshot delle tranche appena deployate: «gli spazi tra le righe… la dicitura 4 foto non la trovo utile, le distanze sono esagerate, per quantità c'è uno spazio infinito quando in realtà preferivo guadagnare spazio… rifai i mockup». Mockup fatto PRIMA di toccare codice (2 sezioni, Oggi fedele agli screenshot vs Proposta, risparmi misurati dal banco: −169px sul form, −127px su 5 sopralluoghi; verificato 390/360/320 × zoom 1/1.15, 0 sbordi) → «ok per tutte le proposte», compresa la regola della data.

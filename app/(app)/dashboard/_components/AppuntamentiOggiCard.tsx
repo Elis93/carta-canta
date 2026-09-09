@@ -4,11 +4,13 @@ import { romeTime, type TodayAgenda } from '@/lib/agenda'
 
 // ── «Appuntamenti di oggi» (Home mobile, redesign 19-20 ago) ────────────────
 // Una RIGA per appuntamento, organizzata come la card «Lavoro in corso»: ora
-// (serif) · cliente · TRE tasti quadrati a lato — Naviga (navigatore con
-// l'indirizzo del cantiere, solo se c'è), Chiama (telefono del cliente, solo
-// se c'è) e la matita (apre il sopralluogo/lavoro per scrivere). Il corpo
-// della riga apre l'agenda su oggi (decisione Eli: via il link «Agenda →»).
-// Nome lungo → puntini: scelta Eli («appuntamenti a una riga»).
+// (serif) · cliente · tasti quadrati a lato — Naviga (navigatore con
+// l'indirizzo del cantiere, solo se c'è) e POI, in alternativa (Eli, 9 set:
+// «se c'è il numero di telefono del cliente, al posto del tasto modifica, far
+// aprire la cornetta»): Chiama col telefono del cliente se c'è, altrimenti la
+// matita che apre il sopralluogo/lavoro. Il corpo della riga apre l'agenda su
+// oggi (decisione Eli: via il link «Agenda →»); il sopralluogo si apre
+// comunque dalla sua lista. Nome lungo → puntini: scelta Eli.
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -91,7 +93,7 @@ export function AppuntamentiOggiCard({ agenda, style }: { agenda: TodayAgenda; s
                     <Navigation size={17} aria-hidden />
                   </a>
                 )}
-                {phone && (
+                {phone ? (
                   <a
                     href={`tel:${phone.replace(/\s+/g, '')}`}
                     aria-label={clientName ? `Chiama ${clientName}` : 'Chiama il cliente'}
@@ -99,14 +101,15 @@ export function AppuntamentiOggiCard({ agenda, style }: { agenda: TodayAgenda; s
                   >
                     <Phone size={17} aria-hidden />
                   </a>
+                ) : (
+                  <Link
+                    href={detailHref}
+                    aria-label={ev.kind === 'lavoro' ? 'Apri il lavoro' : 'Apri il sopralluogo'}
+                    style={sqStyle}
+                  >
+                    <PenLine size={17} aria-hidden />
+                  </Link>
                 )}
-                <Link
-                  href={detailHref}
-                  aria-label={ev.kind === 'lavoro' ? 'Apri il lavoro' : 'Apri il sopralluogo'}
-                  style={sqStyle}
-                >
-                  <PenLine size={17} aria-hidden />
-                </Link>
               </div>
             )
           })}

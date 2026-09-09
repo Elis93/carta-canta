@@ -812,7 +812,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
     a: <>In un <b>sopralluogo</b>, apri la card <b>Appuntamento</b> e imposta data e ora:
       {' '}lo ritrovi nell&rsquo;<b>Agenda</b> (in Altro)
       e, il giorno stesso, anche nella Home sotto <b>Appuntamenti di oggi</b>, con i tasti per
-      avviare la navigazione verso il cantiere, chiamare il cliente e la matita per aprirlo.</>,
+      avviare la navigazione verso il cantiere e per <b>chiamare il cliente</b>{' '}(se il telefono
+      non è in rubrica, al posto della cornetta c&rsquo;è la matita che apre il sopralluogo).</>,
   },
   {
     q: 'Mentre scrivo l’indirizzo del cantiere compaiono dei suggerimenti: cosa sono?',
