@@ -30,6 +30,12 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### 🎯 11 set (2) — Mockup «Fascia della proposta» (via il crema) + piano collaudi + nome
+Tre richieste di Eli in un messaggio.
+- **[MOCKUP, in attesa di scelta]** La fascia sticky «Stai compilando la proposta» (crema `#f1ece2` che a Eli non piace) → artifact https://claude.ai/code/artifact/25fddf0b-77f8-4c4f-a15d-84db34f38811 con Oggi + **A** bianca in rilievo (ombra sotto, colore solo alla pillola attiva) · **B** navy come la testata (occhiello oro, pillola attiva bianca) · **C** grigio neutro `#f4f4f6`. Verificato in Chromium 390/360/320 × zoom 1/1.15, 0 sbordi. Consigliata la **A**. Nessun codice toccato.
+- **[COLLAUDI] `TEST_DA_FARE_ELI.md` aggiornato**: nuovo ordine consigliato in testa + sezione **A-quater** (collaudo di settembre, S1-S10: form riordinati, pillola %/€, termine indicativo, Lavoro a due card, Home/filtro mese, cornetta, campanella/avatar, 2FA post-fix, sopralluoghi) + sezione **F Vetrina e recensioni** (F1-F6, mai collaudate — richiesta esplicita di Eli).
+- **[NOME] «Carta Canta può prendere?»** — risposta in chat: modo di dire perfetto per il prodotto, nessun software concorrente con quel nome trovato in ricerca; il punto vero è il **marchio non registrato** (già Q20 nel dossier avvocato): ricerca di anteriorità + deposito UIBM/EUIPO prima di spendere in marketing.
+
 ### ✅ 11 set — Home: «Attività recente» → «Recenti»
 Eli: «cambiamo attività recente in home con recenti». Cambiati i DUE soli punti visibili: il titoletto di sezione mobile (`dashboard/page.tsx` ~829, `cc-section-label`) e il `CardTitle` desktop (~1118). Le altre occorrenze sono commenti (storia, non toccati). FAQ/novita/tour: nessuno cita il nome della sezione (grep pulito) → nessuna toccata. tsc+build+**781**+smoke 28/28 · scan 0/67.
 

@@ -1,6 +1,15 @@
 # TEST DA FARE — checklist operativa per Eli
 
-> Aggiornato: 25 luglio 2026, notte.
+> Aggiornato: 11 settembre 2026 (nuove sezioni A-quater «collaudo di settembre» e F «vetrina e recensioni»; ordine consigliato in cima).
+>
+> **DA DOVE INIZIARE (ordine consigliato, 11 set):**
+> 1. **Il giro completo del preventivo** (sezione A-quater, S1-S5): i form sono stati riorganizzati a settembre, quindi questo giro collauda insieme il flusso di sempre e le novità.
+> 2. **Lavoro, Home e campanella** (A-quater, S6-S8 + S10).
+> 3. **Accesso e 2FA** (A-quater S9 + sezione A-ter): il fix del 7 set va provato — è sicurezza.
+> 4. **Vetrina e recensioni** (sezione F, mai collaudata).
+> 5. Il resto (A1-A5 se non già fatti, Stripe D, SdI C quando si accende).
+> Prima del lancio: sezione B (backup, uptime, email) — è in `PRIMA_DEL_LANCIO.md`.
+> Aggiornamento precedente: 25 luglio 2026.
 > Tutti i test che **devi fare tu** perché richiedono un telefono vero, un
 > account vero, la console di un servizio esterno o un occhio umano.
 > Quelli che potevo fare io (codice, database, PDF, logica) sono già fatti:
@@ -205,6 +214,46 @@ body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = conseg
 | T4 | **Passo 3** («Cliente e lavori») | Il riquadro del tutorial **non copre** l'elenco delle voci: sta **sotto** la voce evidenziata (col microfono). La card Cliente resta segnata in alto. ⚠️ Se lo scroll è strano, dimmelo |
 | T5 | **Passo 4** («Invialo in un tocco») | Il testo NON dice più «Il numero viene assegnato da solo» |
 | T6 | **Ultimo passo** («Hai finito!») | Dice «A **ogni documento** viene associato un **badge di stato**…» e chiude con «**Per procedere con tutte le funzioni**, segui Completa il profilo» |
+
+---
+
+## A-quater. COLLAUDO DI SETTEMBRE (dal telefono, ~30 min)
+
+> Aggiunta dell'11 settembre. Copre il riordino dei form (7-8 set), il termine
+> dei lavori, la scheda Lavoro a due card, i riquadri della Home e il fix 2FA.
+> È la sezione da cui partire: il giro S1-S5 è il flusso di sempre, fatto sui
+> form nuovi.
+
+| # | Cosa fare | Cosa deve succedere |
+|---|---|---|
+| S1 | **Nuovo preventivo**: compila cliente, 2-3 voci, un acconto, i «Tempi di esecuzione» (es. 30) | Quattro sezioni con l'etichetta sopra la card; la voce aperta ha **Quantità · Prezzo · IVA su una riga** (in «Testo grande» l'IVA scende sotto, senza sbordi); le condizioni sono righe che si aprono una alla volta col valore a destra («30 giorni», «30% alla conferma») |
+| S2 | Su **Nuova fattura** appena aperta guarda il conteggio «Voci» | Dice «**0 voci**» finché non scrivi descrizione o prezzo |
+| S3 | Apri **Sconto** (nel Riepilogo) e **Acconto**: tocca la **pillola %/€ dentro il campo** | Si apre la tendina % / €; cambiando unità il valore **si sposta** (10% → 10 €), mai perso. Stessa pillola in **Impostazioni › Generale** per l'acconto proposto |
+| S4 | Attiva «**Proponi più opzioni**» | La pagina **scorre da sola** alla fascia «Stai compilando la proposta»; compili Base e Premium con le linguette |
+| S5 | Invia il preventivo con i tempi indicati, **accettalo dal link** come cliente, poi guarda PDF, link, foglio interno e scheda Lavoro | La frase resta **«Indicativamente entro 30 giorni dalla conferma…»** OVUNQUE, anche dopo l'accettazione — **mai una data calcolata** (decisione del 9 set) |
+| S6 | Apri un **Lavoro esistente** | Due card separate: «**Stato e dettagli**» (stato, titolo, cliente, cantiere, note — etichette in tondo) e «**Prossimo intervento**» (chiusa dice «gio 12 set · 09:00» o «Nessuno»). Modifica un campo → dopo un attimo «✓ Salvato»; con l'appuntamento a metà (giorno senza ora) la card **non si chiude** |
+| S7 | In **Home** tocca «Fatturato di settembre» | Si apre la lista fatture **filtrata sul mese** con la pillola navy «Incassate a settembre ✕»; la ✕ la toglie. La sezione in fondo si chiama «**Recenti**» |
+| S8 | Sempre in Home: appuntamento di oggi con cliente **con telefono** in rubrica · con la **campanella aperta** tocca l'**avatar** | Al posto della matita c'è la **cornetta** (chiama); senza telefono resta la matita · la tendina delle notifiche **si chiude** quando si apre il menu del profilo |
+| S9 | **2FA (fix del 7 set)**: con la verifica in due passaggi attiva, fai «**Esci**» e rientra con password (o Google) | Deve comparire **sempre** la schermata del codice a 6 cifre. Chiudere e riaprire l'app invece NON lo chiede (voluto: per quello c'è il blocco impronta) |
+| S10 | Apri la lista **Sopralluoghi** | Righe a **due sole righe**: cliente · indirizzo, poi lo stato in parole con la data (appuntamento futuro «gio 12 set · 09:00», altrimenti «2 sett. fa»); filetto verde/oro/grigio a sinistra |
+
+---
+
+## F. VETRINA E RECENSIONI (mai collaudate — ~20 min + un secondo telefono/browser)
+
+> Il profilo pubblico si prepara in **Altro › Vetrina**. La pubblicazione passa
+> dalla verifica della P.IVA (VIES + Registro Imprese): serve la P.IVA vera in
+> Impostazioni › Fiscale. Per vedere il profilo «da cliente» usa un browser in
+> incognito o un altro telefono, SENZA essere collegata.
+
+| # | Cosa fare | Cosa deve succedere |
+|---|---|---|
+| F1 | Compila la vetrina (descrizione, servizi, zona, foto) e **pubblica** | La verifica P.IVA passa (se dice «i registri non rispondono», dimmelo: può essere il token OpenAPI); il profilo risulta «Pubblicato» |
+| F2 | Apri il **profilo pubblico** da un browser anonimo | Si vede tutto e SOLO ciò che hai scelto di mostrare: mai costi, margini, dati dei tuoi clienti. Controlla foto, servizi, zona |
+| F3 | Dal profilo pubblico compila il **modulo di richiesta** (con cellulare e preferenza d'orario) | La richiesta arriva in **Richieste** + campanella + email; nel dettaglio vedi recapiti e «Preferisce: …»; toccando Chiama/WhatsApp si segna da sola «Risposta»; «Crea preventivo» ti apre il form col cliente già in rubrica |
+| F4 | Prova «**Vicino a me**» dalla pagina dei professionisti | Chiede la posizione e ordina per distanza (il permesso va concesso) |
+| F5 | **Recensione**: su una fattura **saldata** usa la card «Chiedi una recensione» (compare solo con vetrina pubblicata) → apri il link come cliente → lascia la recensione | Il riquadro per recensire compare sul link **dopo il saldo**; la recensione lasciata si vede sul profilo pubblico e in **Altro › Vetrina › Recensioni** |
+| F6 | Lascia una recensione «cattiva» di prova | Verifica cosa vedi tu e cosa vede il pubblico, e che dalla tua area si possa segnalarla/gestirla. Se qualcosa ti sembra ingestibile, dimmelo: è materia delicata (B.0) |
 
 ---
 
