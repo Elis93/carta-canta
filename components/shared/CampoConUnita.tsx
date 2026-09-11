@@ -74,11 +74,25 @@ export function CampoConUnita({
           className="min-w-0 p-1"
           style={{ width: 46, borderRadius: 10, border: '1px solid #e6e1d5', boxShadow: '0 6px 18px -6px rgba(20,20,40,.22)' }}
         >
+          {/* ⚠️ Il BIANCO della voce attiva è la classe `**:text-white!`, non un
+              color inline: la classe base di SelectItem ha
+              focus:**:text-accent-foreground, che al fuoco (Radix lo mette
+              proprio sulla voce selezionata all'apertura) colora DIRETTAMENTE
+              lo span del testo — e una classe sul figlio vince sul colore
+              EREDITATO dalla voce, inline compreso. Risultato visto da Eli
+              l'11 set: «%» navy su fondo navy, illeggibile. L'important della
+              classe discendente vince sempre. NON spostare il colore su uno
+              span inline dentro la voce: SelectValue rende una copia dei figli
+              dell'ItemText e la pillola del trigger diventerebbe bianca su
+              beige — le classi della voce invece NON viaggiano nel trigger. */}
           {(['%', '€'] as const).map((u, i) => (
             <SelectItem
               key={u}
               value={u}
-              className="h-9 justify-center p-0 rounded-[7px] text-[15px] [&>span:first-child]:hidden"
+              className={
+                'h-9 justify-center p-0 rounded-[7px] text-[15px] [&>span:first-child]:hidden'
+                + (u === unita ? ' **:text-white!' : '')
+              }
               style={u === unita
                 ? { background: '#1a1a2e', color: '#fff', fontWeight: 600, marginTop: i > 0 ? 3 : 0 }
                 : { color: '#55534b', fontWeight: 600, marginTop: i > 0 ? 3 : 0 }}
