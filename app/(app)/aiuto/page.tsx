@@ -437,7 +437,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <br /><br />
       Nel «valore del lavoro» ci sta tutto ciò che non è quel bene: manodopera,
       materiali, e anche tapparelle, zanzariere e grate, che si contano a parte
-      rispetto all&rsquo;infisso. Tu apri <b>Sconto · bene significativo</b>{' '}sotto i campi della voce e spunti{' '}<b>«È un bene significativo»</b>,
+      rispetto all&rsquo;infisso. Contano però solo le voci con <b>IVA al 10%</b>:{' '}
+      se il bene è l&rsquo;unica voce al 10% del preventivo, il valore del lavoro
+      è zero e il bene va per intero al 22%. Tu apri <b>Sconto · bene significativo</b>{' '}sotto i campi della voce e spunti{' '}<b>«È un bene significativo»</b>,
       il resto lo fa l&rsquo;app: divide la riga in due e scrive in fattura il valore del
       bene, come chiede la legge. La spunta compare solo se non sei in forfettario e la
       voce è al 10%.</>,

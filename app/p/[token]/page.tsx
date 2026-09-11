@@ -110,7 +110,8 @@ export default async function PublicDocumentPage({ params }: Props) {
         unit_price,
         discount_pct,
         vat_rate,
-        total
+        total,
+        bene_significativo
       ),
       workspaces!workspace_id (
         owner_id,
