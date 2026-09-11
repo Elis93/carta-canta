@@ -105,6 +105,13 @@ interface VociTableProps {
   bonusEdilizio?: string
   docType?: 'preventivo' | 'fattura' | 'nota_credito'
   autoFocusFirst?: boolean
+  /**
+   * SOLA LETTURA (Eli, 11 set): le voci si aprono e si chiudono per LEGGERE
+   * i dettagli, ma i campi dentro sono `inert` — niente modifiche, niente
+   * Elimina, niente «Aggiungi voce». ⚠️ Prima l'inert stava sull'intero form
+   * e bloccava anche l'apertura: su un accettato tutto restava «riassuntivo».
+   */
+  lettura?: boolean
 }
 
 function newVoce(sortOrder: number): VoceItem {
@@ -216,6 +223,7 @@ export function VociTable({
   autoFocusFirst = false,
   addActions,
   addNote,
+  lettura = false,
 }: VociTableProps) {
   const showVat = fiscalRegime !== 'forfettario'
 
@@ -432,7 +440,7 @@ export function VociTable({
               {/* Opzione 1: calcola la quantità (m²/m³/piastrelle) → riempie il
                   campo Quantità di QUESTA voce. Su mobile il 📐 vive DENTRO il
                   campo Q.tà della voce aperta (variante B, 3 ago). */}
-              <div className="hidden lg:flex" style={{ justifyContent: 'flex-end', marginBottom: 8 }}>
+              <div className="hidden lg:flex" style={{ justifyContent: 'flex-end', marginBottom: 8 }} inert={lettura || undefined}>
                 {/* "Usa" imposta quantità E unità (mq/mc/lt/pz) — così un'area non
                     diventa "13,86 pz". L'unità si applica solo se è tra quelle valide. */}
                 <CalcQuantitaButton onResult={(v, u) =>
@@ -443,6 +451,9 @@ export function VociTable({
               <div
                 className="hidden lg:grid items-start gap-2"
                 style={{ gridTemplateColumns: showVat ? '2fr 90px 90px 100px 80px 90px 32px' : '2fr 90px 90px 100px 80px 32px' }}
+                // Su desktop i dettagli sono già tutti a vista: in sola
+                // lettura basta rendere inerti i campi della griglia.
+                inert={lettura || undefined}
               >
                 {/* Descrizione con mic dentro — data-tour="voce-mic": il passo 3
                     del tutorial marca questo riquadro (F16) */}
@@ -581,7 +592,7 @@ export function VociTable({
                 <button
                   type="button"
                   onClick={() => setOpenKey(voce._key)}
-                  aria-label={`Modifica voce ${idx + 1}`}
+                  aria-label={lettura ? `Apri voce ${idx + 1}` : `Modifica voce ${idx + 1}`}
                   className="lg:hidden w-full"
                   style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: '2px 0', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                 >
@@ -636,7 +647,7 @@ export function VociTable({
 
                 {/* Descrizione con mic dentro — senza etichetta (variante A:
                     il placeholder basta). data-tour="voce-mic": tutorial F16. */}
-                <div data-tour="voce-mic" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '10px 12px' }}>
+                <div data-tour="voce-mic" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e3e3e6', borderRadius: 10, padding: '10px 12px' }} inert={lettura || undefined}>
                   <textarea
                     placeholder="esempio: rifacimento bagno"
                     value={voce.description}
@@ -685,7 +696,7 @@ export function VociTable({
                   const extraLabel = beneVisibile ? 'Sconto · bene significativo' : 'Sconto · calcola quantità'
                   return (
                     <>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'flex-start' }} inert={lettura || undefined}>
                   <div style={{ flex: '1.6 1 132px', minWidth: 0 }}>
                     <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       Quantità <span style={{ color: ORO }}>*</span>
@@ -787,13 +798,14 @@ export function VociTable({
                     aria-label={`Elimina voce ${idx + 1}`}
                     className="cc-t-sub-strong"
                     style={{ color: '#b05656', background: 'none', border: 'none', padding: '4px 0 4px 8px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+                    inert={lettura || undefined}
                   >
                     Elimina
                   </button>
                 </div>
 
                 {extraOpen && (
-                  <div style={{ marginTop: 8, paddingTop: 10, borderTop: '1px solid #f0efe9' }}>
+                  <div style={{ marginTop: 8, paddingTop: 10, borderTop: '1px solid #f0efe9' }} inert={lettura || undefined}>
                     <div className="grid gap-1.5 items-start grid-cols-[1fr_1fr]">
                       <div className="space-y-1">
                         <span style={{ fontSize: 11, color: 'var(--cc-muted)', display: 'block' }}>Sconto sulla voce</span>
@@ -846,7 +858,7 @@ export function VociTable({
               {fiscalRegime !== 'forfettario'
                 && (voce.vat_rate ?? defaultVatRate ?? 22) === 10
                 && (
-                  <div className="hidden lg:block">
+                  <div className="hidden lg:block" inert={lettura || undefined}>
                     <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
                   </div>
                 )}
@@ -861,7 +873,9 @@ export function VociTable({
           catalogo era un tasto a parte e l'AI un blocco crema in cima alla
           card (dietro «Opzioni»). Il menu si apre sotto il tasto, dentro la
           card: niente portal, si chiude col tocco fuori o con Esc. */}
-      <div className="px-[15px] py-2.5 lg:py-3 border-t">
+      {/* In sola lettura il footer intero è inerte: niente voci nuove,
+          niente catalogo, niente AI — si legge, non si aggiunge. */}
+      <div className="px-[15px] py-2.5 lg:py-3 border-t" inert={lettura || undefined}>
         <div ref={addMenuRef} style={{ position: 'relative' }}>
           <button
             type="button"

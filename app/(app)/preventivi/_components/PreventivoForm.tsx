@@ -1259,13 +1259,15 @@ export function PreventivoForm({
       >
         <Lock className="size-4 shrink-0" style={{ color: '#8a6c33' }} />
         <span>
+          {/* La coda «puoi aprire le righe» è vera dal 11 set: i toggle delle
+              tendine e delle voci restano vivi in sola lettura. */}
           {isNota
-            ? 'Nota di credito annullata: i campi qui sotto sono bloccati e non si possono più modificare.'
+            ? 'Nota di credito annullata: i campi sono bloccati. Puoi aprire le righe e le voci per leggere i dettagli.'
             : docType === 'fattura'
             ? defaultValues?.status === 'accepted'
-              ? 'Fattura pagata: i campi qui sotto sono bloccati e non si possono più modificare.'
-              : 'Fattura annullata: i campi qui sotto sono bloccati e non si possono più modificare.'
-            : 'Preventivo accettato: i campi qui sotto sono bloccati e non si possono più modificare.'}
+              ? 'Fattura pagata: i campi sono bloccati. Puoi aprire le righe e le voci per leggere i dettagli.'
+              : 'Fattura annullata: i campi sono bloccati. Puoi aprire le righe e le voci per leggere i dettagli.'
+            : 'Preventivo accettato: i campi sono bloccati. Puoi aprire le righe e le voci per leggere i dettagli.'}
         </span>
       </div>
     )}
@@ -1277,11 +1279,16 @@ export function PreventivoForm({
       noValidate
       className="space-y-3"
       aria-disabled={isReadOnly || undefined}
-      // Fase avanzata (#18): corpo del form sbiadito e INERT — blocca mouse E
-      // tastiera (pointer-events:none da solo lasciava i campi editabili via
-      // Tab, finding review 22 lug). La didascalia nel footer resta attenuata:
-      // il banner sopra, fuori dal form, è quello a piena leggibilità.
-      inert={isReadOnly || undefined}
+      // Fase avanzata (#18): corpo del form sbiadito e coi CAMPI inert —
+      // blocca mouse E tastiera (pointer-events:none da solo lasciava i campi
+      // editabili via Tab, finding review 22 lug). ⚠️ L'inert NON sta più sul
+      // form intero (Eli, 11 set: «deve essere possibile espandersi per
+      // visualizzare tutti i dettagli, ora sono tutti bloccati nella
+      // visualizzazione riassuntiva»): sul form bloccava anche i toggle delle
+      // righe a tendina e delle voci. Ora sta sui SOLI campi — wrapper qui
+      // sotto + prop `lettura` di RigaTendina/VociTable/MargineBox — e i
+      // toggle di apertura restano vivi. Le reti restano tre: nessun tasto
+      // Salva, auto-save spento su isReadOnly, server action che rifiutano.
       style={isReadOnly ? { opacity: 0.55 } : undefined}
     >
       {/* Input nascosto per «Dalle foto» del menu Aggiungi voce e modale
@@ -1362,7 +1369,9 @@ export function PreventivoForm({
           sta sulla CARD (un target più alto del viewport rende il ritaglio del
           tutorial invisibile su mobile). ── */}
       <SezioneForm label="Intestazione">
-      <div data-tour="cliente" className="cc-card-md" style={{ padding: '4px 15px 12px' }}>
+      {/* In sola lettura la card intera è inerte: titolo, numero e cliente
+          si leggono già a vista, non c'è nulla da «aprire». */}
+      <div data-tour="cliente" className="cc-card-md" style={{ padding: '4px 15px 12px' }} inert={isReadOnly || undefined}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <input
             id="title"
@@ -1513,13 +1522,14 @@ export function PreventivoForm({
           autoFocusFirst={false}
           addActions={addVoceActions}
           addNote={addVoceNote}
+          lettura={isReadOnly}
         />
       </div>
       {/* «Proponi due versioni» sotto la card (solo preventivo): era dentro la
           tendina «Opzioni» insieme all'AI. Con le proposte già attive su Free
           resta la nota onesta (downgrade Pro→Free, ⑥). */}
       {isPreventivo && (
-        <div style={{ margin: '10px 2px 0' }}>
+        <div style={{ margin: '10px 2px 0' }} inert={isReadOnly || undefined}>
             {!isProPlan && optionsActive ? (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.5 }}>
                 <span aria-hidden style={{ flexShrink: 0 }}>🔒</span>
@@ -1589,6 +1599,7 @@ export function PreventivoForm({
             <button
               type="button"
               onClick={() => { setValidityDays(String(listinoInScadenza.giorni)); markDirty() }}
+              inert={isReadOnly || undefined}
               style={{ marginTop: 9, width: '100%', minHeight: 40, border: '1px solid #e0c98f', borderRadius: 10, background: '#fff', color: '#8a6a2f', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
             >
               Allinea: preventivo valido {listinoInScadenza.giorni === 1 ? '1 giorno' : `${listinoInScadenza.giorni} giorni`}
@@ -1603,7 +1614,7 @@ export function PreventivoForm({
           restano nel DOM anche da chiusi (hidden): viaggiano nella submit. ── */}
       <SezioneForm label={mode === 'create' ? 'Condizioni e allegati' : 'Note e condizioni'}>
       <div className="cc-card-md" style={{ padding: '0 15px' }}>
-        <RigaTendina id="note" label="Note al cliente" summary={riepiloghi.note} open={righeAperte.has('note')} onToggle={() => toggleRiga('note')}>
+        <RigaTendina id="note" lettura={isReadOnly} label="Note al cliente" summary={riepiloghi.note} open={righeAperte.has('note')} onToggle={() => toggleRiga('note')}>
           <div style={{ paddingTop: 2 }}>
           {/* Note pubbliche */}
           <div className="space-y-2">
@@ -1635,7 +1646,7 @@ export function PreventivoForm({
 
           </div>
         </RigaTendina>
-        <RigaTendina id="note-interne" label="Note interne" summary={riepiloghi.noteInterne} open={righeAperte.has('note-interne')} onToggle={() => toggleRiga('note-interne')}>
+        <RigaTendina id="note-interne" lettura={isReadOnly} label="Note interne" summary={riepiloghi.noteInterne} open={righeAperte.has('note-interne')} onToggle={() => toggleRiga('note-interne')}>
           <div style={{ paddingTop: 2 }}>
           {/* Note interne */}
           <div className="space-y-2">
@@ -1669,7 +1680,7 @@ export function PreventivoForm({
           </div>
         </RigaTendina>
         {mode === 'create' && (
-          <RigaTendina id="foto" label="Foto" summary={riepiloghi.foto} open={righeAperte.has('foto')} onToggle={() => toggleRiga('foto')}>
+          <RigaTendina id="foto" lettura={isReadOnly} label="Foto" summary={riepiloghi.foto} open={righeAperte.has('foto')} onToggle={() => toggleRiga('foto')}>
           {mode === 'create' && (
             <div className="space-y-2">
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
@@ -1763,7 +1774,7 @@ export function PreventivoForm({
           </RigaTendina>
         )}
         {isPreventivo && (
-          <RigaTendina id="acconto" label="Acconto" summary={riepiloghi.acconto} open={righeAperte.has('acconto')} onToggle={() => toggleRiga('acconto')}>
+          <RigaTendina id="acconto" lettura={isReadOnly} label="Acconto" summary={riepiloghi.acconto} open={righeAperte.has('acconto')} onToggle={() => toggleRiga('acconto')}>
             {isPreventivo && (
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
@@ -1811,7 +1822,7 @@ export function PreventivoForm({
 
           </RigaTendina>
         )}
-        <RigaTendina id="validita" label={isPreventivo ? 'Validità' : 'Scadenza pagamento'} summary={riepiloghi.validita} open={righeAperte.has('validita')} onToggle={() => toggleRiga('validita')}>
+        <RigaTendina id="validita" lettura={isReadOnly} label={isPreventivo ? 'Validità' : 'Scadenza pagamento'} summary={riepiloghi.validita} open={righeAperte.has('validita')} onToggle={() => toggleRiga('validita')}>
           <p className="cc-t-sub" style={{ margin: '0 0 6px' }}>{isPreventivo ? 'Il preventivo vale (giorni)' : 'Da pagare entro (giorni)'}</p>
             <div className="space-y-1.5">
               <Input
@@ -1828,7 +1839,7 @@ export function PreventivoForm({
 
         </RigaTendina>
         {isPreventivo && (
-          <RigaTendina id="tempi" label="Tempi di esecuzione" summary={riepiloghi.tempi} open={righeAperte.has('tempi')} onToggle={() => toggleRiga('tempi')}>
+          <RigaTendina id="tempi" lettura={isReadOnly} label="Tempi di esecuzione" summary={riepiloghi.tempi} open={righeAperte.has('tempi')} onToggle={() => toggleRiga('tempi')}>
             <p className="cc-t-sub" style={{ margin: '0 0 6px' }}>Giorni dalla conferma</p>
             {isPreventivo && (
               <div className="space-y-1.5">
@@ -1852,7 +1863,7 @@ export function PreventivoForm({
 
           </RigaTendina>
         )}
-        <RigaTendina id="pagamento" label="Pagamento" summary={riepiloghi.pagamento} open={righeAperte.has('pagamento')} onToggle={() => toggleRiga('pagamento')}>
+        <RigaTendina id="pagamento" lettura={isReadOnly} label="Pagamento" summary={riepiloghi.pagamento} open={righeAperte.has('pagamento')} onToggle={() => toggleRiga('pagamento')}>
             <div className="space-y-1.5">
               {/* Hidden: invia il valore computato (custom text se Personalizzati) */}
               <input
@@ -1896,7 +1907,7 @@ export function PreventivoForm({
             </div>
 
         </RigaTendina>
-        <RigaTendina id="template" label="Template" summary={riepiloghi.template} open={righeAperte.has('template')} onToggle={() => toggleRiga('template')} last>
+        <RigaTendina id="template" lettura={isReadOnly} label="Template" summary={riepiloghi.template} open={righeAperte.has('template')} onToggle={() => toggleRiga('template')} last>
           <div className="space-y-1.5">
               <Select
                 name="template_id"
@@ -1941,7 +1952,7 @@ export function PreventivoForm({
         tierLabel={optionsActive ? (OPTION_TIER_LABELS[activeTier] ?? null) : null}
         altreProposte={optionsActive ? altreProposte : undefined}
         discountSlot={
-          <div ref={discountSectionRef}>
+          <div ref={discountSectionRef} inert={isReadOnly || undefined}>
             <DiscountField
               pct={discountPct} setPct={setDiscountPct}
               fixed={discountFixed} setFixed={setDiscountFixed}
@@ -1955,6 +1966,7 @@ export function PreventivoForm({
         margineSlot={
           <MargineBox
             bare
+        lettura={isReadOnly}
         voci={activeVoci}
         discountPct={discountPct}
         discountFixed={discountFixed}
@@ -1976,7 +1988,7 @@ export function PreventivoForm({
           committente al pagamento (su un preventivo mostrerebbe un prezzo
           diverso da quello pattuito) e i forfettari ne sono esenti. */}
       {docType === 'fattura' && fiscalRegime !== 'forfettario' && (
-        <div style={{ margin: '0 15px' }}>
+        <div style={{ margin: '0 15px' }} inert={isReadOnly || undefined}>
           <RitenutaCondominio
             defaultPct={defaultValues?.ritenuta_pct ?? null}
             defaultCausale={(defaultValues as { ritenuta_causale?: string | null } | undefined)?.ritenuta_causale ?? null}

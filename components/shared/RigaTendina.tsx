@@ -20,6 +20,7 @@ export function RigaTendina({
   open,
   onToggle,
   last = false,
+  lettura = false,
   children,
 }: {
   id: string
@@ -30,6 +31,14 @@ export function RigaTendina({
   onToggle: () => void
   /** Ultima riga della card: niente filetto sotto. */
   last?: boolean
+  /**
+   * SOLA LETTURA (Eli, 11 set: «deve essere possibile espandersi per
+   * visualizzare tutti i dettagli»): la riga si apre e si chiude, ma i campi
+   * dentro sono `inert` — si leggono, non si toccano. ⚠️ L'inert sta sul
+   * CONTENUTO, mai sull'intero componente: sul form intero bloccava anche
+   * questo toggle e i dettagli restavano invisibili.
+   */
+  lettura?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -57,7 +66,7 @@ export function RigaTendina({
           )}
         <ChevronDown size={18} style={{ color: '#1a1a2e', flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }} />
       </button>
-      <div id={`riga-${id}`} className={open ? undefined : 'hidden'} style={{ paddingBottom: 14 }}>
+      <div id={`riga-${id}`} className={open ? undefined : 'hidden'} style={{ paddingBottom: 14 }} inert={lettura || undefined}>
         {children}
       </div>
     </div>

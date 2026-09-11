@@ -81,6 +81,7 @@ export function MargineBox({
   tierLabel,
   onUpdateVoce,
   bare = false,
+  lettura = false,
 }: {
   voci: VoceItem[]
   /** Sconto documento come stringhe grezze del form (stesse di fiscalOpts) */
@@ -104,6 +105,11 @@ export function MargineBox({
    * righe del form. Senza, resta la card viola storica.
    */
   bare?: boolean
+  /**
+   * SOLA LETTURA (Eli, 11 set): la tendina si apre per leggere il dettaglio,
+   * ma i campi Costo dentro sono `inert` — si guardano, non si correggono.
+   */
+  lettura?: boolean
 }) {
   const [open, setOpen] = useState(false)
 
@@ -131,7 +137,7 @@ export function MargineBox({
   // Il dettaglio aperto (una riga per voce col costo) è lo stesso nei due
   // vestiti: card viola storica e riga «bare» nel Riepilogo.
   const margineDettaglio = (
-        <div style={{ borderTop: bare ? 'none' : '1px solid #e4dff2', padding: bare ? '2px 0 6px' : '9px 13px 12px' }}>
+        <div style={{ borderTop: bare ? 'none' : '1px solid #e4dff2', padding: bare ? '2px 0 6px' : '9px 13px 12px' }} inert={lettura || undefined}>
           {/* Dal 17 ago (Eli) il COSTO si vede e si corregge QUI, non pi\u00F9 nella
               card della voce: una riga per voce con descrizione, campo costo e
               margine. Il costo arriva da solo da catalogo/listini; qui lo si
