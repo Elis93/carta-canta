@@ -2,7 +2,7 @@
 
 > **Fonte di verità per Claude Code.**
 > Va aggiornato a fine di ogni sessione con: feature implementate, decisioni prese, bug emersi, cose rimandate.
-> **Ultima sessione: 9 settembre 2026** (③ i 7 feedback del collaudo: «Prossimo intervento» card a sé + controllo %/€ «proposta C» + niente data calcolata sul termine lavori · ② riquadri della testata Home col filtro del mese · ① la cornetta al posto della matita — sotto).
+> **Ultima sessione: 11 settembre 2026** (Home: «Attività recente» → «Recenti»). Prima: 9 settembre (③ i 7 feedback del collaudo: «Prossimo intervento» card a sé + controllo %/€ «proposta C» + niente data calcolata sul termine lavori · ② riquadri della testata Home col filtro del mese · ① la cornetta al posto della matita — sotto).
 > **Sessione precedente: 8 settembre 2026** (le **rifiniture del riordino**, dal collaudo di Eli sulle tre tranche del 7 set: «spazi tra le righe… distanze esagerate… per quantità c'è uno spazio infinito» → mockup «Rifiniture del riordino» approvato («ok per tutte le proposte») → implementate: voce a UNA riga Quantità·Prezzo·IVA, aria dimezzata nei form, «1 voce» bugiardo corretto, lista sopralluoghi a DUE righe senza «N foto»/«solo appunti» — in produzione, da collaudare sul telefono).
 > Gli handoff qui sotto partono dal **3 agosto**; quelli precedenti sono in `STORICO_SESSIONI.md` (consolidamenti: 14 giu · 15 lug · 6 ago 2026).
 >
@@ -29,6 +29,9 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 ⚠️ Se il report NON esiste (zero righe, zero log), la causa più probabile NON è "zero orfani": è che il cron non è partito. Verificare l'autenticazione della route (`Authorization: Bearer`, non `?secret=` — bug del 5 ago) e che `CRON_SECRET` sia su Vercel.
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
+
+### ✅ 11 set — Home: «Attività recente» → «Recenti»
+Eli: «cambiamo attività recente in home con recenti». Cambiati i DUE soli punti visibili: il titoletto di sezione mobile (`dashboard/page.tsx` ~829, `cc-section-label`) e il `CardTitle` desktop (~1118). Le altre occorrenze sono commenti (storia, non toccati). FAQ/novita/tour: nessuno cita il nome della sezione (grep pulito) → nessuna toccata. tsc+build+**781**+smoke 28/28 · scan 0/67.
 
 ### ✅ 9 set (3) — SETTE FEEDBACK dal collaudo di Eli (mockup «Stato, sconto e acconto» → scelte: «nuova proposta» per la ① e «C» per la ④)
 Eli, 7 punti dal telefono. Mockup fatto PRIMA (artifact https://claude.ai/code/artifact/d333aedf-9298-4365-817f-ac915271579d, due giri: al primo «Prossimo Appuntamento va a parte in una sua sezione bianca… farei proposta B ma non mi convince, fai altri mockup» → V2 con B2/C) → «per la prima ok la nuova proposta e per la seconda proposta C. Procedi poi anche con il resto».
