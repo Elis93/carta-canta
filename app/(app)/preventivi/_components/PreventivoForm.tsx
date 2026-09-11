@@ -1452,15 +1452,19 @@ export function PreventivoForm({
       <SezioneForm label={isNota ? 'Voci della nota' : 'Voci'} right={`${vociCompilate} ${vociCompilate === 1 ? 'voce' : 'voci'}`}>
       <div className="cc-card-md" style={{ overflow: 'hidden', padding: 0 }}>
         {optionsActive && (
+          // Fascia NAVY come la testata Home/Lavoro (mockup «Fascia della
+          // proposta», scelta B di Eli l'11 set — via il crema #f1ece2):
+          // occhiello oro, pillola attiva BIANCA su navy. Dice a colpo
+          // d'occhio «qui sei in modalità proposta».
           <div
             id="fascia-proposta"
             style={{
               position: 'sticky', top: 0, zIndex: 20,
-              background: '#f1ece2', borderBottom: '1px solid #e6dcc8',
+              background: '#1a1a2e',
               padding: '10px 15px 11px', scrollMarginTop: 12,
             }}
           >
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#6f6d64', marginBottom: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.05em', color: '#e6cf94', marginBottom: 8 }}>
               Stai compilando la proposta
             </div>
             {/* F8: proposte Base + Premium; la linguetta "Consigliata" compare
@@ -1478,18 +1482,18 @@ export function PreventivoForm({
                     flex: 1, textAlign: 'center', fontSize: 13.5,
                     fontWeight: activeTier === tier ? 700 : 500,
                     padding: '8px 0', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
-                    background: activeTier === tier ? '#1a1a2e' : '#fff',
-                    border: `1px solid ${activeTier === tier ? '#1a1a2e' : '#e3e3e6'}`,
-                    color: activeTier === tier ? '#fff' : '#55534b',
+                    background: activeTier === tier ? '#fff' : 'transparent',
+                    border: `1px solid ${activeTier === tier ? '#fff' : 'rgba(255,255,255,.35)'}`,
+                    color: activeTier === tier ? '#1a1a2e' : 'rgba(255,255,255,.85)',
                   }}
                 >
                   {OPTION_TIER_LABELS[tier]}
                 </button>
               ))}
             </div>
-            <div style={{ fontSize: 11.5, color: '#8a887f', marginTop: 8, lineHeight: 1.45 }}>
+            <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.62)', marginTop: 8, lineHeight: 1.45 }}>
               Voci, margine e totali qui sotto sono quelli della{' '}
-              <b style={{ color: '#55534b' }}>{OPTION_TIER_LABELS[activeTier]}</b>.
+              <b style={{ color: '#fff' }}>{OPTION_TIER_LABELS[activeTier]}</b>.
             </div>
           </div>
         )}
