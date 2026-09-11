@@ -55,9 +55,37 @@ export function CampoConUnita({
         >
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="%">%</SelectItem>
-          <SelectItem value="€">€</SelectItem>
+        {/* Tendina SU MISURA (proposta A del mockup «Tendina dell'unità»,
+            scelta di Eli l'11 set): il pannello standard di shadcn ha
+            min-w-36 (144px) e la spunta assoluta a destra — per due voci da
+            un carattere usciva un pannello largo sette volte il contenuto.
+            Qui: largo quanto la pillola, sotto di lei allineato a destra,
+            voci centrate, l'unità IN USO in navy, niente spunta (il colore
+            dice già qual è). ⚠️ Lo stato attivo è dato con lo STILE INLINE
+            calcolato da `unita` (non con data-[state=checked]): Radix mette
+            il fuoco sulla voce selezionata all'apertura e il focus:bg-accent
+            della classe base coprirebbe il navy — l'inline vince sempre. */}
+        <SelectContent
+          position="popper"
+          side="bottom"
+          align="end"
+          // La classe base aggiunge già translate-y-1 (4px) in popper → 5px totali come il mockup.
+          sideOffset={1}
+          className="min-w-0 p-1"
+          style={{ width: 46, borderRadius: 10, border: '1px solid #e6e1d5', boxShadow: '0 6px 18px -6px rgba(20,20,40,.22)' }}
+        >
+          {(['%', '€'] as const).map((u, i) => (
+            <SelectItem
+              key={u}
+              value={u}
+              className="h-9 justify-center p-0 rounded-[7px] text-[15px] [&>span:first-child]:hidden"
+              style={u === unita
+                ? { background: '#1a1a2e', color: '#fff', fontWeight: 600, marginTop: i > 0 ? 3 : 0 }
+                : { color: '#55534b', fontWeight: 600, marginTop: i > 0 ? 3 : 0 }}
+            >
+              {u}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

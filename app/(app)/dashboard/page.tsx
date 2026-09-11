@@ -825,9 +825,9 @@ export default async function DashboardPage() {
 
         {/* 8. Activity card — titoletto FUORI dalla card (stile Altro, Eli 2 ago sera) */}
         <div style={{ margin: '23px 15px 18px' }}>
-          {/* «Recenti» secco (Eli 11 set: «cambiamo attività recente con recenti»). */}
+          {/* «Attività recenti» (Eli 11 set, secondo giro: «avevo detto attività recenti»). */}
           <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>
-            Recenti
+            Attività recenti
           </div>
           <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '2px 15px 8px' }}>
 
@@ -1115,7 +1115,7 @@ export default async function DashboardPage() {
         {/* Attività recente */}
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base">Recenti</CardTitle>
+            <CardTitle className="text-base">Attività recenti</CardTitle>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/preventivi">
                 Vedi tutti
