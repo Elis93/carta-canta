@@ -841,6 +841,7 @@ export default async function DashboardPage() {
         <FeHomeRows
           daTrasmettereCount={sdiDaTrasmettereAll.length}
           termineLabel={sdiDaTrasmettereAll[0]?.termineLabel ?? null}
+          daTrasmettereFuoriTermine={sdiDaTrasmettereAll.some((d) => d.urgenza === 'rosso')}
           scartateCount={sdiScartateAll.length}
           style={{ margin: '18px 15px 0' }}
         />

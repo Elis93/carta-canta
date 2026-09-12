@@ -36,10 +36,12 @@ function FeRow({ href, dotColor, label, sub, subColor, count }: {
   )
 }
 
-export function FeHomeRows({ daTrasmettereCount, termineLabel, scartateCount, style }: {
+export function FeHomeRows({ daTrasmettereCount, termineLabel, daTrasmettereFuoriTermine, scartateCount, style }: {
   daTrasmettereCount: number
   /** Termine della più urgente («entro il 23 ago» / «entro OGGI» / «oltre il termine») */
   termineLabel: string | null
+  /** Almeno una da trasmettere è OLTRE il termine → pallino rosso (Eli, 12 set) */
+  daTrasmettereFuoriTermine?: boolean
   scartateCount: number
   style?: React.CSSProperties
 }) {
@@ -52,9 +54,16 @@ export function FeHomeRows({ daTrasmettereCount, termineLabel, scartateCount, st
       <div style={{ background: '#fff', borderRadius: 13, boxShadow: SH, padding: '13px 14px' }}>
         <FeRow
           href="/fatture/da-trasmettere"
-          dotColor={daTrasmettereCount > 0 ? '#3f6fb0' : '#c9c7c0'}
+          dotColor={
+            daTrasmettereCount === 0
+              ? '#c9c7c0'
+              : daTrasmettereFuoriTermine
+                ? '#b05656' // oltre il termine → rosso, come le scartate
+                : '#3f6fb0'
+          }
           label="Da trasmettere"
           sub={daTrasmettereCount > 0 ? (termineLabel ?? 'allo SdI') : ''}
+          subColor={daTrasmettereCount > 0 && daTrasmettereFuoriTermine ? '#b05656' : undefined}
           count={daTrasmettereCount}
         />
         <div aria-hidden style={{ height: 1, background: '#e4e2dc', margin: '14px 0' }} />
