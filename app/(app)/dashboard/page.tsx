@@ -60,6 +60,17 @@ interface LavoroFeedRow {
   clients: { name: string | null; surname: string | null } | null
 }
 
+// Lavoro «in corso» per la card della Home. La select annidata `clients(...)`
+// può tornare oggetto o array a seconda del join: si normalizza al render.
+interface LavoroInCorsoRow {
+  id: string
+  title: string | null
+  client_id: string | null
+  clients: { name: string | null; surname: string | null; phone: string | null }
+    | { name: string | null; surname: string | null; phone: string | null }[]
+    | null
+}
+
 interface DocRow {
   id: string
   title: string
@@ -327,7 +338,7 @@ export default async function DashboardPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabella 049 non ancora in types/database.ts
     (supabase as any)
       .from('lavori')
-      .select('id, title')
+      .select('id, title, client_id, clients(name, surname, phone)')
       .eq('workspace_id', workspace.id)
       .eq('status', 'in_corso')
       .is('deleted_at', null)
@@ -335,9 +346,9 @@ export default async function DashboardPage() {
       .limit(1)
       .maybeSingle()
       .then(
-        (r: { data: { id: string; title: string | null } | null }) => r.data,
+        (r: { data: LavoroInCorsoRow | null }) => r.data,
         () => null,
-      ) as Promise<{ id: string; title: string | null } | null>,
+      ) as Promise<LavoroInCorsoRow | null>,
   ])
 
   const docs: DocRow[] = (recentDocs ?? []) as DocRow[]
@@ -786,10 +797,21 @@ export default async function DashboardPage() {
         <AppuntamentiOggiCard agenda={todayEvents} style={{ margin: '18px 15px 0' }} />
 
         {/* 4d. Lavoro in corso — solo se un lavoro è davvero in corso:
-            titolo (max 2 righe) + Timer / Foto / Modifica. */}
-        {lavoroInCorsoRow && (
-          <LavoroInCorsoCard id={lavoroInCorsoRow.id} title={lavoroInCorsoRow.title} style={{ margin: '18px 15px 0' }} />
-        )}
+            titolo (max 2 righe) + Timer / Foto / Cornetta (chiama o aggiungi). */}
+        {lavoroInCorsoRow && (() => {
+          const cli = Array.isArray(lavoroInCorsoRow.clients) ? lavoroInCorsoRow.clients[0] : lavoroInCorsoRow.clients
+          const clientName = [cli?.name, cli?.surname].filter(Boolean).join(' ') || null
+          return (
+            <LavoroInCorsoCard
+              id={lavoroInCorsoRow.id}
+              title={lavoroInCorsoRow.title}
+              clientId={lavoroInCorsoRow.client_id}
+              clientName={clientName}
+              clientPhone={cli?.phone ?? null}
+              style={{ margin: '18px 15px 0' }}
+            />
+          )
+        })()}
 
         {/* 5. Card unica "In scadenza": preventivo da sollecitare + fattura da
             incassare + i due tasti che sostituiscono la voce Scadenze di Altro

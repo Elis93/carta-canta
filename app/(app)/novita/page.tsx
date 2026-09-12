@@ -17,6 +17,8 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Su ogni documento coi conti — la pagina del cliente, il PDF, i fogli di preventivo e fattura, il riepilogo mentre compili, le card delle proposte — ora ogni voce porta accanto la sua aliquota IVA (per esempio «IVA 22%»). Prima l’IVA si leggeva in fondo come se tutto fosse a un’unica aliquota, anche quando le voci ne avevano di diverse.',
       'Lo sconto della singola voce non si perde più su nessuna pagina: dove prima, per il bene significativo, la voce veniva sostituita da una riga tecnica senza lo sconto, ora resta la voce vera («10 mq × 5,00 −9%») con sotto una riga grigia che spiega la parte al 22%. Lo sconto è scritto sempre nello stesso modo, «Sconto −9%» in verde.',
       'Nel riepilogo c’è una sola riga «IVA» con l’imposta sul totale; quando le aliquote sono più d’una, sotto compaiono in piccolo le quote per aliquota («su 200,00 al 10% — 20,00»). I conti non cambiano di un centesimo e la fattura elettronica resta identica: cambia solo come i numeri vengono mostrati.',
+      'Quando spunti «È un bene significativo» su una voce al 10%, l’app ti avvisa subito se l’IVA effettiva non è più il 10%: se il bene è l’unica voce al 10%, senza altro lavoro al 10% l’intero importo va al 22% — e ti dice come tenerne una parte agevolata (aggiungendo la posa o la manodopera al 10%).',
+      'In Home, sulla card «Lavoro in corso», l’ultimo tasto è ora la cornetta: se hai il numero del cliente lo chiami al volo; se non ce l’hai, un riquadro ti fa aggiungerlo sul momento e lo salva nella scheda del cliente, così lo ritrovi ovunque.',
     ],
   },
   {

@@ -820,6 +820,15 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       non è in rubrica, al posto della cornetta c&rsquo;è la matita che apre il sopralluogo).</>,
   },
   {
+    q: 'In Home, sul lavoro in corso, a cosa servono i tre tasti?',
+    parole: ['lavoro in corso', 'home', 'timer', 'foto', 'cornetta', 'chiamare', 'telefono cliente'],
+    a: <>Sulla card <b>Lavoro in corso</b> hai tre tasti: <b>Timer</b> (apre le ore del lavoro),
+      {' '}<b>Foto</b> (le foto del cantiere) e la <b>cornetta</b>. La cornetta chiama subito il
+      cliente se hai il suo numero in rubrica; se non ce l&rsquo;hai, si apre un riquadro per
+      aggiungerlo al volo, e lo salvo nella <b>scheda del cliente</b> così lo ritrovi ovunque —
+      non solo per questa chiamata. Per aprire la scheda del lavoro tocca il <b>titolo</b>.</>,
+  },
+  {
     q: 'Mentre scrivo l’indirizzo del cantiere compaiono dei suggerimenti: cosa sono?',
     parole: ['indirizzo', 'cantiere', 'suggerimenti', 'sopralluogo', 'lavoro'],
     a: <>Sono gli indirizzi che hai <b>già usato</b> in altri sopralluoghi o lavori: appena inizi

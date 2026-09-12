@@ -553,3 +553,39 @@ export async function getClientAddressAction(
   const address = parts.join(', ').trim()
   return { address: address || null }
 }
+
+/**
+ * Aggiunge/aggiorna VELOCEMENTE il telefono di un cliente dalla Home
+ * (card «Lavoro in corso», cornetta senza numero — Eli, 12 set): il numero si
+ * scrive UNA volta e resta nella scheda del cliente, così vale ovunque, non
+ * solo per la chiamata di adesso. Scoped al workspace (RLS + filtro esplicito).
+ */
+export async function setClientPhoneAction(
+  clientId: string,
+  phone: string,
+): Promise<ActionResult> {
+  if (!clientId) return { error: 'Cliente non trovato.' }
+  const clean = (phone ?? '').trim()
+  // Serve almeno qualche cifra: un numero senza cifre non è un numero.
+  if ((clean.match(/\d/g) ?? []).length < 4) {
+    return { error: 'Scrivi un numero di telefono valido.' }
+  }
+
+  const supabase = await createClient()
+  const workspaceId = await getWorkspaceId()
+  if (!workspaceId) return { error: 'Sessione non valida. Ricarica la pagina.' }
+
+  const { data: updated, error } = await supabase
+    .from('clients')
+    .update({ phone: clean })
+    .eq('id', clientId)
+    .eq('workspace_id', workspaceId)
+    .select('id')
+    .maybeSingle()
+  if (error) return { error: 'Non riesco a salvare il numero. Riprova.' }
+  if (!updated) return { error: 'Cliente non trovato.' }
+
+  revalidatePath('/dashboard')
+  revalidatePath(`/clienti/${clientId}`)
+  return { success: 'Numero salvato nella scheda del cliente.' }
+}

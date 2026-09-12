@@ -1,13 +1,17 @@
 import Link from 'next/link'
 import { Camera, PenLine, Timer } from 'lucide-react'
+import { LavoroTelefonoButton } from './LavoroTelefonoButton'
 
 // ── «Lavoro in corso» (Home mobile, redesign 19-20 ago) ─────────────────────
 // Il lavoro attivo, raggiungibile in un tocco (Eli: «se c'è un lavoro in
 // corso, come lo modifica velocemente un artigiano?»). Titolo su MASSIMO due
 // righe (scelta Eli) + tre tasti quadrati: Timer (le ore), Foto (documenta il
-// cantiere), Matita (la scheda). Timer e Foto atterrano sulla scheda con
-// l'ancora della card giusta (#ore / #foto). La sezione esiste solo se un
-// lavoro è davvero in corso.
+// cantiere), e la CORNETTA (Eli, 12 set): col telefono del cliente chiama
+// diretto, senza numero apre un pop-up per aggiungerlo alla scheda del cliente.
+// La matita non serve più — il corpo della card apre già la scheda —, resta
+// solo di ripiego se il lavoro non ha un cliente collegato. Timer e Foto
+// atterrano sulla scheda con l'ancora giusta (#ore / #foto). La sezione esiste
+// solo se un lavoro è davvero in corso.
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
@@ -18,7 +22,16 @@ const sqStyle: React.CSSProperties = {
   color: '#1a1a2e', textDecoration: 'none',
 }
 
-export function LavoroInCorsoCard({ id, title, style }: { id: string; title: string | null; style?: React.CSSProperties }) {
+export function LavoroInCorsoCard({
+  id, title, clientId, clientName, clientPhone, style,
+}: {
+  id: string
+  title: string | null
+  clientId?: string | null
+  clientName?: string | null
+  clientPhone?: string | null
+  style?: React.CSSProperties
+}) {
   return (
     <div style={style}>
       <div className="cc-section-label" style={{ margin: '0 2px 8px' }}>Lavoro in corso</div>
@@ -40,9 +53,13 @@ export function LavoroInCorsoCard({ id, title, style }: { id: string; title: str
         <Link href={`/lavori/${id}#foto`} aria-label="Foto del lavoro" style={sqStyle}>
           <Camera size={17} aria-hidden />
         </Link>
-        <Link href={`/lavori/${id}`} aria-label="Apri la scheda del lavoro" style={sqStyle}>
-          <PenLine size={17} aria-hidden />
-        </Link>
+        {clientId ? (
+          <LavoroTelefonoButton clientId={clientId} clientName={clientName ?? null} phone={clientPhone ?? null} />
+        ) : (
+          <Link href={`/lavori/${id}`} aria-label="Apri la scheda del lavoro" style={sqStyle}>
+            <PenLine size={17} aria-hidden />
+          </Link>
+        )}
       </div>
     </div>
   )
