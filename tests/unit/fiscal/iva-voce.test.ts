@@ -96,8 +96,10 @@ describe('ivaEffettivaVoci — la pillola mostra l\'aliquota vera', () => {
 })
 
 describe('notaBeneSplit — la riga grigia di dettaglio', () => {
-  it('tutto al 22 (P=0): dice «per intero al 22%»', () => {
-    expect(notaBeneSplit({ al10: 0, al22: 45.5 })).toContain('per intero al 22%')
+  it('tutto al 22 (P=0): dice il PERCHÉ e «per intero al 22%»', () => {
+    const s = notaBeneSplit({ al10: 0, al22: 45.5 })
+    expect(s).toContain('per intero al 22%')
+    expect(s).toContain('senza altre voci al 10%')
   })
   it('diviso 10/22: mostra le due quote', () => {
     const s = notaBeneSplit({ al10: 100, al22: 50 })

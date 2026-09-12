@@ -99,7 +99,11 @@ export function notaBeneSplit(split: { al10: number; al22: number }): string {
     return `Bene significativo: ${fmtEuro(split.al10)} al ${ALIQUOTA_AGEVOLATA}% + ${fmtEuro(split.al22)} al ${ALIQUOTA_ORDINARIA}% (quota eccedente la prestazione)`
   }
   if (split.al22 > 0) {
-    return `Bene significativo: quota eccedente la prestazione — per intero al ${ALIQUOTA_ORDINARIA}%`
+    // Caso P=0: il bene è l'unica cosa al 10% (nessun'altra voce al 10% a cui
+    // agganciare l'agevolazione) → l'intero importo va al 22%. Spieghiamo il
+    // PERCHÉ, non solo l'esito: senza questa frase sembra che il 10% impostato
+    // sia stato ignorato per errore.
+    return `Bene significativo: senza altre voci al ${ALIQUOTA_AGEVOLATA}%, va per intero al ${ALIQUOTA_ORDINARIA}%`
   }
   return `Bene significativo: ${fmtEuro(split.al10)} al ${ALIQUOTA_AGEVOLATA}%`
 }
