@@ -1,6 +1,7 @@
 // Sentry — inizializzazione lato server (Node runtime).
 // Caricato da instrumentation.ts SOLO se il DSN è configurato.
 import * as Sentry from '@sentry/nextjs'
+import { SENTRY_IGNORED_ERRORS } from '@/lib/sentry/ignore'
 
 const dsn = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN
 
@@ -10,6 +11,8 @@ if (dsn) {
     tracesSampleRate: 0.1,
     // Non inviare dati personali di default (privacy)
     sendDefaultPii: false,
+    // Errori noti e benigni che si auto-risolvono (vedi lib/sentry/ignore.ts)
+    ignoreErrors: SENTRY_IGNORED_ERRORS,
     environment: process.env.VERCEL_ENV || process.env.NODE_ENV,
   })
 }

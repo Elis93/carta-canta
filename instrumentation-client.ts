@@ -8,7 +8,10 @@
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN
 
 if (dsn) {
-  void import('@sentry/nextjs').then((Sentry) => {
+  void Promise.all([
+    import('@sentry/nextjs'),
+    import('@/lib/sentry/ignore'),
+  ]).then(([Sentry, { SENTRY_IGNORED_ERRORS }]) => {
     Sentry.init({
       dsn,
       tracesSampleRate: 0.1,
@@ -16,6 +19,8 @@ if (dsn) {
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 0,
       sendDefaultPii: false,
+      // Errori noti e benigni che si auto-risolvono (vedi lib/sentry/ignore.ts)
+      ignoreErrors: SENTRY_IGNORED_ERRORS,
       environment: process.env.NEXT_PUBLIC_VERCEL_ENV || process.env.NODE_ENV,
     })
   })
