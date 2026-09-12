@@ -183,7 +183,7 @@ export default async function AltroPage() {
               <span style={{ border: '1px solid #e8d6ad', color: '#b0863e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '.03em' }}>PRO</span>
             ) : undefined}
           />
-          <MenuRow href="/farti-trovare" icon={Store} label="Vetrina" desc="Fatti trovare dai clienti · richieste e recensioni" descAlways hint={richiesteBadge} last />
+          <MenuRow href="/farti-trovare" icon={Store} label="Vetrina" desc="Fatti trovare dai clienti, richieste e recensioni" descAlways hint={richiesteBadge} last />
         </div>
       </div>
 
