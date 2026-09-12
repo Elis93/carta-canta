@@ -40,6 +40,10 @@ i testi dell'app è un giro a sé, da fare su richiesta.
 
 ## A. DECISIONI BLOCCATE (✅ — non annullare)
 
+### Acconto → fattura: ⏸️ STAND-BY in attesa del commercialista (decisione Eli, 12 set 2026)
+> *«su questo punto dobbiamo aspettare il commercialista quindi teniamolo stand-by ma ricordiamoci che va gestito!!! segnalo»*
+**Bloccata (B.0).** Sul collaudo Eli ha notato che convertendo un preventivo con acconto in fattura non si capisce se la fattura sia sul totale o sul solo acconto, e che l'app non guida al momento dell'incasso dell'acconto. La gestione (① promemoria alla spunta dell'acconto sul preventivo → segnare l'incasso e poi creare/trasmettere la fattura; ② chiarezza che «Converti in fattura» produce una fattura sull'INTERO importo con l'acconto come incasso già ricevuto; ③ eventuale selettore «fattura sul totale» vs «fattura del solo acconto» TD02) è **materia fiscale**: si aspetta la risposta del commercialista alla domanda **N11** di `COSE_DA_FARE_ELI.md` prima di scrivere qualunque codice. **Registrata lì** con i tre punti da gestire una volta sbloccata. Nessun codice scritto.
+
 ### Downgrade Pro → Free: si bloccano i contenuti E le funzioni Pro (richiesta Eli, 12 ago 2026) — ⏳ DA FARE
 > *«Se qualcuno passa al piano Pro e poi a quello Free, i preventivi oltre gli 8 free vengono bloccati, e idem per tutte le cose aggiunte con il piano Pro: devono bloccarsi. Deve apparire un messaggio che dice di tornare a Pro per sbloccare.»*
 - **Cosa fa OGGI (verificato in `lib/free-trial.ts`)**: `checkFreeBlock` blocca **solo la creazione/invio** di nuovi preventivi quando `sent_quota_used >= 8` (contatore storico, non decrementato) e `plan === 'free'`. Quindi chi era Pro e torna Free **non può inviarne di nuovi** — ma i preventivi già creati e le funzioni Pro restano accessibili.

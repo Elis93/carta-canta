@@ -366,6 +366,23 @@ scorporare l'acconto già fatturato.
 - ② Ha senso che l'app, quando si registra l'incasso dell'acconto, proponga «crea la fattura
   di acconto» e poi generi il saldo che scorpora l'acconto già fatturato?
 
+> ⏸️ **STAND-BY — decisione di Eli (12 set 2026): «dobbiamo aspettare il commercialista, teniamolo
+> stand-by ma ricordiamoci che va gestito».** Questa parte del prodotto NON si tocca finché il
+> commercialista non risponde a N11 — è materia fiscale bloccata dalla regola B.0. Ecco cosa va
+> gestito UNA VOLTA SBLOCCATO (così quando arriva la risposta non si riparte da zero):
+> - **① Promemoria alla spunta dell'acconto sul preventivo.** Quando l'artigiano attiva l'acconto,
+>   avvisarlo che appena l'acconto viene INCASSATO va segnato nell'app, poi creata e trasmessa la
+>   fattura (di acconto, se il commercialista conferma il TD02). Oggi `AccontoCard` ha già il toast
+>   e il countdown dei 12 giorni ma parlano di «fattura d'acconto» come se esistesse già la funzione.
+> - **② Chiarezza su «Converti in fattura».** Oggi la conversione produce una fattura sull'INTERO
+>   importo, con l'acconto mostrato come incasso già ricevuto («Acconto già ricevuto −58,19 / Resta
+>   da incassare 135,79» — es. fattura 005/2026, totale 193,98). Eli sul collaudo non capiva se la
+>   fattura fosse sul totale o sul solo acconto: va reso esplicito che è **sul totale** (l'acconto è
+>   un incasso registrato, non una fattura separata).
+> - **③ Futuro selettore** «fattura sul totale» vs «fattura del solo acconto» (TD02) al momento
+>   della conversione — solo se il commercialista conferma che serve la fattura di acconto separata.
+> - ⚠️ Nessun codice scritto per questi tre punti: **bloccati** in attesa della risposta a N11.
+
 **N12 — CONSERVAZIONE A NORMA 10 ANNI** *(⚠️ corretta l'11 ago dopo il controllo dei
 nostri documenti: la conservazione **la fa OPENAPI**, il nostro provider SdI — era uno dei
 criteri di scelta, e ha escluso Invoicetronic che non la offriva. Quindi la domanda NON è
