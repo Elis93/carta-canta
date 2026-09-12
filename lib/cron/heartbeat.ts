@@ -35,7 +35,11 @@ export const OPERATOR_EMAIL = 'supporto@cartacanta.app'
  * ⚠️ Il guardiano NON sorveglia sé stesso (vedi limite in testa al file).
  */
 export const CRON_JOBS: { name: string; label: string; maxAgeHours: number }[] = [
-  { name: 'sdi-auto',         label: 'Trasmissione automatica SdI (oraria)', maxAgeHours: 3 },
+  // ⚠️ sdi-auto è orario, ma i cron di Vercel sono «best-effort»: qualche giro
+  // può slittare o saltare senza che nulla sia rotto. 6h = ~5 giri saltati di
+  // fila prima di allarmare (segnale vero di «morto», non del normale jitter),
+  // e resta comunque ampiamente dentro la finestra fiscale dei 12 giorni.
+  { name: 'sdi-auto',         label: 'Trasmissione automatica SdI (oraria)', maxAgeHours: 6 },
   { name: 'expire-documents', label: 'Scadenze e promemoria (giornaliera)',  maxAgeHours: 30 },
   { name: 'referral',         label: 'Premi invito (mensile)',               maxAgeHours: 24 * 33 },
   { name: 'orphan-files',     label: 'Pulizia file orfani (mensile)',        maxAgeHours: 24 * 33 },

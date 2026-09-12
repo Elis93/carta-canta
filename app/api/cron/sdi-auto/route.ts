@@ -49,6 +49,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
   if (!SDI_ENABLED) {
+    // ⚠️ Anche a vuoto il cron ha GIRATO: registra il battito, altrimenti il
+    // guardiano (/api/cron/health) lo scambia per fermo e manda un falso
+    // allarme. In pre-lancio (SdI spento) questo è lo stato NORMALE: un giro a
+    // vuoto ogni ora prova che il pilota è vivo, senza trasmettere nulla.
+    await recordCronRun('sdi-auto', { trasmesse: 0, rimandate: 0, skipped: 'sdi-off' })
     return NextResponse.json({ ok: true, skipped: 'SDI disattivato' })
   }
 
