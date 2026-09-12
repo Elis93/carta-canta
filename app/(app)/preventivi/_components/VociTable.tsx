@@ -16,6 +16,7 @@ import { suggerisciVoci, normalizzaTesto, type FonteVoce } from '@/lib/documents
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { toast } from 'sonner'
 import { CalcQuantitaButton } from '@/components/calc/CalcQuantitaButton'
+import { ivaEffettivaVoci, type IvaVoceInfo } from '@/lib/fiscal/iva-voce'
 
 // ── NumericInput ──────────────────────────────────────────────────────────────
 interface NumericInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
@@ -146,8 +147,16 @@ const ORO = '#b08d3e'
 // addebita IVA) e voce al 10% (l'agevolazione vale lì). Fuori da quei due
 // casi la spunta non esiste proprio: un interruttore che non fa niente è
 // peggio di un interruttore assente.
-function VoceBene({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<VoceItem>) => void }) {
+function VoceBene({ voce, onUpdate, info }: { voce: VoceItem; onUpdate: (u: Partial<VoceItem>) => void; info?: IvaVoceInfo }) {
   const attivo = voce.bene_significativo === true
+  // ⚠️ Avviso contestuale (Eli, 12 set): con la spunta attiva l'IVA EFFETTIVA
+  // può non essere il 10% impostato — la regola dei beni significativi manda
+  // al 22% la parte che eccede il valore del lavoro. Se il bene è l'unica voce
+  // al 10% (caso «P=0») va TUTTO al 22%. Senza dirlo qui, l'artigiano vede 10%
+  // sul campo e 22% nel riepilogo e pensa a un errore (è quello che è successo).
+  const split = attivo ? info?.split ?? null : null
+  const pZero = split != null && split.al10 === 0 // tutto al 22
+  const splitVero = split != null && split.al10 > 0 && split.al22 > 0 // 10% + 22%
   return (
     <div style={{ marginTop: 8 }}>
       <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
@@ -161,6 +170,24 @@ function VoceBene({ voce, onUpdate }: { voce: VoceItem; onUpdate: (u: Partial<Vo
           È un <b>bene significativo</b> (caldaia, infissi, sanitari…)
         </span>
       </label>
+      {/* P=0: il 10% impostato scompare del tutto → ambra, è la sorpresa. */}
+      {pZero && (
+        <div style={{
+          marginLeft: 26, marginTop: 6, fontSize: 11.5, lineHeight: 1.4, color: '#b0863e',
+          background: '#faf6ec', border: '1px solid #ecdcbb', borderRadius: 8, padding: '6px 9px',
+        }}>
+          <b>IVA effettiva: 22%.</b>{' '}È l’unica voce al 10%: senza altro lavoro al 10%,
+          l’agevolazione non si applica e l’intero importo va al 22%. Aggiungi la posa o la
+          manodopera al 10% perché una parte resti agevolata.
+        </div>
+      )}
+      {/* Split 10%+22%: è l'esito CORRETTO e atteso → nota neutra, non un allarme. */}
+      {splitVero && (
+        <div style={{ marginLeft: 26, marginTop: 6, fontSize: 11.5, lineHeight: 1.4, color: 'var(--cc-muted)' }}>
+          <b>IVA effettiva: 10% + 22%.</b>{' '}La parte del bene che eccede il valore del
+          lavoro va al 22%, come richiede la legge.
+        </div>
+      )}
       {/* Il ⓘ sta IN LINEA sotto l'etichetta, non su una riga propria: la card
           della voce è già alta e ogni riga in più si paga (feedback Eli). */}
       <div style={{ marginLeft: 26, marginTop: 2 }}>
@@ -226,6 +253,18 @@ export function VociTable({
   lettura = false,
 }: VociTableProps) {
   const showVat = fiscalRegime !== 'forfettario'
+
+  // IVA effettiva per voce (allineata a `voci` per indice) — serve all'avviso
+  // contestuale del bene significativo in VoceBene. Dipende dall'INTERA lista
+  // (lo split guarda le altre voci al 10%), quindi si calcola qui e si passa
+  // giù. Memoizzata: non ricalcola a ogni tasto su stati non fiscali (apertura
+  // righe, tendina suggerimenti…). ⚠️ reverse charge non è noto qui: in quel
+  // caso l'IVA non si addebita e la spunta bene è un caso di scuola — la nota
+  // resta un'imprecisione minima e accettata.
+  const ivaInfoVoci = useMemo<IvaVoceInfo[]>(
+    () => (showVat ? ivaEffettivaVoci(voci, fiscalRegime, defaultVatRate) : []),
+    [voci, fiscalRegime, defaultVatRate, showVat],
+  )
 
   // Variante B (mockup approvato da Eli, 3 ago sera): su MOBILE le voci
   // compilate stanno CHIUSE in una riga sola (descrizione · dettaglio ·
@@ -847,7 +886,7 @@ export function VociTable({
                     </div>
                     {beneVisibile && (
                       <div style={{ marginTop: 8 }}>
-                        <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
+                        <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} info={ivaInfoVoci[idx]} />
                       </div>
                     )}
                   </div>
@@ -866,7 +905,7 @@ export function VociTable({
                 && (voce.vat_rate ?? defaultVatRate ?? 22) === 10
                 && (
                   <div className="hidden lg:block" inert={lettura || undefined}>
-                    <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} />
+                    <VoceBene voce={voce} onUpdate={(u) => updateVoce(voce._key, u)} info={ivaInfoVoci[idx]} />
                   </div>
                 )}
 

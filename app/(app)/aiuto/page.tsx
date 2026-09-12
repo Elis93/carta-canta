@@ -440,7 +440,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       rispetto all&rsquo;infisso. Contano però solo le voci con <b>IVA al 10%</b>:{' '}
       se il bene è l&rsquo;unica voce al 10% del preventivo, il valore del lavoro
       è zero e il bene va per intero al 22%. Tu apri <b>Sconto · bene significativo</b>{' '}sotto i campi della voce e spunti{' '}<b>«È un bene significativo»</b>,
-      il resto lo fa l&rsquo;app. Sul preventivo e sulla fattura la voce resta quella
+      il resto lo fa l&rsquo;app. Se l&rsquo;IVA effettiva non è il 10% che hai impostato — perché una
+      parte, o tutto, va al 22% — l&rsquo;app te lo avvisa subito sotto la spunta, così lo capisci mentre
+      compili invece di trovartelo diverso nel riepilogo. Sul preventivo e sulla fattura la voce resta quella
       vera, con accanto la sua <b>aliquota</b> (per la caldaia «22%» o «10% + 22%») e una
       riga che spiega la parte al 22%; in fattura compare anche il valore del bene, come
       chiede la legge. La spunta compare solo se non sei in forfettario e la voce è al
