@@ -11,6 +11,15 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 // Aggiungere una voce qui a ogni rilascio rilevante per l'utente.
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
+    data: 'Metà settembre 2026',
+    titolo: 'Ogni voce dice la sua IVA, e lo sconto non sparisce più',
+    punti: [
+      'Su ogni documento coi conti — la pagina del cliente, il PDF, i fogli di preventivo e fattura, il riepilogo mentre compili, le card delle proposte — ora ogni voce porta accanto la sua aliquota IVA (per esempio «IVA 22%»). Prima l’IVA si leggeva in fondo come se tutto fosse a un’unica aliquota, anche quando le voci ne avevano di diverse.',
+      'Lo sconto della singola voce non si perde più su nessuna pagina: dove prima, per il bene significativo, la voce veniva sostituita da una riga tecnica senza lo sconto, ora resta la voce vera («10 mq × 5,00 −9%») con sotto una riga grigia che spiega la parte al 22%. Lo sconto è scritto sempre nello stesso modo, «Sconto −9%» in verde.',
+      'Nel riepilogo c’è una sola riga «IVA» con l’imposta sul totale; quando le aliquote sono più d’una, sotto compaiono in piccolo le quote per aliquota («su 200,00 al 10% — 20,00»). I conti non cambiano di un centesimo e la fattura elettronica resta identica: cambia solo come i numeri vengono mostrati.',
+    ],
+  },
+  {
     data: 'Inizio settembre 2026',
     titolo: 'Gli avvisi non sono più gialli, e la pagina del documento è riordinata',
     punti: [
@@ -87,7 +96,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
     data: 'Metà agosto 2026',
     titolo: 'Note di credito, proposte più chiare e conferme di accettazione',
     punti: [
-      'IVA al 10% e beni significativi: quando installi una caldaia, degli infissi o dei sanitari, il 10% vale solo fino al valore del lavoro — quello che avanza va al 22%. Spunti «È un bene significativo» sulla voce e l’app fa i conti, divide la riga in due e scrive in fattura il valore del bene, come chiede la legge. Compare solo fuori dal forfettario, sulle voci al 10%.',
+      'IVA al 10% e beni significativi: quando installi una caldaia, degli infissi o dei sanitari, il 10% vale solo fino al valore del lavoro — quello che avanza va al 22%. Spunti «È un bene significativo» sulla voce e l’app fa i conti e scrive in fattura il valore del bene, come chiede la legge. Compare solo fuori dal forfettario, sulle voci al 10%.',
       'Fatture al condominio: spunti «Il cliente è un condominio» e la fattura mostra la ritenuta del 4% che l’amministratore trattiene e versa lui, con il totale davvero da bonificare. Se sei in forfettario non ti riguarda: non ti trattengono nulla e la tua fattura lo dice già.',
       'Lavori edili per altre imprese: c’è la spunta per l’inversione contabile (reverse charge) — fattura senza IVA con la dicitura di legge, per pulizia, demolizioni, impianti e completamento su edifici quando il cliente ha la partita IVA. Serve la sua P.IVA in rubrica; con un privato l’IVA si addebita normalmente.',
       'Note di credito: una fattura trasmessa allo SdI non si annulla — si storna. Sulla fattura trovi «Crea nota di credito»: nasce già compilata (cliente, voci, riferimento alla fattura), tu scegli solo il motivo. Attento ai tempi: per un errore o un accordo col cliente va fatta entro un anno. Ha una numerazione tutta sua (NC 001/2026) e la trovi nella lista Fatture, con scritto quale fattura storna. Puoi farne anche più d’una sulla stessa fattura (storni parziali): l’app ti mostra il residuo stornabile e non lascia stornare più del totale.',

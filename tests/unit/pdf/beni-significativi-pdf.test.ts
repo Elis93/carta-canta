@@ -1,11 +1,17 @@
 // ============================================================
-// BENI SIGNIFICATIVI nel PDF (081)
+// BENI SIGNIFICATIVI nel PDF (081 · rappresentazione rifatta il 12 set)
 //
 // Due cose devono arrivare al cliente, e sono ENTRAMBE obbligatorie:
-//  ① le due righe separate (quota al 10% ed eccedenza al 22%);
+//  ① la separata evidenza della parte al 10% e di quella al 22% — dal 12 set
+//     NON più con due righe sintetiche, ma con la pillola dell'IVA effettiva
+//     sulla voce vera + una riga grigia di dettaglio;
 //  ② la dicitura col valore del bene e il corrispettivo al netto —
 //    art. 1, comma 19, L. 205/2017, dovuta **anche quando tutto resta
-//    al 10%**, cioè proprio quando le righe restano una sola.
+//    al 10%**, cioè proprio quando la voce non si spezza.
+//
+// ⚠️ L'XML per lo SdI resta spezzato in due righe (doc-xml.ts, invariato):
+// qui cambia solo la RAPPRESENTAZIONE del PDF. I totali e le righe IVA del
+// riepilogo vengono dal motore (riepilogoIva sulle voci espanse).
 //
 // Il PDF è la fonte unica (B.8): quello che si verifica qui vale anche
 // per /p/[token] e per le anteprime in app.
@@ -65,13 +71,16 @@ function makeData(items: unknown[], totale: number, imposta: number): PdfDocumen
 }
 
 describe('PDF — beni significativi', () => {
-  it('caldaia 2.000 + posa 800: due righe distinte, 1.600 al 10% e 1.200 al 22%', () => {
+  it('caldaia 2.000 + posa 800: voce vera + pillola IVA + riga grigia (12 set), riepilogo 1.600 al 10% e 1.200 al 22%', () => {
     const html = buildPdfHtml(makeData(
       [item('item-0', 'Caldaia a condensazione', 2000, true), item('item-1', 'Posa in opera', 800)],
       2800, 424,
     ))
-    expect(html).toContain('quota agevolata')
-    expect(html).toContain('quota eccedente il valore della prestazione')
+    // 12 set: la voce resta QUELLA VERA — non più le due righe sintetiche
+    // dello split. Compaiono la pillola dell'IVA effettiva e la riga grigia.
+    expect(html).not.toContain('quota agevolata')
+    expect(html).toContain('IVA&nbsp;10% + 22%')
+    expect(html).toContain('Bene significativo')
     // Le righe IVA del riepilogo vengono dal motore: 1.600×10% e 1.200×22%
     expect(html).toContain('IVA 10%')
     expect(html).toContain('IVA 22%')

@@ -602,7 +602,14 @@ export function VociTable({
                     </span>
                     <span style={{ display: 'block', fontSize: 12, color: 'var(--cc-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {voce.quantity.toLocaleString('it-IT')} {voce.unit} × {voce.unit_price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                      {voce.discount_pct ? ` − ${voce.discount_pct.toLocaleString('it-IT')}%` : ''}
+                      {/* Sconto in verde, formato unico «Sconto −X%» (12 set:
+                          prima « − X%» grigio attaccato al prezzo, non si
+                          leggeva come sconto). */}
+                      {voce.discount_pct ? <span style={{ color: '#2f8a63', fontWeight: 600 }}> · Sconto −{voce.discount_pct.toLocaleString('it-IT')}%</span> : ''}
+                      {/* IVA IMPOSTATA (non l'effettiva): è la riga di modifica,
+                          deve dire cosa hai scelto — l'effetto dello split lo
+                          racconta il Riepilogo. */}
+                      {showVat ? ` · IVA ${(voce.vat_rate ?? defaultVatRate ?? 22).toLocaleString('it-IT')}%` : ''}
                       {/* Ricarico/margine tolto dalla riga chiusa (Eli, 12 ago):
                           vive solo nella card Margine. Resta solo «da completare». */}
                       {(() => {

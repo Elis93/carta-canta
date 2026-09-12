@@ -9,6 +9,7 @@ import { calcolaDocumento, riepilogoIva } from '@/lib/fiscal/calcoli'
 import { stripPrefissoLegacy } from '@/lib/utils'
 import { terminePrevisto } from '@/lib/documents/termine-lavori'
 import { espandiBeniSignificativi, dettaglioBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
+import { ivaEffettivaVoci, notaBeneSplit, type IvaVoceInfo } from '@/lib/fiscal/iva-voce'
 
 type DocumentRow     = Database['public']['Tables']['documents']['Row']
 type DocumentItemRow = Database['public']['Tables']['document_items']['Row']
@@ -355,6 +356,26 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     ? [...new Set(rawItems.map(rawTierOf))].flatMap((t) => espandi(rawItems.filter((i) => rawTierOf(i) === t)))
     : espandi(rawItems)
 
+  // ── Voci mostrate (12 set): la voce resta QUELLA VERA, con la pillola
+  // dell'IVA effettiva e — sul bene significativo — una riga grigia di
+  // dettaglio, invece delle due righe sintetiche dello split. I totali e i
+  // riepiloghi per aliquota continuano a venire da `items` ESPANSE (sopra) e
+  // dal motore, quindi non cambia un centesimo; l'XML resta spezzato
+  // (doc-xml.ts). La «separata evidenza» dell'art. 1 c.19 la assolvono la
+  // riga grigia + la dicitura di legge (beniNotice).
+  // ⚠️ L'IVA effettiva si calcola PER PROPOSTA: lo split dipende dal rapporto
+  // bene/prestazione dentro la singola proposta.
+  const displayItems = rawItems
+  const ivaByItem = new Map<(typeof rawItems)[number], IvaVoceInfo>()
+  {
+    const groups = rawMultiTier ? [...new Set(rawItems.map(rawTierOf))] : ['__all__']
+    for (const g of groups) {
+      const gItems = g === '__all__' ? rawItems : rawItems.filter((i) => rawTierOf(i) === g)
+      ivaEffettivaVoci(gItems as unknown as VoceSplittabile[], workspace.fiscal_regime, doc.vat_rate_default, isReverse)
+        .forEach((info, k) => ivaByItem.set(gItems[k], info))
+    }
+  }
+
   // ── Proposte a livelli (041) — bug Eli 18 lug: nel documento inviato le
   // voci di Base e Premium comparivano APPIATTITE in un'unica lista (45 +
   // 55) col totale della sola Base → incoerente per il cliente. Con più
@@ -453,16 +474,31 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     return ` <span style="font-size:${size};font-weight:600;color:#2f8a63;white-space:nowrap;">Sconto&nbsp;−${pct.toLocaleString('it-IT')}%</span>`
   }
 
+  /** Pillola dell'IVA effettiva della voce (12 set): stessa veste su tutte le
+   *  superfici. `ivaByItem` dà l'aliquota dopo lo split dei beni significativi. */
+  function ivaPillEl(item: (typeof rawItems)[number], size = '14px'): string {
+    const label = ivaByItem.get(item)?.etichetta
+    if (!label) return ''
+    return ` <span style="display:inline-block;font-size:${size};font-weight:600;color:#44506e;background:#eef0f6;border:1px solid #dfe3ee;border-radius:999px;padding:0 8px;white-space:nowrap;">IVA&nbsp;${escHtml(label)}</span>`
+  }
+
+  /** Riga grigia di dettaglio per il bene significativo spezzato (12 set). */
+  function beniNoteEl(item: (typeof rawItems)[number], size = '14px'): string {
+    const split = ivaByItem.get(item)?.split
+    if (!split) return ''
+    return `<div style="font-size:${size};color:#6f6d64;margin-top:3px;line-height:1.4;">${escHtml(notaBeneSplit(split))}</div>`
+  }
+
   /** Righe voci: con più proposte ogni gruppo è un blocco SEPARATO —
    *  intestazione a banda, voci, e in coda il MINI-RIEPILOGO della proposta
    *  (subtotale/IVA/bollo → Totale proposta): il cliente vede come si arriva
    *  a ogni totale senza cercare altrove. L'indice passato a renderItem è
    *  GLOBALE: i codici del preset Tecnico restano univoci (01, 02, 03…). */
-  function withTierHeaders(renderItem: (item: (typeof items)[number], idx: number) => string, colSpan: number): string {
-    if (!multiTier) return items.map(renderItem).join('')
+  function withTierHeaders(renderItem: (item: (typeof rawItems)[number], idx: number) => string, colSpan: number): string {
+    if (!multiTier) return displayItems.map(renderItem).join('')
     let globalIdx = 0
     return presentTiers.map((t, ti) => {
-      const groupRows = items.filter((i) => tierOf(i) === t).map((item) => renderItem(item, globalIdx++)).join('')
+      const groupRows = displayItems.filter((i) => rawTierOf(i) === t).map((item) => renderItem(item, globalIdx++)).join('')
       const f = tierFiscals[t] ?? { subtotal: 0, discount: 0, vatGroups: {}, bollo: 0, total: 0 }
       const detailRow = (label: string, value: string) => `
         <div style="display:flex;justify-content:space-between;gap:18px;padding:2px 0;font-size:16px;color:#777;">
@@ -797,7 +833,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #eef0f1;">
-          <td style="padding:12px 10px;font-size:19px;color:#1e2830;">${esc(item.description)}${scontoVoceEl(item)}</td>
+          <td style="padding:12px 10px;font-size:19px;color:#1e2830;">${esc(item.description)}${scontoVoceEl(item)}${ivaPillEl(item)}${beniNoteEl(item)}</td>
           <td style="padding:12px 8px;font-size:19px;text-align:right;color:#6c727a;white-space:nowrap;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
           <td style="padding:12px 8px;font-size:19px;text-align:right;color:#6c727a;white-space:nowrap;">${fmt(Number(item.unit_price))}&nbsp;€</td>
           <td style="padding:12px 10px;font-size:19px;text-align:right;font-weight:700;color:#16202b;white-space:nowrap;">${fmt(Number(item.total))}&nbsp;€</td>
@@ -915,7 +951,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #f0f0f0;">
-          <td style="padding:10px 10px;font-size:19px;color:#111;font-weight:500;">${esc(item.description)}${scontoVoceEl(item)}</td>
+          <td style="padding:10px 10px;font-size:19px;color:#111;font-weight:500;">${esc(item.description)}${scontoVoceEl(item)}${ivaPillEl(item)}${beniNoteEl(item)}</td>
           <td style="padding:10px 8px;font-size:19px;text-align:right;color:#888;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
           <td style="padding:10px 8px;font-size:19px;text-align:right;color:#888;">${fmt(Number(item.unit_price))}&nbsp;€</td>
           <td style="padding:10px 10px;font-size:19px;text-align:right;font-weight:700;">${fmt(Number(item.total))}&nbsp;€</td>
@@ -1063,7 +1099,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           <tr style="border-bottom:1px solid #ebebeb;">
             <td style="padding:10px 8px;font-size:17px;color:#aaa;font-family:${MONO};vertical-align:top;white-space:nowrap;">${code}</td>
             <td style="padding:10px 8px;font-size:19px;vertical-align:top;line-height:1.5;">
-              ${esc(item.description)}${scontoVoceEl(item, '14px')}<br>
+              ${esc(item.description)}${scontoVoceEl(item, '14px')}${ivaPillEl(item, '13px')}${beniNoteEl(item, '13px')}<br>
               <span style="font-size:19px;font-weight:700;color:#111;font-family:${MONO};">${fmt(Number(item.total))}&nbsp;€</span>
             </td>
             <td style="padding:10px 8px;font-size:17px;text-align:center;color:#888;vertical-align:top;">${esc(item.unit ?? 'cad')}</td>
@@ -1211,7 +1247,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
       const rows = withTierHeaders(item => `
         <tr style="border-bottom:1px solid #efeee9;">
-          <td style="padding:11px 0;font-size:19px;color:#2a333c;">${esc(item.description)}${scontoVoceEl(item)}</td>
+          <td style="padding:11px 0;font-size:19px;color:#2a333c;">${esc(item.description)}${scontoVoceEl(item)}${ivaPillEl(item)}${beniNoteEl(item)}</td>
           <td style="padding:11px 10px;font-size:19px;text-align:right;color:#8a8f96;white-space:nowrap;">${Number(item.quantity).toLocaleString('it-IT', { maximumFractionDigits: 3 })}</td>
           <td style="padding:11px 10px;font-size:19px;text-align:right;color:#8a8f96;white-space:nowrap;">${fmt(Number(item.unit_price))}&nbsp;€</td>
           <td style="padding:11px 0;font-size:19px;text-align:right;font-weight:600;color:#22303c;white-space:nowrap;">${fmt(Number(item.total))}&nbsp;€</td>

@@ -22,6 +22,10 @@ export interface PublicTierItem {
   total: number
   /** Sconto della singola voce (25 ago): il totale è già scontato, la % va detta. */
   discount_pct?: number | null
+  /** Aliquota IVA effettiva dopo lo split dei beni significativi (12 set). */
+  vatLabel?: string | null
+  /** Riga grigia di dettaglio per il bene significativo spezzato. */
+  beniNote?: string | null
 }
 
 export interface PublicTier {
@@ -178,9 +182,19 @@ export function TierPicker({ tiers, initialTier }: { tiers: PublicTier[]; initia
                             {' '}Sconto&nbsp;−{Number(it.discount_pct).toLocaleString('it-IT')}%
                           </span>
                         )}
+                        {it.vatLabel && (
+                          <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 600, color: '#44506e', background: '#eef0f6', border: '1px solid #dfe3ee', borderRadius: 999, padding: '0 6px', whiteSpace: 'nowrap', verticalAlign: 1 }}>
+                            {' '}IVA&nbsp;{it.vatLabel}
+                          </span>
+                        )}
                         {it.quantity !== 1 && (
                           <span style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', marginTop: 1, fontWeight: 400 }}>
                             {it.quantity.toLocaleString('it-IT', { maximumFractionDigits: 3 })}{it.unit ? ` ${it.unit}` : ''} × {fmtEuro(it.unit_price)}
+                          </span>
+                        )}
+                        {it.beniNote && (
+                          <span style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', marginTop: 1, fontWeight: 400, lineHeight: 1.4 }}>
+                            {it.beniNote}
                           </span>
                         )}
                       </span>

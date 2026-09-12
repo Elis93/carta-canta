@@ -47,6 +47,7 @@ import { btnBianco, btnNavy, btnBiancoPieno, btnNavyPieno, btnSoft, rigaMenu } f
 import { docNumberSlug } from '@/lib/documents/numero'
 import { riepilogoIva } from '@/lib/fiscal/calcoli'
 import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
+import { ivaEffettivaVoci, notaBeneSplit } from '@/lib/fiscal/iva-voce'
 import { residuoStornabile, sommaNoteAttive, baseStornabile, importoRitenuta, TOLLERANZA_STORNO } from '@/lib/documents/storno'
 import { isDocFreeLocked } from '@/lib/plan/free-lock'
 import { PRO_LOCK_HREF } from '@/lib/plan/gate'
@@ -490,6 +491,20 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
     },
   ).filter((r) => r.rate > 0)
 
+  // Pillola IVA effettiva + riga grigia del bene significativo (12 set): la
+  // voce resta quella vera, non più le due righe dello split.
+  const ivaInfoSingola = ivaEffettivaVoci(
+    docItems as unknown as VoceSplittabile[],
+    workspace.fiscal_regime,
+    (doc as any).vat_rate_default ?? null,
+    (doc as any).reverse_charge === true,
+  )
+  const ivaPillStyle: React.CSSProperties = {
+    display: 'inline-block', fontSize: 10.5, fontWeight: 600, color: '#44506e',
+    background: '#eef0f6', border: '1px solid #dfe3ee', borderRadius: 999,
+    padding: '0 7px', whiteSpace: 'nowrap', verticalAlign: 1,
+  }
+
   // Modalità MODIFICA vera: solo negli stati dove il form può comparire.
   // Con ?edit=1 stantio in URL (back del browser dopo Annulla/Segna pagata)
   // i gate "nascondi le card di lettura" NON devono scattare — prima
@@ -817,12 +832,20 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             )}
             {docItems.map((item, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 14 }}>
-                <span style={{ color: '#161616' }}>{String(item.description ?? '—')}
+                <span style={{ color: '#161616', minWidth: 0 }}>{String(item.description ?? '—')}
                 {(Number(item.discount_pct ?? 0) > 0) && (
                             <span style={{ fontSize: 12, fontWeight: 600, color: '#2f8a63', whiteSpace: 'nowrap' }}>
                               {' '}Sconto&nbsp;−{Number(item.discount_pct).toLocaleString('it-IT')}%
                             </span>
                           )}
+                {ivaInfoSingola[i]?.etichetta && (
+                  <span style={ivaPillStyle}>{' '}IVA&nbsp;{ivaInfoSingola[i]!.etichetta}</span>
+                )}
+                {ivaInfoSingola[i]?.split && (
+                  <span style={{ display: 'block', fontSize: 11.5, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.4 }}>
+                    {notaBeneSplit(ivaInfoSingola[i]!.split!)}
+                  </span>
+                )}
                 </span>
                 {item.total != null && (
                   <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>

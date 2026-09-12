@@ -1,6 +1,8 @@
 'use client'
 
-import { calcolaDocumento } from '@/lib/fiscal/calcoli'
+import { calcolaDocumento, riepilogoIva } from '@/lib/fiscal/calcoli'
+import { ivaEffettivaVoci, notaBeneSplit } from '@/lib/fiscal/iva-voce'
+import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 import type { FiscalOptions } from '@/types/index'
 import type { VoceItem } from './PreventivoForm'
 
@@ -47,7 +49,24 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
   }))
 
   const fiscal = calcolaDocumento(itemsForCalc, fiscalOpts)
+  // Pillola IVA effettiva + riga grigia del bene significativo (12 set):
+  // l'artigiano vede QUI, mentre compila, che la voce al 10% col bene è
+  // finita al 22 — non lo scopre dal cliente.
+  const ivaInfo = ivaEffettivaVoci(
+    itemsForCalc as unknown as VoceSplittabile[],
+    fiscalOpts.fiscal_regime,
+    fiscalOpts.vat_rate_default,
+    fiscalOpts.reverse_charge ?? false,
+  )
   const isForfettario = fiscalOpts.fiscal_regime === 'forfettario'
+  // Quote IVA per aliquota (12 set): sotto la riga «IVA» quando le aliquote
+  // sono più d'una. Stessa fonte del PDF e dei fogli (riepilogoIva sulle voci
+  // espanse), così non possono divergere.
+  const righeIva = riepilogoIva(
+    espandiBeniSignificativi(itemsForCalc as unknown as VoceSplittabile[], fiscalOpts.fiscal_regime, fiscalOpts.vat_rate_default)
+      .map((i) => ({ total: Number(i.total ?? 0), vat_rate: i.vat_rate == null ? null : Number(i.vat_rate) })),
+    fiscalOpts,
+  ).filter((r) => r.rate > 0)
   const hasDiscount = fiscal.subtotal !== fiscal.afterDiscount
 
   // ── Sconti in chiaro (Eli, 17 ago: «visualizzare in modo chiaro sia gli
@@ -89,32 +108,48 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
           Si aggiorna a ogni modifica: stessa fonte dei totali qui sotto. */}
       {(() => {
         const meaningful = voci
-          .map((v, i) => ({ v, tot: fiscal.itemTotals[i]?.total ?? 0 }))
+          .map((v, i) => ({ v, tot: fiscal.itemTotals[i]?.total ?? 0, iva: ivaInfo[i] }))
           .filter(({ v }) => v.description.trim() !== '' || (v.unit_price ?? 0) > 0 || (v.quantity ?? 0) > 0)
         if (meaningful.length === 0) return null
         return (
           <div style={{ borderBottom: '0.5px solid var(--cc-border-color)', marginBottom: 10, paddingBottom: 8 }}>
-            {meaningful.map(({ v, tot }, i) => (
-              <div key={v.id ?? `r-${i}`} className="flex justify-between items-baseline" style={{ gap: 10, padding: '3px 0' }}>
-                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, color: '#55534b' }}>
-                  {v.description.trim() || <i style={{ color: 'var(--cc-muted)' }}>Voce senza descrizione</i>}
-                  {v.quantity > 0 && (
-                    <span style={{ color: 'var(--cc-muted)' }}>
-                      {' '}· {v.quantity.toLocaleString('it-IT')} {v.unit}
+            {meaningful.map(({ v, tot, iva }, i) => (
+              <div key={v.id ?? `r-${i}`} style={{ padding: '3px 0' }}>
+                <div className="flex justify-between items-baseline" style={{ gap: 10 }}>
+                  <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, color: '#55534b' }}>
+                    {v.description.trim() || <i style={{ color: 'var(--cc-muted)' }}>Voce senza descrizione</i>}
+                    {v.quantity > 0 && (
+                      <span style={{ color: 'var(--cc-muted)' }}>
+                        {' '}· {v.quantity.toLocaleString('it-IT')} {v.unit}
+                      </span>
+                    )}
+                  </span>
+                  {/* Sconto della SINGOLA voce, in chiaro (Eli, 17 ago): il
+                      totale di riga è già scontato, ma senza questa nota lo
+                      sconto dato sulla voce non si vedeva da nessuna parte.
+                      FUORI dallo span troncabile: dentro, con una descrizione
+                      lunga, l'ellissi si mangiava proprio la percentuale. */}
+                  {(v.discount_pct ?? 0) > 0 && (
+                    <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#2f8a63', whiteSpace: 'nowrap' }}>
+                      −{(v.discount_pct as number).toLocaleString('it-IT')}%
                     </span>
                   )}
-                </span>
-                {/* Sconto della SINGOLA voce, in chiaro (Eli, 17 ago): il
-                    totale di riga è già scontato, ma senza questa nota lo
-                    sconto dato sulla voce non si vedeva da nessuna parte.
-                    FUORI dallo span troncabile: dentro, con una descrizione
-                    lunga, l'ellissi si mangiava proprio la percentuale. */}
-                {(v.discount_pct ?? 0) > 0 && (
-                  <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#2f8a63', whiteSpace: 'nowrap' }}>
-                    −{(v.discount_pct as number).toLocaleString('it-IT')}%
-                  </span>
+                  {/* Pillola IVA effettiva (12 set): mostra l'aliquota dopo lo
+                      split — la Cucina al 10% col bene dice «22%». */}
+                  {iva?.etichetta && (
+                    <span style={{ flexShrink: 0, display: 'inline-block', fontSize: 10.5, fontWeight: 600, color: '#44506e', background: '#eef0f6', border: '1px solid #dfe3ee', borderRadius: 999, padding: '0 7px', whiteSpace: 'nowrap' }}>
+                      IVA&nbsp;{iva.etichetta}
+                    </span>
+                  )}
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#161616', whiteSpace: 'nowrap' }}>{curr(tot)}</span>
+                </div>
+                {/* Riga grigia del bene significativo: perché la voce è finita
+                    (in parte) al 22%. */}
+                {iva?.split && (
+                  <div style={{ fontSize: 11.5, color: 'var(--cc-muted)', lineHeight: 1.4, marginTop: 1 }}>
+                    {notaBeneSplit(iva.split)}
+                  </div>
                 )}
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#161616', whiteSpace: 'nowrap' }}>{curr(tot)}</span>
               </div>
             ))}
           </div>
@@ -172,12 +207,22 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
             </div>
           )}
 
-          {/* IVA */}
+          {/* IVA — una riga con l'imposta totale; sotto le quote per aliquota
+              quando sono più d'una (12 set: «IVA» muto non diceva che una voce
+              al 10% col bene è finita al 22). */}
           {!isForfettario && fiscal.taxAmount > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <span>IVA</span>
-              <span>{curr(fiscal.taxAmount)}</span>
-            </div>
+            <>
+              <div className="flex justify-between text-muted-foreground">
+                <span>IVA</span>
+                <span>{curr(fiscal.taxAmount)}</span>
+              </div>
+              {righeIva.length >= 2 && righeIva.map((r) => (
+                <div key={r.rate} className="flex justify-between" style={{ fontSize: 11.5, color: 'var(--cc-muted)', paddingLeft: 14 }}>
+                  <span>su {curr(r.imponibile)} al {r.rate}%</span>
+                  <span style={{ whiteSpace: 'nowrap' }}>{curr(r.imposta)}</span>
+                </div>
+              ))}
+            </>
           )}
 
 

@@ -14,7 +14,8 @@ import { PaymentInfoCard } from '@/components/public/PaymentInfoCard'
 import { hasPaymentChannels, type PaymentChannels } from '@/lib/payments/channels'
 import { ReviewCard } from '@/components/public/ReviewCard'
 import { TierPicker, type PublicTier } from '@/components/public/TierPicker'
-import { calcolaDocumento } from '@/lib/fiscal/calcoli'
+import { calcolaDocumento, riepilogoIva } from '@/lib/fiscal/calcoli'
+import { ivaEffettivaVoci, notaBeneSplit } from '@/lib/fiscal/iva-voce'
 import { buildEpcQrDataUrl } from '@/lib/payments/epc'
 import { CheckCircle2, XCircle, AlertTriangle, Eye, MessageCircle, Banknote } from 'lucide-react'
 import { formatDocNumber } from '@/lib/utils'
@@ -406,28 +407,29 @@ export default async function PublicDocumentPage({ params }: Props) {
             doc_type: 'preventivo',
           }
         )
+        // ⚠️ 12 set: le card mostrano le voci VERE (non più le due righe dello
+        // split), con la pillola dell'IVA effettiva e — sul bene significativo
+        // — la riga grigia di dettaglio. `fiscal.itemTotals` sono le voci
+        // GREZZE col totale di riga calcolato dal motore; l'IVA effettiva si
+        // calcola sulle stesse voci, dentro QUESTA proposta.
+        const tierIva = ivaEffettivaVoci(
+          fiscal.itemTotals as unknown as VoceSplittabile[],
+          workspace.fiscal_regime,
+          doc.vat_rate_default,
+        )
         return {
           tier,
           label: TIER_LABELS[tier],
           total: fiscal.total,
-          // Voci COMPLETE con l'importo riga (dal motore fiscale: sconto voce
-          // incluso) — le card mostrano subito cosa contiene ogni proposta
-          // (richiesta Eli 18 lug: niente giro su "Vedi il documento completo").
-          // Beni significativi (081): anche dentro le card proposta il
-          // cliente vede le due righe, come nel PDF.
-          items: espandiBeniSignificativi(
-            fiscal.itemTotals as unknown as VoceSplittabile[],
-            workspace.fiscal_regime,
-            doc.vat_rate_default,
-          ).map((it) => ({
+          items: fiscal.itemTotals.map((it, idx) => ({
             description: String(it.description ?? ''),
             quantity: Number(it.quantity ?? 1),
             unit: String(it.unit ?? ''),
             unit_price: Number(it.unit_price ?? 0),
             total: Number(it.total ?? 0),
-            // Sconto della voce (25 ago): il motore lo conserva nello spread,
-            // le righe sintetiche dei beni significativi lo azzerano — giusto.
             discount_pct: Number((it as { discount_pct?: number | null }).discount_pct ?? 0) || null,
+            vatLabel: tierIva[idx]?.etichetta ?? null,
+            beniNote: tierIva[idx]?.split ? notaBeneSplit(tierIva[idx]!.split!) : null,
           })),
         }
       })
@@ -514,20 +516,35 @@ export default async function PublicDocumentPage({ params }: Props) {
   // Mappa le voci per il componente mobile (solo i campi necessari).
   // Con le opzioni in attesa di scelta le voci stanno DENTRO le card
   // proposta (TierPicker) — la lista unica mescolerebbe tutte le proposte.
-  const mobileItems = optionTiers
+  // ⚠️ 12 set: la voce NON viene più spezzata per il cliente. Resta quella
+  // vera (quantità, prezzo, sconto), con la pillola dell'IVA effettiva e —
+  // sul bene significativo — una riga grigia di dettaglio. La «separata
+  // evidenza» dell'art. 1 c.19 la assolvono la riga grigia e la dicitura del
+  // PDF; l'XML resta spezzato (doc-xml.ts, invariato).
+  const rawPubItems = optionTiers ? [] : ((doc.document_items ?? []) as unknown as VoceSplittabile[])
+  const pubIvaInfo = ivaEffettivaVoci(rawPubItems, workspace.fiscal_regime, doc.vat_rate_default, (doc as { reverse_charge?: boolean | null }).reverse_charge ?? false)
+  const mobileItems = rawPubItems.map((i, idx) => ({
+    description: i.description,
+    total: Number(i.total ?? 0),
+    discountPct: Number((i as { discount_pct?: number | null }).discount_pct ?? 0) || null,
+    vatLabel: pubIvaInfo[idx]?.etichetta ?? null,
+    beniNote: pubIvaInfo[idx]?.split ? notaBeneSplit(pubIvaInfo[idx]!.split!) : null,
+  }))
+  // Righe IVA per aliquota (12 set): la fonte è `riepilogoIva` sulle voci
+  // ESPANSE — stessa del PDF e del foglio interno, così le quote «su X al Y%»
+  // ricalcano il totale e l'XML.
+  const pubIvaBreakdown = optionTiers
     ? []
-    // ⚠️ Stessa espansione dei beni significativi del PDF (081): senza, il
-    // cliente leggerebbe sul telefono una riga sola e un totale calcolato
-    // su due.
-    : espandiBeniSignificativi(
-        (doc.document_items ?? []) as unknown as VoceSplittabile[],
-        workspace.fiscal_regime,
-        doc.vat_rate_default,
-      ).map((i) => ({
-        description: i.description,
-        total: Number(i.total ?? 0),
-        discountPct: Number((i as { discount_pct?: number | null }).discount_pct ?? 0) || null,
-      }))
+    : riepilogoIva(
+        espandiBeniSignificativi(rawPubItems, workspace.fiscal_regime, doc.vat_rate_default)
+          .map((i) => ({ total: Number(i.total ?? 0), vat_rate: i.vat_rate == null ? null : Number(i.vat_rate) })),
+        {
+          fiscal_regime: workspace.fiscal_regime as 'forfettario' | 'ordinario' | 'minimi',
+          discount_pct: doc.discount_pct ?? undefined,
+          discount_fixed: doc.discount_fixed ?? undefined,
+          vat_rate_default: doc.vat_rate_default ?? undefined,
+        },
+      ).filter((r) => r.rate > 0)
 
   return (
     <div>
@@ -573,6 +590,7 @@ export default async function PublicDocumentPage({ params }: Props) {
               doc.vat_rate_default,
             ).map((i) => i.vat_rate ?? doc.vat_rate_default ?? 22)
           ).size > 1}
+          ivaBreakdown={pubIvaBreakdown}
           ritenutaPct={(doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? null}
           ritenutaAmount={(() => {
             const pct = Number((doc as { ritenuta_pct?: number | null }).ritenuta_pct ?? 0)

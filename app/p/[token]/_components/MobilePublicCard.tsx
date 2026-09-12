@@ -11,6 +11,11 @@ interface Item {
   /** Sconto della singola voce (25 ago): il totale è già scontato, la %
       va DETTA — «100 € → 90 €» senza spiegazione sembra un errore. */
   discountPct?: number | null
+  /** Aliquota EFFETTIVA della voce dopo lo split dei beni significativi
+      (12 set): «22%», «10% + 22%». Null in forfettario. */
+  vatLabel?: string | null
+  /** Riga grigia di dettaglio per il bene significativo spezzato. */
+  beniNote?: string | null
 }
 
 interface MobilePublicCardProps {
@@ -27,6 +32,9 @@ interface MobilePublicCardProps {
   /** true = voci con aliquote IVA diverse: "IVA {default}%" mentirebbe
    * (review 25 lug B3) → etichetta "IVA" senza percentuale. */
   multiVat?: boolean
+  /** Riepilogo IVA per aliquota (12 set): sotto la riga «IVA» totale
+   *  compaiono le quote in piccolo quando le aliquote sono più d'una. */
+  ivaBreakdown?: Array<{ rate: number; imponibile: number; imposta: number }>
   total: number | null
   status: string
   clientName: string | null
@@ -70,6 +78,13 @@ function getInitials(name: string): string {
   return name.split(/\s+/).slice(0, 2).map((w) => w[0] ?? '').join('').toUpperCase().slice(0, 2)
 }
 
+// Pillola IVA della voce (12 set): stessa veste su tutte le superfici di lettura.
+const ivaPillStyle: React.CSSProperties = {
+  display: 'inline-block', fontSize: 10.5, fontWeight: 600, color: '#44506e',
+  background: '#eef0f6', border: '1px solid #dfe3ee', borderRadius: 999,
+  padding: '0 7px', whiteSpace: 'nowrap', verticalAlign: 1,
+}
+
 function formatEur(n: number): string {
   return '€\u00A0' + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -90,6 +105,7 @@ export function MobilePublicCard({
   taxAmount,
   vatRateDefault,
   multiVat = false,
+  ivaBreakdown,
   total,
   status,
   clientName,
@@ -324,16 +340,26 @@ export function MobilePublicCard({
       <div style={{ background: '#fff', padding: '0 16px' }}>
         {items.map((item, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '11px 0', borderTop: '1px solid #f0efeb', fontSize: 13.5 }}>
-            <span style={{ color: '#161616' }}>
+            <span style={{ color: '#161616', minWidth: 0 }}>
               {item.description ?? '—'}
               {(item.discountPct ?? 0) > 0 && (
                 <span style={{ fontSize: 12, fontWeight: 600, color: '#2f8a63', whiteSpace: 'nowrap' }}>
                   {' '}Sconto&nbsp;−{Number(item.discountPct).toLocaleString('it-IT')}%
                 </span>
               )}
+              {item.vatLabel && (
+                <span style={ivaPillStyle}>{' '}IVA&nbsp;{item.vatLabel}</span>
+              )}
+              {/* Bene significativo (12 set): la voce resta quella vera, la
+                  storia fiscale sta in questa riga grigia di dettaglio. */}
+              {item.beniNote && (
+                <span style={{ display: 'block', fontSize: 11.5, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.4 }}>
+                  {item.beniNote}
+                </span>
+              )}
             </span>
             {item.total != null && (
-              <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{formatEur(item.total)}</span>
+              <span style={{ color: '#161616', whiteSpace: 'nowrap', flexShrink: 0 }}>{formatEur(item.total)}</span>
             )}
           </div>
         ))}
@@ -381,10 +407,21 @@ export function MobilePublicCard({
             )
           })()}
           {taxAmount != null && taxAmount > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13.5 }}>
-              <span style={{ color: '#6b6960' }}>{vatLabel}</span>
-              <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(taxAmount)}</span>
-            </div>
+            <>
+              {/* Una riga «IVA» con l'imposta totale; le quote per aliquota
+                  in piccolo sotto quando le aliquote sono più d'una (12 set:
+                  «IVA 22%» come se tutto fosse al 22 era sbagliato). */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13.5 }}>
+                <span style={{ color: '#6b6960' }}>{(ivaBreakdown && ivaBreakdown.length >= 2) ? 'IVA' : vatLabel}</span>
+                <span style={{ color: '#161616', fontWeight: 500 }}>{formatEur(taxAmount)}</span>
+              </div>
+              {ivaBreakdown && ivaBreakdown.length >= 2 && ivaBreakdown.map((r) => (
+                <div key={r.rate} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1px 0 1px 14px', fontSize: 11.5, color: 'var(--cc-muted)' }}>
+                  <span>su {formatEur(r.imponibile)} al {r.rate}%</span>
+                  <span style={{ whiteSpace: 'nowrap' }}>{formatEur(r.imposta)}</span>
+                </div>
+              ))}
+            </>
           )}
           {bolloAmount != null && bolloAmount > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13.5 }}>

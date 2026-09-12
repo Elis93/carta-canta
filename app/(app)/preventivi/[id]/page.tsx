@@ -34,6 +34,7 @@ import { conversationFromLog } from '@/lib/documents/messaggi'
 import { hasPiuProposte, totaliPerProposta, tierOf, TIER_LABEL, TIER_ORDER, type TierKey, type VoceConTier } from '@/lib/documents/proposte'
 import { riepilogoIva } from '@/lib/fiscal/calcoli'
 import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
+import { ivaEffettivaVoci, notaBeneSplit } from '@/lib/fiscal/iva-voce'
 import { MobileStatusChips } from '../_components/MobileStatusChips'
 import type { DocumentLogEntry } from '../_components/DocumentTimeline'
 import { BackButton } from '@/components/shared/BackButton'
@@ -222,6 +223,17 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     ivaOpts,
   ).filter((r) => r.rate > 0)
   const ivaRighe = righeIvaDi(docItems)
+  // Pillola IVA effettiva + riga grigia del bene significativo (12 set): la
+  // voce nel foglio resta quella vera, non più le due righe dello split.
+  // Per il ramo multi-proposta si calcola PER PROPOSTA (lo split dipende dal
+  // rapporto bene/prestazione dentro la singola proposta).
+  const ivaInfoDi = (items: typeof docItems) => ivaEffettivaVoci(
+    items as unknown as VoceSplittabile[],
+    workspace.fiscal_regime,
+    (doc as any).vat_rate_default ?? null,
+    (doc as any).reverse_charge === true,
+  )
+  const ivaInfoSingola = ivaInfoDi(docItems)
   // Sconto di documento in euro, per la riga del riepilogo: % sul subtotale
   // più l'eventuale fisso, arrotondato e mai oltre il subtotale (stessa
   // formula della pagina pubblica e del motore). Senza questa riga il foglio
@@ -370,6 +382,12 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   const riepilogoRow: React.CSSProperties = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '5px 0', fontSize: 13, color: 'var(--cc-muted)',
+  }
+  // Pillola IVA della voce (12 set): stessa veste delle altre superfici.
+  const ivaPillStyle: React.CSSProperties = {
+    display: 'inline-block', fontSize: 10.5, fontWeight: 600, color: '#44506e',
+    background: '#eef0f6', border: '1px solid #dfe3ee', borderRadius: 999,
+    padding: '0 7px', whiteSpace: 'nowrap', verticalAlign: 1,
   }
   return (
     <div className="max-w-4xl mx-auto">
@@ -592,6 +610,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <>
                 {totaliProposte.map((p, i) => {
                   const vociProposta = docItems.filter((it) => tierOf(it as VoceConTier) === p.tier)
+                  const vociPropostaIva = ivaInfoDi(vociProposta)
                   // ⚠️ Quella accettata si riconosce a colpo d'occhio: filetto
                   // verde e spunta. Le altre restano leggibili ma spente — se
                   // fossero identiche, il riepilogo continuerebbe a non dire
@@ -624,14 +643,22 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                       </div>
                       {vociProposta.map((item, k) => (
                         <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '6px 0', fontSize: 14 }}>
-                          <span style={{ color: '#161616' }}>{String(item.description ?? '—')}
+                          <span style={{ color: '#161616', minWidth: 0 }}>{String(item.description ?? '—')}
                           {(Number(item.discount_pct ?? 0) > 0) && (
                             <span style={{ fontSize: 12, fontWeight: 600, color: '#2f8a63', whiteSpace: 'nowrap' }}>
                               {' '}Sconto&nbsp;−{Number(item.discount_pct).toLocaleString('it-IT')}%
                             </span>
                           )}
+                          {vociPropostaIva[k]?.etichetta && (
+                            <span style={ivaPillStyle}>{' '}IVA&nbsp;{vociPropostaIva[k]!.etichetta}</span>
+                          )}
+                          {vociPropostaIva[k]?.split && (
+                            <span style={{ display: 'block', fontSize: 11.5, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.4 }}>
+                              {notaBeneSplit(vociPropostaIva[k]!.split!)}
+                            </span>
+                          )}
                           </span>
-                          {item.total != null && <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{euro(Number(item.total))}</span>}
+                          {item.total != null && <span style={{ color: '#161616', whiteSpace: 'nowrap', flexShrink: 0 }}>{euro(Number(item.total))}</span>}
                         </div>
                       ))}
                       {/* ⚠️ Filetto + testo più piccolo e grigio: senza questo stacco
@@ -688,14 +715,22 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               <>
                 {docItems.map((item, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', fontSize: 14 }}>
-                    <span style={{ color: '#161616' }}>{String(item.description ?? '—')}
+                    <span style={{ color: '#161616', minWidth: 0 }}>{String(item.description ?? '—')}
                     {(Number(item.discount_pct ?? 0) > 0) && (
                             <span style={{ fontSize: 12, fontWeight: 600, color: '#2f8a63', whiteSpace: 'nowrap' }}>
                               {' '}Sconto&nbsp;−{Number(item.discount_pct).toLocaleString('it-IT')}%
                             </span>
                           )}
+                    {ivaInfoSingola[i]?.etichetta && (
+                      <span style={ivaPillStyle}>{' '}IVA&nbsp;{ivaInfoSingola[i]!.etichetta}</span>
+                    )}
+                    {ivaInfoSingola[i]?.split && (
+                      <span style={{ display: 'block', fontSize: 11.5, color: 'var(--cc-muted)', marginTop: 2, lineHeight: 1.4 }}>
+                        {notaBeneSplit(ivaInfoSingola[i]!.split!)}
+                      </span>
+                    )}
                     </span>
-                    {item.total != null && <span style={{ color: '#161616', whiteSpace: 'nowrap' }}>{euro(Number(item.total))}</span>}
+                    {item.total != null && <span style={{ color: '#161616', whiteSpace: 'nowrap', flexShrink: 0 }}>{euro(Number(item.total))}</span>}
                   </div>
                 ))}
                 <div style={{ height: '0.5px', background: '#eee', margin: '6px -15px' }} />
