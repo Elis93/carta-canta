@@ -21,12 +21,14 @@ export interface ClientMessageEmailProps {
 export function ClientMessageEmail({ docLabel, docNumber, message, docUrl }: ClientMessageEmailProps) {
   const rif = docNumber ? `${docLabel} ${docNumber}` : docLabel
   // Articolo dalla PAROLA (fattura/nota = femminili): «della fattura», non
-  // «del fattura» (errore visto da Eli, 25 ago).
-  const della = /^(fattur|nota)/i.test(docLabel) ? 'della' : 'del'
+  // «del fattura» (errore visto da Eli, 25 ago). Vale anche per la Preview,
+  // che diceva «sul fattura» (revisione 17 set).
+  const fem = /^(fattur|nota)/i.test(docLabel)
+  const della = fem ? 'della' : 'del'
   return (
     <Html lang="it">
       <Head />
-      <Preview>{`Il cliente ti ha scritto un messaggio sul ${rif}`}</Preview>
+      <Preview>{`Il cliente ti ha scritto un messaggio ${fem ? 'sulla' : 'sul'} ${rif}`}</Preview>
       <Body style={{ backgroundColor: '#f6f6f4', fontFamily: 'Helvetica, Arial, sans-serif' }}>
         <Container style={{ backgroundColor: '#ffffff', borderRadius: 12, padding: '28px 24px', margin: '24px auto', maxWidth: 520 }}>
           <Heading style={{ fontSize: 19, color: '#1a1a2e', margin: '0 0 12px' }}>

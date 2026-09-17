@@ -2,9 +2,10 @@ import {
   Body, Container, Head, Heading, Hr, Html,
   Preview, Section, Text, Button, Row, Column,
 } from '@react-email/components'
+import { emailDocRef, emailDocRefOggetto } from '@/lib/email/doc-ref'
 
 export interface PreventivoRifiutatoEmailProps {
-  documentTitle: string
+  documentTitle?: string
   documentNumber?: string
   workspaceName: string
   declinedAt: string
@@ -18,12 +19,12 @@ export function PreventivoRifiutatoEmail({
   declinedAt,
   documentUrl,
 }: PreventivoRifiutatoEmailProps) {
-  const docRef = documentNumber ? `#${documentNumber} — ${documentTitle}` : documentTitle
+  const docRef = emailDocRef(documentNumber, documentTitle)
 
   return (
     <Html lang="it">
       <Head />
-      <Preview>Il cliente ha rifiutato il preventivo "{documentTitle}"</Preview>
+      <Preview>{`Il cliente ha rifiutato il preventivo${emailDocRefOggetto(documentNumber, documentTitle)}`}</Preview>
       <Body style={body}>
         <Container style={container}>
 
@@ -39,14 +40,14 @@ export function PreventivoRifiutatoEmail({
               Ciao <strong>{workspaceName}</strong>,
             </Text>
             <Text style={paragraph}>
-              Il tuo cliente ha rifiutato il preventivo{' '}
-              <strong>{docRef}</strong>.
+              Il tuo cliente ha rifiutato il
+              preventivo{docRef ? <>{' '}<strong>{docRef}</strong></> : null}.
             </Text>
 
             <Section style={infoBox}>
               <Row>
                 <Column style={infoLabel}>Preventivo</Column>
-                <Column style={infoValue}>{docRef}</Column>
+                <Column style={infoValue}>{docRef || '—'}</Column>
               </Row>
               <Row>
                 <Column style={infoLabel}>Rifiutato il</Column>

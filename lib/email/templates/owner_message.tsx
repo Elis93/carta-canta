@@ -21,6 +21,9 @@ export interface OwnerMessageEmailProps {
  * registrato), quindi il testo della risposta è dentro l'email: chi legge
  * dalla posta ha già l'informazione, il link serve per rispondere ancora.
  * Email transazionale in risposta a un contatto iniziato dal cliente.
+ * Dà del LEI come le altre email dirette al cliente finale (bonifica 7 ago;
+ * qui allineata il 17 set — dava del tu, unica fra le sorelle). I bottoni
+ * restano con l'etichetta standard («Apri e rispondi»), come nelle sorelle.
  */
 export function OwnerMessageEmail({ workspaceName, docLabel, docNumber, message, publicUrl }: OwnerMessageEmailProps) {
   const rif = docNumber ? `${docLabel} ${docNumber}` : docLabel
@@ -36,7 +39,7 @@ export function OwnerMessageEmail({ workspaceName, docLabel, docNumber, message,
       <Body style={{ backgroundColor: '#f6f6f4', fontFamily: 'Helvetica, Arial, sans-serif' }}>
         <Container style={{ backgroundColor: '#ffffff', borderRadius: 12, padding: '28px 24px', margin: '24px auto', maxWidth: 520 }}>
           <Heading style={{ fontSize: 19, color: '#1a1a2e', margin: '0 0 12px' }}>
-            {workspaceName} ti ha scritto
+            {workspaceName} le ha scritto
           </Heading>
           <Text style={{ fontSize: 15, color: '#333', lineHeight: 1.6 }}>
             Ecco il messaggio {sulla}{' '}<strong>{rif}</strong>:
@@ -47,7 +50,7 @@ export function OwnerMessageEmail({ workspaceName, docLabel, docNumber, message,
             </Text>
           </Section>
           <Text style={{ fontSize: 14, color: '#55534b', lineHeight: 1.6 }}>
-            Se vuoi rispondere, apri la pagina del documento: trovi lì tutta la conversazione.
+            Per rispondere può aprire la pagina del documento: lì trova tutta la conversazione.
           </Text>
           <Section style={{ textAlign: 'center', margin: '20px 0 6px' }}>
             <Button
@@ -59,8 +62,8 @@ export function OwnerMessageEmail({ workspaceName, docLabel, docNumber, message,
           </Section>
           <Hr style={{ borderColor: '#eeeeee', margin: '22px 0 12px' }} />
           <Text style={{ fontSize: 12, color: '#8a887f', lineHeight: 1.5 }}>
-            Ricevi questa email perché {workspaceName} ti ha inviato un messaggio {sulla} {docLabel} che
-            ti riguarda. La conversazione completa è sulla pagina del documento, generato con Carta Canta.
+            Riceve questa email perché {workspaceName} le ha inviato un messaggio {sulla} {docLabel} che
+            la riguarda. La conversazione completa è sulla pagina del documento, generato con Carta Canta.
           </Text>
         </Container>
       </Body>

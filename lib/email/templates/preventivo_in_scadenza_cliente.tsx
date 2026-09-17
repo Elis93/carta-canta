@@ -2,9 +2,10 @@ import {
   Body, Container, Head, Heading, Hr, Html,
   Preview, Section, Text, Button,
 } from '@react-email/components'
+import { emailDocRef } from '@/lib/email/doc-ref'
 
 export interface PreventivoInScadenzaClienteEmailProps {
-  documentTitle: string
+  documentTitle?: string
   documentNumber?: string
   workspaceName: string
   expiresAt: string
@@ -20,7 +21,7 @@ export function PreventivoInScadenzaClienteEmail({
   daysLeft,
   publicUrl,
 }: PreventivoInScadenzaClienteEmailProps) {
-  const docRef = documentNumber ? `#${documentNumber} — ${documentTitle}` : documentTitle
+  const docRef = emailDocRef(documentNumber, documentTitle)
   const giorno = daysLeft === 1 ? 'giorno' : 'giorni'
 
   return (
@@ -38,7 +39,7 @@ export function PreventivoInScadenzaClienteEmail({
           <Section style={content}>
             <Heading style={h1}>Il preventivo scade domani</Heading>
             <Text style={paragraph}>
-              Il preventivo <strong>{docRef}</strong> inviato da{' '}
+              Il preventivo{docRef ? <>{' '}<strong>{docRef}</strong></> : null} inviato da{' '}
               <strong>{workspaceName}</strong> scade il <strong>{expiresAt}</strong>.
             </Text>
             <Text style={paragraph}>

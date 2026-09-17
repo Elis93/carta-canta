@@ -2,9 +2,10 @@ import {
   Body, Container, Head, Heading, Hr, Html,
   Preview, Section, Text, Button,
 } from '@react-email/components'
+import { emailDocRef, emailDocRefOggetto } from '@/lib/email/doc-ref'
 
 export interface PreventivoInScadenzaEmailProps {
-  documentTitle: string
+  documentTitle?: string
   documentNumber?: string
   workspaceName: string
   expiresAt: string
@@ -20,12 +21,13 @@ export function PreventivoInScadenzaEmail({
   daysLeft,
   documentUrl,
 }: PreventivoInScadenzaEmailProps) {
-  const docRef = documentNumber ? `#${documentNumber} — ${documentTitle}` : documentTitle
+  // Riferimento SEMPRE ben formato (bug 12 set: titolo vuoto → «#003/2026 — »)
+  const docRef = emailDocRef(documentNumber, documentTitle)
 
   return (
     <Html lang="it">
       <Head />
-      <Preview>{`Il preventivo "${documentTitle}" scade tra ${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}`}</Preview>
+      <Preview>{`Il preventivo${emailDocRefOggetto(documentNumber, documentTitle)} scade tra ${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}`}</Preview>
       <Body style={body}>
         <Container style={container}>
           <Section style={header}>
@@ -41,13 +43,13 @@ export function PreventivoInScadenzaEmail({
               Ciao <strong>{workspaceName}</strong>,
             </Text>
             <Text style={paragraph}>
-              Il preventivo <strong>{docRef}</strong> è ancora in attesa di risposta
+              Il preventivo{docRef ? <>{' '}<strong>{docRef}</strong></> : null} è ancora in attesa di risposta
               e <strong>scade tra {daysLeft} {daysLeft === 1 ? 'giorno' : 'giorni'}</strong>{' '}
               (il {expiresAt}).
             </Text>
             <Text style={paragraph}>
-              Considera di inviare un promemoria al tuo cliente o di aggiornare
-              la data di scadenza se necessario.
+              Puoi inviare un promemoria al cliente o aggiornare la data di
+              scadenza dalla pagina del preventivo.
             </Text>
 
             <Section style={{ textAlign: 'center', padding: '8px 0 24px' }}>

@@ -17,6 +17,7 @@ import { PreventivoInScadenzaClienteEmail } from '@/lib/email/templates/preventi
 import { PreventivoScadutoEmail } from '@/lib/email/templates/preventivo_scaduto'
 import { SollecitoClienteEmail } from '@/lib/email/templates/sollecito_cliente'
 import { stripPrefissoLegacy } from '@/lib/utils'
+import { emailDocRefOggetto } from '@/lib/email/doc-ref'
 
 // Righe delle query paginate (26 lug): il cron gira su TUTTI i workspace,
 // quindi è la query più esposta al tetto righe dell'API — una troncatura
@@ -146,9 +147,11 @@ export async function GET(request: NextRequest) {
       if (ownerEmail) {
         await sendEmail({
           to: ownerEmail,
-          subject: `Il preventivo "${doc.title ?? ''}" scade tra ${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}`,
+          // Riferimento SEMPRE ben formato: col titolo «"Bagno Rossi"», senza
+          // titolo il numero — mai «""» (bug 12 set, foto di Eli).
+          subject: `Il preventivo${emailDocRefOggetto(doc.doc_number, doc.title)} scade tra ${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}`,
           react: createElement(PreventivoInScadenzaEmail, {
-            documentTitle: doc.title ?? '',
+            documentTitle: doc.title ?? undefined,
             documentNumber: doc.doc_number ?? undefined,
             workspaceName,
             expiresAt: expiresAtFormatted,
@@ -173,9 +176,10 @@ export async function GET(request: NextRequest) {
         try {
           await sendEmail({
             to: clientEmail,
-            subject: `Hai ancora 1 giorno per rispondere al preventivo di ${workspaceName}`,
+            // Al LEI come il corpo (il cliente finale): l'oggetto dava del tu.
+            subject: `Ha ancora 1 giorno per rispondere al preventivo di ${workspaceName}`,
             react: createElement(PreventivoInScadenzaClienteEmail, {
-              documentTitle: doc.title ?? '',
+              documentTitle: doc.title ?? undefined,
               documentNumber: doc.doc_number ?? undefined,
               workspaceName,
               expiresAt: expiresAtFormatted,
@@ -221,9 +225,9 @@ export async function GET(request: NextRequest) {
 
       await sendEmail({
         to: ownerEmail,
-        subject: `Il preventivo "${doc.title ?? ''}" è scaduto senza risposta`,
+        subject: `Il preventivo${emailDocRefOggetto(doc.doc_number, doc.title)} è scaduto senza risposta`,
         react: createElement(PreventivoScadutoEmail, {
-          documentTitle: doc.title ?? '',
+          documentTitle: doc.title ?? undefined,
           documentNumber: doc.doc_number ?? undefined,
           workspaceName,
           expiredAt,
@@ -291,10 +295,11 @@ export async function GET(request: NextRequest) {
       const numClean = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : ''
       await sendEmail({
         to: client.email,
-        subject: `Promemoria: preventivo${numClean ? ` #${numClean}` : ''} in attesa di risposta`,
+        // Numero senza «#»: nell'app i numeri compaiono nudi (revisione 17 set).
+        subject: `Promemoria: preventivo${numClean ? ` ${numClean}` : ''} in attesa di risposta`,
         react: createElement(SollecitoClienteEmail, {
           clientName: client.name ?? 'Gentile cliente',
-          documentTitle: doc.title ?? '',
+          documentTitle: doc.title ?? undefined,
           documentNumber: numClean || undefined,
           workspaceName: workspace.ragione_sociale ?? workspace.name,
           publicUrl: `${appUrl}/p/${doc.public_token}`,

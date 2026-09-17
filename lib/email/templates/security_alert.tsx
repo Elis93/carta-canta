@@ -55,7 +55,7 @@ export function SecurityAlertEmail({ title, what, when, actionUrl, actionLabel }
             <strong>Non sei stato tu?</strong> Fai queste tre cose, in quest&rsquo;ordine:
           </Text>
           <Text style={{ fontSize: 15, color: '#b05656', lineHeight: 1.6, margin: '0 0 4px' }}>
-            <strong>1.</strong> Vai su <strong>Altro › Account e dati</strong>{' '}e tocca{' '}
+            <strong>1.</strong> Vai su <strong>Altro › Account e abbonamento › Sicurezza e blocco app</strong>{' '}e tocca{' '}
             <strong>Esci da tutti i dispositivi</strong>: cambiare solo la password non basta,
             chi è già entrato resterebbe dentro.
           </Text>

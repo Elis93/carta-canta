@@ -2,9 +2,10 @@ import {
   Body, Container, Head, Heading, Hr, Html,
   Preview, Section, Text, Button,
 } from '@react-email/components'
+import { emailDocRef, emailDocRefOggetto } from '@/lib/email/doc-ref'
 
 export interface PreventivoScadutoEmailProps {
-  documentTitle: string
+  documentTitle?: string
   documentNumber?: string
   workspaceName: string
   expiredAt: string
@@ -18,12 +19,12 @@ export function PreventivoScadutoEmail({
   expiredAt,
   documentUrl,
 }: PreventivoScadutoEmailProps) {
-  const docRef = documentNumber ? `#${documentNumber} — ${documentTitle}` : documentTitle
+  const docRef = emailDocRef(documentNumber, documentTitle)
 
   return (
     <Html lang="it">
       <Head />
-      <Preview>{`Il preventivo "${documentTitle}" è scaduto senza risposta`}</Preview>
+      <Preview>{`Il preventivo${emailDocRefOggetto(documentNumber, documentTitle)} è scaduto senza risposta`}</Preview>
       <Body style={body}>
         <Container style={container}>
 
@@ -38,7 +39,7 @@ export function PreventivoScadutoEmail({
               Ciao <strong>{workspaceName}</strong>,
             </Text>
             <Text style={paragraph}>
-              Il preventivo <strong>{docRef}</strong> è scaduto il {expiredAt}{' '}
+              Il preventivo{docRef ? <>{' '}<strong>{docRef}</strong></> : null} è scaduto il {expiredAt}{' '}
               senza ricevere risposta dal cliente.
             </Text>
             <Text style={paragraph}>

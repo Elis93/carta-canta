@@ -14,6 +14,7 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoVistoEmail } from '@/lib/email/templates/preventivo_visto'
+import { emailDocRefOggetto } from '@/lib/email/doc-ref'
 import { checkPublicRateLimit } from '@/lib/public-rate-limit'
 import { clientIpFrom } from '@/lib/client-ip'
 
@@ -117,13 +118,16 @@ export async function POST(request: NextRequest, { params }: Params) {
       await sendEmail({
         to:      ownerEmail,
         subject: (() => {
-          const docRef = doc.title ? `"${doc.title}"` : doc.doc_number ?? null
           const tipo = isPreventivo ? 'Il preventivo' : 'La fattura'
           const stato = `è stat${isPreventivo ? 'o' : 'a'} apert${isPreventivo ? 'o' : 'a'}`
-          return docRef ? `${tipo} ${docRef} ${stato}` : `${tipo} ${stato}`
+          return `${tipo}${emailDocRefOggetto(doc.doc_number, doc.title)} ${stato}`
         })(),
         react:   createElement(PreventivoVistoEmail, {
-          documentTitle:  doc.title ?? doc.doc_number ?? (isPreventivo ? 'Preventivo' : 'Fattura'),
+          // ⚠️ Il titolo è il TITOLO: senza, il template mostrava il numero
+          // due volte («003/2026 — 003/2026») perché il numero faceva anche
+          // da titolo di ripiego (revisione 17 set). Il riferimento composto
+          // lo costruisce il template con emailDocRef.
+          documentTitle:  doc.title ?? undefined,
           documentNumber: doc.doc_number ?? undefined,
           workspaceName:  wsName,
           viewedAt,

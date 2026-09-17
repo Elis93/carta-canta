@@ -9,6 +9,7 @@ import { createElement } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoRifiutatoEmail } from '@/lib/email/templates/preventivo_rifiutato'
+import { emailDocRefOggetto } from '@/lib/email/doc-ref'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
 import { logRifiutoCliente } from '@/lib/documents/log-cliente'
 
@@ -123,9 +124,10 @@ export async function POST(
 
         await sendEmail({
           to: ownerEmail,
-          subject: `Il cliente ha rifiutato il preventivo${doc.title ? ` "${doc.title}"` : doc.doc_number ? ` ${doc.doc_number}` : ''}`,
+          subject: `Il cliente ha rifiutato il preventivo${emailDocRefOggetto(doc.doc_number, doc.title)}`,
           react: createElement(PreventivoRifiutatoEmail, {
-            documentTitle: doc.title ?? doc.doc_number ?? 'Preventivo',
+            // Il titolo è il TITOLO (il riferimento lo compone il template).
+            documentTitle: doc.title ?? undefined,
             documentNumber: doc.doc_number ?? undefined,
             workspaceName,
             declinedAt: new Date().toLocaleString('it-IT', {

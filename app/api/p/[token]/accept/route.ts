@@ -12,6 +12,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoAccettatoEmail } from '@/lib/email/templates/preventivo_accettato'
 import { PreventivoAccettatoClienteEmail } from '@/lib/email/templates/preventivo_accettato_cliente'
+import { emailDocRefOggetto } from '@/lib/email/doc-ref'
 import { checkPublicRateLimit, rateLimitResponse } from '@/lib/public-rate-limit'
 import { logAccettazioneCliente } from '@/lib/documents/log-cliente'
 import { clientIpFrom } from '@/lib/client-ip'
@@ -255,9 +256,11 @@ export async function POST(
 
         await sendEmail({
           to: ownerEmail,
-          subject: `${body.signer_name} ha accettato il preventivo${doc.title ? ` "${doc.title}"` : doc.doc_number ? ` ${doc.doc_number}` : ''}`,
+          subject: `${body.signer_name} ha accettato il preventivo${emailDocRefOggetto(doc.doc_number, doc.title)}`,
           react: createElement(PreventivoAccettatoEmail, {
-            documentTitle: doc.title ?? doc.doc_number ?? 'Preventivo',
+            // Il titolo è il TITOLO (senza ripieghi sul numero: il template
+            // compone il riferimento con emailDocRef — revisione 17 set).
+            documentTitle: doc.title ?? undefined,
             documentNumber: doc.doc_number ?? undefined,
             signerName: body.signer_name,
             workspaceName,
@@ -318,7 +321,7 @@ export async function POST(
         react: createElement(PreventivoAccettatoClienteEmail, {
           workspaceName,
           signerName: body.signer_name,
-          documentTitle: doc.title ?? (doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : 'Preventivo'),
+          documentTitle: doc.title ?? undefined,
           // ⚠️ Senza il prefisso storico: su un documento vecchio («Prev001/2026»)
           // la ricevuta mostrerebbe il numero col marcatore interno.
           documentNumber: doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : undefined,

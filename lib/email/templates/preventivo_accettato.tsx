@@ -2,9 +2,10 @@ import {
   Body, Container, Head, Heading, Hr, Html,
   Preview, Section, Text, Button, Row, Column,
 } from '@react-email/components'
+import { emailDocRef, emailDocRefOggetto } from '@/lib/email/doc-ref'
 
 export interface PreventivoAccettatoEmailProps {
-  documentTitle: string
+  documentTitle?: string
   documentNumber?: string
   signerName: string
   workspaceName: string
@@ -20,12 +21,12 @@ export function PreventivoAccettatoEmail({
   acceptedAt,
   documentUrl,
 }: PreventivoAccettatoEmailProps) {
-  const docRef = documentNumber ? `#${documentNumber} — ${documentTitle}` : documentTitle
+  const docRef = emailDocRef(documentNumber, documentTitle)
 
   return (
     <Html lang="it">
       <Head />
-      <Preview>{signerName} ha accettato il preventivo "{documentTitle}"</Preview>
+      <Preview>{`${signerName} ha accettato il preventivo${emailDocRefOggetto(documentNumber, documentTitle)}`}</Preview>
       <Body style={body}>
         <Container style={container}>
 
@@ -42,8 +43,8 @@ export function PreventivoAccettatoEmail({
               Ciao <strong>{workspaceName}</strong>,
             </Text>
             <Text style={paragraph}>
-              <strong>{signerName}</strong> ha appena accettato il tuo preventivo{' '}
-              <strong>{docRef}</strong>.
+              <strong>{signerName}</strong> ha appena accettato il tuo
+              preventivo{docRef ? <>{' '}<strong>{docRef}</strong></> : null}.
             </Text>
 
             {/* Riepilogo */}
@@ -58,7 +59,7 @@ export function PreventivoAccettatoEmail({
               </Row>
               <Row>
                 <Column style={infoLabel}>Preventivo</Column>
-                <Column style={infoValue}>{docRef}</Column>
+                <Column style={infoValue}>{docRef || '—'}</Column>
               </Row>
             </Section>
 

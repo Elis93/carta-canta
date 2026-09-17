@@ -2,10 +2,11 @@ import {
   Body, Container, Head, Heading, Hr, Html,
   Preview, Section, Text, Button,
 } from '@react-email/components'
+import { emailDocRef } from '@/lib/email/doc-ref'
 
 export interface SollecitoClienteEmailProps {
   clientName: string
-  documentTitle: string
+  documentTitle?: string
   documentNumber?: string
   workspaceName: string
   publicUrl: string
@@ -23,9 +24,7 @@ export function SollecitoClienteEmail({
 }: SollecitoClienteEmailProps) {
   const isFattura = docType === 'fattura'
   const docLabel = isFattura ? 'la fattura' : 'il preventivo'
-  const docRef = documentNumber
-    ? (documentTitle ? `#${documentNumber} — ${documentTitle}` : `#${documentNumber}`)
-    : (documentTitle || (isFattura ? 'questa fattura' : 'questo preventivo'))
+  const docRef = emailDocRef(documentNumber, documentTitle)
 
   return (
     <Html lang="it">
@@ -47,8 +46,8 @@ export function SollecitoClienteEmail({
               Gentile <strong>{clientName}</strong>,
             </Text>
             <Text style={paragraph}>
-              Le ricordiamo che {docLabel}{' '}
-              <strong>{docRef}</strong> {isFattura ? 'inviata' : 'inviato'} da{' '}
+              Le ricordiamo che {docLabel}{docRef ? <>{' '}<strong>{docRef}</strong></> : null}{' '}
+              {isFattura ? 'inviata' : 'inviato'} da{' '}
               <strong>{workspaceName}</strong> è ancora in attesa
               {isFattura ? ' di pagamento' : ' di una Sua risposta'}.
             </Text>

@@ -17,11 +17,12 @@ import {
   Body, Container, Head, Heading, Hr, Html,
   Preview, Section, Text, Button, Row, Column,
 } from '@react-email/components'
+import { emailDocRef } from '@/lib/email/doc-ref'
 
 export interface PreventivoAccettatoClienteEmailProps {
   workspaceName: string
   signerName: string
-  documentTitle: string
+  documentTitle?: string
   documentNumber?: string
   /** Proposta scelta ("Base"/"Premium") — solo con più proposte */
   tierLabel?: string | null
@@ -41,7 +42,7 @@ export function PreventivoAccettatoClienteEmail({
   acceptedAt,
   documentUrl,
 }: PreventivoAccettatoClienteEmailProps) {
-  const docRef = documentNumber ? `${documentNumber} — ${documentTitle}` : documentTitle
+  const docRef = emailDocRef(documentNumber, documentTitle)
 
   return (
     <Html lang="it">
@@ -59,7 +60,7 @@ export function PreventivoAccettatoClienteEmail({
               Gentile <strong>{signerName}</strong>,
             </Text>
             <Text style={paragraph}>
-              le confermiamo che ha accettato il preventivo <strong>{docRef}</strong>{' '}di{' '}
+              le confermiamo che ha accettato il preventivo{docRef ? <>{' '}<strong>{docRef}</strong></> : null}{' '}di{' '}
               <strong>{workspaceName}</strong>.{' '}Qui sotto trova il riepilogo; questa email
               le serve da ricevuta.
             </Text>

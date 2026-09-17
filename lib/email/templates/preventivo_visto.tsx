@@ -2,9 +2,10 @@ import {
   Body, Container, Head, Heading, Hr, Html,
   Preview, Section, Text, Button,
 } from '@react-email/components'
+import { emailDocRef, emailDocRefOggetto } from '@/lib/email/doc-ref'
 
 export interface PreventivoVistoEmailProps {
-  documentTitle: string
+  documentTitle?: string
   documentNumber?: string
   workspaceName: string
   viewedAt: string
@@ -20,7 +21,7 @@ export function PreventivoVistoEmail({
   documentUrl,
   docType = 'preventivo',
 }: PreventivoVistoEmailProps) {
-  const docRef = documentNumber ? `#${documentNumber} — ${documentTitle}` : documentTitle
+  const docRef = emailDocRef(documentNumber, documentTitle)
   const isPreventivo = docType === 'preventivo'
   const docLabel = isPreventivo ? 'preventivo' : 'fattura'
   const ilDoc = isPreventivo ? 'il preventivo' : 'la fattura'
@@ -28,7 +29,7 @@ export function PreventivoVistoEmail({
   return (
     <Html lang="it">
       <Head />
-      <Preview>{`${isPreventivo ? 'Il preventivo' : 'La fattura'} "${documentTitle}" è stat${isPreventivo ? 'o' : 'a'} apert${isPreventivo ? 'o' : 'a'} dal tuo cliente`}</Preview>
+      <Preview>{`${isPreventivo ? 'Il preventivo' : 'La fattura'}${emailDocRefOggetto(documentNumber, documentTitle)} è stat${isPreventivo ? 'o' : 'a'} apert${isPreventivo ? 'o' : 'a'} dal tuo cliente`}</Preview>
       <Body style={body}>
         <Container style={container}>
 
@@ -43,8 +44,7 @@ export function PreventivoVistoEmail({
               Ciao <strong>{workspaceName}</strong>,
             </Text>
             <Text style={paragraph}>
-              Il tuo cliente ha aperto {ilDoc}{' '}
-              <strong>{docRef}</strong> il {viewedAt}.
+              Il tuo cliente ha aperto {ilDoc}{docRef ? <>{' '}<strong>{docRef}</strong></> : null} il {viewedAt}.
             </Text>
             <Text style={paragraph}>
               È un buon momento per contattarlo se ha domande.

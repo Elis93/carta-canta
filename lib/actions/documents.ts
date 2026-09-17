@@ -2875,9 +2875,10 @@ export async function sendReminderAction(
   const numClean = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : ''
   const result = await sendEmail({
     to: client.email,
+    // Numero senza «#»: nell'app i numeri compaiono nudi (revisione 17 set).
     subject: docType === 'fattura'
-      ? `Promemoria: fattura${numClean ? ` #${numClean}` : ''} in attesa di pagamento`
-      : `Promemoria: preventivo${numClean ? ` #${numClean}` : ''} in attesa di risposta`,
+      ? `Promemoria: fattura${numClean ? ` ${numClean}` : ''} in attesa di pagamento`
+      : `Promemoria: preventivo${numClean ? ` ${numClean}` : ''} in attesa di risposta`,
     react: createElement(SollecitoClienteEmail, {
       clientName: clientFullName || client.name,
       documentTitle: doc.title ?? '',

@@ -97,10 +97,12 @@ export async function POST(
         // Tipo VERO, mai per esclusione (regola 9 ago): la nota di credito
         // usciva come «preventivo» e l'URL della nota era comunque /fatture.
         const label = docTypeLabel(doc.doc_type).toLowerCase()
-        const laLabel = /^(fattur|nota)/.test(label) ? `la ${label}` : `il ${label}`
+        // Preposizione ARTICOLATA: «sulla fattura», mai «su la fattura»
+        // (revisione 17 set — l'oggetto usciva con l'articolo staccato).
+        const sulLabel = /^(fattur|nota)/.test(label) ? `sulla ${label}` : `sul ${label}`
         await sendEmail({
           to: ownerEmail,
-          subject: `Messaggio dal cliente su ${laLabel} ${doc.doc_number ? formatDocNumber(doc.doc_number) : ''}`.trim(),
+          subject: `Messaggio dal cliente ${sulLabel} ${doc.doc_number ? formatDocNumber(doc.doc_number) : ''}`.trim(),
           react: createElement(ClientMessageEmail, {
             docLabel: label,
             docNumber: doc.doc_number ? formatDocNumber(doc.doc_number) : null,
