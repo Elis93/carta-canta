@@ -151,9 +151,11 @@ function VoceBene({ voce, onUpdate, info }: { voce: VoceItem; onUpdate: (u: Part
   const attivo = voce.bene_significativo === true
   // ⚠️ Avviso contestuale (Eli, 12 set): con la spunta attiva l'IVA EFFETTIVA
   // può non essere il 10% impostato — la regola dei beni significativi manda
-  // al 22% la parte che eccede il valore del lavoro. Se il bene è l'unica voce
-  // al 10% (caso «P=0») va TUTTO al 22%. Senza dirlo qui, l'artigiano vede 10%
-  // sul campo e 22% nel riepilogo e pensa a un errore (è quello che è successo).
+  // al 22% la parte che eccede il valore del lavoro. Il caso «P=0» (tutto al
+  // 22%) scatta quando NON esiste lavoro al 10% senza spunta: bene unica voce
+  // al 10%, oppure TUTTE le voci al 10% marcate come bene (collaudo Eli 18
+  // set: due spunte → «non risultava il calcolo» — era la legge, non un bug).
+  // Senza dirlo qui, l'artigiano vede 10% sul campo e 22% nel riepilogo.
   const split = attivo ? info?.split ?? null : null
   const pZero = split != null && split.al10 === 0 // tutto al 22
   const splitVero = split != null && split.al10 > 0 && split.al22 > 0 // 10% + 22%
@@ -176,9 +178,10 @@ function VoceBene({ voce, onUpdate, info }: { voce: VoceItem; onUpdate: (u: Part
           marginLeft: 26, marginTop: 6, fontSize: 11.5, lineHeight: 1.4, color: '#b0863e',
           background: '#faf6ec', border: '1px solid #ecdcbb', borderRadius: 8, padding: '6px 9px',
         }}>
-          <b>IVA effettiva: 22%.</b>{' '}È l’unica voce al 10%: senza altro lavoro al 10%,
-          l’agevolazione non si applica e l’intero importo va al 22%. Aggiungi la posa o la
-          manodopera al 10% perché una parte resti agevolata.
+          <b>IVA effettiva: 22%.</b>{' '}L’agevolazione vale fino al valore del lavoro
+          al 10% <b>senza</b>{' '}questa spunta (posa, manodopera): qui non ce n’è, quindi
+          l’intero importo va al 22%. La spunta va solo sul bene: posa e manodopera
+          restano voci al 10% normali.
         </div>
       )}
       {/* Split 10%+22%: è l'esito CORRETTO e atteso → nota neutra, non un allarme. */}

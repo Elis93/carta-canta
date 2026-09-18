@@ -16,7 +16,9 @@ export function SezioneForm({
   tourId?: string
 }) {
   return (
-    <div data-tour={tourId}>
+    // «cc-sezione»: dalla seconda sezione in poi il CSS aggiunge aria sopra
+    // (18 set, Eli: «ogni sezione leggermente staccata dalla precedente»).
+    <div data-tour={tourId} className="cc-sezione">
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, margin: '0 2px 6px' }}>
         <span className="cc-section-label" style={{ marginBottom: 0 }}>{label}</span>
         {right ? <span className="cc-t-sub" style={{ whiteSpace: 'nowrap' }}>{right}</span> : null}

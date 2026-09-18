@@ -392,6 +392,16 @@
     margin: 12px 0;
   }
 
+  /* SEZIONI DEL FORM DOCUMENTO (SezioneForm — Intestazione · Voci ·
+     Condizioni · Riepilogo). 18 set, Eli: «ogni sezione leggermente
+     staccata dalla precedente». Il form ha space-y-3 (12px) uguale per
+     tutto: qui si aggiunge aria SOLO all'inizio di una nuova sezione,
+     dalla seconda in poi (il ~ salta la prima, l'Intestazione). Padding
+     e non margin: non litiga con lo space-y del form. */
+  .cc-sezione ~ .cc-sezione {
+    padding-top: 10px;
+  }
+
   /* Scheda con ombra standard */
   .cc-card {
     background-color: #ffffff;
