@@ -73,16 +73,18 @@ export function MonthAgenda({ weeks, monthParam, todayKey, byDay, defaultSelecte
                 key={key}
                 type="button"
                 onClick={() => setSelected(key)}
-                aria-label={`${dayNum}${count > 0 ? ` — ${count} appuntament${count === 1 ? 'o' : 'i'}` : ''}`}
+                aria-label={`${dayNum}${isToday ? ' (oggi)' : ''}${count > 0 ? ` — ${count} appuntament${count === 1 ? 'o' : 'i'}` : ''}`}
                 aria-pressed={isSel}
                 style={{
                   position: 'relative', aspectRatio: '1 / 1', minHeight: 40, border: 'none', cursor: 'pointer',
                   borderRadius: 10, fontFamily: 'inherit', padding: 0,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-                  background: isSel ? '#1a1a2e' : isToday ? '#f5e9d0' : 'transparent',
-                  color: isSel ? '#fff' : inMonth ? '#161616' : '#c8c7c2',
+                  /* 18 set (Eli): «oggi» NON ha più il fondo beige — sembrava un
+                     giorno già selezionato. L'unico riquadro pieno è la
+                     SELEZIONE (navy); oggi si riconosce dal numero in oro. */
+                  background: isSel ? '#1a1a2e' : 'transparent',
+                  color: isSel ? '#fff' : isToday ? '#b0863e' : inMonth ? '#161616' : '#c8c7c2',
                   fontSize: 14, fontWeight: isToday || isSel ? 700 : 500,
-                  outline: isToday && !isSel ? '1px solid #e5d3a1' : 'none',
                 }}
               >
                 {dayNum}

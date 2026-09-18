@@ -185,16 +185,18 @@ export function AppointmentPicker({ value, onChange, excludeKind, excludeId, onI
               key={k}
               type="button"
               onClick={() => selectDay(k)}
-              aria-label={`${dayNum}${has ? ' — hai già un appuntamento' : ''}`}
+              aria-label={`${dayNum}${isToday ? ' (oggi)' : ''}${has ? ' — hai già un appuntamento' : ''}`}
               aria-pressed={isSel}
               style={{
                 position: 'relative', aspectRatio: '1 / 1', minHeight: 34, border: 'none', cursor: 'pointer',
                 borderRadius: 8, fontFamily: 'inherit', padding: 0,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
-                background: isSel ? '#1a1a2e' : isToday ? '#f5e9d0' : 'transparent',
-                color: isSel ? '#fff' : inMonth ? '#161616' : '#c8c7c2',
+                /* 18 set (Eli): niente fondo beige su «oggi» — qui all'apertura
+                   NESSUN giorno è selezionato, e il beige sembrava una scelta
+                   già fatta. Pieno (navy) = selezione; oggi = numero in oro. */
+                background: isSel ? '#1a1a2e' : 'transparent',
+                color: isSel ? '#fff' : isToday ? '#b0863e' : inMonth ? '#161616' : '#c8c7c2',
                 fontSize: 13, fontWeight: isToday || isSel ? 700 : 500,
-                outline: isToday && !isSel ? '1px solid #e5d3a1' : 'none',
               }}
             >
               {dayNum}

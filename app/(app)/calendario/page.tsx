@@ -233,7 +233,7 @@ export default async function CalendarioPage({
       )}
 
       <p style={{ margin: '14px 15px 0', fontSize: 12, color: '#767676', textAlign: 'center' }}>
-        Il pallino oro segna i giorni con appuntamenti · tocca un giorno per vederli
+        Oggi è il numero in oro · il pallino segna i giorni con appuntamenti · tocca un giorno per vederli
       </p>
 
       {/* FAB nuovo sopralluogo (con appuntamento) */}

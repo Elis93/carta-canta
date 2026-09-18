@@ -24,8 +24,10 @@ export function TodayAgendaCard({ agenda, style }: { agenda: TodayAgenda; style?
       <div style={{ background: '#fff', borderRadius: 14, boxShadow: SH, padding: '4px 15px 13px' }}>
       {events.length === 0 && (
         !hasUpcoming ? (
+          /* 18 set (Eli): il vuoto apre l'AGENDA, non il sopralluogo — da lì
+             il + aggiunge l'appuntamento. Allineato alla card mobile. */
           <Link
-            href="/sopralluoghi/nuovo"
+            href="/calendario"
             style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 0 12px', textDecoration: 'none', color: 'inherit' }}
           >
             <span style={{ width: 26, height: 26, borderRadius: '50%', background: '#f3ede0', color: '#b0863e', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
