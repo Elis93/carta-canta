@@ -5,7 +5,7 @@
 // ============================================================
 
 import type { Database } from '@/types/database'
-import { calcolaDocumento, riepilogoIva } from '@/lib/fiscal/calcoli'
+import { calcolaDocumento, riepilogoIva, FORFETTARIO_LEGAL_NOTICE, BOLLO_VIRTUALE_NOTICE } from '@/lib/fiscal/calcoli'
 import { stripPrefissoLegacy } from '@/lib/utils'
 import { terminePrevisto } from '@/lib/documents/termine-lavori'
 import { espandiBeniSignificativi, dettaglioBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
@@ -236,11 +236,9 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // «IVA x%», e al suo posto la dicitura di legge.
   const isReverse    = (doc as { reverse_charge?: boolean | null }).reverse_charge === true
 
-  const legalNotice = template?.legal_notice ?? (
-    isForf
-      ? "Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014 (Regime Forfettario) – Operazione fuori campo IVA ai sensi del comma 58, lettera a), del medesimo articolo"
-      : null
-  )
+  // ⚖️ La dicitura del forfettario viene dalla costante di calcoli.ts (testo
+  // prescritto per iscritto dallo studio, 18 set 2026): stessa fonte dell'XML.
+  const legalNotice = template?.legal_notice ?? (isForf ? FORFETTARIO_LEGAL_NOTICE : null)
 
   // ⚠️ La NOTA DI CREDITO si comporta come una fattura in tutto (IVA, bollo,
   // diciture di regime) ma DEVE dirlo in testata: è il documento che storna,
@@ -700,7 +698,14 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           : `L'intero corrispettivo di ${fmt(beniSplit.imponibile10)} € è soggetto a IVA 10%: il valore dei beni significativi non supera quello della prestazione.`)
     : null
 
-  const legalLines = [legalNotice, reverseNotice, ritenutaNotice, beniNotice].filter(Boolean) as string[]
+  // ⚖️ Dicitura del bollo assolto in modo virtuale (prescrizione scritta dello
+  // studio, 18 set 2026): ogni documento FISCALE col bollo addebitato deve
+  // dichiararlo — prima il PDF diceva solo «Marca da bollo € 2,00». Solo su
+  // fattura e nota (il preventivo non porta bollo dall'11 ago); la costante
+  // vive in calcoli.ts, la stessa che l'XML mette in <Causale>.
+  const bolloNotice = isFattura && bolloAmount > 0 ? BOLLO_VIRTUALE_NOTICE : null
+
+  const legalLines = [legalNotice, reverseNotice, ritenutaNotice, bolloNotice, beniNotice].filter(Boolean) as string[]
 
   // ── Termine dei lavori (088) — SOLO preventivi ─────────────────────────────
   // Riga propria, in evidenza rispetto alle note legali (è una clausola che il

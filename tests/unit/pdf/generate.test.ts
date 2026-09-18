@@ -166,8 +166,11 @@ describe('buildPdfHtml', () => {
   })
 
   it('include la nota legale forfettario se regime è forfettario', () => {
+    // ⚖️ Dal 18 set 2026 il testo è quello prescritto dallo studio del
+    // commercialista: cita RF19 e le tre leggi (190/2014, 208/2015, 145/2018).
     const html = buildPdfHtml(makeTestData())
-    expect(html).toContain('Forfettario')
+    expect(html).toContain('RF19 - Operazione senza applicazione')
+    expect(html).toContain('145/2018')
   })
 
   it('NON mostra IVA in regime forfettario', () => {

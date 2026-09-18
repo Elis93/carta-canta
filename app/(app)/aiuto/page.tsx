@@ -413,13 +413,15 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
   ] : []),
   {
     q: 'Perché la fattura ha 2 € in più del preventivo?',
-    parole: ['marca da bollo', 'bollo', '77', 'due euro', 'totale diverso'],
+    parole: ['marca da bollo', 'bollo', '77', 'due euro', 'totale diverso', 'riaddebito', 'bollo virtuale'],
     a: <>È la <b>marca da bollo</b>: sulle fatture (e sulle note di credito) senza IVA sopra{' '}
-      77,47&nbsp;€ la legge chiede 2&nbsp;€ di imposta, e l&rsquo;app li aggiunge da sola.
+      77,47&nbsp;€ la legge chiede 2&nbsp;€ di imposta, e l&rsquo;app li aggiunge da sola al
+      totale — è il <b>riaddebito al cliente</b>. L&rsquo;imposta all&rsquo;Agenzia la versi
+      tu (te la conteggia ogni trimestre nel cassetto fiscale), e la fattura porta la
+      dicitura dell&rsquo;<b>assolvimento in modo virtuale</b>; nella fattura elettronica il
+      bollo esce anche come riga &laquo;Bollo&raquo;, come indicato dal commercialista.
       Il <b>preventivo</b>{' '}invece non è un documento fiscale: il bollo non è dovuto e non
-      compare — arriva quando il preventivo diventa fattura. Il costo è a tuo carico
-      (l&rsquo;Agenzia lo conteggia ogni trimestre nel cassetto fiscale): addebitarlo al
-      cliente è una scelta tua, da concordare.</>,
+      compare — arriva quando il preventivo diventa fattura.</>,
   },
   {
     q: 'Ho installato una caldaia: perché una parte è al 22% invece che al 10%?',
@@ -496,8 +498,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       venisse aggiornata. Nel dubbio su un lavoro, chiedi al tuo commercialista: qui
       l&rsquo;app fa quello che le dici.
       <br /><br />
-      <b>Se sei in forfettario non ti riguarda:</b>{' '}le tue fatture restano fuori campo
-      IVA come sempre, e la spunta non compare.</>,
+      <b>Se sei in forfettario non ti riguarda:</b>{' '}le tue fatture restano senza
+      applicazione dell&rsquo;IVA come sempre, e la spunta non compare.</>,
   },
   {
     q: 'Il cliente riceve una conferma quando accetta?',

@@ -78,7 +78,7 @@ INSERT INTO templates (
   'Inter',
   true,
   false,
-  'Operazione effettuata ai sensi dell''art. 1, commi 54-89, L. 190/2014 (Regime Forfettario) – Operazione fuori campo IVA ai sensi del comma 58, lettera a), del medesimo articolo',
+  'RF19 - Operazione senza applicazione dell''Iva ai sensi dell''art. 1 co. 54-89, della legge n. 190/2014 così come modificato dalla legge n. 208/2015 e dalla legge n. 145/2018',
   true
 );
 

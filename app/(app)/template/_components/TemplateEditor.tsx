@@ -389,7 +389,7 @@ export function TemplateEditor({
             <textarea
               value={legalNotice}
               onChange={(e) => setLegalNotice(e.target.value)}
-              placeholder="esempio: Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014…"
+              placeholder="esempio: RF19 - Operazione senza applicazione dell'Iva ai sensi dell'art. 1 co. 54-89…"
               rows={3}
               style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e3e3e6', borderRadius: 10, padding: '11px 12px', fontSize: 14, color: '#161616', resize: 'vertical', fontFamily: 'inherit' }}
             />

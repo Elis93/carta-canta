@@ -6,6 +6,7 @@
 // ============================================================
 
 import type { SdiInvoice, SdiRitenuta } from './types'
+import { BOLLO_VIRTUALE_NOTICE } from '@/lib/fiscal/calcoli'
 
 function esc(s: string | null | undefined): string {
   if (!s) return ''
@@ -136,6 +137,43 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
     )
     .join('')
 
+  // ⚖️ BOLLO RIADDEBITATO = RIGA in fattura (prescrizione scritta dello
+  // studio, 18 set 2026): descrizione «Bollo», importo fisso, natura N2.2
+  // per i forfettari e N2.1 (art. 15) per gli ordinari. Prima il bollo
+  // viaggiava SOLO nel blocco DatiBollo — che resta: dichiara che l'imposta
+  // è assolta in modo virtuale dall'emittente; la riga è il riaddebito al
+  // cliente (che infatti è già dentro ImportoTotaleDocumento).
+  // ⚠️ NIENTE <Ritenuta>SI</Ritenuta> qui: il bollo è un'imposta, non un
+  // corrispettivo d'appalto — la ritenuta non lo riguarda.
+  const naturaBollo = isForfettario ? 'N2.2' : 'N2.1'
+  const bolloRigaXml = inv.bollo > 0
+    ? `
+      <DettaglioLinee>
+        <NumeroLinea>${inv.righe.length + 1}</NumeroLinea>
+        <Descrizione>Bollo</Descrizione>
+        <Quantita>1.00</Quantita>
+        <PrezzoUnitario>${num(inv.bollo)}</PrezzoUnitario>
+        <PrezzoTotale>${num(inv.bollo)}</PrezzoTotale>
+        <AliquotaIVA>0.00</AliquotaIVA>
+        <Natura>${naturaBollo}</Natura>
+      </DettaglioLinee>`
+    : ''
+
+  // Il riepilogo della riga «Bollo» per i NON forfettari: un blocco a sé a
+  // natura N2.1 (per i forfettari la riga confluisce nel loro unico blocco
+  // N2.2, qui sotto). Ogni natura presente nelle righe DEVE avere il suo
+  // riepilogo, altrimenti lo SdI scarta con 00429.
+  const riepilogoBolloXml = !isForfettario && inv.bollo > 0
+    ? `
+      <DatiRiepilogo>
+        <AliquotaIVA>0.00</AliquotaIVA>
+        <Natura>N2.1</Natura>
+        <ImponibileImporto>${num(inv.bollo)}</ImponibileImporto>
+        <Imposta>0.00</Imposta>
+        <RiferimentoNormativo>Imposta di bollo riaddebitata - art. 15 DPR 633/1972</RiferimentoNormativo>
+      </DatiRiepilogo>`
+    : ''
+
   // Riepilogo IVA: per il forfettario un unico blocco a aliquota 0 / N2.2
   const riepilogoXml = isReverse
     ? `
@@ -147,13 +185,19 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
         <RiferimentoNormativo>Inversione contabile - art. 17, comma 6, lett. a-ter, DPR 633/1972</RiferimentoNormativo>
       </DatiRiepilogo>`
     : isForfettario
+    // ⚠️ L'imponibile del blocco N2.2 COMPRENDE la riga «Bollo» (che esce
+    // anch'essa a natura N2.2): lo SdI verifica che ImponibileImporto torni
+    // con la somma dei PrezzoTotale delle righe di quella natura (00422).
+    // Il riferimento normativo è la forma corta (max 100 caratteri) della
+    // dicitura prescritta dallo studio (18 set 2026): la versione completa
+    // viaggia in <Causale>.
     ? `
       <DatiRiepilogo>
         <AliquotaIVA>0.00</AliquotaIVA>
         <Natura>N2.2</Natura>
-        <ImponibileImporto>${num(inv.imponibile)}</ImponibileImporto>
+        <ImponibileImporto>${num(Math.round((inv.imponibile + inv.bollo + Number.EPSILON) * 100) / 100)}</ImponibileImporto>
         <Imposta>0.00</Imposta>
-        <RiferimentoNormativo>Art. 1, commi 54-89, L. 190/2014 - Regime forfettario</RiferimentoNormativo>
+        <RiferimentoNormativo>Art. 1 co. 54-89 L. 190/2014, mod. L. 208/2015 e L. 145/2018 - Regime forfettario</RiferimentoNormativo>
       </DatiRiepilogo>`
     // ⚠️ UN BLOCCO PER ALIQUOTA (081). `DatiRiepilogo` è ripetibile e va
     // ripetuto: lo SdI ricalcola `Imposta = ImponibileImporto × AliquotaIVA`
@@ -171,6 +215,10 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
         <Imposta>${num(r.imposta)}</Imposta>
       </DatiRiepilogo>`)
         .join('')
+
+  // Il blocco N2.1 della riga «Bollo» si aggancia a QUALSIASI ramo non
+  // forfettario (per i forfettari è '' e il bollo sta già dentro l'N2.2).
+  const riepilogoConBolloXml = riepilogoXml + riepilogoBolloXml
 
   // ⚠️ POSIZIONE e COERENZA. `DatiRitenuta` sta in `DatiGeneraliDocumento`
   // SUBITO DOPO `<Numero>` e PRIMA di `<DatiBollo>` (l'XSD impone l'ordine).
@@ -206,15 +254,19 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
   // <Causale> è ripetibile (0..N) e max 200 caratteri: ogni riga della
   // causale diventa un elemento a sé — serve per la seconda dicitura dei
   // forfettari (esenzione ritenuta, comma 67) che non entrerebbe nei 200.
-  const causaleXml = inv.causale
-    ? inv.causale
-        .split('\n')
-        .map((c) => c.trim())
-        .filter(Boolean)
-        .map((c) => `
+  // ⚖️ Col bollo addebitato si aggiunge la dicitura dell'assolvimento
+  // virtuale (prescrizione scritta dello studio, 18 set 2026) — la stessa
+  // che il PDF stampa nelle note legali (costante in calcoli.ts).
+  const causaleRighe = [
+    ...(inv.causale
+      ? inv.causale.split('\n').map((c) => c.trim()).filter(Boolean)
+      : []),
+    ...(inv.bollo > 0 ? [BOLLO_VIRTUALE_NOTICE] : []),
+  ]
+  const causaleXml = causaleRighe
+    .map((c) => `
       <Causale>${esc(c.slice(0, 200))}</Causale>`)
-        .join('')
-    : ''
+    .join('')
 
   // ── Nota di credito (TD04) ────────────────────────────────────────────
   // Il TIPO di documento è ciò che dice allo SdI e all'Agenzia che si tratta
@@ -294,7 +346,7 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
         <ImportoTotaleDocumento>${num(inv.totale)}</ImportoTotaleDocumento>${causaleXml}
       </DatiGeneraliDocumento>${collegataXml}
     </DatiGenerali>
-    <DatiBeniServizi>${righeXml}${riepilogoXml}
+    <DatiBeniServizi>${righeXml}${bolloRigaXml}${riepilogoConBolloXml}
     </DatiBeniServizi>
   </FatturaElettronicaBody>
 </p:FatturaElettronica>`

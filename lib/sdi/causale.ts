@@ -5,10 +5,15 @@
 // spezzato in xml.ts). Fase 1 della ritenuta d'acconto (27 lug):
 // senza la riga del comma 67 un condominio committente trattiene
 // il 4% per errore a un forfettario, che invece è ESENTE.
+//
+// ⚖️ 18 set 2026: la dicitura IVA è quella PRESCRITTA PER ISCRITTO dallo
+// studio del commercialista e vive in UN posto solo (calcoli.ts), così
+// PDF e XML non possono divergere.
 // ============================================================
 
-export const CAUSALE_FORFETTARIO_IVA =
-  'Operazione effettuata ai sensi dell’art. 1, commi da 54 a 89, della Legge n. 190/2014 e successive modificazioni — regime forfettario. Operazione senza applicazione dell’IVA.'
+import { FORFETTARIO_LEGAL_NOTICE } from '@/lib/fiscal/calcoli'
+
+export const CAUSALE_FORFETTARIO_IVA = FORFETTARIO_LEGAL_NOTICE
 
 export const CAUSALE_FORFETTARIO_RITENUTA =
   'Compenso non soggetto a ritenuta d’acconto ai sensi dell’art. 1, comma 67, della Legge n. 190/2014.'

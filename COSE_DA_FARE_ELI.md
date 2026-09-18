@@ -188,18 +188,19 @@ produzione con quella password: va cambiata subito.
 > di prodotto restano a Eli.
 
 **✉️ RISPOSTA SCRITTA (email dello studio, 18 set — risponde all'ultimo punto della mail di
-Eli del 22/07). Tre prescrizioni operative, ⏳ DA IMPLEMENTARE nell'app (Eli: «voglio farlo dopo»):**
-- ① **Dicitura regime forfettario in fattura**: «RF19 - Operazione senza applicazione dell'Iva
+Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set (sera):**
+- ① ✅ **Dicitura regime forfettario in fattura**: «RF19 - Operazione senza applicazione dell'Iva
   ai sensi dell'art. 1 co. 54-89, della legge n. 190/2014 così come modificato dalla legge
-  n. 208/2015 e dalla legge n. 145/2018». ⚠️ La nostra dicitura attuale (PDF + causale XML) è
-  DIVERSA: cita solo la L. 190/2014 e dice «fuori campo IVA» — va allineata.
-- ② **Dicitura bollo**: «Imposta di bollo Euro 2,00 assolta in modo virtuale ai sensi
-  dell'art. 15 del D.P.R. 642/1972 e del DM 17/06/2014 e ss.mm.». Oggi il PDF mostra solo la
-  riga «Marca da bollo € 2,00» senza dicitura di legge — va aggiunta.
-- ③ **Bollo riaddebitato al cliente**: riga in fattura con dicitura «Bollo», importo fisso
-  2,00 €, con natura **N2.2 per i forfettari** e **N2.1 (art. 15) per gli ordinari**. ⚠️ Oggi
-  l'app somma il bollo al totale ma nell'XML lo rappresenta SOLO col blocco DatiBollo, non
-  come riga: da analizzare con cura (riepiloghi, controllo 00421) prima di toccare doc-xml.
+  n. 208/2015 e dalla legge n. 145/2018». → È ora LA dicitura dell'app (costante unica in
+  `calcoli.ts`): PDF (4 preset), `<Causale>` dell'XML, suggerimento nel Template editor. La
+  vecchia («fuori campo IVA», solo L. 190/2014) non esiste più da nessuna parte.
+- ② ✅ **Dicitura bollo**: «Imposta di bollo assolta in modo virtuale ai sensi dell'art. 15
+  del DPR 642/1972 e del DM 17/06/2014.» → sul PDF (note legali di ogni fattura/nota col
+  bollo) e nell'XML come `<Causale>` aggiuntiva. Prima c'era solo «Marca da bollo € 2,00».
+- ③ ✅ **Bollo riaddebitato al cliente = riga «Bollo» nell'XML**: importo fisso 2,00 €, natura
+  **N2.2 per i forfettari** (confluisce nel loro riepilogo, che ora comprende il bollo) e
+  **N2.1 (art. 15) per gli ordinari** (riepilogo a sé). Il blocco DatiBollo resta (dichiara
+  l'assolvimento virtuale). Verificato: 00421/00422/00429 tornano, 813 test verdi.
 
 **Esiti dell'incontro (dal riassunto vocale di Eli):**
 - **N11 (fattura di acconto) — ✅ RISPOSTA: sì.** «La fattura deve essere trasmessa allo SdI

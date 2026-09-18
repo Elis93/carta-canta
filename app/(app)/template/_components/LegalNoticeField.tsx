@@ -9,11 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { FORFETTARIO_LEGAL_NOTICE, BOLLO_VIRTUALE_NOTICE } from '@/lib/fiscal/calcoli'
 
+// ⚖️ I testi di forfettario e bollo vengono dalle costanti di calcoli.ts
+// (diciture prescritte per iscritto dallo studio del commercialista, 18 set
+// 2026): sono le stesse che il PDF stampa da sé quando la nota legale non è
+// personalizzata — il suggerimento non deve proporre una versione diversa.
 const LEGAL_PRESETS: { label: string; text: string }[] = [
   {
     label: 'Regime forfettario',
-    text: "Operazione effettuata ai sensi dell'art. 1, commi 54-89, Legge n. 190/2014 – Regime forfettario. Imposta non applicata.",
+    text: FORFETTARIO_LEGAL_NOTICE,
   },
   {
     label: 'Ritenuta d\'acconto 20%',
@@ -21,7 +26,7 @@ const LEGAL_PRESETS: { label: string; text: string }[] = [
   },
   {
     label: 'Marca da bollo',
-    text: "Imposta di bollo assolta sull'originale – art. 15 D.M. 17/06/2014.",
+    text: BOLLO_VIRTUALE_NOTICE,
   },
   {
     label: 'Reverse charge',
@@ -70,7 +75,7 @@ export function LegalNoticeField({ value, onChange, hint }: LegalNoticeFieldProp
         name="legal_notice"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="esempio: Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014…"
+        placeholder="esempio: RF19 - Operazione senza applicazione dell'Iva ai sensi dell'art. 1 co. 54-89…"
         rows={4}
       />
       {hint && (

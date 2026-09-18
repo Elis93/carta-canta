@@ -4,6 +4,7 @@ import {
   calcolaDocumento,
   riepilogoIva,
   FORFETTARIO_LEGAL_NOTICE,
+  BOLLO_VIRTUALE_NOTICE,
   VAT_RATES,
 } from '@/lib/fiscal/calcoli'
 import type { FiscalOptions } from '@/types/index'
@@ -82,14 +83,38 @@ describe('FORFETTARIO_LEGAL_NOTICE', () => {
     expect(FORFETTARIO_LEGAL_NOTICE.length).toBeGreaterThan(50)
   })
 
-  it('contiene il riferimento normativo art. 1 L. 190/2014', () => {
+  // ⚖️ Testo prescritto PER ISCRITTO dallo studio del commercialista
+  // (18 set 2026): deve citare RF19 e TUTTE E TRE le leggi — la vecchia
+  // dicitura citava solo la 190/2014 e diceva «fuori campo IVA» (impreciso).
+  it('è il testo prescritto dallo studio: RF19 + le tre leggi', () => {
+    expect(FORFETTARIO_LEGAL_NOTICE).toContain('RF19')
     expect(FORFETTARIO_LEGAL_NOTICE).toContain('art. 1')
-    expect(FORFETTARIO_LEGAL_NOTICE).toContain('L. 190/2014')
-    expect(FORFETTARIO_LEGAL_NOTICE).toContain('Forfettario')
+    expect(FORFETTARIO_LEGAL_NOTICE).toContain('190/2014')
+    expect(FORFETTARIO_LEGAL_NOTICE).toContain('208/2015')
+    expect(FORFETTARIO_LEGAL_NOTICE).toContain('145/2018')
+    expect(FORFETTARIO_LEGAL_NOTICE).toContain('senza applicazione')
   })
 
-  it('contiene la dicitura fuori campo IVA', () => {
-    expect(FORFETTARIO_LEGAL_NOTICE).toContain('fuori campo IVA')
+  it('non dice più «fuori campo IVA» (correzione dello studio)', () => {
+    expect(FORFETTARIO_LEGAL_NOTICE).not.toContain('fuori campo')
+  })
+
+  it('entra in un solo <Causale> del tracciato (max 200 caratteri)', () => {
+    expect(FORFETTARIO_LEGAL_NOTICE.length).toBeLessThanOrEqual(200)
+  })
+})
+
+// ── BOLLO_VIRTUALE_NOTICE ──────────────────────────────────────────────────
+describe('BOLLO_VIRTUALE_NOTICE', () => {
+  it('cita art. 15 DPR 642/1972 e DM 17/06/2014 (prescrizione dello studio)', () => {
+    expect(BOLLO_VIRTUALE_NOTICE).toContain('assolta in modo virtuale')
+    expect(BOLLO_VIRTUALE_NOTICE).toContain('art. 15')
+    expect(BOLLO_VIRTUALE_NOTICE).toContain('642/1972')
+    expect(BOLLO_VIRTUALE_NOTICE).toContain('DM 17/06/2014')
+  })
+
+  it('entra in un solo <Causale> del tracciato (max 200 caratteri)', () => {
+    expect(BOLLO_VIRTUALE_NOTICE.length).toBeLessThanOrEqual(200)
   })
 })
 

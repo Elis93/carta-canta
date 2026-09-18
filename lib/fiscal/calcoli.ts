@@ -17,11 +17,22 @@ export function roundFiscale(value: number): number {
 }
 
 // ── STRINGA LEGALE FORFETTARIO ────────────────────────────────
-// Non modificabile — obbligatoria per legge IT
+// ⚖️ Testo PRESCRITTO PER ISCRITTO dallo studio del commercialista
+// (risposta all'incontro del 18 set 2026) — non riformulare: la vecchia
+// dicitura citava solo la L. 190/2014 e diceva «fuori campo IVA», che è
+// impreciso (l'operazione è SENZA APPLICAZIONE dell'IVA, non fuori campo).
+// È LA fonte unica: PDF (template.ts), XML (<Causale>, via causale.ts).
 export const FORFETTARIO_LEGAL_NOTICE =
-  "Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014 " +
-  '(Regime Forfettario) – Operazione fuori campo IVA ai sensi del comma 58, ' +
-  "lettera a), del medesimo articolo"
+  "RF19 - Operazione senza applicazione dell'Iva ai sensi dell'art. 1 " +
+  'co. 54-89, della legge n. 190/2014 così come modificato dalla legge ' +
+  'n. 208/2015 e dalla legge n. 145/2018'
+
+// ⚖️ Dicitura del BOLLO assolto in modo virtuale — anch'essa prescritta
+// per iscritto dallo studio (18 set 2026). Compare su ogni fattura/nota
+// col bollo addebitato: PDF (note legali) e XML (<Causale>, xml.ts).
+export const BOLLO_VIRTUALE_NOTICE =
+  "Imposta di bollo assolta in modo virtuale ai sensi dell'art. 15 " +
+  'del DPR 642/1972 e del DM 17/06/2014.'
 
 // ── ALIQUOTE IVA DISPONIBILI ──────────────────────────────────
 export const VAT_RATES = [

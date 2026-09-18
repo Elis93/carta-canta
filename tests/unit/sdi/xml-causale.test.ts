@@ -45,12 +45,24 @@ function makeInvoice(overrides: Partial<SdiInvoice> = {}): SdiInvoice {
 }
 
 describe('XML FatturaPA — causale forfettario con esenzione ritenuta', () => {
-  it('emette DUE <Causale>: fuori campo IVA + esenzione comma 67', () => {
+  // ⚖️ 18 set 2026: col bollo (la fixture ne ha 2 €) le causali sono TRE —
+  // dicitura RF19 (testo prescritto dallo studio) + esenzione comma 67 +
+  // assolvimento virtuale del bollo.
+  it('emette TRE <Causale>: dicitura RF19 + esenzione comma 67 + bollo virtuale', () => {
     const xml = buildFatturaPaXml(makeInvoice())
     const causali = xml.match(/<Causale>([^<]*)<\/Causale>/g) ?? []
-    expect(causali).toHaveLength(2)
+    expect(causali).toHaveLength(3)
+    expect(xml).toContain('RF19 - Operazione senza applicazione')
+    expect(xml).toContain('145/2018')
     expect(xml).toContain('comma 67')
-    expect(xml).toContain('regime forfettario')
+    expect(xml).toContain('assolta in modo virtuale')
+  })
+
+  it('senza bollo le <Causale> restano due (niente dicitura bollo)', () => {
+    const xml = buildFatturaPaXml(makeInvoice({ bollo: 0 }))
+    const causali = xml.match(/<Causale>([^<]*)<\/Causale>/g) ?? []
+    expect(causali).toHaveLength(2)
+    expect(xml).not.toContain('assolta in modo virtuale')
   })
 
   it('ogni <Causale> resta nei 200 caratteri del tracciato', () => {
@@ -73,7 +85,9 @@ describe('XML FatturaPA — causale forfettario con esenzione ritenuta', () => {
   })
 
   it('una causale su una riga sola resta un solo <Causale> (retrocompatibilità)', () => {
-    const xml = buildFatturaPaXml(makeInvoice({ causale: 'Nota semplice' }))
+    // bollo: 0 per isolare il comportamento dello split (col bollo si
+    // aggiungerebbe la sua dicitura, verificata dal test qui sopra).
+    const xml = buildFatturaPaXml(makeInvoice({ causale: 'Nota semplice', bollo: 0 }))
     const causali = xml.match(/<Causale>([^<]*)<\/Causale>/g) ?? []
     expect(causali).toHaveLength(1)
     expect(xml).toContain('<Causale>Nota semplice</Causale>')
