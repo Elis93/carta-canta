@@ -180,6 +180,71 @@ produzione con quella password: va cambiata subito.
 > (prima: 112). Cinque test nuovi in `tests/unit/fiscal/calcoli.test.ts` bloccano il ritorno
 > indietro, incluso il caso con due aliquote diverse e quello degli arrotondamenti.
 
+### 🗣️ INCONTRO col commercialista — 18 settembre 2026 (esiti)
+
+> Fonte: la **risposta scritta dello studio** arrivata prima dell'incontro + il **riassunto
+> vocale di Eli** dopo l'incontro (trascritto da Code lo stesso giorno — le due registrazioni
+> dell'incontro vero erano vuote: microfono occupato). Qui gli esiti; le decisioni
+> di prodotto restano a Eli.
+
+**✉️ RISPOSTA SCRITTA (email dello studio, 18 set — risponde all'ultimo punto della mail di
+Eli del 22/07). Tre prescrizioni operative, ⏳ DA IMPLEMENTARE nell'app (Eli: «voglio farlo dopo»):**
+- ① **Dicitura regime forfettario in fattura**: «RF19 - Operazione senza applicazione dell'Iva
+  ai sensi dell'art. 1 co. 54-89, della legge n. 190/2014 così come modificato dalla legge
+  n. 208/2015 e dalla legge n. 145/2018». ⚠️ La nostra dicitura attuale (PDF + causale XML) è
+  DIVERSA: cita solo la L. 190/2014 e dice «fuori campo IVA» — va allineata.
+- ② **Dicitura bollo**: «Imposta di bollo Euro 2,00 assolta in modo virtuale ai sensi
+  dell'art. 15 del D.P.R. 642/1972 e del DM 17/06/2014 e ss.mm.». Oggi il PDF mostra solo la
+  riga «Marca da bollo € 2,00» senza dicitura di legge — va aggiunta.
+- ③ **Bollo riaddebitato al cliente**: riga in fattura con dicitura «Bollo», importo fisso
+  2,00 €, con natura **N2.2 per i forfettari** e **N2.1 (art. 15) per gli ordinari**. ⚠️ Oggi
+  l'app somma il bollo al totale ma nell'XML lo rappresenta SOLO col blocco DatiBollo, non
+  come riga: da analizzare con cura (riepiloghi, controllo 00421) prima di toccare doc-xml.
+
+**Esiti dell'incontro (dal riassunto vocale di Eli):**
+- **N11 (fattura di acconto) — ✅ RISPOSTA: sì.** «La fattura deve essere trasmessa allo SdI
+  ogni volta che si incassa, anche solo un acconto.» → lo stand-by del 12 set si può
+  sbloccare (i 3 punti annotati sotto N11), su decisione di Eli.
+- **Copia di cortesia = fattura GIÀ emessa.** Se la fattura viene creata/inviata al cliente
+  con la copia di cortesia, vuol dire che è già stata trasmessa allo SdI; altrimenti deve
+  essere una BOZZA con un avviso «molto chiaro» che dice che è una bozza. ⚠️ Tocca il nostro
+  flusso client-first (invio al cliente PRIMA della trasmissione, pilota +24h): da decidere
+  come allinearci — es. avviso/filigrana «non ancora trasmessa» sulla copia del cliente
+  finché lo SdI non conferma. Decisione di prodotto per Eli.
+- **Preventivi: nessun obbligo di conservazione.** Un preventivo inviato, accettato e pagato
+  «può anche essere cancellato»: l'obbligo dei 10 anni è delle fatture. (Chiude il pezzo
+  «preventivi» di N1③; il consiglio in FAQ di tenerli come prova contrattuale resta valido.)
+- **Fatture SEZIONALI per tipo di lavorazione** (proposta sua): serie separate tipo 1/2026,
+  1A/2026, 1B/2026 per suddividere le fatture per lavorazione; a fine anno confluiscono
+  tutte nella dichiarazione. → idea di prodotto (l'infrastruttura c'è già: invoice_sequences
+  per doc_type; servirebbe un sezionale configurabile). Decisione a Eli.
+- **BOLLE (DDT, documento di trasporto)** (proposta sua, ci lavora molto): il falegname che
+  consegna un mobile deve poter fare la bolla d'accompagnamento; se il cliente paga subito →
+  fattura diretta, se non paga → DDT e poi fattura (differita, TD24 — già annotata come
+  opportunità l'11 ago). Vale per clienti privati e P.IVA. → feature nuova, decisione a Eli.
+- **Clienti UE ed EXTRA-UE** (ci tiene molto — siamo in zona di confine, extra-UE = Svizzera):
+  gestire la fatturazione verso l'estero. Oggi l'app assume clienti italiani. → area nuova
+  (fiscalità estero: fuori campo/non imponibile, XML con IdPaese estero, esterometro/TD17-19
+  lato passivo NO — solo attivo). Materia B.0: prima le domande, poi il codice.
+- **Statistiche**: fatturato confrontato col mese precedente e con l'anno precedente. (Il
+  Bilancio ha già il confronto anno-su-anno del 5 ago; il confronto col mese precedente è
+  un'aggiunta piccola.)
+- **Dichiarazione dei redditi nell'app**: il commercialista potrebbe CARICARE la dichiarazione
+  dell'artigiano (anche gli anni passati) e lui la vede lì → estensione dell'area /studio
+  (oggi sola lettura documenti). Idea di prodotto.
+- **Visione confermata**: «ogni persona deve avere il proprio ufficio in tasca» — agenda,
+  calendario, schede clienti, storico lavori, rapportini con foto da mandare al cliente,
+  bolle, preventivi, fatture. (In gran parte è già l'app.)
+- **Vademecum / base documentale**: lui usa un vademecum con tutte le regole e «ha un link» —
+  lo manderà quando lo ritrova. Eli chiede a Code di cercare intanto la base documentale
+  pubblica che usano i commercialisti (candidati: banca dati **def.finanze.it** — normativa e
+  prassi MEF/AdE: circolari, risoluzioni, interpelli —, la **Guida AdE alla compilazione
+  delle fatture elettroniche**, le **specifiche tecniche FatturaPA**). ⏳ Ricerca da fare.
+- [ ] **Eli: mandargli la MAIL riassuntiva** con tutto scritto (lui stesso l'ha chiesta: le
+  cose che non sapeva a memoria le va a controllare e risponde per iscritto). Code può
+  prepararla quando serve, riusando le domande rimaste aperte (A0 · N12 · N1/N3 residui ·
+  N9/N10 · N19 · N5 · N7).
+
 ### 📌 NUOVE domande per il commercialista — emerse DOPO l'invio del dossier
 
 > Il dossier del 5 agosto è **già stato mandato** (con la mail preparata insieme). Queste sono
@@ -314,6 +379,10 @@ suona anche la campanella; alla trasmissione fuori termine compare l'avviso di t
 (senza bloccare: trasmettere tardi è meglio che mai). Riferimento del conteggio: la più
 vecchia fra data del documento e primo incasso (art. 6 c.4 — principio di anticipazione).
 Al commercialista resta la conferma.*
+> 🗣️ **Incontro 18 set**: sul tema ha aggiunto che la **copia di cortesia presuppone la
+> fattura già trasmessa** — se non lo è ancora, il documento mostrato al cliente deve essere
+> chiaramente una BOZZA. Vedi la sezione «Incontro 18 settembre» qui sopra (decisione di
+> prodotto sul nostro flusso client-first ancora da prendere).
 
 **🔎 RICERCA «cosa dà per scontato l'app» (11 ago, richiesta di Eli: «ho paura che
 anche per altre funzioni abbiamo dato per scontato qualcosa che nella prassi non si fa»).**
@@ -366,6 +435,11 @@ scorporare l'acconto già fatturato.
 - ② Ha senso che l'app, quando si registra l'incasso dell'acconto, proponga «crea la fattura
   di acconto» e poi generi il saldo che scorpora l'acconto già fatturato?
 
+> ✅ **RISPOSTA all'incontro del 18 set: sì — la fattura va trasmessa allo SdI a OGNI incasso,
+> anche solo per un acconto** (riassunto vocale di Eli). Lo stand-by qui sotto è quindi
+> SBLOCCABILE: i tre punti si implementano quando Eli dà il via. (Resta da confermare per
+> iscritto il TD02 per la fattura del solo acconto — punto ② della domanda.)
+>
 > ⏸️ **STAND-BY — decisione di Eli (12 set 2026): «dobbiamo aspettare il commercialista, teniamolo
 > stand-by ma ricordiamoci che va gestito».** Questa parte del prodotto NON si tocca finché il
 > commercialista non risponde a N11 — è materia fiscale bloccata dalla regola B.0. Ecco cosa va
