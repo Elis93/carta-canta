@@ -25,7 +25,7 @@ import { ChevronDown, Loader2, Navigation, Save, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
 import { AddressAutocomplete } from '@/components/shared/AddressAutocomplete'
-import type { ClientHit } from '@/components/shared/QuickCreateClientDialog'
+import { QuickCreateClientDialog, type ClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { CardTendina } from '@/components/shared/CardTendina'
 import { saveLavoroAction, setLavoroStatusAction } from '@/lib/actions/lavori'
@@ -91,6 +91,9 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
   const [openAppt, setOpenAppt] = useState(Boolean(defaults?.scheduledAt))
   useEffect(() => { if (apptIncomplete) setOpenAppt(true) }, [apptIncomplete])
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
+  // Creazione rapida del cliente dalla tendina («Aggiungi nuovo cliente»),
+  // come nel Nuovo preventivo (Eli, 18 set: tutti i riquadri cliente uguali).
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const [status, setStatus] = useState<LavoroStatus>(defaults?.status ?? 'da_iniziare')
   const [pending, startTransition] = useTransition()
   const [pendingAction, setPendingAction] = useState<'save' | LavoroStatus | null>(null)
@@ -332,7 +335,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
             </div>
             <div>
               <span style={fieldLabelMin}>Cliente</span>
-              <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
+              <ClientAutocomplete value={client} onChange={setClient} onCreateNew={() => setQuickCreateOpen(true)} />
             </div>
             <div>
               <span style={fieldLabelMin}>Indirizzo del cantiere</span>
@@ -364,6 +367,13 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
           />
           {esitoAutoSave && <div style={{ marginTop: 10 }}>{esitoAutoSave}</div>}
         </CardTendina>
+        {/* Creazione rapida del cliente (stesso dialog del Nuovo preventivo).
+            setClient cambia la firma → l'auto-save registra da sé. */}
+        <QuickCreateClientDialog
+          open={quickCreateOpen}
+          onOpenChange={setQuickCreateOpen}
+          onCreated={(nuovo) => setClient(nuovo)}
+        />
       </>
     )
   }
@@ -380,7 +390,7 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
           (Eli, 19 ago). L'appuntamento è una card a sé, sotto. */}
       <div style={cardStyle}>
         <div style={secLabel}>Cliente e cantiere</div>
-        <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
+        <ClientAutocomplete value={client} onChange={setClient} onCreateNew={() => setQuickCreateOpen(true)} />
         {/* Suggerimenti INTERNI degli indirizzi già usati (Eli 20 ago). */}
         <div style={{ marginTop: 10 }}>
           <AddressAutocomplete value={address} onChange={setAddress} placeholder="esempio: Via Roma 12, Milano" maxLength={200} style={fieldStyle} />
@@ -415,6 +425,13 @@ export function LavoroForm({ defaults }: { defaults: LavoroDefaults | null }) {
         {pending && pendingAction === 'save' ? <Loader2 size={18} className="animate-spin" /> : <Save size={17} />}
         Crea lavoro
       </button>
+
+      {/* Creazione rapida del cliente (stesso dialog del Nuovo preventivo). */}
+      <QuickCreateClientDialog
+        open={quickCreateOpen}
+        onOpenChange={setQuickCreateOpen}
+        onCreated={(nuovo) => setClient(nuovo)}
+      />
     </div>
   )
 }

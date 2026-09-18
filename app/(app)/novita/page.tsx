@@ -19,6 +19,8 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Nel riepilogo c’è una sola riga «IVA» con l’imposta sul totale; quando le aliquote sono più d’una, sotto compaiono in piccolo le quote per aliquota («su 200,00 al 10% — 20,00»). I conti non cambiano di un centesimo e la fattura elettronica resta identica: cambia solo come i numeri vengono mostrati.',
       'Quando spunti «È un bene significativo» su una voce al 10%, l’app ti avvisa subito se l’IVA effettiva non è più il 10%: se il bene è l’unica voce al 10%, senza altro lavoro al 10% l’intero importo va al 22% — e ti dice come tenerne una parte agevolata (aggiungendo la posa o la manodopera al 10%).',
       'In Home, sulla card «Lavoro in corso», l’ultimo tasto è ora la cornetta: se hai il numero del cliente lo chiami al volo; se non ce l’hai, un riquadro ti fa aggiungerlo sul momento e lo salva nella scheda del cliente, così lo ritrovi ovunque.',
+      'Il riquadro Cliente funziona allo stesso modo dappertutto: anche sul lavoro e sul sopralluogo, se il cliente non è in rubrica, in fondo alla tendina c’è «Aggiungi nuovo cliente» e lo crei al volo senza uscire dal modulo — come su preventivi e fatture.',
+      'Nell’Agenda (e nel calendario dell’appuntamento) il giorno di oggi non ha più lo sfondo colorato che sembrava una selezione già fatta: oggi è il numero in oro, e l’unico giorno «pieno» è quello che scegli tu. In Home, quando non ci sono appuntamenti, il tocco apre l’Agenda.',
     ],
   },
   {

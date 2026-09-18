@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import { usePhotoLightbox, ZoomHotspot } from '@/components/shared/PhotoLightbox'
 import { ClientAutocomplete } from '@/components/shared/ClientAutocomplete'
 import { AddressAutocomplete } from '@/components/shared/AddressAutocomplete'
-import type { ClientHit } from '@/components/shared/QuickCreateClientDialog'
+import { QuickCreateClientDialog, type ClientHit } from '@/components/shared/QuickCreateClientDialog'
 import { VoiceInput } from '@/components/shared/VoiceInput'
 import { Calcolatrice, type CalcSnapshot } from '@/components/calc/Calcolatrice'
 import { AppointmentPicker } from '@/app/(app)/_components/AppointmentPicker'
@@ -143,6 +143,9 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
   const [apptIncomplete, setApptIncomplete] = useState(false)
   const [notes, setNotes] = useState(defaults?.notes ?? '')
   const [client, setClient] = useState<ClientHit | null>(defaults?.client ?? null)
+  // Creazione rapida del cliente dalla tendina («Aggiungi nuovo cliente»),
+  // come nel Nuovo preventivo (Eli, 18 set: tutti i riquadri cliente uguali).
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   // Indirizzo del cliente (residenza/sede) per offrire il tocco «usa questo»:
   // NON è l'indirizzo del cantiere, è solo un punto di partenza (vedi sotto).
   const [clienteAddress, setClienteAddress] = useState<string | null>(null)
@@ -372,7 +375,7 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
           con un tocco. */}
       <div style={cardStyle}>
         <div style={{ ...secLabel, marginBottom: 12 }}>Cliente e cantiere</div>
-        <ClientAutocomplete value={client} onChange={setClient} placeholder="Cerca cliente…" />
+        <ClientAutocomplete value={client} onChange={setClient} onCreateNew={() => setQuickCreateOpen(true)} />
         {/* Suggerimenti INTERNI degli indirizzi già usati (Eli 20 ago) — vedi
             AddressAutocomplete. Il wrapper porta il marginTop; il campo tiene
             fieldStyle. */}
@@ -655,6 +658,15 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
 
       {/* Niente riga sotto i tasti (Eli, 17 ago: eliminata). Il comportamento
           resta: appunti e misure vanno nelle Note interne del preventivo. */}
+
+      {/* Creazione rapida del cliente (stesso dialog del Nuovo preventivo).
+          setClient basta: indirizzo suggerito e titolo automatico seguono
+          lo stato del cliente da soli (effect + derivazione qui sopra). */}
+      <QuickCreateClientDialog
+        open={quickCreateOpen}
+        onOpenChange={setQuickCreateOpen}
+        onCreated={(nuovo) => setClient(nuovo)}
+      />
     </div>
   )
 }
