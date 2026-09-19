@@ -246,14 +246,24 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
   calendario, schede clienti, storico lavori, rapportini con foto da mandare al cliente,
   bolle, preventivi, fatture. (In gran parte è già l'app.)
 - **Vademecum / base documentale**: lui usa un vademecum con tutte le regole e «ha un link» —
-  lo manderà quando lo ritrova. Eli chiede a Code di cercare intanto la base documentale
-  pubblica che usano i commercialisti (candidati: banca dati **def.finanze.it** — normativa e
-  prassi MEF/AdE: circolari, risoluzioni, interpelli —, la **Guida AdE alla compilazione
-  delle fatture elettroniche**, le **specifiche tecniche FatturaPA**). ⏳ Ricerca da fare.
-- [ ] **Eli: mandargli la MAIL riassuntiva** con tutto scritto (lui stesso l'ha chiesta: le
-  cose che non sapeva a memoria le va a controllare e risponde per iscritto). Code può
-  prepararla quando serve, riusando le domande rimaste aperte (A0 · N12 · N1/N3 residui ·
-  N9/N10 · N19 · N5 · N7 · **N21** — clienti stranieri, aggiunta il 19 set).
+  lo manderà quando lo ritrova. 🔎 **Ricerca fatta il 19 set**: la base documentale PUBBLICA è
+  ① **def.finanze.it** (banca dati del MEF, gratuita: normativa + prassi — circolari,
+  risoluzioni, interpelli), ② la guida ufficiale AdE **«La fattura elettronica e i servizi
+  gratuiti dell'Agenzia delle Entrate»** (PDF aggiornato a dicembre 2025, nell'area tematica
+  Fatturazione elettronica del sito AdE), ③ le **specifiche tecniche FatturaPA** (stesso sito).
+  ⚠️ Il vademecum SUO è quasi certamente una **banca dati professionale a pagamento**
+  (Eutekne, MySolution, Sole 24 Ore…) che da fuori non si consulta: per questo il link glielo
+  chiediamo comunque nella mail — se è una di quelle, ci serve sapere QUALE per capire cosa
+  cita quando risponde.
+- [x] **Eli: mandargli la MAIL riassuntiva** — ✅ **testo PREPARATO da Code il 19 set**
+  (consegnato in chat, pronto da incollare): domande A0 · N11 (conferma scritta del TD02) ·
+  N12 · N1/N3 residui · N21 · N5 · N7 · N9/N10 · N19, più il blocco «conferme senza urgenza»
+  (N13-N18, N20), la **richiesta del link al vademecum** e la chiusa sull'app da testare.
+  Resta a Eli: rileggerlo, sistemare il tu/Lei come si parlano davvero, e spedirlo.
+- [ ] **Quando l'app è pronta e i bug più importanti risolti: mandargli l'APP DA TESTARE**
+  (sua richiesta, riferita da Eli il 19 set). Prima del suo collaudo conviene dargli un
+  account di prova pulito e i passi essenziali (registrazione → preventivo → fattura), così
+  vede il flusso fiscale che gli abbiamo descritto nelle domande.
 
 ### 📌 NUOVE domande per il commercialista — emerse DOPO l'invio del dossier
 
