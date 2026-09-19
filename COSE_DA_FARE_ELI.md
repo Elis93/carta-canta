@@ -227,6 +227,15 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
   gestire la fatturazione verso l'estero. Oggi l'app assume clienti italiani. → area nuova
   (fiscalità estero: fuori campo/non imponibile, XML con IdPaese estero, esterometro/TD17-19
   lato passivo NO — solo attivo). Materia B.0: prima le domande, poi il codice.
+  **Precisazione di Eli (19 set): «per clienti extra-UE sono anche tutti gli stranieri che
+  abitano in Italia».** ⚠️ Annotazione fiscale per quando si costruirà: sul piano fiscale il
+  discrimine NON è la cittadinanza ma la **residenza fiscale / il codice fiscale** — uno
+  straniero che ABITA in Italia e ha il codice fiscale si fattura come un cliente italiano
+  normale (l'app lo gestisce già oggi); il trattamento «estero» (IdPaese, codice destinatario
+  XXXXXXX, natura fuori campo/non imponibile) riguarda chi NON è fiscalmente residente in
+  Italia, qualunque passaporto abbia. E per i lavori su IMMOBILI in Italia l'IVA italiana si
+  applica comunque (art. 7-quater): a cambiare è l'identificazione del cliente nell'XML, non
+  l'imposta. Il caso vero da chiarire è lo straniero in Italia SENZA codice fiscale → **N21**.
 - **Statistiche**: fatturato confrontato col mese precedente e con l'anno precedente. (Il
   Bilancio ha già il confronto anno-su-anno del 5 ago; il confronto col mese precedente è
   un'aggiunta piccola.)
@@ -244,7 +253,7 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
 - [ ] **Eli: mandargli la MAIL riassuntiva** con tutto scritto (lui stesso l'ha chiesta: le
   cose che non sapeva a memoria le va a controllare e risponde per iscritto). Code può
   prepararla quando serve, riusando le domande rimaste aperte (A0 · N12 · N1/N3 residui ·
-  N9/N10 · N19 · N5 · N7).
+  N9/N10 · N19 · N5 · N7 · **N21** — clienti stranieri, aggiunta il 19 set).
 
 ### 📌 NUOVE domande per il commercialista — emerse DOPO l'invio del dossier
 
@@ -592,6 +601,27 @@ farlo se non aggiungendo una voce a mano, e in quel caso l'XML non le dichiara.
 - **Il mio parere:** vale la pena, ma **dopo** il lancio e solo se apriamo davvero ai
   professionisti — per l'artigiano che è il nostro utente tipo non cambia nulla, e ogni
   campo fiscale in più è una superficie in più da tenere corretta.
+
+**N21 — CLIENTI STRANIERI: chi conta come «estero»? E chi in Italia non ha il codice
+fiscale?** *(19 set — nasce dalla precisazione di Eli sull'idea «clienti UE/extra-UE»
+dell'incontro: per lei contano anche gli stranieri che abitano in Italia)*
+Il nostro riassunto, da confermare prima di costruire la funzione:
+- ① **Il discrimine è la residenza fiscale, non la cittadinanza — confermi?** Uno straniero
+  che vive in Italia e ha il **codice fiscale** si fattura come un cliente italiano normale
+  (CF nell'anagrafica, XML ordinario), qualunque sia il passaporto; il trattamento «estero»
+  (IdPaese diverso da IT, CodiceDestinatario `XXXXXXX`, natura N2.1/N3.x a seconda del caso)
+  vale per chi NON è fiscalmente residente/stabilito in Italia.
+- ② **Il caso scomodo: il cliente presente in Italia SENZA codice fiscale** (turista,
+  frontaliero svizzero con casa qui, straniero appena arrivato). Come lo identifichiamo in
+  fattura? Si può usare l'identificativo estero (IdPaese + IdCodice del suo paese)? E se non
+  ha nemmeno quello?
+- ③ **Per i lavori su immobili in Italia** l'IVA italiana si applica comunque (art. 7-quater
+  DPR 633/1972), anche con cliente estero — quindi per il nostro artigiano tipo cambia
+  l'identificazione del cliente nell'XML, non l'imposta. Per le prestazioni generiche B2B
+  verso l'estero invece scatta il fuori campo art. 7-ter. Confermi che il primo caso è
+  quello dominante per noi?
+- ④ **Il forfettario** che fattura a un privato svizzero per un lavoro fatto in Italia:
+  resta tutto in N2.2 come oggi, o c'è qualcosa di diverso da dichiarare?
 
 **Segnalati come OPPORTUNITÀ, non come rischi** (non servono risposte, ma un parere se
 capita): la **fattura differita TD24** entro il 15 del mese successivo, che ci calzerebbe
