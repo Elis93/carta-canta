@@ -127,8 +127,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
     q: 'Cosa fanno i tre tasti accanto a una scadenza in Home?',
     parole: ['sollecita', 'sollecito', 'busta', 'whatsapp', 'chiama', 'email automatica'],
     a: <>Nella sezione <b>In scadenza</b>{' '}della Home, accanto a ogni documento: la{' '}
-      <b>busta</b>{' '}invia <b>subito</b>{' '}al cliente un&rsquo;email di sollecito già scritta —
-      parte al tocco, senza mostrarti il testo prima (la spunta verde conferma l&rsquo;invio).{' '}
+      <b>busta</b>{' '}invia al cliente un&rsquo;email di sollecito già scritta — prima
+      dell&rsquo;invio ti chiede <b>conferma</b>{' '}(con il nome del cliente), poi parte
+      senza mostrarti il testo; la spunta verde conferma l&rsquo;invio.{' '}
       <b>WhatsApp</b>{' '}apre il messaggio pronto col link al documento: lo rivedi e lo mandi tu.
       La <b>cornetta</b>{' '}avvia la chiamata al numero in rubrica. I tasti compaiono solo se il
       cliente ha email o telefono salvati.</>,
@@ -865,7 +866,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
     a: <>Sì: apri <VaiA a="strumenti">Altro</VaiA>{' '}e attiva <b>Testo grande</b>, subito
       sotto il campo di ricerca — scritte e pulsanti diventano più grandi in tutta
       l&rsquo;app e sotto le voci dei menu compare una breve spiegazione. Si spegne con lo
-      stesso interruttore. Dal computer lo trovi in{' '}
+      stesso interruttore, che ti viene proposto anche alla <b>registrazione</b>, nella
+      schermata &laquo;Tutto pronto!&raquo;. Dal computer lo trovi in{' '}
       <VaiA a="impGenerale">Impostazioni › Dati dell&rsquo;attività</VaiA>.</>,
   },
   {

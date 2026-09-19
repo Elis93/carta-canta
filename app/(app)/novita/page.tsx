@@ -22,6 +22,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
       'Il riquadro Cliente funziona allo stesso modo dappertutto: anche sul lavoro e sul sopralluogo, se il cliente non è in rubrica, in fondo alla tendina c’è «Aggiungi nuovo cliente» e lo crei al volo senza uscire dal modulo — come su preventivi e fatture.',
       'Nell’Agenda (e nel calendario dell’appuntamento) il giorno di oggi non ha più lo sfondo colorato che sembrava una selezione già fatta: oggi è il numero in oro, e l’unico giorno «pieno» è quello che scegli tu. In Home, quando non ci sono appuntamenti, il tocco apre l’Agenda.',
       'Le diciture fiscali sono quelle indicate per iscritto dal commercialista: la fattura del forfettario cita per esteso la legge 190/2014 con le modifiche del 2015 e del 2018 (via il vecchio «fuori campo IVA»), e quando c’è la marca da bollo la fattura dichiara che l’imposta è assolta in modo virtuale (art. 15 DPR 642/1972 e DM 17/06/2014). Nella fattura elettronica il bollo riaddebitato esce anche come riga «Bollo». I conti non cambiano di un centesimo.',
+      'L’app è più comoda per chi legge o tocca con meno precisione: «Testo grande» ti viene proposto già alla registrazione (resta comunque in Altro), i tasti quadrati della Home sono più grandi e facili da centrare, e la busta del sollecito chiede conferma — col nome del cliente — prima di far partire l’email.',
     ],
   },
   {

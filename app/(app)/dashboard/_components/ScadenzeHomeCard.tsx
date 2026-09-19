@@ -17,13 +17,16 @@ import { Mail, Phone, Loader2, CheckCircle2, Info } from 'lucide-react'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
+import { testoConfermaSollecito } from '@/lib/documents/conferma-sollecito'
 import { ContextHint } from '@/components/shared/ContextHint'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
 export interface ScadenzaDocInfo {
   documentId: string
-  /** Numero già formattato per la UI (fatture con "Fatt.", B.3) */
+  /** Numero PULITO, senza marcatore («008/2026»): il prefisso «Fatt.»/«Prev.»
+   *  lo aggiunge la card (docLabel); nei messaggi WhatsApp la parola
+   *  «fattura» c'è già nella frase — col marcatore uscirebbe doppia (B.3). */
   numberLabel: string | null
   clientName: string | null
   clientEmail: string | null
@@ -58,6 +61,11 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
 
   async function handleSollecita(e: React.MouseEvent) {
     e.stopPropagation()
+    // ⚠️ Conferma PRIMA dell'invio (18 set, «app facile per un 70enne»):
+    // la busta mandava l'email al primo tocco, senza chiedere — un tocco
+    // di curiosità era un'email vera al cliente. Stessa frase del menu
+    // «⋯» del documento (helper unico).
+    if (!window.confirm(testoConfermaSollecito(kind, doc.clientName))) return
     setSending(true)
     setError(null)
     const result = await runAction(
@@ -160,7 +168,11 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
             {doc.expiresLabel}
           </div>
         </div>
-        {/* Tasti quadrati piccoli — 38×34 come nel mockup approvato */}
+        {/* Tasti quadrati — 44×44 (18 set, «app facile per un 70enne»):
+            l'area toccabile minima raccomandata è 44px; i 38×34 del mockup
+            di agosto erano sotto soglia. Cresce solo il riquadro, le icone
+            restano uguali; il testo a sinistra ha già l'ellissi e assorbe
+            lo spazio in meno. */}
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
           {doc.clientEmail && (
             <button
@@ -168,7 +180,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
               disabled={sending || sent}
               aria-label={sent ? 'Sollecito inviato' : 'Sollecita per email'}
               style={{
-                width: 38, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: '#fff', color: sent ? '#2f8a63' : '#b0863e', borderRadius: 9,
                 border: sent ? '1px solid #bce3d2' : '1px solid #e0c98a',
                 cursor: sending || sent ? 'default' : 'pointer', opacity: sending ? 0.8 : 1, flexShrink: 0,
@@ -186,7 +198,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"
                   style={{
-                    width: 38, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     border: '1px solid #d9d7d0', borderRadius: 9,
                     color: '#1a1a2e', textDecoration: 'none', flexShrink: 0,
                   }}
@@ -198,7 +210,7 @@ function ScadenzaBlock({ doc, kind, workspaceName }: {
                 href={phoneHref}
                 aria-label="Chiama"
                 style={{
-                  width: 38, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   border: '1px solid #d9d7d0', borderRadius: 9,
                   color: '#1a1a2e', textDecoration: 'none', flexShrink: 0,
                 }}
@@ -280,9 +292,10 @@ export function ScadenzeHomeCard({ preventivo, fattura, workspaceName }: {
           <ContextHint id="tasti-sollecito-home">
             I tre tasti accanto a ogni scadenza:{' '}
             <Mail size={13} style={{ display: 'inline', verticalAlign: '-2px' }} aria-hidden />{' '}
-            <b>invia subito</b>{' '}al cliente un&rsquo;email di sollecito già scritta — parte al
-            tocco, senza mostrarti il testo prima. Con <b>WhatsApp</b>{' '}apri il messaggio
-            pronto: lo rivedi e lo mandi tu. La <b>cornetta</b>{' '}chiama il cliente.
+            invia al cliente un&rsquo;email di sollecito già scritta — ti chiede{' '}
+            <b>conferma</b>{' '}e poi parte, senza mostrarti il testo. Con <b>WhatsApp</b>{' '}
+            apri il messaggio pronto: lo rivedi e lo mandi tu. La <b>cornetta</b>{' '}
+            chiama il cliente.
           </ContextHint>
         </div>
       )}

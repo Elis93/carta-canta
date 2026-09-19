@@ -7,6 +7,7 @@ import { Mail, Phone, Loader2, CheckCircle2, AlertTriangle, UserRound } from 'lu
 import { Button } from '@/components/ui/button'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency } from '@/lib/utils'
+import { testoConfermaSollecito } from '@/lib/documents/conferma-sollecito'
 
 interface PendingDocCardProps {
   documentId: string
@@ -39,6 +40,9 @@ export function PendingDocCard({
   const [error, setError]           = useState<string | null>(null)
 
   async function handleSollecita() {
+    // Conferma PRIMA dell'invio (18 set): l'email parte davvero, e senza
+    // anteprima — la stessa frase di Home e menu «⋯» (helper unico).
+    if (!window.confirm(testoConfermaSollecito('preventivo', clientName))) return
     setSending(true)
     setError(null)
     const result = await runAction(() => sendReminderAction(documentId), 'inviare il sollecito')

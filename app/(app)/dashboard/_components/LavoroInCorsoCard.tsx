@@ -15,8 +15,9 @@ import { LavoroTelefonoButton } from './LavoroTelefonoButton'
 
 const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 
+// 44×44: area toccabile minima raccomandata (18 set, «app facile per un 70enne»).
 const sqStyle: React.CSSProperties = {
-  width: 40, height: 40, flexShrink: 0, borderRadius: 10,
+  width: 44, height: 44, flexShrink: 0, borderRadius: 10,
   border: '1px solid #d9d7d0', background: '#fff',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   color: '#1a1a2e', textDecoration: 'none',

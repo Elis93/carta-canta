@@ -28,6 +28,7 @@ import { MoreHorizontal, Archive, BellRing, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { runAction } from '@/lib/run-action'
 import { archiviaDocumentoAction, sendReminderAction } from '@/lib/actions/documents'
+import { testoConfermaSollecito } from '@/lib/documents/conferma-sollecito'
 import { btnQuadrato, rigaMenu } from './stili'
 
 export function MenuAltro({ children, label = 'Altro', style }: { children: ReactNode; label?: string; style?: CSSProperties }) {
@@ -153,11 +154,10 @@ export function RigaSollecita({ documentId, docType }: { documentId: string; doc
       disabled={busy}
       onClick={async () => {
         if (busy) return
-        // ⚠️ La busta manda l'email SUBITO, senza anteprima (regola della Home,
-        // 20 ago): la conferma sta qui, prima che parta.
-        if (!window.confirm(docType === 'fattura'
-          ? 'Mandare ora al cliente l’email di sollecito del pagamento? Parte subito, già scritta.'
-          : 'Mandare ora al cliente l’email di sollecito? Parte subito, già scritta.')) return
+        // ⚠️ L'email parte davvero e senza anteprima: la conferma sta qui,
+        // prima dell'invio. Dal 18 set la frase viene dall'helper unico
+        // (testoConfermaSollecito), lo stesso di Home e pagine Scadenze.
+        if (!window.confirm(testoConfermaSollecito(docType))) return
         setBusy(true)
         const res = await runAction(() => sendReminderAction(documentId, docType), 'inviare il sollecito')
         setBusy(false)

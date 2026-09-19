@@ -18,8 +18,9 @@ import { toast } from 'sonner'
 import { runAction } from '@/lib/run-action'
 import { setClientPhoneAction } from '@/lib/actions/clients'
 
+// 44×44: area toccabile minima raccomandata (18 set, «app facile per un 70enne»).
 const sqStyle: React.CSSProperties = {
-  width: 40, height: 40, flexShrink: 0, borderRadius: 10,
+  width: 44, height: 44, flexShrink: 0, borderRadius: 10,
   border: '1px solid #d9d7d0', background: '#fff',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   color: '#1a1a2e', textDecoration: 'none', cursor: 'pointer',

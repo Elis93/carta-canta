@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { AtecoMultiSelect } from '@/components/shared/AtecoMultiSelect'
 import { useComuneLookup } from '@/hooks/useComuneLookup'
 import { UnlockVeil } from '@/components/security/UnlockVeil'
+import { TextSizeToggle } from '@/components/shared/TextSizeToggle'
 import { toast } from 'sonner'
 
 // ── Stili condivisi mockup ──────────────────────────────────
@@ -380,6 +381,18 @@ function Step3({ onComplete }: { onComplete: () => void }) {
         <h2 className="text-xl font-semibold">Tutto pronto!</h2>
         <p className="text-muted-foreground mt-1.5 text-sm">
           Il tuo workspace è configurato. Crea il tuo primo preventivo in pochi minuti.
+        </p>
+      </div>
+      {/* «Testo grande» proposto QUI, al primo accesso (Eli, 18 set): il
+          toggle vive in Altro, ma chi ne ha più bisogno non lo troverebbe
+          mai da solo. È lo STESSO TextSizeToggle di Altro: toccandolo
+          l'effetto si vede subito e la scelta resta salvata sul telefono
+          (localStorage) — nessuno stato nuovo, nessun passo in più. */}
+      <div style={{ textAlign: 'left', border: '1px solid #e3e3e6', borderRadius: 12, padding: '11px 14px 12px' }}>
+        <TextSizeToggle />
+        <p style={{ fontSize: 12.5, color: 'var(--cc-muted)', margin: '3px 0 0', lineHeight: 1.5 }}>
+          Scritte e pulsanti più grandi in tutta l&rsquo;app. Puoi cambiare idea
+          quando vuoi: l&rsquo;interruttore è in <b>Altro</b>.
         </p>
       </div>
       <Button size="lg" className="w-full" onClick={onComplete}>

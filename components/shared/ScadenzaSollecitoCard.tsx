@@ -7,6 +7,7 @@ import { StatusBadge } from '@/app/(app)/preventivi/_components/StatusBadge'
 import { sendReminderAction } from '@/lib/actions/documents'
 import { formatCurrency, formatDocNumber } from '@/lib/utils'
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp'
+import { testoConfermaSollecito } from '@/lib/documents/conferma-sollecito'
 import { PosticipaSollecito } from './PosticipaSollecito'
 import { Avviso } from '@/components/shared/Avviso'
 
@@ -150,6 +151,9 @@ export function ScadenzaSollecitoCard({
   async function handleEmailSollecito(e: React.MouseEvent) {
     e.stopPropagation()
     if (sending || sent) return
+    // Conferma PRIMA dell'invio (18 set): l'email parte davvero, senza
+    // anteprima — stessa frase di Home e menu «⋯» (helper unico).
+    if (!window.confirm(testoConfermaSollecito(docType, clientName))) return
     setSending(true)
     setError(null)
     const result = await sendReminderAction(documentId, docType)
