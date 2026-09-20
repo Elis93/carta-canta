@@ -1,0 +1,154 @@
+# PROGETTO — Copia di cortesia: prima la trasmissione, poi la copia
+
+> Nato il 20 settembre 2026 dalla prescrizione del commercialista (incontro 18 set) e
+> dalla conferma di Eli: «appena una fattura viene creata, significa che viene anche
+> trasmessa, e solo in seguito si può mandare la copia di cortesia al cliente — un po'
+> come fanno i nostri concorrenti». Ricerca web fatta il 20 set (fonti in §2-§3).
+>
+> ⚠️ Riguarda SOLO le FATTURE (e le note di credito). I PREVENTIVI restano client-first:
+> il loro senso è proprio arrivare al cliente prima di ogni atto fiscale.
+
+---
+
+## 1. La prescrizione
+
+Dal riassunto vocale di Eli (18 set): **la copia di cortesia presuppone una fattura GIÀ
+trasmessa allo SdI**. Se non è ancora trasmessa, ciò che il cliente vede deve essere
+dichiaratamente una **bozza, con un avviso «molto chiaro»**.
+
+Conferma di Eli (20 set): il flusso va invertito come fanno i concorrenti —
+creazione → trasmissione → poi la copia di cortesia.
+
+## 2. Cosa dicono norma e prassi (ricerca 20 set)
+
+- **La fattura elettronica esiste solo se trasmessa allo SdI** (art. 1 D.Lgs 127/2015;
+  art. 21 DPR 633/1972). Tutto ciò che il cliente riceve fuori dallo SdI è una **copia
+  priva di valenza fiscale**.
+- **Verso i CONSUMATORI FINALI (B2C) consegnare la copia è un OBBLIGO**, non una
+  cortesia facoltativa (art. 1 c.3 D.Lgs 127/2015): copia analogica o PDF, salvo
+  **rinuncia espressa** del cliente. → Per il nostro target (clienti privati) la copia
+  va mandata comunque — il punto è QUANDO, non SE.
+- **Dicitura di prassi sulla copia**: «copia priva di valenza fiscale» (o equivalente)
+  + l'informazione che l'originale è disponibile nel **cassetto fiscale** del cliente
+  (area riservata AdE).
+- **Fattura SCARTATA = mai emessa**: si corregge e si ritrasmette entro 5 giorni con
+  stesso numero e stessa data. Se la copia fosse già in mano al cliente, avrebbe un
+  documento che fiscalmente non esiste → è il motivo per cui la copia parte DOPO
+  l'esito, non solo dopo l'invio.
+
+## 3. Come fanno i concorrenti (ricerca 20 set)
+
+**Fatture in Cloud** e **Aruba** sono invoice-first, con lo stesso schema:
+
+1. Si crea la fattura → **controlli pre-invio** (anomalie che causerebbero uno scarto).
+2. Si trasmette allo SdI (per FiC in automatico alla creazione).
+3. La **copia di cortesia parte DOPO**: in automatico se il cliente ha il flag
+   «invia sempre la copia di cortesia» in anagrafica (email con modello predefinito),
+   oppure a mano in un secondo momento dalla lista delle fatture inviate.
+4. Best practice dichiarata (WindDoc e altri): la copia automatica parte **solo dopo
+   che lo SdI ha accettato la fattura**, «così da essere certi che al cliente arrivi
+   la fattura approvata».
+
+Nessuno dei due permette di mandare la copia di una fattura non ancora trasmessa come
+se fosse la fattura: prima dell'invio esiste solo la **bozza**, chiaramente marcata.
+
+## 4. Il nostro flusso oggi, e dove diverge
+
+Oggi (client-first, costruito quando lo SdI era lontano):
+
+```
+bozza → «Invia al cliente» (email/WhatsApp/link)  ← il cliente VEDE la fattura qui
+      → conferma fiscale (nasce doc_date)
+      → pilota +24h → trasmissione SdI → esito
+```
+
+Divergenze dalla prescrizione:
+- Il cliente riceve la "fattura" PRIMA che esista fiscalmente. Con lo SdI **spento in
+  produzione** (stato attuale), OGNI copia in circolazione precede la trasmissione.
+- La pagina `/p/[token]` e il PDF non dicono in nessun modo se la fattura è stata
+  trasmessa o no: una bozza e una fattura emessa si presentano identiche.
+- Punti del codice coinvolti: `registraConfermaFiscale` (lib/documents/conferma-fiscale.ts)
+  — la conferma scatta all'invio al cliente; `ShareButton`/`SendEmailDialog` (i canali);
+  pilota `sdi_auto_at` + cron `sdi-auto`; `SdiCard`; PDF `lib/pdf/template.ts`;
+  pagina cliente `/p/[token]` + `MobilePublicCard`.
+
+## 5. ROADMAP in tre fasi
+
+### Fase 0 — Onestà della copia (fattibile SUBITO, anche con SdI spento)
+La regola del commercialista applicata a ciò che circola oggi:
+- **Fattura NON ancora trasmessa** → su PDF e pagina `/p/[token]` un avviso/filigrana
+  ben visibile: «**BOZZA — documento non ancora emesso ai fini fiscali**» (parole da
+  decidere con Eli). È l'«avviso molto chiaro» chiesto da lui.
+- **Fattura trasmessa con esito positivo** (sdi_status consegnata/emessa) → la stessa
+  copia diventa: «**Copia di cortesia priva di valenza fiscale** — l'originale è stato
+  trasmesso al Sistema di Interscambio ed è disponibile nel cassetto fiscale».
+- Nessun cambio di flusso: cambia solo la VERITÀ scritta sulla copia. Zero migration
+  (si legge `sdi_status`, già presente).
+- Nota storica: il banner «non sostituisce la fattura elettronica» era stato tolto il
+  26 ago perché ridondante NELLA CARD; qui la dicitura va SUL DOCUMENTO che il cliente
+  vede, che è un'altra cosa.
+
+### Fase 1 — Inversione del flusso fatture (il cuore del progetto)
+Su una fattura, il primo passo dopo la compilazione diventa la **trasmissione**, non
+l'invio al cliente:
+- La **conferma** della fattura (oggi «Invia al cliente») diventa «**Conferma ed
+  emetti**»: nasce doc_date e parte la trasmissione — subito, oppure col pilota +24h
+  reinterpretato come **finestra di ripensamento PRIMA dell'emissione** (con «Annulla»
+  come oggi), non più come rete dopo l'invio al cliente.
+- La **copia di cortesia si sblocca all'esito positivo**: quando lo SdI risponde
+  consegnata/emessa, la copia parte in automatico (se il cliente ha l'email in
+  rubrica) o compare l'invito «Manda la copia di cortesia al cliente» (WhatsApp/link).
+- **Prima dell'esito**, i canali di condivisione su una fattura restano disponibili ma
+  consegnano la BOZZA marcata (Fase 0) — con un avviso che spiega la differenza — o
+  vengono proprio bloccati (decisione D3).
+- Coerenza con **N11**: «Segna pagata» / incasso di un acconto = fatto fiscale che
+  chiede la fattura → nel flusso nuovo l'incasso spinge verso la trasmissione, non
+  verso l'invio della copia.
+- ⚠️ Con lo SdI SPENTO la Fase 1 non è attivabile per intero (non c'è nulla da
+  trasmettere): si progetta e si costruisce dietro il flag `NEXT_PUBLIC_SDI_ENABLED`,
+  e diventa il comportamento di serie al passaggio live. Nel frattempo vale la Fase 0.
+
+### Fase 2 — Parità coi concorrenti e rifiniture
+- Flag in rubrica cliente: «**Invia sempre la copia di cortesia** a questo cliente»
+  (con la rinuncia espressa del B2C coperta: flag spento = niente copia automatica).
+- Riga sul PDF di cortesia B2C: l'originale è nel cassetto fiscale (obbligo informativo
+  di prassi).
+- **Gestione scarto post-copia** (caso residuo): se una fattura viene scartata dopo che
+  una copia è circolata, avviso all'artigiano di rimandare la copia corretta.
+- Registrare la copia inviata in cronologia («Copia di cortesia inviata il …»).
+- FAQ + /novita + collaudo sandbox (T-nuovi in TEST_DA_FARE_ELI.md).
+
+## 6. Decisioni per Eli (prima di scrivere codice)
+
+- **D1 — Fase 0 subito?** Consigliato sì: è la prescrizione applicata a ciò che i
+  clienti vedono OGGI, e non tocca il flusso.
+- **D2 — Le parole dell'avviso bozza** («BOZZA — non ancora valida ai fini fiscali»?
+  filigrana diagonale o fascia in testa?) e della dicitura di cortesia.
+- **D3 — Fase 1: prima dell'esito SdI, l'invio al cliente va BLOCCATO o consentito
+  come bozza marcata?** I concorrenti non lo offrono proprio; noi abbiamo il caso
+  legittimo «il cliente vuole vedere la cifra prima» — che però è il PREVENTIVO, non
+  la fattura. Consiglio: bloccato (con messaggio che spiega), coerente con la regola
+  «se non si dovrebbe fare, non lo permettiamo» (5 set).
+- **D4 — La copia parte in automatico all'esito positivo** (se email in rubrica) **o
+  sempre a mano?** Consiglio: automatica con flag per cliente (Fase 2), manuale come
+  ripiego — è lo standard FiC/Aruba.
+- **D5 — Il pilota +24h resta?** Consiglio: sì, ma spostato PRIMA dell'emissione
+  (finestra di ripensamento), perché il suo valore era proprio «24 ore per accorgersi
+  di un errore» — che nel flusso nuovo servono prima della trasmissione, non dopo.
+
+## 7. Cosa NON cambia
+
+- **Preventivi**: client-first intatto (link, accettazione, firma).
+- **Motore fiscale** (`lib/fiscal/calcoli.ts`) e **XML** (`lib/sdi/xml.ts`): intoccati.
+- Le tre prescrizioni del 18 set già implementate (RF19, bollo virtuale, riga Bollo).
+- La conferma fiscale via «Segna pagata» (incasso di persona) resta un percorso valido:
+  nel flusso nuovo porta alla trasmissione come gli altri.
+
+---
+
+*Fonti della ricerca (20 set 2026): FAQ AdE «Fatture elettroniche verso i consumatori
+finali»; art. 1 c.3 D.Lgs 127/2015 (obbligo copia B2C salvo rinuncia); glossario e
+guida «Fattura di cortesia» di Fatture in Cloud; guide Aruba «Invio fatture
+elettroniche a SdI e invio copia .pdf al cliente» e «Invio copia cortesia»; WindDoc
+(copia automatica solo dopo l'accettazione SdI); FiscoeTasse (scartata = correggere e
+ritrasmettere con stesso numero e data).*

@@ -212,6 +212,12 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
   flusso client-first (invio al cliente PRIMA della trasmissione, pilota +24h): da decidere
   come allinearci — es. avviso/filigrana «non ancora trasmessa» sulla copia del cliente
   finché lo SdI non conferma. Decisione di prodotto per Eli.
+  → ✅ **20 set: Eli conferma l'inversione del flusso** («appena una fattura viene creata
+  viene anche trasmessa, solo dopo si manda la copia di cortesia, come i concorrenti»).
+  Ricerca web fatta + **roadmap in `PROGETTO_COPIA_CORTESIA.md`** (3 fasi: ⓪ avviso
+  BOZZA/dicitura di cortesia sulle copie — fattibile subito · ① inversione del flusso
+  col pilota spostato prima dell'emissione · ② copia automatica all'esito + flag per
+  cliente). In attesa delle decisioni D1-D5 di Eli (nel file di progetto).
 - **Preventivi: nessun obbligo di conservazione.** Un preventivo inviato, accettato e pagato
   «può anche essere cancellato»: l'obbligo dei 10 anni è delle fatture. (Chiude il pezzo
   «preventivi» di N1③; il consiglio in FAQ di tenerli come prova contrattuale resta valido.)
@@ -459,6 +465,14 @@ scorporare l'acconto già fatturato.
 > anche solo per un acconto** (riassunto vocale di Eli). Lo stand-by qui sotto è quindi
 > SBLOCCABILE: i tre punti si implementano quando Eli dà il via. (Resta da confermare per
 > iscritto il TD02 per la fattura del solo acconto — punto ② della domanda.)
+>
+> ✅ **CONFERMA di Eli (20 set)**: «quando si riceve l'acconto o si fa la fattura
+> dell'acconto devono partire i 12 giorni, e poi il saldo riporterà l'acconto che è già
+> stato dato e che viene sottratto». → Quando si parte con N11, PRIMA del codice va fatta
+> la **ricerca web su come si rappresenta in XML** (richiesta esplicita di Eli): TD02 per
+> l'acconto, e come la fattura di saldo scorpora l'acconto già fatturato (riga in
+> detrazione? `DatiFattureCollegate` verso la TD02? `ScontoMaggiorazione`?) — le fonti
+> vanno verificate, non assunte.
 >
 > ⏸️ **STAND-BY — decisione di Eli (12 set 2026): «dobbiamo aspettare il commercialista, teniamolo
 > stand-by ma ricordiamoci che va gestito».** Questa parte del prodotto NON si tocca finché il
