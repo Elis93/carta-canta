@@ -40,6 +40,19 @@ i testi dell'app è un giro a sé, da fare su richiesta.
 
 ## A. DECISIONI BLOCCATE (✅ — non annullare)
 
+### 🎯 PRINCIPIO GUIDA — sul flusso della fatturazione «ogni scelta deve essere fatta come fanno i competitors» (Eli, 20 set 2026)
+> *«Ha senso tenere le 24h? Come fanno i concorrenti? E comunque direi che ogni scelta deve essere fatta come fanno i competitors»*
+**Bloccata.** Sul flusso fatture/SdI (emissione, trasmissione, copia di cortesia) il riferimento è
+la prassi dei concorrenti consolidati (Fatture in Cloud, Aruba): dove esiste uno standard di
+mercato, si adotta quello — verificato con ricerca, non a memoria — invece di inventare
+meccaniche nostre. Prima applicazione: **il pilota +24h viene RITIRATO col flusso invertito**
+(vedi `PROGETTO_COPIA_CORTESIA.md`) — nessun concorrente ha una finestra di ripensamento
+automatica: la fattura si emette con un gesto esplicito («Invia allo SdI» / «Salva in bozze»,
+modello Aruba) e il ripensamento è la BOZZA, non un limbo post-conferma. La copia di cortesia
+parte dopo l'esito positivo dello SdI, automatica col flag per cliente (standard FiC/Aruba).
+⚠️ Il principio vale per il FLUSSO fiscale, non annulla le decisioni di prodotto già bloccate
+su altre aree (UI, tono, preventivi client-first — che i competitors non hanno e resta nostro).
+
 ### Acconto → fattura: ⏸️ STAND-BY in attesa del commercialista (decisione Eli, 12 set 2026)
 > *«su questo punto dobbiamo aspettare il commercialista quindi teniamolo stand-by ma ricordiamoci che va gestito!!! segnalo»*
 **Bloccata (B.0).** Sul collaudo Eli ha notato che convertendo un preventivo con acconto in fattura non si capisce se la fattura sia sul totale o sul solo acconto, e che l'app non guida al momento dell'incasso dell'acconto. La gestione (① promemoria alla spunta dell'acconto sul preventivo → segnare l'incasso e poi creare/trasmettere la fattura; ② chiarezza che «Converti in fattura» produce una fattura sull'INTERO importo con l'acconto come incasso già ricevuto; ③ eventuale selettore «fattura sul totale» vs «fattura del solo acconto» TD02) è **materia fiscale**: si aspetta la risposta del commercialista alla domanda **N11** di `COSE_DA_FARE_ELI.md` prima di scrivere qualunque codice. **Registrata lì** con i tre punti da gestire una volta sbloccata. Nessun codice scritto.

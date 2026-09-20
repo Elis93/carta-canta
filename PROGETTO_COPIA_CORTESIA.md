@@ -7,6 +7,10 @@
 >
 > ⚠️ Riguarda SOLO le FATTURE (e le note di credito). I PREVENTIVI restano client-first:
 > il loro senso è proprio arrivare al cliente prima di ogni atto fiscale.
+>
+> 🎯 **REGOLA DI PROGETTO (Eli, 20 set)**: «ogni scelta deve essere fatta come fanno i
+> competitors». Sul flusso fiscale il riferimento è FiC/Aruba, verificato con ricerca.
+> Registrata anche in `DECISIONI_E_FEEDBACK.md §A`.
 
 ---
 
@@ -52,6 +56,20 @@ creazione → trasmissione → poi la copia di cortesia.
 Nessuno dei due permette di mandare la copia di una fattura non ancora trasmessa come
 se fosse la fattura: prima dell'invio esiste solo la **bozza**, chiaramente marcata.
 
+**Il MOMENTO della trasmissione (ricerca 20 set, sulla domanda di Eli «ha senso tenere
+le 24h?»): NESSUN concorrente ha una finestra di ripensamento automatica.**
+- **Aruba**: due tasti — «**Salva in bozze**» (si modifica quando si vuole, niente di
+  fiscale è successo) e «**Invia allo SdI**» (parte SUBITO: XML, firma, trasmissione).
+- **Fatture in Cloud**: la fattura si crea e si invia con un gesto esplicito («Invia
+  ora»); si può anche salvare senza inviare e trasmettere più avanti, dentro i 12
+  giorni di legge — ma la scelta è sempre dell'utente, mai un timer.
+- In entrambi il «ripensamento» è la **BOZZA**: finché non premi il tasto non è
+  successo niente. Dopo il tasto, gli errori si gestiscono con gli strumenti fiscali
+  (scarto → correggi e ritrasmetti · nota di credito) — che abbiamo già.
+- I **controlli pre-invio** (FiC li dichiara esplicitamente) sostituiscono la rete del
+  tempo: si blocca PRIMA ciò che causerebbe uno scarto. Anche questi li abbiamo già
+  (guardie art. 21, coerenza 00421, dati cliente).
+
 ## 4. Il nostro flusso oggi, e dove diverge
 
 Oggi (client-first, costruito quando lo SdI era lontano):
@@ -88,19 +106,26 @@ La regola del commercialista applicata a ciò che circola oggi:
   26 ago perché ridondante NELLA CARD; qui la dicitura va SUL DOCUMENTO che il cliente
   vede, che è un'altra cosa.
 
-### Fase 1 — Inversione del flusso fatture (il cuore del progetto)
+### Fase 1 — Inversione del flusso fatture (il cuore del progetto) — modello Aruba
 Su una fattura, il primo passo dopo la compilazione diventa la **trasmissione**, non
-l'invio al cliente:
-- La **conferma** della fattura (oggi «Invia al cliente») diventa «**Conferma ed
-  emetti**»: nasce doc_date e parte la trasmissione — subito, oppure col pilota +24h
-  reinterpretato come **finestra di ripensamento PRIMA dell'emissione** (con «Annulla»
-  come oggi), non più come rete dopo l'invio al cliente.
+l'invio al cliente. Come i concorrenti (decisione Eli, 20 set):
+- **Due gesti, come Aruba**: «**Salva in bozze**» (nessun effetto fiscale, si modifica
+  liberamente) e «**Invia allo SdI**» (gesto ESPLICITO: nasce doc_date e la
+  trasmissione parte SUBITO, dopo i controlli pre-invio e un dialog di conferma che
+  dice cosa sta per succedere). **Niente più pilota +24h**: nessun concorrente ha un
+  timer di ripensamento — il ripensamento è la bozza, prima del tasto. Il pilota
+  attuale (`sdi_auto_at` + cron `sdi-auto`) nasceva per il flusso client-first (la
+  trasmissione era un EFFETTO dell'invio al cliente, senza gesto esplicito: le 24h
+  erano la rete); col gesto esplicito la rete non serve e va **ritirato** — cron
+  spento, colonna dormiente, interruttore «trasmissione automatica» delle Impostazioni
+  rimosso o riconvertito.
 - La **copia di cortesia si sblocca all'esito positivo**: quando lo SdI risponde
   consegnata/emessa, la copia parte in automatico (se il cliente ha l'email in
-  rubrica) o compare l'invito «Manda la copia di cortesia al cliente» (WhatsApp/link).
-- **Prima dell'esito**, i canali di condivisione su una fattura restano disponibili ma
-  consegnano la BOZZA marcata (Fase 0) — con un avviso che spiega la differenza — o
-  vengono proprio bloccati (decisione D3).
+  rubrica, standard FiC/Aruba) o compare l'invito «Manda la copia di cortesia al
+  cliente» (WhatsApp/link).
+- **Prima dell'esito, l'invio al cliente di una fattura è BLOCCATO** (come i
+  concorrenti: la bozza vive solo nell'app; per «far vedere la cifra prima» c'è il
+  PREVENTIVO). Restano l'anteprima interna e la Fase 0 come rete per i casi legacy.
 - Coerenza con **N11**: «Segna pagata» / incasso di un acconto = fatto fiscale che
   chiede la fattura → nel flusso nuovo l'incasso spinge verso la trasmissione, non
   verso l'invio della copia.
@@ -118,23 +143,24 @@ l'invio al cliente:
 - Registrare la copia inviata in cronologia («Copia di cortesia inviata il …»).
 - FAQ + /novita + collaudo sandbox (T-nuovi in TEST_DA_FARE_ELI.md).
 
-## 6. Decisioni per Eli (prima di scrivere codice)
+## 6. Decisioni
 
+**✅ CHIUSE dalla regola «come i competitors» (Eli, 20 set)**:
+- **D3 — Invio al cliente prima dell'esito SdI: BLOCCATO.** I concorrenti non lo
+  offrono proprio (la bozza vive nell'app); il caso «far vedere la cifra prima» è il
+  PREVENTIVO. Coerente con «se non si dovrebbe fare, non lo permettiamo» (5 set).
+- **D4 — Copia di cortesia AUTOMATICA all'esito positivo** (email in rubrica), con
+  flag per cliente in Fase 2; manuale come ripiego. È lo standard FiC/Aruba.
+- **D5 — Il pilota +24h NON resta.** Nessun concorrente ha un timer di ripensamento:
+  gesto esplicito «Invia allo SdI» + bozza come spazio del ripensamento + controlli
+  pre-invio. Il pilota (cron `sdi-auto`, `sdi_auto_at`, interruttore in Impostazioni)
+  si ritira con la Fase 1.
+
+**⏳ ANCORA APERTE (per Eli)**:
 - **D1 — Fase 0 subito?** Consigliato sì: è la prescrizione applicata a ciò che i
   clienti vedono OGGI, e non tocca il flusso.
 - **D2 — Le parole dell'avviso bozza** («BOZZA — non ancora valida ai fini fiscali»?
   filigrana diagonale o fascia in testa?) e della dicitura di cortesia.
-- **D3 — Fase 1: prima dell'esito SdI, l'invio al cliente va BLOCCATO o consentito
-  come bozza marcata?** I concorrenti non lo offrono proprio; noi abbiamo il caso
-  legittimo «il cliente vuole vedere la cifra prima» — che però è il PREVENTIVO, non
-  la fattura. Consiglio: bloccato (con messaggio che spiega), coerente con la regola
-  «se non si dovrebbe fare, non lo permettiamo» (5 set).
-- **D4 — La copia parte in automatico all'esito positivo** (se email in rubrica) **o
-  sempre a mano?** Consiglio: automatica con flag per cliente (Fase 2), manuale come
-  ripiego — è lo standard FiC/Aruba.
-- **D5 — Il pilota +24h resta?** Consiglio: sì, ma spostato PRIMA dell'emissione
-  (finestra di ripensamento), perché il suo valore era proprio «24 ore per accorgersi
-  di un errore» — che nel flusso nuovo servono prima della trasmissione, non dopo.
 
 ## 7. Cosa NON cambia
 
@@ -148,7 +174,9 @@ l'invio al cliente:
 
 *Fonti della ricerca (20 set 2026): FAQ AdE «Fatture elettroniche verso i consumatori
 finali»; art. 1 c.3 D.Lgs 127/2015 (obbligo copia B2C salvo rinuncia); glossario e
-guida «Fattura di cortesia» di Fatture in Cloud; guide Aruba «Invio fatture
-elettroniche a SdI e invio copia .pdf al cliente» e «Invio copia cortesia»; WindDoc
+guida «Fattura di cortesia» di Fatture in Cloud; FiC «Invio e termini di emissione
+fattura elettronica»; guide Aruba «Invio fatture elettroniche a SdI e invio copia
+.pdf al cliente», «Invio copia cortesia» e «Creazione fattura guidata: invio a SdI o
+salvataggio in Bozze» (i due tasti, trasmissione immediata); WindDoc
 (copia automatica solo dopo l'accettazione SdI); FiscoeTasse (scartata = correggere e
 ritrasmettere con stesso numero e data).*
