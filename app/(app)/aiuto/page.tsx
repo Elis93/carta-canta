@@ -314,6 +314,22 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       di ricerca — basta anche solo <b>nota</b>{' '}o <b>nc</b>. Sulla nota non c&rsquo;è &laquo;Segna pagata&raquo;:
       è denaro che torna al cliente, non che arriva.</>,
   },
+  {
+    q: 'Sulla fattura c’è scritto che «non costituisce fattura valida»: perché?',
+    id: 'dicitura-copia',
+    parole: ['copia di cortesia', 'non costituisce fattura valida', 'dicitura', 'valenza fiscale', 'dpr 633', 'proforma'],
+    a: <>Per l&rsquo;Agenzia delle Entrate la fattura esiste solo quando viene{' '}
+      <b>trasmessa al Sistema di Interscambio</b>{' '}(SdI). Il PDF e la pagina del link
+      sono una <b>copia</b>: finché la trasmissione non è avvenuta, la copia lo dichiara
+      con la dicitura «non costituisce fattura valida ai fini del DPR 633/1972» — la
+      stessa che i gestionali più diffusi mettono sui documenti non ancora emessi.
+      È un&rsquo;indicazione del commercialista: chi la riceve deve sapere cosa ha in mano.
+      <br /><br />
+      Dopo la trasmissione con esito positivo la stessa copia diventa una{' '}
+      <b>copia di cortesia</b>: resta leggibile e pagabile, e dice al cliente che
+      l&rsquo;originale è consultabile nella sua area riservata dell&rsquo;Agenzia delle
+      Entrate. La dicitura si aggiorna da sola: non devi fare niente.</>,
+  },
   // Le tre FAQ della fattura elettronica compaiono solo con lo SdI acceso
   // (decisione 10 ago: niente FAQ su UI che l'utente non vede — citano la
   // card SdI, la Home e l'interruttore, che senza flag non esistono).

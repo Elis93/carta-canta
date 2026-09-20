@@ -16,6 +16,7 @@ import { ReviewCard } from '@/components/public/ReviewCard'
 import { TierPicker, type PublicTier } from '@/components/public/TierPicker'
 import { calcolaDocumento, riepilogoIva } from '@/lib/fiscal/calcoli'
 import { ivaEffettivaVoci, notaBeneSplit } from '@/lib/fiscal/iva-voce'
+import { statoCopiaSdi, dicituraCopiaSdi } from '@/lib/documents/copia-sdi'
 import { buildEpcQrDataUrl } from '@/lib/payments/epc'
 import { CheckCircle2, XCircle, AlertTriangle, Eye, MessageCircle, Banknote } from 'lucide-react'
 import { formatDocNumber } from '@/lib/utils'
@@ -175,7 +176,7 @@ export default async function PublicDocumentPage({ params }: Props) {
   }
 
   // isOwner, ownerEmail, canali di pagamento e acconto in parallelo (tutti indipendenti)
-  const [isOwner, ownerEmail, paymentChannels, depositRow, clientPhotos, reviewExists, optionsData] = await Promise.all([
+  const [isOwner, ownerEmail, paymentChannels, depositRow, clientPhotos, reviewExists, optionsData, sdiStatusRaw] = await Promise.all([
     (async () => {
       try {
         const userSupabase = await createClient()
@@ -273,7 +274,31 @@ export default async function PublicDocumentPage({ params }: Props) {
         return { refTier: opt.recommended_tier ?? null, items: items ?? [] }
       } catch { return null }
     })(),
+    // Stato SdI del documento (044 — tollerante): serve alla dicitura di verità
+    // della copia (Fase 0 copia di cortesia, 20 set). Query a sé: la colonna
+    // non è nei tipi generati e nella select principale romperebbe la pagina.
+    (async (): Promise<string | null> => {
+      if (isPreventivo) return null
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 044 non ancora in types/database.ts
+        const { data } = await (admin as any)
+          .from('documents')
+          .select('sdi_status')
+          .eq('public_token', token)
+          .maybeSingle()
+        return (data?.sdi_status as string | null) ?? null
+      } catch { return null }
+    })(),
   ])
+
+  // La dicitura sulla copia (modulo puro, condiviso col PDF): solo fatture/NC.
+  const statoCopia = statoCopiaSdi(
+    (doc as Record<string, unknown>).doc_type as string,
+    sdiStatusRaw,
+  )
+  const sdiCopia = statoCopia
+    ? { stato: statoCopia, testo: dicituraCopiaSdi(statoCopia, (doc as Record<string, unknown>).doc_type as string) }
+    : null
 
   const client = doc.clients as {
     name: string
@@ -613,6 +638,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           discountFixed={doc.discount_fixed}
           bolloAmount={doc.bollo_amount}
           deposit={deposit}
+          sdiCopia={sdiCopia}
           tierPicker={optionTiers ? <TierPicker tiers={optionTiers} initialTier={optionsData?.refTier} /> : undefined}
           totalTierLabel={optionTiers ? refTierLabel : undefined}
         />

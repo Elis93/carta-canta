@@ -92,16 +92,25 @@ Divergenze dalla prescrizione:
 
 ## 5. ROADMAP in tre fasi
 
-### Fase 0 — Onestà della copia (fattibile SUBITO, anche con SdI spento)
-La regola del commercialista applicata a ciò che circola oggi:
-- **Fattura NON ancora trasmessa** → su PDF e pagina `/p/[token]` un avviso/filigrana
-  ben visibile: «**BOZZA — documento non ancora emesso ai fini fiscali**» (parole da
-  decidere con Eli). È l'«avviso molto chiaro» chiesto da lui.
-- **Fattura trasmessa con esito positivo** (sdi_status consegnata/emessa) → la stessa
-  copia diventa: «**Copia di cortesia priva di valenza fiscale** — l'originale è stato
-  trasmesso al Sistema di Interscambio ed è disponibile nel cassetto fiscale».
+### Fase 0 — Onestà della copia (fattibile SUBITO, anche con SdI spento) — ✅ diciture chiuse «come i competitors» (Eli, 20 set)
+La regola del commercialista applicata a ciò che circola oggi. Tre stati, tre verità
+(le parole sono gli STANDARD dei concorrenti, non inventate — vedi §6 D2):
+- **Fattura NON ancora trasmessa** (sdi_status assente, o scartata = mai emessa) →
+  su PDF e pagina `/p/[token]` la dicitura della famiglia proforma (lo standard con
+  cui i concorrenti marcano ogni documento-fattura non fiscale): «**Il presente
+  documento non costituisce fattura valida ai fini del DPR 633/1972 e successive
+  modifiche.** La fattura definitiva viene emessa con la trasmissione al Sistema di
+  Interscambio.» È l'«avviso molto chiaro» chiesto dal commercialista.
+- **Fattura trasmessa, in attesa di esito** (sdi_status inviata) → «Fattura trasmessa
+  al Sistema di Interscambio, in attesa di esito. Copia priva di valenza fiscale.»
+- **Fattura trasmessa con esito positivo** (sdi_status consegnata/mancata_consegna) →
+  lo standard Fatture in Cloud, quasi verbatim: «**Copia di cortesia non valida ai
+  fini fiscali.** L'originale della fattura è stato inviato al Sistema di
+  Interscambio ed è consultabile nell'area riservata del sito dell'Agenzia delle
+  Entrate.»
 - Nessun cambio di flusso: cambia solo la VERITÀ scritta sulla copia. Zero migration
-  (si legge `sdi_status`, già presente).
+  (si legge `sdi_status`, già presente; sulla pagina cliente con query a sé
+  tollerante — la select principale è esplicita e tipizzata).
 - Nota storica: il banner «non sostituisce la fattura elettronica» era stato tolto il
   26 ago perché ridondante NELLA CARD; qui la dicitura va SUL DOCUMENTO che il cliente
   vede, che è un'altra cosa.
@@ -143,9 +152,7 @@ l'invio al cliente. Come i concorrenti (decisione Eli, 20 set):
 - Registrare la copia inviata in cronologia («Copia di cortesia inviata il …»).
 - FAQ + /novita + collaudo sandbox (T-nuovi in TEST_DA_FARE_ELI.md).
 
-## 6. Decisioni
-
-**✅ CHIUSE dalla regola «come i competitors» (Eli, 20 set)**:
+## 6. Decisioni — ✅ TUTTE CHIUSE dalla regola «come i competitors» (Eli, 20 set: «Facciamo uguale»)
 - **D3 — Invio al cliente prima dell'esito SdI: BLOCCATO.** I concorrenti non lo
   offrono proprio (la bozza vive nell'app); il caso «far vedere la cifra prima» è il
   PREVENTIVO. Coerente con «se non si dovrebbe fare, non lo permettiamo» (5 set).
@@ -156,11 +163,29 @@ l'invio al cliente. Come i concorrenti (decisione Eli, 20 set):
   pre-invio. Il pilota (cron `sdi-auto`, `sdi_auto_at`, interruttore in Impostazioni)
   si ritira con la Fase 1.
 
-**⏳ ANCORA APERTE (per Eli)**:
-- **D1 — Fase 0 subito?** Consigliato sì: è la prescrizione applicata a ciò che i
-  clienti vedono OGGI, e non tocca il flusso.
-- **D2 — Le parole dell'avviso bozza** («BOZZA — non ancora valida ai fini fiscali»?
-  filigrana diagonale o fascia in testa?) e della dicitura di cortesia.
+- **D1 — Fase 0: SUBITO** («Facciamo uguale», Eli 20 set). I concorrenti non fanno
+  MAI circolare una fattura non trasmessa presentata come fattura: prima dell'invio
+  esiste solo la bozza, e il loro documento non-fiscale che circola (la **proforma**)
+  porta SEMPRE la dicitura che dice cosa non è. Finché il nostro flusso resta
+  client-first (e con lo SdI spento lo è per costruzione), la marcatura onesta è il
+  minimo per essere «uguali».
+- **D2 — Le parole: gli STANDARD dei concorrenti, non inventate** («Facciamo uguale»).
+  · Copia dopo l'esito positivo = la dicitura di **Fatture in Cloud** (la più diffusa,
+  ricalcata quasi verbatim): «Copia di cortesia non valida ai fini fiscali.
+  L'originale della fattura è stato inviato al Sistema di Interscambio ed è
+  consultabile nell'area riservata del sito dell'Agenzia delle Entrate.»
+  · Fattura non ancora trasmessa = la famiglia della dicitura **proforma** (Danea,
+  FiC, prassi comune): «Il presente documento non costituisce fattura valida ai fini
+  del DPR 633/1972 e successive modifiche», con la coda adattata al nostro caso («la
+  fattura definitiva viene emessa con la trasmissione al Sistema di Interscambio» —
+  l'originale dice «all'atto del pagamento», che è il caso proforma, non il nostro).
+  · **Forma**: come i concorrenti la dicitura è una RIGA IN EVIDENZA sul documento
+  (riquadro sotto i totali), NON una filigrana diagonale — la filigrana resta quella
+  già esistente delle bozze/annullate, che è un'altra cosa (stato del documento).
+  ⚠️ Nota di trasparenza (dalla ricerca): la copia B2C ha valore per il consumatore
+  ai fini di garanzia/detrazioni, e in caso di discrepanza PREVALE l'elettronica —
+  la dicitura «non valida ai fini fiscali» è comunque lo standard di mercato e la
+  forma più prudente (B.0).
 
 ## 7. Cosa NON cambia
 
@@ -179,4 +204,10 @@ fattura elettronica»; guide Aruba «Invio fatture elettroniche a SdI e invio co
 .pdf al cliente», «Invio copia cortesia» e «Creazione fattura guidata: invio a SdI o
 salvataggio in Bozze» (i due tasti, trasmissione immediata); WindDoc
 (copia automatica solo dopo l'accettazione SdI); FiscoeTasse (scartata = correggere e
-ritrasmettere con stesso numero e data).*
+ritrasmettere con stesso numero e data). Sulle DICITURE (terza ricerca, 20 set):
+glossario «Fattura di cortesia» di Fatture in Cloud + Danea, StartyERP, Studio
+Capriotti, Alias Digital (la dicitura FiC «Copia di cortesia non valida ai fini
+fiscali…» è lo standard citato da tutti); Danea «Fattura proforma» + Fiscomania,
+SumUp, Fattura24, TeamSystem (dicitura proforma «Il presente documento non
+costituisce fattura valida ai fini del DPR 633/1972…»); iContenzioso (in caso di
+discrepanza prevale l'elettronica).*

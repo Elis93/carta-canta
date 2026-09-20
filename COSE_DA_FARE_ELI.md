@@ -214,10 +214,12 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
   finché lo SdI non conferma. Decisione di prodotto per Eli.
   → ✅ **20 set: Eli conferma l'inversione del flusso** («appena una fattura viene creata
   viene anche trasmessa, solo dopo si manda la copia di cortesia, come i concorrenti»).
-  Ricerca web fatta + **roadmap in `PROGETTO_COPIA_CORTESIA.md`** (3 fasi: ⓪ avviso
-  BOZZA/dicitura di cortesia sulle copie — fattibile subito · ① inversione del flusso
-  col pilota spostato prima dell'emissione · ② copia automatica all'esito + flag per
-  cliente). In attesa delle decisioni D1-D5 di Eli (nel file di progetto).
+  Ricerca web fatta + **roadmap in `PROGETTO_COPIA_CORTESIA.md`** (3 fasi: ⓪ diciture
+  di verità sulle copie — fattibile subito · ① inversione del flusso modello Aruba,
+  gesto esplicito «Invia allo SdI», pilota +24h ritirato · ② copia automatica
+  all'esito + flag per cliente). **Decisioni D1-D5 TUTTE CHIUSE il 20 set** («ogni
+  scelta come i competitors» + «Facciamo uguale»): diciture standard FiC/proforma,
+  Fase 0 implementata subito.
 - **Preventivi: nessun obbligo di conservazione.** Un preventivo inviato, accettato e pagato
   «può anche essere cancellato»: l'obbligo dei 10 anni è delle fatture. (Chiude il pezzo
   «preventivi» di N1③; il consiglio in FAQ di tenerli come prova contrattuale resta valido.)

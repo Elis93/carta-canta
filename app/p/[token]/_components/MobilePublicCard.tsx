@@ -67,6 +67,13 @@ interface MobilePublicCardProps {
     acconto: number
     saldo: number
   } | null
+  /** La verità della copia rispetto allo SdI (Fase 0 copia di cortesia,
+   *  20 set): solo fatture/NC. Testo dal modulo puro copia-sdi.ts, lo stesso
+   *  del PDF — le parole sono gli standard dei concorrenti (FiC/proforma). */
+  sdiCopia?: {
+    stato: 'non_emessa' | 'in_attesa_esito' | 'copia_cortesia'
+    testo: string
+  } | null
   /** Opzioni a livelli: selettore proposte (TierPicker), reso prima dei bottoni */
   tierPicker?: React.ReactNode
   /** Etichetta della proposta a cui si riferisce il totale del documento
@@ -123,6 +130,7 @@ export function MobilePublicCard({
   ritenutaPct,
   ritenutaAmount,
   deposit,
+  sdiCopia,
   tierPicker,
   totalTierLabel,
 }: MobilePublicCardProps) {
@@ -502,6 +510,25 @@ export function MobilePublicCard({
         </div>
       )}
 
+      {/* ── La verità della copia rispetto allo SdI (Fase 0, 20 set 2026):
+          riquadro in evidenza sul documento, come i concorrenti — ambra
+          quando la fattura NON è ancora emessa (l'«avviso molto chiaro» del
+          commercialista), grigio neutro per attesa esito / copia di cortesia.
+          Il testo arriva dal modulo puro copia-sdi.ts, lo stesso del PDF. ── */}
+      {sdiCopia && (
+        <div style={{ background: '#fff', padding: '10px 16px 12px' }}>
+          <div
+            style={
+              sdiCopia.stato === 'non_emessa'
+                ? { background: '#fdf6e8', border: '1.5px solid #d9b25f', borderRadius: 10, padding: '9px 12px', fontSize: 12.5, lineHeight: 1.5, color: '#6b5322', fontWeight: 600 }
+                : { background: '#f7f6f3', border: '1px solid #e3e0d8', borderRadius: 10, padding: '9px 12px', fontSize: 12.5, lineHeight: 1.5, color: '#55534b' }
+            }
+          >
+            {sdiCopia.testo}
+          </div>
+        </div>
+      )}
+
       {/* ── Piede del foglio: il marchio Carta Canta (richiesta Eli, 25 ago) ── */}
       <div style={{ background: '#fff', borderTop: '1px solid #f0efeb', padding: '11px 16px 13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
         <svg viewBox="0 0 512 512" width={20} height={20} aria-hidden style={{ flexShrink: 0, borderRadius: 5 }}>
@@ -510,7 +537,9 @@ export function MobilePublicCard({
           <path d="M307 175 A96 96 0 1 0 307 337" fill="none" stroke="#f3ede0" strokeWidth="30" strokeLinecap="round" />
         </svg>
         <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>
-          Documento emesso con{' '}
+          {/* «emesso» contraddirebbe la dicitura qui sopra quando la fattura
+              non è ancora passata dallo SdI → «generato» in quel caso. */}
+          {sdiCopia?.stato === 'non_emessa' ? 'Documento generato con' : 'Documento emesso con'}{' '}
           <b style={{ color: '#8a6b28', fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 700 }}>Carta&nbsp;Canta</b>
         </span>
       </div>

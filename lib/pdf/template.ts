@@ -10,6 +10,7 @@ import { stripPrefissoLegacy } from '@/lib/utils'
 import { terminePrevisto } from '@/lib/documents/termine-lavori'
 import { espandiBeniSignificativi, dettaglioBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 import { ivaEffettivaVoci, notaBeneSplit, type IvaVoceInfo } from '@/lib/fiscal/iva-voce'
+import { statoCopiaSdi, dicituraCopiaSdi } from '@/lib/documents/copia-sdi'
 
 type DocumentRow     = Database['public']['Tables']['documents']['Row']
 type DocumentItemRow = Database['public']['Tables']['document_items']['Row']
@@ -723,6 +724,28 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       ${legalLines.map((l) => `<p style="font-size:17px;color:#b3b1ab;line-height:1.5;">${escHtml(l)}</p>`).join('\n      ')}
     </div>` : ''
 
+  // ── La verità della copia rispetto allo SdI (Fase 0, 20 set 2026) ──────────
+  // Prescrizione del commercialista: la copia di cortesia presuppone una
+  // fattura GIÀ trasmessa; prima è un documento non fiscale e deve dirlo.
+  // Le parole sono gli standard dei concorrenti (modulo puro copia-sdi.ts,
+  // condiviso con la pagina cliente — le due superfici non possono divergere).
+  // Solo fatture e note di credito: sui preventivi il modulo risponde null.
+  // Riquadro in evidenza sotto i totali, come i concorrenti (riga in chiaro,
+  // NON una filigrana: quella resta per gli stati bozza/annullata).
+  const statoCopia = statoCopiaSdi(doc.doc_type, (doc as Record<string, unknown>).sdi_status as string | null | undefined)
+  const sdiNoticeHtml = statoCopia ? (() => {
+    const testo = dicituraCopiaSdi(statoCopia, doc.doc_type)
+    // Non emessa = l'«avviso molto chiaro»: ambra, bordo pieno. Gli altri due
+    // stati sono informativi: grigio neutro.
+    const veste = statoCopia === 'non_emessa'
+      ? 'background:#fdf6e8;border:1.5px solid #d9b25f;color:#6b5322;'
+      : 'background:#f7f6f3;border:1px solid #e3e0d8;color:#55534b;'
+    return `
+    <div style="margin-top:14px;border-radius:8px;padding:10px 14px;${veste}">
+      <p style="font-size:16px;line-height:1.5;margin:0;${statoCopia === 'non_emessa' ? 'font-weight:600;' : ''}">${escHtml(testo)}</p>
+    </div>`
+  })() : ''
+
   // ── Acconto (migration 038) ────────────────────────────────
   // Preventivo con acconto richiesto: box ambra sotto il totale
   // ("Acconto alla conferma — Saldo a fine lavori").
@@ -935,6 +958,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           </div>`}
 
           ${depositHtml}
+          ${sdiNoticeHtml}
           ${termineHtml}
           ${paymentHtml}
           ${legalHtml}
@@ -1078,6 +1102,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           </div>`}
 
           ${depositHtml}
+          ${sdiNoticeHtml}
           ${termineHtml}
           ${paymentHtml}
           ${legalHtml}
@@ -1226,6 +1251,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           </div>`}
 
           ${depositHtml}
+          ${sdiNoticeHtml}
           ${termineHtml}
           ${paymentHtml}
           ${legalHtml}
@@ -1363,6 +1389,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
           </div>`}
 
           ${depositHtml}
+          ${sdiNoticeHtml}
           ${termineHtml}
           ${paymentHtml}
           ${legalHtml}

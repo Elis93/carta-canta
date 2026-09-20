@@ -11,6 +11,14 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 // Aggiungere una voce qui a ogni rilascio rilevante per l'utente.
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
+    data: 'Fine settembre 2026',
+    titolo: 'La copia della fattura dice sempre la verità',
+    punti: [
+      'Su indicazione del commercialista, il PDF e la pagina del link di una fattura dichiarano ora in che stato è il documento. Finché la fattura non è stata trasmessa al Sistema di Interscambio, la copia porta la dicitura standard «non costituisce fattura valida ai fini del DPR 633/1972» — la stessa che usano i gestionali più diffusi sui documenti non ancora emessi. Chi la riceve sa esattamente cosa ha in mano.',
+      'Dopo la trasmissione con esito positivo, la stessa copia diventa una «copia di cortesia»: resta leggibile e pagabile, e dice al cliente che l’originale è consultabile nella sua area riservata dell’Agenzia delle Entrate. La dicitura si aggiorna da sola, senza che tu debba fare niente. I preventivi non c’entrano e restano come sono.',
+    ],
+  },
+  {
     data: 'Metà settembre 2026',
     titolo: 'Ogni voce dice la sua IVA, e lo sconto non sparisce più',
     punti: [
