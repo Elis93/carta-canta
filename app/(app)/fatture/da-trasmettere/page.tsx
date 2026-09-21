@@ -21,7 +21,6 @@ interface Riga {
   created_at: string
   paid_at?: string | null
   doc_date?: string | null
-  sdi_auto_at?: string | null
   sdi_status?: string | null
   clients: { name: string | null } | null
 }
@@ -55,7 +54,7 @@ export default async function FattureDaTrasmetterePage({
 
   const now = new Date()
 
-  // Query a CASCATA, come in Home: doc_date e sdi_auto_at arrivano con la 080.
+  // Query a CASCATA, come in Home: doc_date arriva con la 080.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044/080 non nei types generati
   const db = supabase as any
   const base =
@@ -69,7 +68,7 @@ export default async function FattureDaTrasmetterePage({
       .is('deleted_at', null)
       .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired))')
       .order('created_at', { ascending: true })
-  const ricca = await query(', doc_date, sdi_auto_at')
+  const ricca = await query(', doc_date')
   const righe: Riga[] = !ricca.error
     ? ((ricca.data ?? []) as Riga[])
     : await query('').then(
@@ -86,7 +85,6 @@ export default async function FattureDaTrasmetterePage({
       doc: d,
       termine,
       scartata: d.sdi_status === 'scartata',
-      autoProgrammata: !!d.sdi_auto_at && !d.sdi_status,
       giorni: termine ? termine.giorniRimasti : Number.POSITIVE_INFINITY,
     }
   })
@@ -176,7 +174,7 @@ export default async function FattureDaTrasmetterePage({
           </div>
 
           {/* Una card per documento */}
-          {mostrate.map(({ doc, termine, scartata, autoProgrammata }) => {
+          {mostrate.map(({ doc, termine, scartata }) => {
             const isNota = doc.doc_type === 'nota_credito'
             const numero = isNota
               ? stripPrefissoLegacy(doc.doc_number ?? '') || '—'
@@ -214,11 +212,6 @@ export default async function FattureDaTrasmetterePage({
                       <span style={{ color: '#b05656', fontWeight: 600 }}>
                         Scartata dallo SdI — correggi e reinvia
                       </span>
-                    </>
-                  ) : autoProgrammata ? (
-                    <>
-                      <Send size={14} style={{ color: '#3f6fb0', flexShrink: 0 }} />
-                      <span style={{ color: '#3f6fb0' }}>Parte da sola, non devi fare niente</span>
                     </>
                   ) : termine ? (
                     <>

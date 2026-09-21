@@ -31,6 +31,8 @@ import { tierDuplicateSendError } from '@/lib/documents/tier-check'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 import { stripPrefissoLegacy } from '@/lib/utils'
 import { richiedeDatiFattura, datiFatturaMancanti, messaggioDatiFattura } from '@/lib/documents/dati-fattura'
+import { copiaCortesiaBloccata } from '@/lib/documents/copia-sdi'
+import { messaggioCopiaBloccata } from '@/lib/documents/copia-cortesia'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -173,6 +175,16 @@ export async function POST(request: NextRequest, { params }: Params) {
       },
       { status: 422 }
     )
+  }
+
+  // ── Fase 1 copia di cortesia (SdI attivo, 21 set): prima la trasmissione,
+  // poi la copia — una fattura/nota senza esito positivo non parte via email.
+  // sdi_status arriva dal select('*'): pre-044 è undefined → nessun blocco.
+  if (
+    process.env.NEXT_PUBLIC_SDI_ENABLED === 'true' &&
+    copiaCortesiaBloccata(doc.doc_type, (doc as Record<string, unknown>).sdi_status as string | null | undefined)
+  ) {
+    return NextResponse.json({ error: messaggioCopiaBloccata(doc.doc_type) }, { status: 422 })
   }
 
   // ── Downgrade Pro→Free: documento bloccato (oltre gli 8 inviati) ──────

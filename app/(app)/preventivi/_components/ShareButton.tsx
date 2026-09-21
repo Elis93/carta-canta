@@ -21,7 +21,9 @@ interface ShareButtonProps {
   /** Avviso dei 12 giorni SdI da mostrare al PRIMO invio (solo fatture/note,
    *  solo con SdI attivo — lo compone il server): 'auto' = pilota in
    *  programma · 'manuale' = trasmissione a mano. Null = niente avviso. */
-  avvisoSdi?: 'auto' | 'manuale' | null
+  /** true = SdI attivo e fattura non ancora trasmessa: al primo invio
+   *  parte l'avviso dei 12 giorni (dal ritiro del pilota è un booleano) */
+  avvisoSdi?: boolean
   isDraft: boolean
   /** true se il documento ha almeno una voce (total > 0) */
   hasVoci: boolean
@@ -101,7 +103,7 @@ export function ShareButton({
   publicToken,
   docNumber,
   docType = 'preventivo',
-  avvisoSdi = null,
+  avvisoSdi = false,
   isDraft,
   hasVoci,
   triggerStyle,
@@ -183,9 +185,7 @@ export function ShareButton({
     toast.info('Da oggi hai 12 giorni per trasmetterla allo SdI', {
       // ⚠️ «card SdI» e non «card Fattura elettronica»: sulla nota di
       // credito la card si intitola «Nota di credito elettronica».
-      description: avvisoSdi === 'auto'
-        ? 'Trasmissione automatica attiva: parte da sola tra 24 ore, non devi fare niente. La gestisci (o la annulli) dalla card SdI del documento.'
-        : 'La trasmetti tu dalla card SdI del documento: il conto alla rovescia è lì a ricordartelo.',
+      description: 'La trasmetti tu dalla card SdI del documento: il conto alla rovescia è lì a ricordartelo.',
       duration: 10000,
       closeButton: true,
     })

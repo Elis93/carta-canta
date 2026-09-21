@@ -94,8 +94,8 @@ const SH = '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)'
 // I blocchi SdI della Home esistono solo con la fattura elettronica accesa
 const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
-// Riga per i blocchi SdI della Home (query tollerante: doc_date e
-// sdi_auto_at arrivano con la 080 e possono non esserci ancora)
+// Riga per i blocchi SdI della Home (query tollerante: doc_date arriva
+// con la 080 e può non esserci ancora)
 interface SdiHomeRow {
   id: string
   doc_number: string | null
@@ -105,7 +105,6 @@ interface SdiHomeRow {
   paid_at: string | null
   created_at: string
   doc_date?: string | null
-  sdi_auto_at?: string | null
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -302,9 +301,9 @@ export default async function DashboardPage() {
       ) as Promise<LavoroFeedRow[]>,
     // Blocchi SdI della Home (Eli, 11 ago): non trasmesse fuori bozza (per il
     // countdown dei 12 giorni) + scartate. Stessa selezione della campanella.
-    // ⚠️ A CASCATA: doc_date e sdi_auto_at nascono con la 080 — se mancano,
-    // la stessa query riparte senza quelle colonne invece di far sparire i
-    // blocchi (deploy-prima-della-migration è l'ordine reale).
+    // ⚠️ A CASCATA: doc_date nasce con la 080 — se manca, la stessa query
+    // riparte senza quella colonna invece di far sparire i blocchi
+    // (deploy-prima-della-migration è l'ordine reale).
     // ⚠️ Dal 20 ago la query gira SEMPRE (Eli: «voglio vederla in Home per
     // testare l'estetica»): la sezione mobile «Fatture elettroniche» compare
     // anche con lo SdI spento — i collegamenti ricadono su /fatture finché il
@@ -325,7 +324,7 @@ export default async function DashboardPage() {
           // i contatori si fermano lì: accettato e annotato.
           .order('created_at', { ascending: true })
           .limit(50)
-      const ricca = await querySdi(', doc_date, sdi_auto_at')
+      const ricca = await querySdi(', doc_date')
       if (!ricca.error) return (ricca.data ?? []) as SdiHomeRow[]
       const base = await querySdi('').then(
         (r: { data: unknown[] | null }) => (r.data ?? []) as SdiHomeRow[],
@@ -641,11 +640,6 @@ export default async function DashboardPage() {
     .map((d) => {
       const rif = riferimentoTrasmissione(d.doc_date ?? d.created_at, d.paid_at)
       const termine = rif ? termineTrasmissione(rif, now) : null
-      // «parte da sola» finché sdi_auto_at è valorizzato — NIENTE confronto
-      // col futuro: fra l'orario programmato e il giro orario del cron la
-      // trasmissione è ancora in coda, e in quella finestra la riga non deve
-      // suggerire un'azione manuale su un documento che sta per partire.
-      const autoProgrammata = !!d.sdi_auto_at
       return {
         id: d.id,
         numberLabel: sdiNumberLabel(d),
@@ -661,7 +655,6 @@ export default async function DashboardPage() {
           : termine && termine.giorniRimasti <= 3
             ? 'ambra'
             : 'neutro') as SdiHomeDaTrasmettere['urgenza'],
-        autoProgrammata,
         // Per l'ordinamento (i più urgenti in cima; senza termine in fondo)
         _giorni: termine ? termine.giorniRimasti : Number.POSITIVE_INFINITY,
       }

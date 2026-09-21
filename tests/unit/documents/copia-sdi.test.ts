@@ -4,7 +4,7 @@
 // un refactoring.
 
 import { describe, it, expect } from 'vitest'
-import { statoCopiaSdi, dicituraCopiaSdi } from '@/lib/documents/copia-sdi'
+import { statoCopiaSdi, dicituraCopiaSdi, esitoPositivoSdi, copiaCortesiaBloccata } from '@/lib/documents/copia-sdi'
 
 describe('statoCopiaSdi', () => {
   it('preventivo → null (client-first intatto, mai una dicitura SdI)', () => {
@@ -74,5 +74,45 @@ describe('dicituraCopiaSdi', () => {
     expect(dicituraCopiaSdi('non_emessa', 'nota_credito')).not.toContain('fattura')
     expect(dicituraCopiaSdi('copia_cortesia', 'nota_credito')).toContain("L'originale della nota di credito")
     expect(dicituraCopiaSdi('in_attesa_esito', 'nota_credito')).toContain('Nota di credito trasmessa')
+  })
+})
+
+// ── Fase 1 (21 set): il blocco dell'invio al cliente prima dell'esito ──────
+describe('esitoPositivoSdi', () => {
+  it('positivo solo su consegnata e mancata_consegna', () => {
+    expect(esitoPositivoSdi('consegnata')).toBe(true)
+    expect(esitoPositivoSdi('mancata_consegna')).toBe(true)
+    expect(esitoPositivoSdi('inviata')).toBe(false)
+    expect(esitoPositivoSdi('scartata')).toBe(false)
+    expect(esitoPositivoSdi(null)).toBe(false)
+    expect(esitoPositivoSdi('')).toBe(false)
+  })
+})
+
+describe('copiaCortesiaBloccata', () => {
+  it('preventivo mai bloccato (client-first intatto)', () => {
+    expect(copiaCortesiaBloccata('preventivo', null)).toBe(false)
+    expect(copiaCortesiaBloccata('preventivo', 'inviata')).toBe(false)
+  })
+
+  it('fattura senza esito positivo → bloccata (bozza, inviata, scartata)', () => {
+    expect(copiaCortesiaBloccata('fattura', null)).toBe(true)
+    expect(copiaCortesiaBloccata('fattura', 'inviata')).toBe(true)
+    expect(copiaCortesiaBloccata('fattura', 'scartata')).toBe(true)
+  })
+
+  it('esito positivo → la copia si sblocca', () => {
+    expect(copiaCortesiaBloccata('fattura', 'consegnata')).toBe(false)
+    expect(copiaCortesiaBloccata('fattura', 'mancata_consegna')).toBe(false)
+  })
+
+  it('vale anche per le note (TD04 e TD05: copie della stessa famiglia)', () => {
+    expect(copiaCortesiaBloccata('nota_credito', null)).toBe(true)
+    expect(copiaCortesiaBloccata('nota_debito', 'inviata')).toBe(true)
+    expect(copiaCortesiaBloccata('nota_credito', 'consegnata')).toBe(false)
+  })
+
+  it('un esito futuro sconosciuto NON sblocca (mai fidarsi di un valore ignoto)', () => {
+    expect(copiaCortesiaBloccata('fattura', 'accettata_con_riserva')).toBe(true)
   })
 })

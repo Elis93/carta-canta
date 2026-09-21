@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Send, CheckCircle2, XCircle, Timer } from 'lucide-react'
+import { CheckCircle2, XCircle, Timer } from 'lucide-react'
 
 // ── Blocchi SdI della Home (Eli, 11 ago 2026) ───────────────────────────────
 // «In home compaiono sia sdi da mandare che quelli rifiutati affianco.»
@@ -19,8 +19,6 @@ export interface SdiHomeDaTrasmettere {
   termineLabel: string | null
   /** Colore dell'urgenza: neutro >3gg · ambra ≤3 · rosso fuori termine */
   urgenza: 'neutro' | 'ambra' | 'rosso'
-  /** Trasmissione automatica programmata: parte da sola, nessuna azione richiesta */
-  autoProgrammata: boolean
 }
 
 export interface SdiHomeScartata {
@@ -87,12 +85,7 @@ export function SdiHomeCard({
                   <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {d.numberLabel}
                   </div>
-                  {d.autoProgrammata ? (
-                    <div style={{ fontSize: 11, color: '#3f6fb0', display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      <Send size={11} style={{ flexShrink: 0 }} aria-hidden="true" />
-                      parte da sola
-                    </div>
-                  ) : d.termineLabel ? (
+                  {d.termineLabel ? (
                     <div style={{ fontSize: 11, fontWeight: d.urgenza === 'neutro' ? 400 : 600, color: URGENZA_COLOR[d.urgenza], whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {d.termineLabel}
                     </div>

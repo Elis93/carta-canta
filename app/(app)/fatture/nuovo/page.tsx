@@ -140,6 +140,9 @@ export default async function NuovaFatturaPage({ searchParams }: Props) {
         fiscalRegime={workspace.fiscal_regime}
         isProPlan={workspace.plan !== 'free'}
         nextInvoiceNumber={nextInvoiceNumber}
+        // Fase 1 (SdI attivo): la fattura nuova si salva in bozze e si
+        // trasmette; la copia al cliente arriva all'esito positivo.
+        invioClienteBloccato={process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'}
       />
       </div>
     </div>

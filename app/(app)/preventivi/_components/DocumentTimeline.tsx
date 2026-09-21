@@ -19,6 +19,7 @@ export interface DocumentLogEntry {
     | 'marked_accepted' | 'marked_rejected' | 'marked_expired' | 'unaccepted' | 'reopened'
     | 'client_message' | 'owner_message' | 'expiry_set'
     | 'client_accepted' | 'client_rejected'
+    | 'copia_cortesia'
   at: string
   /** solo expiry_set (25 ago): la nuova data di scadenza impostata */
   expires?: string
@@ -176,7 +177,11 @@ export function DocumentTimeline({
     }
   }
 
-  if (sentAt) {
+  // La copia di cortesia AUTOMATICA (Fase 1, 21 set) scrive sent_at E la sua
+  // voce di log: l'evento derivato qui si sopprime — la voce dedicata dice
+  // meglio la stessa cosa (dedupe come per marked_*).
+  const hasCopiaCortesiaLog = documentLog.some((e) => e.type === 'copia_cortesia')
+  if (sentAt && !hasCopiaCortesiaLog) {
     events.push({
       key: 'sent',
       icon: <Send className="size-3" />,
@@ -306,6 +311,16 @@ export function DocumentTimeline({
         icon: <Pencil className="size-3" />,
         label: 'Documento aggiornato',
         badgeBg: '#ede9f7', badgeColor: '#7c3aed',
+        date: entry.at,
+      })
+    } else if (entry.type === 'copia_cortesia') {
+      // Fase 1: la copia partita da sola all'esito positivo dello SdI.
+      events.push({
+        key: `copia-cortesia-${i}`,
+        icon: <Send className="size-3" />,
+        label: 'Copia di cortesia inviata al cliente',
+        detail: 'Partita in automatico all\u2019esito positivo dello SdI, via email.',
+        badgeBg: '#d8e8fb', badgeColor: '#3f6fb0',
         date: entry.at,
       })
     } else if (entry.type === 'resent') {

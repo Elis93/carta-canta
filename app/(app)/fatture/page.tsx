@@ -10,7 +10,6 @@ import { SearchBar } from '@/components/shared/SearchBar'
 import { ExportCommercialistaButton } from '@/components/shared/ExportCommercialistaButton'
 import { StatusBadge } from '../preventivi/_components/StatusBadge'
 import { DocumentRowActions } from '../preventivi/_components/DocumentRowActions'
-import { getSdiQuota } from '@/lib/sdi/quota'
 import { archivioDisponibile } from '@/lib/documents/archivio'
 import { freeOpenSentIds } from '@/lib/plan/free-lock'
 import { SortSelect } from '../preventivi/_components/SortSelect'
@@ -431,16 +430,9 @@ export default async function FatturePage({ searchParams }: Props) {
   const senderName = workspace.ragione_sociale ?? workspace.name ?? ''
 
   // Avviso dei 12 giorni per l'invio email dalla LISTA (bozze — 080): la
-  // conferma fiscale parte anche da qui, quindi anche qui serve l'avviso.
-  // 'auto' solo se il pilota partirà davvero (interruttore + quota).
-  let avvisoSdiWs: 'auto' | 'manuale' | null = null
-  if (process.env.NEXT_PUBLIC_SDI_ENABLED === 'true') {
-    const acceso = (workspace as { sdi_auto_enabled?: boolean | null }).sdi_auto_enabled !== false
-    const quotaOk = acceso
-      ? await getSdiQuota(workspace.id, workspace.plan).then((q) => q.allowed, () => false)
-      : false
-    avvisoSdiWs = acceso && quotaOk ? 'auto' : 'manuale'
-  }
+  // conferma fiscale parte anche da qui. Dal ritiro del pilota (Fase 1,
+  // 21 set) è un booleano: la trasmissione è sempre un gesto manuale.
+  const sdiFlagOn = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 
   // Piano gratuito: contatore delle 8 FATTURE inviate (083), gemello del banner
   // preventivi. ⚠️ Il limite morde sull'INVIO, non sulla creazione — quindi
@@ -817,7 +809,10 @@ export default async function FatturePage({ searchParams }: Props) {
                     // (decisione Eli, 11 ago).
                     hasIncasso={incassateIds.has(ft.id)}
                     docType={ft.doc_type ?? 'fattura'}
-                    avvisoSdi={ft.doc_type === 'nota_credito' ? (avvisoSdiWs ? 'manuale' : null) : avvisoSdiWs}
+                    avvisoSdi={sdiFlagOn && !sdiById.get(ft.id)}
+                    // Fase 1: bozza di fattura/nota senza esito positivo →
+                    // «Invia al cliente» spento (prima la trasmissione).
+                    copiaBloccata={(() => { const st = sdiById.get(ft.id); return sdiFlagOn && !(st === 'consegnata' || st === 'mancata_consegna') })()}
                     locked={bloccatiIds.has(ft.id)}
                   />
                 </div>

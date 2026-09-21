@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { signPhotoPaths } from '@/lib/photos/signed-url'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
-import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronRight, Hammer, Link as LinkIcon } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Pencil, X, ChevronRight, Hammer, Send, Link as LinkIcon } from 'lucide-react'
 import { CardTendina } from '@/components/shared/CardTendina'
 import { LinkToPreventivoButton } from '../_components/LinkToPreventivoButton'
 import { SegnaPagataButton } from '../_components/SegnaPagataButton'
@@ -49,6 +49,7 @@ import { riepilogoIva } from '@/lib/fiscal/calcoli'
 import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 import { ivaEffettivaVoci, notaBeneSplit } from '@/lib/fiscal/iva-voce'
 import { residuoStornabile, sommaNoteAttive, baseStornabile, importoRitenuta, TOLLERANZA_STORNO } from '@/lib/documents/storno'
+import { copiaCortesiaBloccata } from '@/lib/documents/copia-sdi'
 import { isDocFreeLocked } from '@/lib/plan/free-lock'
 import { PRO_LOCK_HREF } from '@/lib/plan/gate'
 
@@ -269,7 +270,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         Date.now() - sdiUpdatedMs > 10 * 60_000
 
       const giaTrasmessa = !!sdiRow?.sdi_status
-      const puoTrasmettere = doc.status !== 'draft' && doc.status !== 'rejected'
+      // FASE 1 (modello Aruba, 21 set): si trasmette ANCHE dalla bozza — è lo
+      // stato normale da cui parte «Invia allo SdI». Resta esclusa solo
+      // l'annullata (trasmettere un documento annullato lo renderebbe emesso).
+      const puoTrasmettere = doc.status !== 'rejected'
       if (!giaTrasmessa && !puoTrasmettere) throw new Error('card non pertinente')
 
       sdiProps = {
@@ -290,20 +294,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         // Timer dei 12 giorni (11 ago): la DATA FISCALE (doc_date, nasce
         // alla conferma — 080) con fallback legacy, + primo incasso.
         // doc_date arriva dal select('*'): pre-080 è undefined, nessun rischio.
-        docCreatedAt: ((doc as { doc_date?: string | null }).doc_date ?? doc.created_at) ?? null,
+        // ⚠️ Sulla BOZZA niente fallback a created_at (Fase 1: la card ora
+        // compare anche lì): una bozza non confermata non ha data fiscale —
+        // il termine scatta solo da un incasso registrato (paid_at).
+        docCreatedAt: doc.status === 'draft'
+          ? ((doc as { doc_date?: string | null }).doc_date ?? null)
+          : (((doc as { doc_date?: string | null }).doc_date ?? doc.created_at) ?? null),
         docPaidAt: (doc as { paid_at?: string | null }).paid_at ?? null,
-        // Pilota automatico (080) — lettura tollerante A PARTE: nel select
-        // principale della card farebbe fallire tutto pre-080.
-        sdiAutoAt: await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-          .from('documents')
-          .select('sdi_auto_at')
-          .eq('id', id)
-          .maybeSingle()
-          .then(
-            (r: { data: { sdi_auto_at?: string | null } | null; error: unknown }) =>
-              r.error ? null : (r.data?.sdi_auto_at ?? null),
-            () => null,
-          ),
       }
     } catch { /* migration 044 assente, o card non pertinente su questa fattura */ }
   }
@@ -312,40 +309,26 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // e niente storno di sé stessa. Lo SdI invece SERVE — una nota che resta
   // nell'app non storna nulla: per l'Agenzia la fattura è ancora intera.
   const isNotaCredito = doc.doc_type === 'nota_credito'
-  // ── Avviso dei 12 giorni al primo invio (Eli, 11 ago) ──────────────────
-  // 'auto' se il pilota trasmetterà DAVVERO da solo (solo fatture,
-  // interruttore acceso E quota che lo consente — promettere «parte da
-  // sola» a un Free con la quota esaurita sarebbe una bugia: il cron
-  // rifiuterebbe), 'manuale' altrimenti; null con SdI spento.
-  // ⚠️ Fallback in errore/pre-080: 'manuale' — stesso default della action
-  // che programma (registraConfermaFiscale): se non possiamo dimostrare che
-  // il pilota partirà, non lo promettiamo.
-  let avvisoSdi: 'auto' | 'manuale' | null = null
-  if (process.env.NEXT_PUBLIC_SDI_ENABLED === 'true') {
-    if (isNotaCredito) {
-      avvisoSdi = 'manuale'
-    } else {
-      const acceso = await (supabase as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-        .from('workspaces')
-        .select('sdi_auto_enabled')
-        .eq('id', workspace.id)
-        .maybeSingle()
-        .then(
-          (r: { data: { sdi_auto_enabled?: boolean | null } | null; error: unknown }) =>
-            r.error ? false : r.data?.sdi_auto_enabled !== false,
-          () => false,
-        )
-      const quotaOk = acceso
-        ? await getSdiQuota(workspace.id, workspace.plan).then((q) => q.allowed, () => false)
-        : false
-      avvisoSdi = acceso && quotaOk ? 'auto' : 'manuale'
-    }
-  }
+  // ── Avviso dei 12 giorni (Eli, 11 ago) — dal ritiro del pilota (Fase 1,
+  // 21 set) è un booleano: la trasmissione è sempre un gesto manuale, e
+  // l'avviso ha senso solo finché la fattura NON è già stata trasmessa.
+  const sdiFlagOn = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
+  const avvisoSdi = sdiFlagOn && !(doc as any).sdi_status // eslint-disable-line @typescript-eslint/no-explicit-any
   const isDraft = doc.status === 'draft'
   const isCancelled = doc.status === 'rejected'
   // ⚖️ Fattura già trasmessa allo SdI (stato ≠ "scartata") = emessa: niente
   // riattivazione, solo nota di credito. Oggi lo SdI è spento → sempre falso.
   const sdiTransmitted = !!(doc as any).sdi_status && (doc as any).sdi_status !== 'scartata' // eslint-disable-line @typescript-eslint/no-explicit-any
+  // ── FASE 1 copia di cortesia (21 set, modello Aruba): con SdI attivo,
+  // l'invio al cliente si sblocca solo all'ESITO POSITIVO — prima esiste la
+  // bozza, e la strada è «Invia allo SdI». Le guardie vere stanno sul server
+  // (bloccoInvioCliente); qui si spegne e si spiega (regola 8 ago).
+  const copiaBloccata = sdiFlagOn && copiaCortesiaBloccata(doc.doc_type, (doc as any).sdi_status) // eslint-disable-line @typescript-eslint/no-explicit-any
+  // Esito positivo ma copia mai partita (cliente senza email, quota, o
+  // fattura incassata di persona da bozza — la copia automatica parte solo
+  // dalle bozze): l'INVITO a mandarla — di solito la manda da sola l'app.
+  const copiaDaMandare = sdiFlagOn && !copiaBloccata && sdiTransmitted &&
+    (doc.status === 'draft' || (doc.status === 'accepted' && !doc.sent_at))
   // Downgrade Pro→Free: fattura INVIATA oltre le prime 8 = sola lettura
   // (Eli, 12 ago). Le note (credito/debito) non sono 'fattura' → mai bloccate;
   // le bozze restano aperte. Come per lo SdI: niente matita, ?edit=1 non apre
@@ -688,8 +671,10 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               />
             )}
             {/* 19 lug: su una fattura ANNULLATA niente "Invia al cliente" (il
-                cliente vedrebbe "annullata"): o si riattiva, o resta com'è. */}
-            {doc.public_token && !isCancelled && !freeLocked && (
+                cliente vedrebbe "annullata"): o si riattiva, o resta com'è.
+                Fase 1 (copiaBloccata): l'invio si sblocca all'esito positivo
+                dello SdI — l'avviso in cima alla pagina spiega la strada. */}
+            {doc.public_token && !isCancelled && !freeLocked && !copiaBloccata && (
               <ShareButton
                 avvisoSdi={avvisoSdi}
                 documentId={id}
@@ -708,7 +693,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             {canReactivate && <RiattivaFatturaButton documentId={id} />}
             {/* Dialog email SENZA trigger: si apre dall'icona Email del pop-up
                 "Invia al cliente" (evento) — montato per ogni stato */}
-            {!freeLocked && (doc.status === 'draft' ? (
+            {!freeLocked && !copiaBloccata && (doc.status === 'draft' ? (
               <SendEmailDialogController
                 avvisoSdi={avvisoSdi}
                 documentId={id}
@@ -768,6 +753,35 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             sotto={<>Sulla fattura d&rsquo;origine restano da stornare <b style={{ fontWeight: 600 }}>€&nbsp;{notaOltreResiduo.residuo.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b> (totale meno le altre note attive): con questi importi la trasmissione allo SdI verrà bloccata. Riduci le voci della nota entro il residuo.</>}
           >
             <b>Questa nota supera il residuo stornabile.</b>
+          </Avviso>
+        )}
+
+        {/* ── FASE 1 copia di cortesia (21 set): con SdI attivo, prima la
+            trasmissione e poi la copia — il banner spiega la strada al posto
+            del tasto «Invia», che qui è spento (regola 8 ago: spento e
+            spiegato). Non sull'annullata (lì non si invia comunque). */}
+        {copiaBloccata && !isCancelled && !editing && (
+          <Avviso
+            gravita="info"
+            icon={<Send size={16} />}
+            sotto={
+              isNotaCredito
+                ? <>Trasmettila con «Invia allo SdI» nella card qui sotto. Appena arriva l&rsquo;esito positivo, la copia per il cliente si sblocca — e parte da sola se ha un&rsquo;email in rubrica.</>
+                : <>Trasmettila con «Invia allo SdI» nella card «Fattura elettronica». Appena arriva l&rsquo;esito positivo, la copia di cortesia per il cliente si sblocca — e parte da sola se ha un&rsquo;email in rubrica. Per far vedere una cifra prima, c&rsquo;è il preventivo.</>
+            }
+          >
+            <b>Prima la trasmissione, poi la copia al cliente.</b>
+          </Avviso>
+        )}
+        {/* Esito positivo ma copia mai partita (cliente senza email in
+            rubrica, o quota Free esaurita): l'invito a mandarla a mano. */}
+        {copiaDaMandare && !editing && (
+          <Avviso
+            gravita="ok"
+            icon={<Send size={16} />}
+            sotto={<>La copia di cortesia non è ancora stata mandata al cliente: usa «Invia» qui sotto (email, WhatsApp o link).</>}
+          >
+            <b>{isNotaCredito ? 'Nota di credito emessa.' : 'Fattura emessa.'}</b>
           </Avviso>
         )}
 
@@ -979,7 +993,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               {!freeLocked && (
                 <AnteprimaButton src={`/api/documents/${id}/pdf?preview=1`} style={btnBianco} />
               )}
-              {!freeLocked && doc.public_token && !isCancelled && (
+              {!freeLocked && doc.public_token && !isCancelled && !copiaBloccata && (
                 <ShareButton
                   avvisoSdi={avvisoSdi}
                   documentId={id}
@@ -994,6 +1008,13 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                   triggerLabel="Invia"
                   triggerStyle={isDraft ? btnNavy : btnBianco}
                 />
+              )}
+              {/* Fase 1: «Invia» SPENTO finché manca l'esito positivo dello
+                  SdI — il banner in cima spiega perché e cosa fare. */}
+              {!freeLocked && doc.public_token && !isCancelled && copiaBloccata && (
+                <button type="button" disabled aria-disabled style={{ ...btnBianco, opacity: 0.5, cursor: 'default' }}>
+                  Invia
+                </button>
               )}
               <MenuAltro>
                 {isNotaCredito && !sdiTransmitted && doc.status !== 'rejected' && (
@@ -1344,6 +1365,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             docType={isNotaCredito ? 'nota_credito' : 'fattura'}
             defaultClient={formDefaultClient}
             supplierLists={supplierLists}
+            // Fase 1: senza esito positivo SdI niente «Invia al cliente» /
+            // «Salva e invia» — resta il salvataggio, la strada è la card SdI.
+            invioClienteBloccato={copiaBloccata}
           />
         </div>
         )}

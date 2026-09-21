@@ -502,20 +502,9 @@ export async function updateWorkspaceFiscal(
   if (isPivaDuplicata(error)) return { error: PIVA_DUPLICATA_MESSAGE }
   if (error) return { error: 'Errore nel salvataggio.' }
 
-  // Pilota automatico SdI (colonna 080) — update separato e TOLLERANTE, e
-  // SOLO se il campo è arrivato dal form: l'interruttore compare solo con
-  // SdI attivo, e senza questa guardia ogni salvataggio del tab con SdI
-  // spento lo azzererebbe in silenzio (la trappola degli ATECO).
-  if (formData.get('sdi_auto_presente') !== null) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 080 non ancora in types/database.ts
-    const { error: autoErr } = await (supabase as any)
-      .from('workspaces')
-      .update({ sdi_auto_enabled: formData.get('sdi_auto_enabled') === 'on' })
-      .eq('id', workspace.id)
-    if (autoErr && !isMissingColumnError(autoErr)) {
-      return { error: 'Impostazioni salvate, ma la trasmissione automatica no. Riprova.' }
-    }
-  }
+  // ⚠️ Il blocco «sdi_auto_enabled» (pilota +24h) è stato ritirato con la
+  // Fase 1 della copia di cortesia (21 set): l'interruttore non esiste più
+  // in UI e la colonna resta dormiente.
 
   // Costo orario manodopera (colonna 052) — update separato e tollerante:
   // se la migration non è applicata, il resto del tab si salva comunque.

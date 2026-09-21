@@ -38,9 +38,13 @@ describe('isCronStale', () => {
 })
 
 describe('CRON_JOBS registry', () => {
-  it('sorveglia i quattro cron di produzione, non sé stesso', () => {
+  it('sorveglia i tre cron di produzione, non sé stesso', () => {
     const names = CRON_JOBS.map((c) => c.name)
-    expect(names).toEqual(['sdi-auto', 'expire-documents', 'referral', 'orphan-files'])
+    // ⚠️ `sdi-auto` NON c'è più: il pilota +24h è stato ritirato con la Fase 1
+    // della copia di cortesia (21 set 2026) — la trasmissione è un gesto
+    // esplicito, niente trasmissioni programmate da sorvegliare.
+    expect(names).toEqual(['expire-documents', 'referral', 'orphan-files'])
+    expect(names).not.toContain('sdi-auto')
     expect(names).not.toContain('health') // il guardiano non sorveglia sé stesso
   })
 

@@ -57,3 +57,30 @@ export function dicituraCopiaSdi(stato: StatoCopiaSdi, docType: string | null | 
       return `Copia di cortesia non valida ai fini fiscali. L'originale della ${nome} è stato inviato al Sistema di Interscambio ed è consultabile nell'area riservata del sito dell'Agenzia delle Entrate.`
   }
 }
+
+/** Esito POSITIVO dello SdI: la fattura è emessa (consegnata al canale del
+ *  cliente, oppure lasciata nel suo cassetto fiscale — valida lo stesso). */
+export function esitoPositivoSdi(sdiStatus: string | null | undefined): boolean {
+  const s = (sdiStatus ?? '').trim()
+  return s === 'consegnata' || s === 'mancata_consegna'
+}
+
+/**
+ * FASE 1 (modello Aruba, Eli 21 set): con la fatturazione elettronica ATTIVA,
+ * l'invio al cliente di una fattura (o nota) è consentito solo DOPO l'esito
+ * positivo dello SdI — prima esiste solo la bozza, che vive nell'app. È la
+ * regola dei concorrenti: la copia parte quando lo SdI ha accettato, «così da
+ * essere certi che al cliente arrivi la fattura approvata».
+ *
+ * ⚠️ Comprende anche la NOTA DI DEBITO (TD05): è una fattura integrativa, la
+ * sua copia segue la stessa regola. Il flag NEXT_PUBLIC_SDI_ENABLED lo
+ * controlla il CHIAMANTE (questo modulo resta puro); con SdI spento il blocco
+ * non esiste e vale il flusso client-first + le diciture della Fase 0.
+ */
+export function copiaCortesiaBloccata(
+  docType: string | null | undefined,
+  sdiStatus: string | null | undefined,
+): boolean {
+  if (docType !== 'fattura' && docType !== 'nota_credito' && docType !== 'nota_debito') return false
+  return !esitoPositivoSdi(sdiStatus)
+}

@@ -361,20 +361,18 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       link che mandi al cliente sono una <b>copia di cortesia</b>: gli servono per leggerla
       e pagarla, ma non valgono come emissione.
       <br /><br />
-      Il tempo però corre lo stesso: il giorno del <b>primo invio al cliente</b>{' '}diventa
-      la <b>data della fattura</b>, e da lì la legge dà <b>12 giorni</b>{' '}per completare
-      l&rsquo;emissione con la trasmissione (la mandi il 10, va trasmessa entro il 22).
-      Se il cliente <b>paga prima</b>{' '}di ricevere la fattura, i 12 giorni partono dal
-      giorno dell&rsquo;<b>incasso</b>: vale sempre la <b>più vecchia</b>{' '}tra le due date.
-      ⚠️ L&rsquo;app <b>non vede i pagamenti</b>{' '}che arrivano sul tuo conto: quando il
-      cliente paga, registralo tu sulla fattura («Segna pagata», o l&rsquo;acconto) — il
-      conteggio può partire solo dalle date che l&rsquo;app conosce.
-      Finché resta <b>bozza</b>{' '}nessun conteggio parte. Per non fartelo
-      tenere a mente, sulla fattura la card <b>Fattura elettronica</b>{' '}mostra il{' '}
-      <b>conto alla rovescia</b>{' '}— «Da trasmettere entro il … · mancano N giorni» — e
-      negli ultimi 3 giorni ti arriva anche la notifica in campanella. E con la{' '}
-      <b>trasmissione automatica</b>{' '}attiva non devi nemmeno pensarci: la fattura
-      parte da sola.
+      Il tempo corre dal momento in cui la fattura viene <b>confermata</b>: finché resta
+      una <b>bozza</b>{' '}nessun conteggio parte, e trasmettendola dalla bozza l&rsquo;emissione
+      è contestuale — niente da tenere a mente. Attenzione però agli <b>incassi</b>: se il
+      cliente paga <b>prima</b>{' '}della trasmissione (anche solo un acconto), i{' '}
+      <b>12 giorni</b>{' '}partono dal giorno dell&rsquo;incasso (la legge dà 12 giorni
+      dall&rsquo;operazione per completare l&rsquo;emissione: incassi il 10, va trasmessa
+      entro il 22). ⚠️ L&rsquo;app <b>non vede i pagamenti</b>{' '}che arrivano sul tuo
+      conto: quando il cliente paga, registralo tu sulla fattura («Segna pagata», o
+      l&rsquo;acconto) — il conteggio può partire solo dalle date che l&rsquo;app conosce.
+      Per non fartelo tenere a mente, sulla fattura la card <b>Fattura elettronica</b>{' '}
+      mostra il <b>conto alla rovescia</b>{' '}— «Da trasmettere entro il … · mancano N
+      giorni» — e negli ultimi 3 giorni ti arriva anche la notifica in campanella.
       <br /><br />
       L&rsquo;elenco completo di quelle ancora da trasmettere, in ordine di urgenza, è in{' '}
       <VaiA a="daTrasmettere" />{' '}— ci arrivi anche dal riquadro <b>Da trasmettere</b>{' '}
@@ -386,31 +384,25 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       in misura sensibile.</>,
   },
   {
-    q: 'La fattura parte da sola allo SdI? Come funziona la trasmissione automatica?',
-    id: 'trasmissione-automatica',
-    parole: ['automatica', 'automatico', 'pilota', 'parte da sola', 'trasmissione automatica', '24 ore', 'annulla trasmissione'],
-    a: <>Sì, ed è <b>accesa di partenza</b>: quando confermi una fattura (il primo invio al
-      cliente o «Segna pagata»), la trasmissione allo SdI viene <b>programmata dopo 24 ore</b>.
-      Un avviso te lo dice nel momento stesso, e sulla fattura la card{' '}
-      <b>Fattura elettronica</b>{' '}mostra giorno e ora della partenza in un riquadro
-      azzurro.
+    q: 'Quando arriva la fattura al cliente? Come funziona la copia di cortesia?',
+    id: 'copia-cortesia',
+    parole: ['copia di cortesia', 'invia al cliente', 'copia', 'quando arriva', 'invio bloccato', 'prima la trasmissione', 'email al cliente', 'salva in bozze'],
+    a: <>Con la fatturazione elettronica attiva l&rsquo;ordine è: <b>prima la trasmissione,
+      poi la copia al cliente</b>{' '}— come negli altri programmi di fatturazione. Compili
+      la fattura, la <b>salvi in bozze</b>{' '}(nessun effetto fiscale: la modifichi quando
+      vuoi) e quando è pronta la trasmetti col tasto <b>Invia allo SdI</b>, anche
+      direttamente dalla bozza.
       <br /><br />
-      Vuoi fermarla? Nel riquadro c&rsquo;è il tasto <b>Annulla</b>: ferma la partenza
-      automatica di <b>quella sola fattura</b>, prima che avvenga — non viene inviato nulla
-      e non si cancella nulla. La fattura resta dov&rsquo;è e la trasmetti tu quando
-      preferisci, col tasto <b>Invia allo SdI</b>{' '}e il conto alla rovescia dei 12 giorni
-      a ricordarti il termine. Le 24 ore di attesa servono proprio a questo: il tempo di
-      ricontrollare i dati o cambiare idea.
+      Appena lo SdI la accetta, la <b>copia di cortesia</b>{' '}si sblocca: se il cliente
+      ha un&rsquo;email in rubrica <b>parte da sola</b>, col link al documento; altrimenti
+      sulla fattura trovi «Invia» per mandarla tu (email, WhatsApp o link). La copia porta
+      la dicitura di legge — «Copia di cortesia non valida ai fini fiscali…» — perché
+      l&rsquo;originale è quello nel <b>cassetto fiscale</b>{' '}del cliente.
       <br /><br />
-      Se l&rsquo;invio automatico non riesce, <b>non insiste da solo</b>: la fattura torna
-      alla trasmissione manuale e <b>ti arriva un&rsquo;email</b>{' '}che te lo dice, col
-      conto alla rovescia dei 12 giorni a fare da rete — niente parte due volte e niente
-      fallisce in silenzio.
-      <br /><br />
-      Preferisci trasmettere sempre tu? Spegni l&rsquo;interruttore in{' '}
-      <b>Impostazioni › Dati fiscali › Trasmissione automatica allo SdI</b>: resterà tutto
-      manuale, guidato dal conto alla rovescia. Le <b>note di credito</b>{' '}non partono
-      mai da sole: quelle le trasmetti sempre tu.</>,
+      Perché non prima? Una fattura <b>scartata</b>{' '}per l&rsquo;Agenzia non è mai
+      esistita: se il cliente avesse già in mano la copia, avrebbe un documento che
+      fiscalmente non esiste. Per far vedere una cifra prima del lavoro c&rsquo;è il{' '}
+      <b>preventivo</b>, che resta libero come sempre.</>,
   },
   {
     q: 'La fattura è stata scartata dallo SdI: cosa faccio?',

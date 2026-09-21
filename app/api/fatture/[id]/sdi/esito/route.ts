@@ -13,6 +13,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveWorkspaceForUser } from '@/lib/actions/resolve-workspace'
 import { getSdiProvider } from '@/lib/sdi'
 import { sendSdiScartataEmail } from '@/lib/sdi/scartata-email'
+import { inviaCopiaCortesiaAutomatica } from '@/lib/documents/copia-cortesia'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 const SDI_ENABLED = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
@@ -104,6 +105,12 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   // (rowcount): se il webhook è arrivato primo, niente doppia email (24 lug).
   if (result.esito === 'scartata' && changed && changed.length > 0) {
     await sendSdiScartataEmail(createAdminClient(), ws.id, id, doc.doc_number ?? null, result.message)
+  }
+  // Esito POSITIVO → copia di cortesia sbloccata e, se il cliente ha un'email
+  // in rubrica, inviata da sola (Fase 1). Solo se QUESTO update ha registrato
+  // l'esito (rowcount): il webhook arrivato primo l'ha già gestita.
+  if (result.esito !== 'scartata' && changed && changed.length > 0) {
+    await inviaCopiaCortesiaAutomatica(createAdminClient(), id)
   }
 
   return NextResponse.json({ esito: result.esito, message: result.message })

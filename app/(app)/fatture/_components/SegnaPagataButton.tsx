@@ -49,7 +49,7 @@ export function SegnaPagataButton({
   total,
   alreadyPaid = 0,
   wasDraft = false,
-  avvisoSdi = null,
+  avvisoSdi = false,
   triggerStyle,
 }: {
   documentId: string
@@ -59,7 +59,7 @@ export function SegnaPagataButton({
   /** La fattura è una BOZZA: «Segna pagata» qui è la sua CONFERMA fiscale (080) */
   wasDraft?: boolean
   /** Avviso dei 12 giorni alla conferma (Eli, 11 ago) — 'auto' se il pilota partirà */
-  avvisoSdi?: 'auto' | 'manuale' | null
+  avvisoSdi?: boolean
   /** Veste del bottone (pagina A: navy pieno o bianco a seconda dello stato). */
   triggerStyle?: React.CSSProperties
 }) {
@@ -120,9 +120,7 @@ export function SegnaPagataButton({
         // la fattura resta bozza e nessuna conferma avviene.
         if (wasDraft && avvisoSdi) {
           toast.info('Da oggi hai 12 giorni per trasmetterla allo SdI', {
-            description: avvisoSdi === 'auto'
-              ? 'Trasmissione automatica attiva: parte da sola tra 24 ore, non devi fare niente. La gestisci (o la annulli) dalla card SdI della fattura.'
-              : 'La trasmetti tu dalla card SdI della fattura: il conto alla rovescia è lì a ricordartelo.',
+            description: 'La trasmetti tu dalla card SdI della fattura: il conto alla rovescia è lì a ricordartelo.',
             duration: 10000,
             closeButton: true,
           })

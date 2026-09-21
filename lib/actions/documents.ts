@@ -28,29 +28,9 @@ import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, baseStorna
 import { registraConfermaFiscale, fermaPilotaSdi } from '@/lib/documents/conferma-fiscale'
 import { logNuovaScadenza } from '@/lib/documents/log-scadenza'
 import { richiedeDatiFattura, datiFatturaMancanti, messaggioDatiFattura } from '@/lib/documents/dati-fattura'
-
-/** L'artigiano annulla la trasmissione automatica programmata su UN
- *  documento («Annulla» sulla card SdI). Il documento resta trasmissibile
- *  a mano, col conto alla rovescia dei 12 giorni a fare da rete. */
-export async function annullaTrasmissioneAutomaticaAction(
-  documentId: string,
-): Promise<{ error: string } | null> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non autenticato' }
-  const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
-  if (!workspace) return { error: 'Workspace non trovato' }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 080 non nei tipi
-  const { error } = await (supabase as any)
-    .from('documents')
-    .update({ sdi_auto_at: null })
-    .eq('id', documentId)
-    .eq('workspace_id', workspace.id)
-  if (error) return { error: 'Annullamento non riuscito. Riprova.' }
-  revalidatePath(`/fatture/${documentId}`)
-  return null
-}
-
+// Fase 1 copia di cortesia (21 set): con SdI attivo, una fattura/nota senza
+// esito positivo NON si manda al cliente — prima la trasmissione, poi la copia.
+import { bloccoInvioCliente } from '@/lib/documents/copia-cortesia'
 import { parseImportoIt, stripPrefissoLegacy, docTypePath } from '@/lib/utils'
 import { resolveWorkspaceForUser } from './resolve-workspace'
 
@@ -1967,6 +1947,10 @@ export async function sendDocumentAction(
   if (!doc.client_id) return { error: 'Seleziona un cliente prima di inviare' }
   if ((doc.total ?? 0) === 0) return { error: 'Aggiungi almeno una voce con prezzo e quantità prima di inviare' }
 
+  // Fase 1 (SdI attivo): prima la trasmissione, poi la copia di cortesia.
+  const bloccoCopia = await bloccoInvioCliente(supabase, documentId, doc.doc_type)
+  if (bloccoCopia) return { error: bloccoCopia }
+
   // Piano Free: blocco all'INVIO se la quota del tipo documento è piena.
   // Preventivi e fatture hanno contatori SEPARATI (8 ciascuno, 083). Le note
   // di credito non consumano quota → nessun blocco. La creazione resta libera:
@@ -2127,6 +2111,11 @@ export async function registerManualSendAction(
 
   // Determina il tipo documento (dalla query o dall'hint del chiamante)
   const tipoDoc = String(docTypeHint ?? (doc as Record<string, unknown>).doc_type ?? 'preventivo')
+
+  // Fase 1 (SdI attivo): prima la trasmissione, poi la copia di cortesia —
+  // questo è il varco WhatsApp/«Copia link», che non passa dall'email.
+  const bloccoCopiaManual = await bloccoInvioCliente(supabase, documentId, tipoDoc)
+  if (bloccoCopiaManual) return { error: bloccoCopiaManual }
 
   // ⚖️ FATTURE (e note): dati del cliente obbligatori per l'art. 21 (nome,
   // residenza o domicilio, P.IVA o CF) — questo è il varco WhatsApp/«Copia
@@ -3366,6 +3355,11 @@ export async function registerManualResendAction(
   if (doc.status === 'draft' || !doc.sent_at) {
     return { error: 'Questo documento non risulta ancora inviato: usa «Invia al cliente».' }
   }
+
+  // Fase 1 (SdI attivo): anche il REINVIO di un documento legacy già in giro
+  // resta bloccato finché manca l'esito positivo — si trasmette prima.
+  const bloccoCopiaResend = await bloccoInvioCliente(supabase, documentId, doc.doc_type)
+  if (bloccoCopiaResend) return { error: bloccoCopiaResend }
 
   // ⚖️ FATTURE (e note): il reinvio è una consegna come la prima — i dati
   // dell'art. 21 sul cliente (nome, residenza o domicilio, P.IVA o CF) vanno

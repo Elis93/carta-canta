@@ -112,11 +112,10 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
   }, [state])
 
   const [fiscalRegime, setFiscalRegime] = useState(workspace.fiscal_regime)
-  // Pilota automatico SdI (080) — «automatico deve essere default» (Eli):
-  // acceso se la colonna manca o è true, spento solo su false esplicito.
-  const [sdiAuto, setSdiAuto] = useState(
-    (workspace as { sdi_auto_enabled?: boolean | null }).sdi_auto_enabled !== false
-  )
+  // ⚠️ L'interruttore «Trasmissione automatica allo SdI» (pilota +24h, 080) è
+  // stato RITIRATO con la Fase 1 della copia di cortesia (21 set): la
+  // trasmissione è un gesto esplicito dentro la fattura, come i concorrenti.
+  // La colonna sdi_auto_enabled resta a DB, dormiente.
   // Conta la manodopera nel margine dei lavori (085) — default ON (comportamento
   // storico). I forfettari possono spegnerlo: le loro ore non sono soldi usciti
   // dal conto. Colonna assente pre-085 → undefined → true. Dichiarato QUI (prima
@@ -129,19 +128,15 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
   // cambiare nessuno stato — la spunta si riaccendeva da sola pur avendo
   // salvato «spenta» (Eli, 11 ago: «non mi salva il deflaggamento»). È lo
   // stesso inciampo della tendina dell'acconto del 9 ago, stesso rimedio.
-  const sdiAutoRef = useRef<HTMLInputElement>(null)
-  const sdiAutoCorrente = useRef(sdiAuto)
-  sdiAutoCorrente.current = sdiAuto
   const countLaborRef = useRef<HTMLInputElement>(null)
   const countLaborCorrente = useRef(countLabor)
   countLaborCorrente.current = countLabor
   useEffect(() => {
-    const form = sdiAutoRef.current?.form ?? countLaborRef.current?.form
+    const form = countLaborRef.current?.form
     if (!form) return
     const onReset = () => {
       // Il reset agisce DOPO l'evento: si rimette a posto al giro successivo.
       requestAnimationFrame(() => {
-        if (sdiAutoRef.current) sdiAutoRef.current.checked = sdiAutoCorrente.current
         if (countLaborRef.current) countLaborRef.current.checked = countLaborCorrente.current
       })
     }
@@ -308,50 +303,9 @@ export function ImpostazioniFiscali({ workspace }: { workspace: Workspace }) {
             </div>
           )}
 
-          {process.env.NEXT_PUBLIC_SDI_ENABLED === 'true' && (
-            <>
-              <div style={{ height: 14 }} />
-              {/* Il campo-sentinella dice all'action che l'interruttore era nel
-                  form: senza, salvare il tab con SdI spento lo azzererebbe. */}
-              <input type="hidden" name="sdi_auto_presente" value="1" />
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: '#fafafa', borderRadius: 10, padding: '11px 12px' }}>
-                <input
-                  ref={sdiAutoRef}
-                  id="sdi-auto"
-                  type="checkbox"
-                  name="sdi_auto_enabled"
-                  checked={sdiAuto}
-                  onChange={(e) => setSdiAuto(e.target.checked)}
-                  style={{ width: 18, height: 18, marginTop: 1, accentColor: '#1a1a2e', flexShrink: 0 }}
-                />
-                <label htmlFor="sdi-auto" style={{ fontSize: 13, color: '#161616', lineHeight: 1.45, cursor: 'pointer' }}>
-                  <b>Trasmissione automatica allo SdI</b>
-                  <span style={{ display: 'block', fontSize: 12, color: '#767676', marginTop: 2 }}>
-                    La fattura elettronica, oltre che al cliente, va mandata
-                    all&rsquo;<b>Agenzia delle Entrate</b> tramite il <b>Sistema di
-                    Interscambio (SdI)</b>: è questo passaggio che la rende ufficialmente
-                    emessa.
-                    <span style={{ display: 'block', marginTop: 6 }}>
-                      {/* «(o la segni come pagata)»: la conferma fiscale scatta a
-                          OGNI primo passaggio fuori bozza (conferma-fiscale.ts), non
-                          solo all'invio al cliente — senza l'inciso, chi incassa in
-                          contanti senza mai inviarla non saprebbe del pilota. */}
-                      <b>Spunta accesa (consigliato):</b>{' '}quando invii la fattura al
-                      cliente (o la segni come pagata), il giorno dopo l&rsquo;app la
-                      trasmette in automatico all&rsquo;Agenzia. Hai 24 ore per ripensarci:
-                      fino a quel momento puoi fermare la trasmissione con un tocco dentro
-                      alla fattura stessa.
-                    </span>
-                    <span style={{ display: 'block', marginTop: 6 }}>
-                      <b>Spunta spenta:</b>{' '}la trasmissione all&rsquo;Agenzia delle
-                      Entrate va fatta a mano, con il tasto dentro alla fattura. L&rsquo;app
-                      ti ricorda la scadenza (12 giorni) con un conto alla rovescia.
-                    </span>
-                  </span>
-                </label>
-              </div>
-            </>
-          )}
+          {/* ⚠️ L'interruttore «Trasmissione automatica allo SdI» stava qui:
+              ritirato con la Fase 1 (21 set) — la trasmissione è un gesto
+              esplicito dentro la fattura, il ripensamento è la bozza. */}
 
           <div style={{ height: 14 }} />
 

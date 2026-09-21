@@ -117,6 +117,10 @@ interface PreventivoFormProps {
    *  Il desktop mostra il form inline anche senza ?edit=1, quindi il redirect
    *  mobile da solo non basta: qui il form diventa `inert` come sugli accettati. */
   forceReadOnly?: boolean
+  /** FASE 1 copia di cortesia (21 set): con SdI attivo, una fattura/nota senza
+   *  esito positivo non si manda al cliente — niente «Invia al cliente» /
+   *  «Salva e invia»: resta il salvataggio, la strada è «Invia allo SdI». */
+  invioClienteBloccato?: boolean
   /** Anteprima del prossimo numero (solo create mode, senza incrementare la sequenza) */
   nextDocNumber?: string
   /**
@@ -204,6 +208,7 @@ export function PreventivoForm({
   defaultVatRate,
   isProPlan = false,
   forceReadOnly = false,
+  invioClienteBloccato = false,
   nextDocNumber,
   defaultDeposit = null,
   docType = 'preventivo',
@@ -2059,6 +2064,9 @@ export function PreventivoForm({
                   : <><Save className="size-4" /> Salva bozza</>
                 }
               </Button>
+              {/* Fase 1 (invioClienteBloccato): la copia al cliente si sblocca
+                  all'esito positivo SdI — qui resta solo «Salva bozza». */}
+              {!invioClienteBloccato && (
               <Button
                 type="button"
                 disabled={saving || draftSaved}
@@ -2080,6 +2088,7 @@ export function PreventivoForm({
                   : <><Send className="size-4" /> Invia al cliente</>
                 }
               </Button>
+              )}
             </>
           ) : mode === 'edit' ? (
             /* Edit mode — sent/viewed/expired: Aggiorna + Salva e invia
@@ -2102,7 +2111,7 @@ export function PreventivoForm({
                   ? (isNota ? 'Aggiorna nota di credito' : docType === 'fattura' ? 'Aggiorna fattura' : 'Aggiorna preventivo')
                   : 'Aggiorna'}
               </Button>
-              {defaultValues?.status !== 'rejected' && (
+              {defaultValues?.status !== 'rejected' && !invioClienteBloccato && (
                 <Button
                   type="button"
                   disabled={saving}

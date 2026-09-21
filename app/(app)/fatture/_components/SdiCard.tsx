@@ -25,7 +25,6 @@ function scadenzaBreve(scadenza: string): string {
     .replace('.', '')
 }
 import { spiegaErroreSdi } from '@/lib/sdi/errori-comuni'
-import { annullaTrasmissioneAutomaticaAction } from '@/lib/actions/documents'
 import { Avviso } from '@/components/shared/Avviso'
 import {
   Dialog,
@@ -85,8 +84,6 @@ export interface SdiCardProps {
   docCreatedAt?: string | null
   /** Primo incasso registrato: se precedente, anticipa l'effettuazione (art. 6) */
   docPaidAt?: string | null
-  /** Trasmissione automatica programmata (080) — null = niente in programma */
-  sdiAutoAt?: string | null
 }
 
 export function SdiCard({
@@ -106,14 +103,12 @@ export function SdiCard({
   isNotaCredito = false,
   docCreatedAt = null,
   docPaidAt = null,
-  sdiAutoAt = null,
 }: SdiCardProps) {
   const nomeDoc = isNotaCredito ? 'nota di credito' : 'fattura'
   const router = useRouter()
   // Punto ⓘ (richiesta Eli 2 ago): spiegazione in parole semplici di cosa
   // è lo SdI e perché la trasmissione serve — chiusa di default.
   const [infoOpen, setInfoOpen] = useState(false)
-  const [annullandoAuto, setAnnullandoAuto] = useState(false)
   // Card a TENDINA (Eli 25 ago sera): chiusa di default, APERTA d'ufficio
   // quando c'è qualcosa che non può aspettare — scartata o termine superato
   // (gli avvisi fiscali non si nascondono, regola §B.2). Il riepilogo di
@@ -129,31 +124,9 @@ export function SdiCard({
   useEffect(() => {
     if (window.location.hash === '#sdi') setCardOpen(true)
   }, [])
-  // Il pilota è «in programma» finché sdi_auto_at è valorizzato e non si è
-  // trasmesso nulla. ⚠️ NIENTE confronto col futuro: il cron gira ogni ora
-  // in punto, quindi fra l'orario programmato e il giro successivo passano
-  // fino a 59 minuti — in quella finestra la trasmissione è ancora in coda
-  // (e annullabile!), e nascondere riquadro e tasto Annulla proprio lì
-  // sarebbe il momento peggiore. Quando il cron agisce, azzera il campo
-  // comunque (successo O fallimento) e il riquadro sparisce da solo.
-  const autoProgrammata = !!sdiAutoAt && sdiStatus === null
-  // L'ora da DIRE non è sdi_auto_at spaccato al minuto (il cron non parte a
-  // quell'ora): è l'ora piena successiva — «verso le 15:00».
-  const autoMs = sdiAutoAt ? Date.parse(sdiAutoAt) : NaN
-  const autoVersoMs = Number.isFinite(autoMs) ? Math.ceil(autoMs / 3_600_000) * 3_600_000 : NaN
-  const autoImminente = Number.isFinite(autoVersoMs) && autoVersoMs <= Date.now()
-
-  async function annullaAuto() {
-    setAnnullandoAuto(true)
-    try {
-      const res = await annullaTrasmissioneAutomaticaAction(documentId)
-      if (res?.error) { toast.error(res.error, { closeButton: true }); return }
-      toast.success('Trasmissione automatica annullata', { description: 'Questa fattura la trasmetti tu, quando vuoi: il conto dei 12 giorni resta qui a ricordartelo.', closeButton: true })
-      router.refresh()
-    } finally {
-      setAnnullandoAuto(false)
-    }
-  }
+  // ⚠️ Il PILOTA +24h è stato ritirato con la Fase 1 (21 set): la trasmissione
+  // è un gesto esplicito — «Invia allo SdI» — anche dalla bozza. Niente più
+  // riquadro «parte da sola» né tasto Annulla.
   const [open, setOpen] = useState(false)
   const [dest, setDest] = useState(clientDestinatario ?? '')
   const [pec, setPec] = useState(clientPec ?? '')
@@ -250,7 +223,7 @@ export function SdiCard({
           ? 'Provider di prova: non è uscito nulla dall’app.'
           : ambiente === 'collaudo'
             ? 'Ambiente di collaudo: NON è arrivata all’Agenzia delle Entrate.'
-            : `Riceverai l’esito del Sistema di Interscambio qui sulla ${nomeDoc}.`,
+            : `Riceverai l’esito del Sistema di Interscambio qui sulla ${nomeDoc}. All’esito positivo la copia di cortesia per il cliente si sblocca — e parte da sola se ha un’email in rubrica.`,
         closeButton: true,
       })
       setOpen(false)
@@ -320,11 +293,6 @@ export function SdiCard({
 
   const quotaExhausted = !isPro && freeRemaining !== null && freeRemaining <= 0
   const canSend = !sdiStatus || sdiStatus === 'scartata'
-  // Il riquadro del pilota si mostra solo se la trasmissione può DAVVERO
-  // partire: con la quota bloccata (Free esaurito, tetto, pausa) il cron
-  // rifiuterebbe — promettere «non devi fare niente» sopra un paywall
-  // sarebbe una contraddizione in 12 pixel (review 11 ago).
-  const pilotaVisibile = autoProgrammata && !quotaExhausted && !quotaReason
 
   // Traduzione dello scarto (11 ago): i 10 errori più comuni spiegati in
   // parole semplici, con cosa fare. Errore non riconosciuto → null, e resta
@@ -337,7 +305,6 @@ export function SdiCard({
     : sdiStatus === 'inviata' ? 'Inviata, attendo esito'
     : sdiStatus === 'mancata_consegna' ? 'Emessa'
     : termine?.fuoriTermine ? 'Termine superato'
-    : pilotaVisibile ? 'Parte da sola'
     : termine ? `entro il ${scadenzaBreve(termine.scadenza)}`
     : 'Da trasmettere'
   // null = nessuna urgenza → grigio 13 come gli altri riepiloghi.
@@ -412,31 +379,34 @@ export function SdiCard({
               <p style={{ margin: 0 }}>
                 La nota di credito storna la fattura <b>solo se viene trasmessa</b>{' '}allo
                 SdI, il canale dell&rsquo;Agenzia delle Entrate: finché resta qui dentro,
-                quella fattura per il fisco è ancora intera.
+                quella fattura per il fisco è ancora intera. La trasmetti tu, anche
+                direttamente dalla bozza.
               </p>
               <p style={{ margin: '6px 0 0' }}>
-                Anche per la nota valgono i <b>12 giorni</b>{' '}dal giorno in cui la mandi
-                al cliente; se viene <b>scartata</b>, la correggi e la ritrasmetti entro{' '}
-                <b>5 giorni</b>, con lo stesso numero e la stessa data. La trasmissione
-                automatica non la riguarda: la nota la trasmetti sempre tu.
+                La <b>copia per il cliente</b>{' '}parte DOPO l&rsquo;esito positivo dello
+                SdI. Se la nota viene <b>scartata</b>, la correggi e la ritrasmetti entro{' '}
+                <b>5 giorni</b>, con lo stesso numero e la stessa data.
               </p>
             </>
           ) : (
             <>
               <p style={{ margin: 0 }}>
-                Il modo più semplice per non pensarci: tieni attiva la{' '}
-                <Link href="/impostazioni/fiscale" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>trasmissione automatica</Link>{' '}
-                — la fattura parte da sola 24 ore dopo la conferma.
+                La fattura è <b>emessa</b>{' '}solo quando passa dallo SdI: la trasmetti da
+                qui con <b>«Invia allo SdI»</b>, anche direttamente dalla bozza. Il
+                ripensamento è la bozza: finché non tocchi il tasto, non è successo
+                niente.
               </p>
               <p style={{ margin: '6px 0 0' }}>
-                In breve: la fattura è <b>emessa</b>{' '}solo quando passa dallo SdI (il PDF
-                al cliente è una copia di cortesia). Il conto alla rovescia parte dal
-                giorno dell&rsquo;<b>invio al cliente</b>{' '}— o del <b>primo incasso</b>,
-                se arriva prima: l&rsquo;app non vede i pagamenti che ricevi, quindi
-                l&rsquo;incasso lo registri tu sulla fattura — e dà <b>12 giorni</b>{' '}per
-                trasmetterla. Se viene{' '}
-                <b>scartata</b>, la correggi e la ritrasmetti entro <b>5 giorni</b>, con lo
-                stesso numero e la stessa data.
+                La <b>copia per il cliente</b>{' '}parte DOPO: appena lo SdI accetta la
+                fattura, la copia di cortesia si sblocca — e parte da sola se il cliente
+                ha un&rsquo;email in rubrica.
+              </p>
+              <p style={{ margin: '6px 0 0' }}>
+                Se registri un <b>incasso</b>{' '}(anche solo un acconto) prima di
+                trasmettere, da lì corrono i <b>12 giorni</b>{' '}di legge: il conto alla
+                rovescia qui sotto te lo ricorda. Se viene <b>scartata</b>, la correggi e
+                la ritrasmetti entro <b>5 giorni</b>, con lo stesso numero e la stessa
+                data.
               </p>
             </>
           )}
@@ -446,8 +416,8 @@ export function SdiCard({
           <p style={{ margin: '6px 0 0' }}>
             Tutti i dettagli sono nelle Domande frequenti:{' '}
             <Link href="/aiuto#trasmissione-sdi" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>cos&rsquo;è lo SdI</Link>{' '}·{' '}
-            <Link href="/aiuto#dodici-giorni" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>i 12 giorni</Link>{isNotaCredito ? null : (<>{' '}·{' '}
-            <Link href="/aiuto#trasmissione-automatica" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>la trasmissione automatica</Link></>)}.
+            <Link href="/aiuto#dodici-giorni" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>i 12 giorni</Link>{' '}·{' '}
+            <Link href="/aiuto#copia-cortesia" style={{ fontWeight: 600, color: '#1a1a2e', textDecoration: 'underline' }}>la copia di cortesia</Link>.
           </p>
         </div>
       )}
@@ -456,35 +426,6 @@ export function SdiCard({
           sostituisce la fattura elettronica…» (26 lug) è stato TOLTO da Eli
           il 26 ago: la stessa cosa la dicono già il ⓘ conciso, il conto alla
           rovescia dei 12 giorni e le FAQ — era un terzo modo di dirla. */}
-
-      {/* ── Pilota automatico (Eli, 11 ago: «automatico deve essere default e
-          sia chiaro all'artigiano»): la trasmissione è GIÀ in programma —
-          qui si vede quando parte e si può annullare. ── */}
-      {pilotaVisibile && sdiAutoAt && (
-        <div style={{ background: '#eef2f7', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 9, alignItems: 'flex-start', marginBottom: 11 }}>
-          <Send size={15} style={{ color: '#1a1a2e', flexShrink: 0, marginTop: 1 }} />
-          <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.45, color: '#2b2b2b' }}>
-            <b>Trasmissione automatica attiva</b>: la {nomeDoc} parte da sola{' '}
-            {autoImminente ? (
-              <>a minuti, al prossimo controllo automatico.</>
-            ) : (
-              <>
-                {new Date(autoVersoMs).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', timeZone: 'Europe/Rome' })} verso le{' '}
-                {new Date(autoVersoMs).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}.
-              </>
-            )}{' '}
-            Non devi fare niente.
-          </span>
-          <button
-            type="button"
-            onClick={annullaAuto}
-            disabled={annullandoAuto}
-            style={{ border: '1px solid #d9d7d0', borderRadius: 9, background: '#fff', color: '#55534b', fontSize: 12, fontWeight: 600, padding: '5px 10px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, opacity: annullandoAuto ? 0.6 : 1 }}
-          >
-            {annullandoAuto ? <Loader2 size={13} className="animate-spin" /> : 'Annulla'}
-          </button>
-        </div>
-      )}
 
       {/* ── Il conto alla rovescia dei 12 giorni (Eli, 11 ago: «voglio che
           abbia sotto controllo la situazione e sia guidato») ── */}

@@ -115,7 +115,48 @@ La regola del commercialista applicata a ciò che circola oggi. Tre stati, tre v
   26 ago perché ridondante NELLA CARD; qui la dicitura va SUL DOCUMENTO che il cliente
   vede, che è un'altra cosa.
 
-### Fase 1 — Inversione del flusso fatture (il cuore del progetto) — modello Aruba
+### Fase 1 — Inversione del flusso fatture (il cuore del progetto) — modello Aruba — ✅ IMPLEMENTATA (21 set 2026, dietro il flag `NEXT_PUBLIC_SDI_ENABLED`)
+
+**Cosa è stato fatto (21 set):**
+- **Pilota +24h RITIRATO per intero** (vale anche con flag spento): cron `sdi-auto`
+  ELIMINATO (route + vercel.json + guardiano heartbeat + email `sdi_auto_fallita`),
+  `registraConfermaFiscale` scrive solo `doc_date`, interruttore «Trasmissione
+  automatica» tolto da Impostazioni › Fiscale (colonna `sdi_auto_enabled` dormiente),
+  riquadro «parte da sola» + tasto Annulla via da SdiCard/Home/da-trasmettere,
+  `annullaTrasmissioneAutomaticaAction` eliminata. `sdi_auto_at` resta a DB, dormiente.
+- **Si trasmette DALLA BOZZA**: caduto il rifiuto «invia prima al cliente» in
+  `trasmettiDocumentoSdi` (+ guardia nuova: voci con prezzo/quantità a zero → 422);
+  la SdiCard compare anche sulle bozze (via il gate `status !== 'draft'` della pagina);
+  sulla bozza senza conferma il timer dei 12 giorni parte SOLO da un incasso
+  registrato (niente fallback a created_at). FatturaForm (flag on): il tasto è
+  «**Salva in bozze**» (navy, unico) con la spiegazione del passo dopo.
+- **Invio al cliente BLOCCATO prima dell'esito positivo** (flag on, fatture + NC + ND):
+  guardie SERVER in `sendDocumentAction`, `registerManualSendAction`,
+  `registerManualResendAction` e route `send-email` (`bloccoInvioCliente` /
+  `copiaCortesiaBloccata` — un sdi_status illeggibile vale «non trasmessa» → blocco);
+  in UI il tasto «Invia» è spento e spiegato (pagina fattura + voce della lista),
+  banner «Prima la trasmissione, poi la copia al cliente» in cima alla pagina,
+  «Salva e invia» del form in modifica nascosto.
+- **Copia di cortesia all'esito positivo**: `inviaCopiaCortesiaAutomatica`
+  (lib/documents/copia-cortesia.ts) agganciata a webhook SdI e pull esito — se il
+  documento è una bozza mai inviata e il cliente ha un'email, la copia parte DA SOLA
+  (claim atomico su status draft: webhook+pull concorrenti non mandano due email;
+  email fallita → si torna alla bozza e resta l'invito). Consuma la quota Free delle
+  8 fatture (è il primo invio), scrive status sent + termine di pagamento + voce di
+  cronologia `copia_cortesia` (DocumentTimeline la mostra e sopprime il derivato
+  «Inviata al cliente»). Senza email/quota → banner-invito «Fattura emessa. Manda la
+  copia di cortesia» (anche sulla pagata-da-bozza mai inviata).
+- FAQ: la FAQ del pilota (#trasmissione-automatica) SOSTITUITA da «Quando arriva la
+  fattura al cliente?» (#copia-cortesia); #dodici-giorni riscritta (la data non nasce
+  più dall'invio al cliente); ⓘ della SdiCard riscritto; /novita aggiornata.
+- ⚠️ **Residui dichiarati**: la copia automatica di una NC/ND usa il template email
+  con l'etichetta «Fattura» nel riquadro (residuo noto, come il dialog della lista) ·
+  la copia automatica parte solo dalle BOZZE (una pagata-da-bozza mai inviata ha
+  l'invito manuale) · `sendReminderAction` (solleciti) non è gatata: vale per i
+  documenti legacy già in mano al cliente · con flag OFF non cambia nulla
+  (client-first + diciture Fase 0).
+
+Il disegno originale della fase:
 Su una fattura, il primo passo dopo la compilazione diventa la **trasmissione**, non
 l'invio al cliente. Come i concorrenti (decisione Eli, 20 set):
 - **Due gesti, come Aruba**: «**Salva in bozze**» (nessun effetto fiscale, si modifica

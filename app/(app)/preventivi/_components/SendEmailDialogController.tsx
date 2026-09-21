@@ -27,7 +27,7 @@ interface Props {
   docType?: string
   hideTrigger?: boolean
   /** Avviso dei 12 giorni SdI al primo invio — passa dritto al dialog */
-  avvisoSdi?: 'auto' | 'manuale' | null
+  avvisoSdi?: boolean
 }
 
 export function SendEmailDialogController({

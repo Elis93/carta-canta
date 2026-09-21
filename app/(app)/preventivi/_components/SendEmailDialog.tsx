@@ -216,7 +216,8 @@ interface SendEmailDialogProps {
       "cartacanta:open-send-dialog" (icona Email del pop-up Invia al cliente) */
   hideTrigger?: boolean
   /** Avviso dei 12 giorni SdI al primo invio ('auto'/'manuale', null = niente) */
-  avvisoSdi?: 'auto' | 'manuale' | null
+  /** true = SdI attivo e fattura non trasmessa: avviso dei 12 giorni al primo invio */
+  avvisoSdi?: boolean
 }
 
 // ── Messaggio default ──────────────────────────────────────────────────────
@@ -250,7 +251,7 @@ export function SendEmailDialog({
   hasClient = true,
   hasVoci = true,
   hideTrigger = false,
-  avvisoSdi = null,
+  avvisoSdi = false,
 }: SendEmailDialogProps) {
   const router = useRouter()
   const isControlled = controlledOpen !== undefined
@@ -321,9 +322,7 @@ export function SendEmailDialog({
     if (avvisoSdi && !isResend) {
       toast.info('Da oggi hai 12 giorni per trasmetterla allo SdI', {
         // «card SdI»: sulla nota di credito la card ha un altro titolo.
-        description: avvisoSdi === 'auto'
-          ? 'Trasmissione automatica attiva: parte da sola tra 24 ore, non devi fare niente. La gestisci (o la annulli) dalla card SdI del documento.'
-          : 'La trasmetti tu dalla card SdI del documento: il conto alla rovescia è lì a ricordartelo.',
+        description: 'La trasmetti tu dalla card SdI del documento: il conto alla rovescia è lì a ricordartelo.',
         duration: 10000,
         closeButton: true,
       })

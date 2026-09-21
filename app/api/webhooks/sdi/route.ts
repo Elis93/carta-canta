@@ -20,6 +20,7 @@ import { z } from 'zod/v4'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { extractNotificationEvents, extractUuidCandidates } from '@/lib/sdi/esito'
 import { sendSdiScartataEmail } from '@/lib/sdi/scartata-email'
+import { inviaCopiaCortesiaAutomatica } from '@/lib/documents/copia-cortesia'
 
 const BodySchema = z.object({
   provider_id: z.string().min(1),
@@ -161,6 +162,11 @@ export async function POST(request: NextRequest) {
     // app la calcola la campanella dai dati)
     if (job.esito === 'scartata') {
       await sendSdiScartataEmail(admin, doc.workspace_id, doc.id, doc.doc_number, job.message)
+    } else {
+      // Esito POSITIVO → la copia di cortesia si sblocca e, se il cliente ha
+      // un'email in rubrica, PARTE DA SOLA (Fase 1, standard FiC/Aruba).
+      // Best-effort: un problema con la copia non tocca l'esito registrato.
+      await inviaCopiaCortesiaAutomatica(admin, doc.id)
     }
   }
 

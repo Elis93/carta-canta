@@ -61,13 +61,17 @@ interface DocumentRowActionsProps {
    *  (decisione Eli, 11 ago: spento e spiegato) */
   hasIncasso?: boolean
   /** Avviso dei 12 giorni alla PRIMA conferma via email dalla lista (080) */
-  avvisoSdi?: 'auto' | 'manuale' | null
+  avvisoSdi?: boolean
+  /** FASE 1 copia di cortesia (21 set, SdI attivo): bozza di fattura/nota
+   *  senza esito positivo → «Invia al cliente» spento e spiegato — prima la
+   *  trasmissione allo SdI, dalla pagina della fattura. */
+  copiaBloccata?: boolean
   /** true = documento in SOLA LETTURA su Free (oltre gli 8 inviati): la
    *  duplica è una funzione bloccata (crea una nuova bozza da un doc Pro). */
   locked?: boolean
 }
 
-export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false, sdiTransmitted = false, hasIncasso = false, avvisoSdi = null, locked = false }: DocumentRowActionsProps) {
+export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false, sdiTransmitted = false, hasIncasso = false, avvisoSdi = false, copiaBloccata = false, locked = false }: DocumentRowActionsProps) {
   const [duplicating, setDuplicating]       = useState(false)
   const [duplicateError, setDuplicateError] = useState<string | null>(null)
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
@@ -155,12 +159,22 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
             </p>
           )}
 
-          {/* "Invia" disponibile solo per bozze */}
+          {/* "Invia" disponibile solo per bozze. Fase 1 (SdI attivo): senza
+              esito positivo il tasto resta SPENTO e spiegato — prima la
+              trasmissione, poi la copia di cortesia. */}
           {doc.status === 'draft' && (
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSendDialogOpen(true) }}>
+            <DropdownMenuItem
+              disabled={copiaBloccata}
+              onClick={(e) => { e.stopPropagation(); if (!copiaBloccata) setSendDialogOpen(true) }}
+            >
               <Send className="size-4" />
               Invia al cliente
             </DropdownMenuItem>
+          )}
+          {doc.status === 'draft' && copiaBloccata && (
+            <p className="px-2 pb-1.5 pt-0.5 text-xs text-muted-foreground" style={{ maxWidth: 230, lineHeight: 1.4 }}>
+              Prima la trasmissione: apri la fattura e usa «Invia allo SdI». La copia per il cliente si sblocca all&rsquo;esito positivo.
+            </p>
           )}
 
           <DropdownMenuItem onClick={handleArchive} disabled={archiving}>

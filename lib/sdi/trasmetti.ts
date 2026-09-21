@@ -98,13 +98,13 @@ export async function trasmettiDocumentoSdi(opts: {
   const isNotaDebito = doc.doc_type === 'nota_debito'
   const isNota = isNotaCredito || isNotaDebito
   const nomeNota = isNotaDebito ? 'nota di debito' : 'nota di credito'
-  if (doc.status === 'draft') {
-    return { status: 422, body: {
-      error: isNota
-        ? `Invia prima la ${nomeNota} al cliente: le bozze non si trasmettono allo SdI.`
-        : 'Invia prima la fattura al cliente (o segnala definitiva): le bozze non si trasmettono allo SdI.',
-    } }
-  }
+  // ⚠️ FASE 1 (modello Aruba, 21 set 2026): la BOZZA è lo stato normale da cui
+  // si trasmette — «Salva in bozze» + «Invia allo SdI», come i concorrenti.
+  // Il vecchio rifiuto («invia prima al cliente») apparteneva al flusso
+  // client-first, dove la conferma nasceva all'invio della copia; ora è il
+  // contrario: prima la trasmissione, poi la copia di cortesia. Le guardie
+  // sotto (voci, cliente, numero, dati art. 21) valgono anche per le bozze,
+  // e le voci «da completare» sono bloccate qui sotto.
   // Una fattura ANNULLATA non si trasmette (review 25 lug A3): trasmettere un
   // documento che l'app dichiara annullato lo renderebbe emesso e
   // intoccabile (nota di credito come unica correzione).
@@ -137,6 +137,17 @@ export async function trasmettiDocumentoSdi(opts: {
   ) as unknown as VoceRiga[]
   if (items.length === 0) {
     return { status: 422, body: { error: 'La fattura non ha voci.' } }
+  }
+  // Le bozze possono contenere voci «da completare» (prezzo/quantità a zero,
+  // es. proposte dall'AI): come per l'invio al cliente, non devono diventare
+  // una fattura FISCALE con righe a zero. Guardia nata con la trasmissione
+  // dalla bozza (Fase 1) — sui documenti già inviati era garantita dai
+  // percorsi di invio.
+  const voceIncompleta = items.some(
+    (i) => Number(i.unit_price ?? 0) <= 0 || Number(i.quantity ?? 0) <= 0,
+  )
+  if (voceIncompleta) {
+    return { status: 422, body: { error: 'Una o più voci sono ancora da completare (prezzo o quantità a zero). Completale prima di trasmettere.' } }
   }
 
   // ── Limiti fase 1: l'XML non rappresenta ancora sconti né riepiloghi

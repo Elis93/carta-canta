@@ -16,6 +16,7 @@ const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
     punti: [
       'Su indicazione del commercialista, il PDF e la pagina del link di una fattura dichiarano ora in che stato è il documento. Finché la fattura non è stata trasmessa al Sistema di Interscambio, la copia porta la dicitura standard «non costituisce fattura valida ai fini del DPR 633/1972» — la stessa che usano i gestionali più diffusi sui documenti non ancora emessi. Chi la riceve sa esattamente cosa ha in mano.',
       'Dopo la trasmissione con esito positivo, la stessa copia diventa una «copia di cortesia»: resta leggibile e pagabile, e dice al cliente che l’originale è consultabile nella sua area riservata dell’Agenzia delle Entrate. La dicitura si aggiorna da sola, senza che tu debba fare niente. I preventivi non c’entrano e restano come sono.',
+      'Quando la fatturazione elettronica è attiva, il giro della fattura diventa quello dei gestionali più diffusi: la compili, la salvi in bozze (nessun effetto fiscale, la modifichi quando vuoi) e la trasmetti col tasto «Invia allo SdI» — anche direttamente dalla bozza. La copia per il cliente parte dopo l’esito positivo: da sola se ha un’email in rubrica, altrimenti con «Invia» sulla fattura. Il timer delle 24 ore non esiste più: il ripensamento è la bozza, prima del tasto.',
     ],
   },
   {

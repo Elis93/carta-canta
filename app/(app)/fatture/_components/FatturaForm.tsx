@@ -100,6 +100,11 @@ interface FatturaFormProps {
   defaultVatRate?: number | null
   isProPlan?: boolean
   nextInvoiceNumber?: string
+  /** FASE 1 copia di cortesia (21 set, SdI attivo): la fattura nuova prima si
+   *  TRASMETTE («Salva in bozze» → «Invia allo SdI» dalla sua pagina); la
+   *  copia al cliente si sblocca all'esito positivo → niente «Invia al
+   *  cliente» qui. */
+  invioClienteBloccato?: boolean
 }
 
 // Separa il prefisso alfabetico dalla parte numerica: "Fatt001/2026" → ["Fatt", "001/2026"]
@@ -136,6 +141,7 @@ export function FatturaForm({
   defaultVatRate,
   nextInvoiceNumber,
   isProPlan = false,
+  invioClienteBloccato = false,
 }: FatturaFormProps) {
   const [selectedClient, setSelectedClient] = useState<ClientHit | null>(null)
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
@@ -479,11 +485,16 @@ export function FatturaForm({
             if (el) el.value = 'save'
             setPendingIntent('save')
           }}
-          style={{ flex: 1, height: 50, boxSizing: 'border-box', borderRadius: 12, border: '1px solid #e3e3e6', fontSize: 14, fontWeight: 500 }}
+          style={invioClienteBloccato
+            ? { flex: 1, height: 50, boxSizing: 'border-box', borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)' }
+            : { flex: 1, height: 50, boxSizing: 'border-box', borderRadius: 12, border: '1px solid #e3e3e6', fontSize: 14, fontWeight: 500 }}
         >
           {isPending && pendingIntent === 'save' && <Loader2 className="size-4 animate-spin" />}
-          Salva bozza
+          {/* Fase 1 (modello Aruba): il gesto è «Salva in bozze» — la
+              trasmissione è l'altro gesto, dentro la fattura. */}
+          {invioClienteBloccato ? 'Salva in bozze' : 'Salva bozza'}
         </Button>
+        {!invioClienteBloccato && (
         <Button
           type="submit"
           disabled={isPending}
@@ -513,7 +524,15 @@ export function FatturaForm({
           )}
           Invia al cliente
         </Button>
+        )}
       </div>
+      {invioClienteBloccato && (
+        <p style={{ fontSize: 12.5, color: '#767676', lineHeight: 1.5, marginTop: 9 }}>
+          Poi la trasmetti allo SdI dalla pagina della fattura («Invia allo SdI»).
+          La copia per il cliente si sblocca all&rsquo;esito positivo — e parte da
+          sola se il cliente ha un&rsquo;email in rubrica.
+        </p>
+      )}
     </form>
 
     <QuickCreateClientDialog
