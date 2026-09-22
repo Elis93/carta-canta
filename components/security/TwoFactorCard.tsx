@@ -20,12 +20,17 @@ const card: React.CSSProperties = {
   background: '#fff', borderRadius: 14, boxShadow: '0 1px 2px rgba(20,20,40,.05),0 8px 24px -10px rgba(20,20,40,.15)',
   padding: '15px 15px', marginTop: 13,
 }
+// ⚠️ display:flex + centratura sul bottone, non verticalAlign sulle icone:
+// senza, la rotella di caricamento (spinner-only) resta sulla baseline del
+// testo e si vede fuori centro (ricontrollo spinner, 22 set).
 const btnPrimary: React.CSSProperties = {
   width: '100%', minHeight: 46, borderRadius: 12, border: 'none', background: '#1a1a2e', color: '#fff',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
   fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', marginTop: 12,
 }
 const btnGhost: React.CSSProperties = {
   width: '100%', minHeight: 44, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
   fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', marginTop: 10,
 }
 
@@ -213,7 +218,8 @@ export function TwoFactorCard() {
             ))}
           </div>
           <button type="button" onClick={copiaCodici} style={btnGhost}>
-            {copied ? <><Check size={15} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} />Copiati</> : <><Copy size={15} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} />Copia i codici</>}
+            {/* Niente verticalAlign a mano: il bottone è flex e centra da sé (gap 6). */}
+            {copied ? <><Check size={15} />Copiati</> : <><Copy size={15} />Copia i codici</>}
           </button>
           <button type="button" onClick={fatto} style={btnPrimary}>Ho salvato i codici</button>
         </>

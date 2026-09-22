@@ -295,9 +295,9 @@ export function MarketplaceProfileForm({
             value="publish"
             onClick={() => { intentRef.current = 'publish' }}
             disabled={pending}
-            style={{ width: '100%', height: 48, border: 'none', borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', cursor: 'pointer', fontFamily: 'inherit', opacity: pending ? 0.7 : 1 }}
+            style={{ width: '100%', height: 48, border: 'none', borderRadius: 12, background: '#1a1a2e', color: '#fff', fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', fontFamily: 'inherit', opacity: pending ? 0.7 : 1 }}
           >
-            {pending && pendingAction === 'publish' ? <Loader2 size={17} className="animate-spin" style={{ display: 'inline-block', verticalAlign: '-3px', marginRight: 8 }} /> : null}Aggiorna profilo pubblicato
+            {pending && pendingAction === 'publish' ? <Loader2 size={17} className="animate-spin" /> : null} Aggiorna profilo pubblicato
           </button>
           <button
             type="button"

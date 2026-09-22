@@ -650,10 +650,11 @@ export function SopralluogoForm({ defaults }: { defaults: SopralluogoDefaults | 
         disabled={pending}
         style={{
           width: '100%', height: 48, borderRadius: 12, border: '1px solid #e7e7ea', background: '#fff', color: '#1a1a2e',
-          fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 1px 2px rgba(20,20,40,.05)',
+          fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 1px 2px rgba(20,20,40,.05)',
         }}
       >
-        {pending && pendingAction === 'save' ? <Loader2 size={16} className="animate-spin" style={{ display: 'inline-block', verticalAlign: '-3px', marginRight: 8 }} /> : null}Salva bozza
+        {pending && pendingAction === 'save' ? <Loader2 size={16} className="animate-spin" /> : null} Salva bozza
       </button>
 
       {/* Niente riga sotto i tasti (Eli, 17 ago: eliminata). Il comportamento

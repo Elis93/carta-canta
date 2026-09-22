@@ -202,7 +202,7 @@ export function QuickCreateClientDialog({
                 onClick={() => { setShowDuplicate(false); setForceCreate(true) }}
               >
                 {isPending ? (
-                  <><Loader2 className="size-4 animate-spin mr-2" /> Creazione…</>
+                  <><Loader2 className="size-4 animate-spin" /> Creazione…</>
                 ) : (
                   <>
                     No, crea &ldquo;{name.trim()}{surname.trim() ? ` ${surname.trim()}` : ''}&rdquo;

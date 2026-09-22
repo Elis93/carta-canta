@@ -448,7 +448,7 @@ export function AppLock({ userEmail }: { userEmail: string }) {
         <button
           type="submit"
           disabled={pwBusy || !password}
-          style={{ width: '100%', minHeight: 50, borderRadius: 12, border: 'none', marginTop: 10, background: password ? '#f3ede0' : 'rgba(243,237,224,.3)', color: '#1a1a2e', fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: pwBusy ? 'wait' : 'pointer' }}
+          style={{ width: '100%', minHeight: 50, borderRadius: 12, border: 'none', marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: password ? '#f3ede0' : 'rgba(243,237,224,.3)', color: '#1a1a2e', fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: pwBusy ? 'wait' : 'pointer' }}
         >
           {pwBusy ? <Loader2 size={18} className="animate-spin" /> : 'Entra'}
         </button>
