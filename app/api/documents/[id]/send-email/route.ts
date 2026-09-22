@@ -502,7 +502,12 @@ export async function POST(request: NextRequest, { params }: Params) {
       totalFormatted,
       message:       body.message,
       publicUrl,
-      docType:       (doc.doc_type === 'fattura' ? 'fattura' : 'preventivo') as 'preventivo' | 'fattura',
+      // ⚠️ Il tipo VERO, mai per esclusione (regola 9 ago): una nota di
+      // credito col template del preventivo usciva con l'invito ad
+      // «accettarlo o rifiutarlo» — residuo chiuso il 22 set.
+      docType:       (['fattura', 'nota_credito', 'nota_debito'].includes(doc.doc_type ?? '')
+        ? doc.doc_type
+        : 'preventivo') as 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito',
       ownerEmail:    user.email ?? null,
     }),
     replyTo: user.email ?? undefined,

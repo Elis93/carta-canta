@@ -18,9 +18,6 @@ interface ShareButtonProps {
   docNumber: string | null
   /** 'preventivo' | 'fattura' | 'nota_credito' */
   docType?: string
-  /** Avviso dei 12 giorni SdI da mostrare al PRIMO invio (solo fatture/note,
-   *  solo con SdI attivo — lo compone il server): 'auto' = pilota in
-   *  programma · 'manuale' = trasmissione a mano. Null = niente avviso. */
   /** true = SdI attivo e fattura non ancora trasmessa: al primo invio
    *  parte l'avviso dei 12 giorni (dal ritiro del pilota è un booleano) */
   avvisoSdi?: boolean

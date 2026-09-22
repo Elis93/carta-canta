@@ -113,8 +113,10 @@ export async function getAppNotifications(
               .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
               .is('deleted_at', null)
               // scartate + non trasmesse fuori bozza: le seconde servono al
-              // promemoria dei 12 giorni (art. 21 c.4), non solo se pagate
-              .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired))')
+              // promemoria dei 12 giorni (art. 21 c.4), non solo se pagate.
+              // + le BOZZE con un incasso registrato (Fase 1, 22 set): il
+              // timer corre dall'incasso anche in bozza.
+              .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired)),and(sdi_status.is.null,status.eq.draft,paid_at.not.is.null)')
               .limit(30)
           } catch {
             return { data: null }
@@ -531,7 +533,12 @@ export async function getAppNotifications(
       // documento (o dal primo incasso, se precedente).
       // La data FISCALE (doc_date, nasce alla conferma — 080) con fallback
       // legacy sulla data di creazione.
-      const rif = riferimentoTrasmissione(doc.doc_date ?? doc.created_at, doc.paid_at)
+      // Sulla BOZZA niente fallback a created_at (regola della card SdI):
+      // il termine parte solo dall'incasso registrato.
+      const rif = riferimentoTrasmissione(
+        doc.status === 'draft' ? (doc.doc_date ?? null) : (doc.doc_date ?? doc.created_at),
+        doc.paid_at,
+      )
       const termine = rif ? termineTrasmissione(rif) : null
       if (termine && termine.giorniRimasti <= 3) {
         const key = `sdi_termine:${doc.id}`

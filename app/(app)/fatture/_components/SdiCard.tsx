@@ -368,10 +368,10 @@ export function SdiCard({
         </p>
       )}
 
-      {/* ⓘ CONCISO (Eli 26 ago: «lascerei una descrizione più concisa dei 12
-          giorni e dei 5 giorni, ma prima di tutto punterei a fargli tenere
-          attivo il flag di trasmissione automatica, con link, e rimando alle
-          FAQ»): il testo per esteso vive nelle Domande frequenti. */}
+      {/* ⓘ CONCISO (Eli 26 ago: descrizione breve + rimando alle FAQ; il
+          «flag di trasmissione automatica» che citava allora non esiste più —
+          pilota ritirato con la Fase 1, 21 set): il testo per esteso vive
+          nelle Domande frequenti. */}
       {infoOpen && (
         <div style={{ background: '#f7f6f2', border: '1px solid #e8e6e0', borderRadius: 10, padding: '11px 13px', marginBottom: 11, fontSize: 12.5, color: '#3f3d36', lineHeight: 1.55 }}>
           {isNotaCredito ? (

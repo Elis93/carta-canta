@@ -158,6 +158,8 @@ body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = conseg
 | T15 | (Sandbox) Trasmetti la bozza del T14 e aspetta l'esito positivo (o usa «Controlla l'esito ora») | All'esito, se il cliente ha un'**email in rubrica**, la **copia di cortesia parte da sola** (email col link); la fattura passa a «Inviata», in cronologia c'è «Copia di cortesia inviata al cliente» e il link porta la dicitura «Copia di cortesia non valida ai fini fiscali…» |
 | T16 | (Sandbox) Ripeti con un cliente **senza email** in rubrica | All'esito positivo compare il banner verde «**Fattura emessa.** Manda la copia di cortesia»; il tasto «Invia» è di nuovo attivo (WhatsApp/link/email) |
 | T17 | (Sandbox) Prova a **mandare al cliente** una fattura non ancora trasmessa (dal ⋯ della lista, o «Salva e invia» in modifica) | Ovunque il comando è spento e spiegato («Prima la trasmissione…»); anche forzando, il server rifiuta con lo stesso messaggio |
+| T18 | (Sandbox, ricontrollo 22 set) Bozza di fattura con un **acconto registrato** («Segna pagata» → acconto parziale), poi «**Segna pagata**» col saldo pieno PRIMA di trasmettere; trasmetti e aspetta l'esito | ① Con l'acconto la bozza compare in Home «Da trasmettere», in /fatture/da-trasmettere e (a ≤3 giorni) in campanella, col conto alla rovescia che parte dall'incasso; ② all'esito positivo la copia parte da sola anche sulla **pagata-da-bozza** (resta «Pagata», in cronologia «Copia di cortesia inviata al cliente») |
+| T19 | (Sandbox) **Nota di credito** trasmessa con esito positivo, cliente con email | L'email della copia dice «**Nota di credito** n. …» e «Visualizza la nota di credito» — mai «Fattura», mai l'invito ad accettarla |
 
 ---
 

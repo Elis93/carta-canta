@@ -1,7 +1,7 @@
 // ============================================================
 // Heartbeat dei cron — «se un lavoro automatico smette di girare, lo sappiamo».
 //
-// PERCHÉ (RISCHI 3.7): i cron sono silenziosi. Se `sdi-auto` o `expire-documents`
+// PERCHÉ (RISCHI 3.7): i cron sono silenziosi. Se `expire-documents` o `referral`
 // smettessero di partire — un errore di deploy, una variabile mancante, un
 // guasto di Vercel — nessuno se ne accorgerebbe finché un artigiano non si
 // lamenta di una fattura non trasmessa. Un fallimento silenzioso su una cosa

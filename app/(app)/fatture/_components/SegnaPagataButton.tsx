@@ -58,7 +58,8 @@ export function SegnaPagataButton({
   alreadyPaid?: number
   /** La fattura è una BOZZA: «Segna pagata» qui è la sua CONFERMA fiscale (080) */
   wasDraft?: boolean
-  /** Avviso dei 12 giorni alla conferma (Eli, 11 ago) — 'auto' se il pilota partirà */
+  /** true = SdI attivo e fattura non trasmessa: avviso dei 12 giorni alla
+   *  conferma da bozza (dal ritiro del pilota è un booleano) */
   avvisoSdi?: boolean
   /** Veste del bottone (pagina A: navy pieno o bianco a seconda dello stato). */
   triggerStyle?: React.CSSProperties

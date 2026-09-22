@@ -74,11 +74,13 @@ export async function bloccoInvioCliente(
  *
  * Parte SOLO se:
  *  · SdI attivo (col flag spento vale il flusso client-first: nessuna email
- *    a sorpresa) · esito positivo · documento in BOZZA mai inviato al cliente
- *    (se una copia è già in giro — caso legacy — non si manda due volte:
- *    la dicitura della Fase 0 sul link si aggiorna da sola) · il cliente ha
- *    un'email in rubrica · la quota Free lo consente (l'invio della fattura
- *    consuma il contatore delle 8, come ogni primo invio).
+ *    a sorpresa) · esito positivo · documento MAI inviato al cliente — in
+ *    bozza (il giro normale) oppure pagata-da-bozza senza sent_at («Segna
+ *    pagata» prima della trasmissione). Se una copia è già in giro — caso
+ *    legacy — non si manda due volte: la dicitura della Fase 0 sul link si
+ *    aggiorna da sola · il cliente ha un'email in rubrica · la quota Free lo
+ *    consente (l'invio della fattura consuma il contatore delle 8, come ogni
+ *    primo invio).
  *
  * Il CLAIM è atomico (update condizionato su status='draft'): webhook e pull
  * concorrenti non mandano due email. Se l'email poi non parte, si torna
@@ -101,8 +103,16 @@ export async function inviaCopiaCortesiaAutomatica(
     if (!doc) return
     const d = doc as Record<string, unknown>
     if (!esitoPositivoSdi(d.sdi_status as string | null)) return
-    // Mai inviata al cliente: la copia automatica è il PRIMO invio.
-    if (d.status !== 'draft' || d.sent_at) return
+    // Mai inviata al cliente: la copia automatica è il PRIMO invio. Due casi:
+    //  · BOZZA — il giro normale della Fase 1: la copia la fa diventare
+    //    «Inviata», col termine di pagamento che parte da oggi;
+    //  · PAGATA-DA-BOZZA («Segna pagata» prima della trasmissione: incasso
+    //    di persona) — resta pagata: la copia scrive solo sent_at e il log,
+    //    SENZA termine di pagamento (è già saldata). Residuo chiuso 22 set.
+    // Un sent_at presente (caso legacy: copia già in giro) ferma tutto.
+    const daBozza = d.status === 'draft'
+    const pagataMaiInviata = d.status === 'accepted' && !d.sent_at
+    if ((!daBozza && !pagataMaiInviata) || d.sent_at) return
     const client = d.clients as Record<string, unknown> | null
     const clientEmail = String(client?.email ?? '').trim()
     if (!clientEmail) return
@@ -148,22 +158,38 @@ export async function inviaCopiaCortesiaAutomatica(
     const updatedLog = [
       ...prevLog,
       { type: 'copia_cortesia', at: now.toISOString() },
-      { type: 'expiry_set', at: now.toISOString(), expires: expiresAt.toISOString() },
+      // Il termine di pagamento nasce solo sul giro dalla bozza: una fattura
+      // già saldata non ha niente da «pagare entro».
+      ...(daBozza ? [{ type: 'expiry_set', at: now.toISOString(), expires: expiresAt.toISOString() }] : []),
     ]
-    const { data: claimed, error: claimErr } = await admin
+    // Il CLAIM resta atomico in entrambi i casi: la condizione sullo stato
+    // (draft, o accepted-senza-sent_at) fa da lucchetto contro il doppio
+    // invio di webhook e pull concorrenti.
+    let claimQuery = admin
       .from('documents')
-      .update({
-        status: 'sent',
-        sent_at: now.toISOString(),
-        expires_at: expiresAt.toISOString(),
-        pdf_url: null,
-        sent_snapshot: snapshot,
-        updated_after_send_at: null,
-        document_log: updatedLog,
-      })
+      .update(
+        daBozza
+          ? {
+              status: 'sent',
+              sent_at: now.toISOString(),
+              expires_at: expiresAt.toISOString(),
+              pdf_url: null,
+              sent_snapshot: snapshot,
+              updated_after_send_at: null,
+              document_log: updatedLog,
+            }
+          : {
+              sent_at: now.toISOString(),
+              pdf_url: null,
+              sent_snapshot: snapshot,
+              updated_after_send_at: null,
+              document_log: updatedLog,
+            },
+      )
       .eq('id', docId)
-      .eq('status', 'draft')
-      .select('id')
+      .eq('status', daBozza ? 'draft' : 'accepted')
+    if (!daBozza) claimQuery = claimQuery.is('sent_at', null)
+    const { data: claimed, error: claimErr } = await claimQuery.select('id')
     if (claimErr || !claimed || claimed.length === 0) return // un altro percorso l'ha già inviata
 
     // ── L'email col link (la stessa forma dell'invio manuale) ──
@@ -193,7 +219,10 @@ export async function inviaCopiaCortesiaAutomatica(
         totalFormatted,
         message,
         publicUrl,
-        docType: 'fattura',
+        // Il tipo VERO (mai per esclusione, regola 9 ago): la nota di credito
+        // ha le sue parole anche nell'email — residuo chiuso il 22 set.
+        docType: (docType === 'nota_credito' || docType === 'nota_debito' ? docType : 'fattura') as
+          'fattura' | 'nota_credito' | 'nota_debito',
         ownerEmail,
       }),
       replyTo: ownerEmail ?? undefined,
@@ -202,12 +231,16 @@ export async function inviaCopiaCortesiaAutomatica(
     if (!result.success) {
       // L'email non è partita: si torna alla bozza (l'invito manuale in app
       // resta la strada) e si logga — mai un fallimento silenzioso.
-      console.error('[copia-cortesia] email non inviata, ripristino la bozza:', result.error, docId)
+      console.error('[copia-cortesia] email non inviata, ripristino lo stato:', result.error, docId)
       await admin
         .from('documents')
-        .update({ status: 'draft', sent_at: null, expires_at: null, document_log: prevLog })
+        .update(
+          daBozza
+            ? { status: 'draft', sent_at: null, expires_at: null, document_log: prevLog }
+            : { sent_at: null, document_log: prevLog },
+        )
         .eq('id', docId)
-        .eq('status', 'sent')
+        .eq('status', daBozza ? 'sent' : 'accepted')
         .then(() => {}, () => {})
       return
     }

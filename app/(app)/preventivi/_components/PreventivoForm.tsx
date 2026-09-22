@@ -2053,15 +2053,20 @@ export function PreventivoForm({
                 variant="outline"
                 disabled={saving || draftSaved}
                 onClick={doSaveDraft}
-                style={{ flex: 1, border: '1px solid #e3e3e6', borderRadius: 12, fontSize: 14, fontWeight: 500, height: 50, boxSizing: 'border-box' }}
+                // Con l'invio al cliente bloccato (Fase 1) questo è l'UNICO
+                // tasto: veste navy e parole di FatturaForm («Salva in bozze»),
+                // così le due strade della fattura nuova sono identiche.
+                style={invioClienteBloccato
+                  ? { flex: 1, background: '#1a1a2e', color: '#fff', borderRadius: 12, fontSize: 14, fontWeight: 600, boxShadow: '0 6px 16px -6px rgba(26,26,46,.5)', height: 50, boxSizing: 'border-box' }
+                  : { flex: 1, border: '1px solid #e3e3e6', borderRadius: 12, fontSize: 14, fontWeight: 500, height: 50, boxSizing: 'border-box' }}
               >
                 {/* `azione === null` = salvataggio automatico: la rotella
                     resta sul tasto Salva, che è ciò che sta accadendo. */}
                 {(azione === 'salva' || (saving && azione === null))
                   ? <><Loader2 className="size-4 animate-spin" /> Salvataggio…</>
                   : draftSaved
-                  ? <><CheckCircle2 className="size-4 text-green-600" /> Bozza salvata</>
-                  : <><Save className="size-4" /> Salva bozza</>
+                  ? <><CheckCircle2 className={invioClienteBloccato ? 'size-4' : 'size-4 text-green-600'} /> Bozza salvata</>
+                  : <><Save className="size-4" /> {invioClienteBloccato ? 'Salva in bozze' : 'Salva bozza'}</>
                 }
               </Button>
               {/* Fase 1 (invioClienteBloccato): la copia al cliente si sblocca

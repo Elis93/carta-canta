@@ -66,7 +66,11 @@ export default async function FattureDaTrasmetterePage({
       .eq('workspace_id', workspace.id)
       .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
       .is('deleted_at', null)
-      .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired))')
+      // Anche le BOZZE con un incasso registrato (Fase 1, 22 set): il timer
+      // dei 12 giorni corre dall'incasso anche se la fattura non è mai
+      // uscita dalla bozza — senza questo ramo sparivano da qui mentre la
+      // loro card SdI mostrava il conto alla rovescia.
+      .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired)),and(sdi_status.is.null,status.eq.draft,paid_at.not.is.null)')
       .order('created_at', { ascending: true })
   const ricca = await query(', doc_date')
   const righe: Riga[] = !ricca.error
@@ -79,7 +83,13 @@ export default async function FattureDaTrasmetterePage({
   // Termine dei 12 giorni per ciascuna (art. 21 c.4): il riferimento è la
   // data fiscale del documento, o il primo incasso se è arrivato prima.
   const conTermine = righe.map((d) => {
-    const rif = riferimentoTrasmissione(d.doc_date ?? d.created_at, d.paid_at)
+    // ⚠️ Sulla BOZZA niente fallback a created_at (stessa regola della card
+    // SdI): una bozza non confermata non ha data fiscale — il termine parte
+    // solo dall'incasso registrato (paid_at).
+    const rif = riferimentoTrasmissione(
+      d.status === 'draft' ? (d.doc_date ?? null) : (d.doc_date ?? d.created_at),
+      d.paid_at,
+    )
     const termine = rif ? termineTrasmissione(rif, now) : null
     return {
       doc: d,

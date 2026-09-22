@@ -215,7 +215,6 @@ interface SendEmailDialogProps {
   /** true → nessun bottone trigger: il dialog si apre solo via evento
       "cartacanta:open-send-dialog" (icona Email del pop-up Invia al cliente) */
   hideTrigger?: boolean
-  /** Avviso dei 12 giorni SdI al primo invio ('auto'/'manuale', null = niente) */
   /** true = SdI attivo e fattura non trasmessa: avviso dei 12 giorni al primo invio */
   avvisoSdi?: boolean
 }

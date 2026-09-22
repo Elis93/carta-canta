@@ -317,7 +317,9 @@ export default async function DashboardPage() {
           .eq('workspace_id', workspace.id)
           .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
           .is('deleted_at', null)
-          .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired))')
+          // + le BOZZE con un incasso registrato (Fase 1, 22 set): il timer
+          // dei 12 giorni corre dall'incasso anche in bozza.
+          .or('sdi_status.eq.scartata,and(sdi_status.is.null,status.in.(sent,viewed,accepted,expired)),and(sdi_status.is.null,status.eq.draft,paid_at.not.is.null)')
           // I più vecchi per primi: senza un order esplicito le 50 righe
           // sarebbero un campione arbitrario, e i «più urgenti in cima»
           // verrebbero scelti dentro il campione sbagliato. Oltre le 50
@@ -638,7 +640,12 @@ export default async function DashboardPage() {
   const sdiDaTrasmettereAll: SdiHomeDaTrasmettere[] = sdiRows
     .filter((d) => !d.sdi_status)
     .map((d) => {
-      const rif = riferimentoTrasmissione(d.doc_date ?? d.created_at, d.paid_at)
+      // Sulla BOZZA niente fallback a created_at (regola della card SdI):
+      // il termine parte solo dall'incasso registrato.
+      const rif = riferimentoTrasmissione(
+        d.status === 'draft' ? (d.doc_date ?? null) : (d.doc_date ?? d.created_at),
+        d.paid_at,
+      )
       const termine = rif ? termineTrasmissione(rif, now) : null
       return {
         id: d.id,

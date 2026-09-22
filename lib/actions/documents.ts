@@ -2109,8 +2109,12 @@ export async function registerManualSendAction(
   const tierDupErr = tierDuplicateSendError(sendItems)
   if (tierDupErr) return { error: tierDupErr }
 
-  // Determina il tipo documento (dalla query o dall'hint del chiamante)
-  const tipoDoc = String(docTypeHint ?? (doc as Record<string, unknown>).doc_type ?? 'preventivo')
+  // Il tipo documento: PRIMA quello del DB (autorevole — la select lo porta
+  // sempre), l'hint del chiamante solo come ripiego. ⚠️ Prima era il
+  // contrario: un hint sbagliato avrebbe scelto la sequenza di numerazione
+  // errata e SCAVALCATO le guardie fiscali (art. 21 e blocco Fase 1), che su
+  // una server action non devono dipendere da un valore passato dal client.
+  const tipoDoc = String((doc as Record<string, unknown>).doc_type ?? docTypeHint ?? 'preventivo')
 
   // Fase 1 (SdI attivo): prima la trasmissione, poi la copia di cortesia —
   // questo è il varco WhatsApp/«Copia link», che non passa dall'email.

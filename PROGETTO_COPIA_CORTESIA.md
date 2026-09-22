@@ -144,17 +144,25 @@ La regola del commercialista applicata a ciò che circola oggi. Tre stati, tre v
   email fallita → si torna alla bozza e resta l'invito). Consuma la quota Free delle
   8 fatture (è il primo invio), scrive status sent + termine di pagamento + voce di
   cronologia `copia_cortesia` (DocumentTimeline la mostra e sopprime il derivato
-  «Inviata al cliente»). Senza email/quota → banner-invito «Fattura emessa. Manda la
-  copia di cortesia» (anche sulla pagata-da-bozza mai inviata).
+  «Inviata al cliente»). Dal 22 set copre anche la pagata-da-bozza mai inviata
+  (resta pagata: solo sent_at + log, nessun termine di pagamento). Senza email/quota
+  → banner-invito «Fattura emessa. Manda la copia di cortesia».
 - FAQ: la FAQ del pilota (#trasmissione-automatica) SOSTITUITA da «Quando arriva la
   fattura al cliente?» (#copia-cortesia); #dodici-giorni riscritta (la data non nasce
   più dall'invio al cliente); ⓘ della SdiCard riscritto; /novita aggiornata.
-- ⚠️ **Residui dichiarati**: la copia automatica di una NC/ND usa il template email
-  con l'etichetta «Fattura» nel riquadro (residuo noto, come il dialog della lista) ·
-  la copia automatica parte solo dalle BOZZE (una pagata-da-bozza mai inviata ha
-  l'invito manuale) · `sendReminderAction` (solleciti) non è gatata: vale per i
-  documenti legacy già in mano al cliente · con flag OFF non cambia nulla
-  (client-first + diciture Fase 0).
+- ✅ **Residui chiusi al ricontrollo del 22 set**: ① il template email conosce ora
+  anche NC/ND (`PreventivoEmail.docType` allargato: «Nota di credito n. …», niente più
+  «Fattura» — corretto anche il gemello della route send-email, che sulla NC usava
+  perfino le parole del PREVENTIVO con l'invito ad accettarlo) · ② la copia automatica
+  copre anche la **pagata-da-bozza mai inviata** («Segna pagata» prima della
+  trasmissione): claim atomico su `accepted`+`sent_at IS NULL`, scrive solo sent_at e
+  il log — resta pagata, nessun termine di pagamento · ③ le **bozze con un incasso
+  registrato** (timer dei 12 giorni attivo) compaiono ora in Home «Da trasmettere»,
+  in /fatture/da-trasmettere e in campanella (prima erano invisibili lì mentre la
+  card SdI mostrava il conto alla rovescia).
+- ⚠️ **Residui che restano, deliberati**: `sendReminderAction` (solleciti) non è
+  gatata — vale per documenti legacy già in mano al cliente, bloccarla non
+  recupererebbe nulla · con flag OFF non cambia nulla (client-first + diciture Fase 0).
 
 Il disegno originale della fase:
 Su una fattura, il primo passo dopo la compilazione diventa la **trasmissione**, non

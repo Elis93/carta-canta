@@ -324,9 +324,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // bozza, e la strada è «Invia allo SdI». Le guardie vere stanno sul server
   // (bloccoInvioCliente); qui si spegne e si spiega (regola 8 ago).
   const copiaBloccata = sdiFlagOn && copiaCortesiaBloccata(doc.doc_type, (doc as any).sdi_status) // eslint-disable-line @typescript-eslint/no-explicit-any
-  // Esito positivo ma copia mai partita (cliente senza email, quota, o
-  // fattura incassata di persona da bozza — la copia automatica parte solo
-  // dalle bozze): l'INVITO a mandarla — di solito la manda da sola l'app.
+  // Esito positivo ma copia mai partita (cliente senza email in rubrica, o
+  // quota Free esaurita — dal 22 set la copia automatica copre anche la
+  // pagata-da-bozza mai inviata): l'INVITO a mandarla a mano.
   const copiaDaMandare = sdiFlagOn && !copiaBloccata && sdiTransmitted &&
     (doc.status === 'draft' || (doc.status === 'accepted' && !doc.sent_at))
   // Downgrade Pro→Free: fattura INVIATA oltre le prime 8 = sola lettura
