@@ -138,6 +138,9 @@ export function SdiCard({
   const [sending, setSending] = useState(false)
   const [checking, setChecking] = useState(false)
   const [reclaiming, setReclaiming] = useState(false)
+  // Simulazione dell'esito (solo prova/collaudo): dice QUALE tasto è in corso
+  // (regola §B.2: mai una rotella sul tasto non toccato).
+  const [forcing, setForcing] = useState<'consegnata' | 'scartata' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Fattura senza conferma d'invio: 'inviata' ma senza sent_at. Se il server
@@ -186,6 +189,36 @@ export function SdiCard({
       toast.error('Errore di rete. Controlla la connessione e riprova.')
     } finally {
       setChecking(false)
+    }
+  }
+
+  // SOLO PROVA/COLLAUDO: la sandbox non emette esiti da sola — a luglio si
+  // forzavano col curl sul webhook, impraticabile dal telefono. La route ha
+  // il cancello vero (404 in produzione); il gate qui è solo il vestito.
+  async function forzaEsito(esito: 'consegnata' | 'scartata') {
+    setForcing(esito)
+    try {
+      const res = await fetch(`/api/fatture/${documentId}/sdi/forza-esito`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ esito }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(data.error ?? 'Simulazione non riuscita. Riprova.', { closeButton: true })
+        return
+      }
+      toast.success(esito === 'scartata' ? 'Esito simulato: Scartata' : 'Esito simulato: Consegnata', {
+        description: esito === 'scartata'
+          ? 'Come per uno scarto vero: parte anche l’email di avviso.'
+          : 'Come per un esito vero: la copia di cortesia si sblocca (e parte da sola se il cliente ha un’email).',
+        closeButton: true,
+      })
+      router.refresh()
+    } catch {
+      toast.error('Errore di rete. Controlla la connessione e riprova.')
+    } finally {
+      setForcing(null)
     }
   }
 
@@ -544,6 +577,36 @@ export function SdiCard({
         >
           {checking ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={15} />} Controlla l&rsquo;esito ora
         </button>
+      )}
+
+      {/* SOLO PROVA/COLLAUDO — la sandbox non emette esiti: senza questi tasti
+          il collaudo resta fermo su «Inviata» per sempre (Eli, 22 set, dal
+          telefono). In produzione non esistono: gate qui E 404 sulla route. */}
+      {ambiente !== 'reale' && sdiStatus === 'inviata' && sdiSentAt && (
+        <div style={{ marginTop: 10, border: '1px dashed #d8c9a3', borderRadius: 11, background: '#fdfaf3', padding: '10px 12px' }}>
+          <p style={{ fontSize: 12, color: '#8a6b28', lineHeight: 1.5, margin: '0 0 8px' }}>
+            <b>Ambiente di {ambiente === 'prova' ? 'prova' : 'collaudo'}</b>: l&rsquo;esito vero non arriva.
+            Simulalo con un tocco — succede tutto quello che succederebbe con l&rsquo;esito reale.
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => forzaEsito('consegnata')}
+              disabled={forcing !== null}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 40, borderRadius: 10, border: '1px solid #bcd9c8', background: '#fff', color: '#2f8a63', fontSize: 13, fontWeight: 600, cursor: forcing ? 'wait' : 'pointer', opacity: forcing && forcing !== 'consegnata' ? 0.55 : 1, fontFamily: 'inherit' }}
+            >
+              {forcing === 'consegnata' ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />} Consegnata
+            </button>
+            <button
+              type="button"
+              onClick={() => forzaEsito('scartata')}
+              disabled={forcing !== null}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 40, borderRadius: 10, border: '1px solid #e3c2be', background: '#fff', color: '#b05656', fontSize: 13, fontWeight: 600, cursor: forcing ? 'wait' : 'pointer', opacity: forcing && forcing !== 'scartata' ? 0.55 : 1, fontFamily: 'inherit' }}
+            >
+              {forcing === 'scartata' ? <Loader2 size={15} className="animate-spin" /> : <AlertTriangle size={15} />} Scartata
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Sblocco della fattura orfana (crash PRIMA della chiamata al provider,

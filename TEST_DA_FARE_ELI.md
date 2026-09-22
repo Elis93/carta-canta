@@ -117,14 +117,16 @@
 | C8 | Su una fattura trasmessa prova a **modificarla** | Bloccata |
 | C9 | Metti una fattura trasmessa nel **cestino** | Avviso "documento fiscale emesso…"; dopo 15 giorni **non** sparisce da sola (il cron non la tocca più) |
 
-**Come si simula un esito in sandbox** (recuperato dal 23 lug — la Swagger UI della console è bloccata dal CORS, va usato **curl dal PC** col token sandbox):
+**Come si simula un esito in sandbox — AGGIORNATO 22 set**: sulla fattura «Inviata, attendo esito», dentro la card **Fattura elettronica**, c'è il riquadro tratteggiato «**Ambiente di collaudo: l'esito vero non arriva. Simulalo**» con i due tasti **Consegnata** e **Scartata** — un tocco dal telefono e succede tutto quello che succederebbe con l'esito reale (copia di cortesia automatica compresa, o email di scarto). ⚠️ I tasti esistono SOLO in prova/collaudo: in produzione la route risponde 404.
+<details><summary>Vecchio metodo col curl (23 lug, non serve più)</summary>
+
 ```
 POST https://test.sdi.openapi.it/simulate/customer-notification
 body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = consegnata
                                                     "NS"          ← NS = scartata
 ```
-✅ Il giro **RC → "Consegnata"** è già stato verificato end-to-end il 23 lug (Fatt. 014/2026).
-⏳ Resta da provare **NS**: trasmetti una fattura NUOVA (alla trasmissione si agganciano i callback giusti), simula NS, e guarda se lo stato passa a "Scartata" **da solo**, senza premere "Controlla l'esito" — se sì il webhook funziona (conferma nel registro CALLBACKS/Sandbox della console).
+✅ Il giro **RC → "Consegnata"** verificato end-to-end il 23 lug (Fatt. 014/2026).
+</details>
 
 ---
 
@@ -155,13 +157,13 @@ body: {"uuid": "<uuid della fattura>", "notification": "RC"}     ← RC = conseg
 | T12 | (Con SdI attivo) Apri la **Home** | Sotto «In scadenza» ci sono i due riquadri affiancati **«Da trasmettere»** (con i giorni che restano per ciascuna) e **«Scartate»**; se non c'è niente dicono «Tutto trasmesso» / «Nessuno scarto» |
 | T13 | (Sandbox) Fai scartare una fattura (es. codice destinatario inventato «XXXXXXX») | Sotto il riquadro rosso dello scarto compare la **spiegazione in parole semplici** con «Cosa fare»; la fattura compare nel riquadro «Scartate» della Home |
 | T14 | (Sandbox, **Fase 1** — 21 set) Crea una **fattura nuova** con SdI attivo | Nel form c'è UN solo tasto navy, «**Salva in bozze**», con la riga che spiega il passo dopo; niente «Invia al cliente». Sulla pagina della fattura (bozza) il tasto «Invia» è **spento** col banner «Prima la trasmissione, poi la copia al cliente», e la card «Fattura elettronica» offre «**Invia allo SdI**» già dalla bozza |
-| T15 | (Sandbox) Trasmetti la bozza del T14 e aspetta l'esito positivo (o usa «Controlla l'esito ora») | All'esito, se il cliente ha un'**email in rubrica**, la **copia di cortesia parte da sola** (email col link); la fattura passa a «Inviata», in cronologia c'è «Copia di cortesia inviata al cliente» e il link porta la dicitura «Copia di cortesia non valida ai fini fiscali…» |
+| T15 | (Sandbox) Trasmetti la bozza del T14 e simula l'esito positivo (tasto «**Consegnata**» nel riquadro tratteggiato della card) | All'esito, se il cliente ha un'**email in rubrica**, la **copia di cortesia parte da sola** (email col link); la fattura passa a «Inviata», in cronologia c'è «Copia di cortesia inviata al cliente» e il link porta la dicitura «Copia di cortesia non valida ai fini fiscali…» |
 | T16 | (Sandbox) Ripeti con un cliente **senza email** in rubrica | All'esito positivo compare il banner verde «**Fattura emessa.** Manda la copia di cortesia»; il tasto «Invia» è di nuovo attivo (WhatsApp/link/email) |
 | T17 | (Sandbox) Prova a **mandare al cliente** una fattura non ancora trasmessa (dal ⋯ della lista, o «Salva e invia» in modifica) | Ovunque il comando è spento e spiegato («Prima la trasmissione…»); anche forzando, il server rifiuta con lo stesso messaggio |
 | T18 | (Sandbox, ricontrollo 22 set) Bozza di fattura con un **acconto registrato** («Segna pagata» → acconto parziale), poi «**Segna pagata**» col saldo pieno PRIMA di trasmettere; trasmetti e aspetta l'esito | ① Con l'acconto la bozza compare in Home «Da trasmettere», in /fatture/da-trasmettere e (a ≤3 giorni) in campanella, col conto alla rovescia che parte dall'incasso; ② all'esito positivo la copia parte da sola anche sulla **pagata-da-bozza** (resta «Pagata», in cronologia «Copia di cortesia inviata al cliente») |
 | T19 | (Sandbox) **Nota di credito** trasmessa con esito positivo, cliente con email | L'email della copia dice «**Nota di credito** n. …» e «Visualizza la nota di credito» — mai «Fattura», mai l'invito ad accettarla |
 | T20 | (Sandbox, **Fase 2** — 22 set, dopo la migration 089) Apri la scheda di un cliente CON email, togli la spunta «**Invia sempre la copia di cortesia**» e salva; poi trasmetti una sua fattura dalla bozza e aspetta l'esito positivo | ① La spunta si salva (riapri la scheda: resta spenta); ② all'esito positivo la copia **NON parte da sola** — la fattura resta in bozza col banner verde «Fattura emessa. Manda la copia di cortesia» e il tasto «Invia» attivo; ③ rimettendo la spunta, la prossima fattura torna automatica |
-| T21 | (Sandbox, **Fase 2**) Fattura con copia GIÀ inviata al cliente che viene **scartata** dallo SdI (in sandbox: esito scartata dopo l'invio della copia — serve una fattura legacy o il mock); correggila e ritrasmettila fino all'esito positivo | ① Sulla card scartata compare la riga «Il cliente ha già ricevuto la copia…»; ② l'email di scarto porta lo stesso avviso; ③ dopo la correzione, all'esito positivo la pagina mostra «**Il cliente ha la copia vecchia**» con l'invito a rimandarla con «Invia»; ④ rimandata la copia, l'avviso sparisce |
+| T21 | (Sandbox, **Fase 2** — il giro completo dello scarto post-copia) ⚠️ Serve una fattura con la **copia già in mano al cliente** PRIMA dello scarto — col flusso di Fase 1 non nasce più da sola (la copia parte solo all'esito positivo, che chiude la fattura). Per costruirla in sandbox: trasmetti una fattura e, **prima di simulare l'esito**, valorizza a mano `sent_at` sulla sua riga in Supabase (Table Editor → `documents` → data/ora qualsiasi) — è la «fattura legacy» del caso reale. Poi: simula «**Scartata**» → ① la card dice «Il cliente ha già ricevuto la copia…» e ② l'email di scarto pure; correggi la fattura, ritrasmettila, simula «**Consegnata**» → ③ compare il banner «**Il cliente ha la copia vecchia**» con l'invito a rimandarla; ④ rimanda la copia con «Invia» → l'avviso sparisce | ① Sulla card scartata compare la riga «Il cliente ha già ricevuto la copia…»; ② l'email di scarto porta lo stesso avviso; ③ dopo la correzione, all'esito positivo la pagina mostra «**Il cliente ha la copia vecchia**» con l'invito a rimandarla con «Invia»; ④ rimandata la copia, l'avviso sparisce |
 
 ---
 
