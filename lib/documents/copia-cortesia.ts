@@ -100,9 +100,18 @@ export async function inviaCopiaCortesiaAutomatica(
       .is('deleted_at', null)
       .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
       .maybeSingle()
-    if (!doc) return
+    // Ogni ramo che ferma la copia LOGGA il perché (22 set, collaudo T15):
+    // senza, un «non è partita» dal telefono era indistinguibile fra sei
+    // cause diverse — i log Vercel devono dire sempre quale ramo è scattato.
+    if (!doc) {
+      console.log('[copia-cortesia] documento non trovato o non idoneo (tipo/cestino)', docId)
+      return
+    }
     const d = doc as Record<string, unknown>
-    if (!esitoPositivoSdi(d.sdi_status as string | null)) return
+    if (!esitoPositivoSdi(d.sdi_status as string | null)) {
+      console.log('[copia-cortesia] esito non positivo, copia non dovuta:', d.sdi_status, docId)
+      return
+    }
     // Mai inviata al cliente: la copia automatica è il PRIMO invio. Due casi:
     //  · BOZZA — il giro normale della Fase 1: la copia la fa diventare
     //    «Inviata», col termine di pagamento che parte da oggi;
@@ -112,7 +121,10 @@ export async function inviaCopiaCortesiaAutomatica(
     // Un sent_at presente (caso legacy: copia già in giro) ferma tutto.
     const daBozza = d.status === 'draft'
     const pagataMaiInviata = d.status === 'accepted' && !d.sent_at
-    if ((!daBozza && !pagataMaiInviata) || d.sent_at) return
+    if ((!daBozza && !pagataMaiInviata) || d.sent_at) {
+      console.log('[copia-cortesia] già inviata o stato non idoneo (status:', d.status, '· sent_at:', d.sent_at ? 'presente' : 'assente', ')', docId)
+      return
+    }
     const client = d.clients as Record<string, unknown> | null
     // ── FASE 2: flag per cliente «Invia sempre la copia di cortesia» ──
     // Spento in rubrica = rinuncia espressa (B2C) o preferenza del manuale:
@@ -125,14 +137,23 @@ export async function inviaCopiaCortesiaAutomatica(
       return
     }
     const clientEmail = String(client?.email ?? '').trim()
-    if (!clientEmail) return
+    if (!clientEmail) {
+      // Il caso «senza email» è il giro NORMALE dell'invito manuale (T16),
+      // ma va comunque a log: distingue «cliente senza email» da «cliente
+      // non collegato al documento», che dal telefono sembrano identici.
+      console.log(client ? '[copia-cortesia] cliente senza email in rubrica: resta l’invito manuale' : '[copia-cortesia] nessun cliente collegato al documento: resta l’invito manuale', docId)
+      return
+    }
 
     const { data: ws } = await admin
       .from('workspaces')
       .select('id, name, ragione_sociale, plan, owner_id, free_trial_expires_at, sent_quota_used, sent_invoice_quota_used')
       .eq('id', d.workspace_id as string)
       .maybeSingle()
-    if (!ws) return
+    if (!ws) {
+      console.error('[copia-cortesia] workspace non trovato: copia non inviata', docId)
+      return
+    }
 
     // Quota Free: l'invio di una FATTURA consuma il contatore delle 8 — a
     // quota piena la copia non parte (resta l'invito, che mostra il paywall).
@@ -200,7 +221,13 @@ export async function inviaCopiaCortesiaAutomatica(
       .eq('status', daBozza ? 'draft' : 'accepted')
     if (!daBozza) claimQuery = claimQuery.is('sent_at', null)
     const { data: claimed, error: claimErr } = await claimQuery.select('id')
-    if (claimErr || !claimed || claimed.length === 0) return // un altro percorso l'ha già inviata
+    if (claimErr || !claimed || claimed.length === 0) {
+      // Un altro percorso (webhook/pull concorrente) l'ha già inviata — o il
+      // claim è fallito per un errore vero: due esiti diversi, il log li separa.
+      if (claimErr) console.error('[copia-cortesia] claim fallito:', claimErr, docId)
+      else console.log('[copia-cortesia] claim a vuoto: un percorso concorrente l’ha già inviata', docId)
+      return
+    }
 
     // ── L'email col link (la stessa forma dell'invio manuale) ──
     const senderName = String(ws.ragione_sociale ?? ws.name)
