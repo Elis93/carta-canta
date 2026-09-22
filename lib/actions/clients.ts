@@ -299,6 +299,22 @@ export async function createClientAction(
 
   if (error) return { error: 'Errore nel salvataggio del cliente. Riprova.' }
 
+  // ── FASE 2 copia di cortesia: flag «Invia sempre la copia» (089) ──
+  // Scritto SOLO se il campo era nel form (sentinella: la creazione rapida
+  // dal preventivo non lo manda e non deve toccarlo) e con un UPDATE
+  // SEPARATO best-effort: pre-089 la colonna non esiste e includerla
+  // nell'insert farebbe fallire l'INTERA creazione del cliente.
+  // Mai null esplicito (colonna NOT NULL — lezione 081): solo true/false.
+  if (formData.get('copia_cortesia_auto_presente') !== null) {
+    const copiaAuto = formData.get('copia_cortesia_auto') !== 'false'
+    const { error: e089 } = await db
+      .from('clients')
+      .update({ copia_cortesia_auto: copiaAuto })
+      .eq('id', newClient.id)
+      .eq('workspace_id', workspaceId)
+    if (e089) console.warn('[clients] copia_cortesia_auto non salvato (pre-089?):', e089.message ?? e089)
+  }
+
   revalidatePath('/(app)/clienti', 'page')
 
   // Non usiamo redirect() qui: lo gestiamo lato client così possiamo
@@ -385,6 +401,19 @@ export async function updateClientAction(
   if (!updated || updated.length === 0) {
     console.error('[clients] update: 0 righe toccate', { clientId, workspaceId })
     return { error: 'Non ho trovato il cliente da aggiornare. Ricarica la pagina e riprova.' }
+  }
+
+  // ── FASE 2 copia di cortesia: flag «Invia sempre la copia» (089) ──
+  // Gemello della create: sentinella + update separato best-effort
+  // (pre-089 il resto della scheda si salva comunque), mai null esplicito.
+  if (formData.get('copia_cortesia_auto_presente') !== null) {
+    const copiaAuto = formData.get('copia_cortesia_auto') !== 'false'
+    const { error: e089 } = await db
+      .from('clients')
+      .update({ copia_cortesia_auto: copiaAuto })
+      .eq('id', clientId)
+      .eq('workspace_id', workspaceId)
+    if (e089) console.warn('[clients] copia_cortesia_auto non salvato (pre-089?):', e089.message ?? e089)
   }
 
   revalidatePath(`/clienti/${clientId}`)

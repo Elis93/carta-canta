@@ -8,10 +8,13 @@ export interface SdiScartataEmailProps {
   motivo: string | null
   appUrl: string
   documentId: string
+  /** true = la copia era già in mano al cliente prima dello scarto (Fase 2):
+   *  dopo la correzione va avvisato con la copia aggiornata. */
+  copiaCircolata?: boolean
 }
 
 /** Fattura scartata dallo SdI → avviso in app + EMAIL (decisione Eli). */
-export function SdiScartataEmail({ docNumber, motivo, appUrl, documentId }: SdiScartataEmailProps) {
+export function SdiScartataEmail({ docNumber, motivo, appUrl, documentId, copiaCircolata = false }: SdiScartataEmailProps) {
   return (
     <Html lang="it">
       <Head />
@@ -26,6 +29,13 @@ export function SdiScartataEmail({ docNumber, motivo, appUrl, documentId }: SdiS
             {motivo ? <> Motivo: <strong>{motivo}</strong>.</> : null}
             {' '}Correggi i dati e reinviala: bastano pochi minuti.
           </Text>
+          {copiaCircolata && (
+            <Text style={{ fontSize: 15, color: '#333', lineHeight: 1.6 }}>
+              Il cliente ha già ricevuto la copia di questa fattura: per l&rsquo;Agenzia
+              una fattura scartata non è mai esistita. Dopo la correzione e il nuovo
+              esito positivo, rimandagli la copia aggiornata dal tasto «Invia».
+            </Text>
+          )}
           <Section style={{ textAlign: 'center', margin: '22px 0 6px' }}>
             <Button
               href={`${appUrl}/fatture/${documentId}`}

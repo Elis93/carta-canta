@@ -66,6 +66,23 @@ export function esitoPositivoSdi(sdiStatus: string | null | undefined): boolean 
 }
 
 /**
+ * FASE 2 (flag per cliente, standard FiC/Aruba): la copia di cortesia
+ * AUTOMATICA parte solo se il cliente non l'ha rifiutata in anagrafica —
+ * «Invia sempre la copia di cortesia» spento = rinuncia espressa del B2C
+ * (art. 1 c.3 D.Lgs 127/2015) o preferenza di mandarla a mano.
+ *
+ * ⚠️ Ferma SOLO un `false` ESPLICITO: pre-089 la colonna non esiste
+ * (undefined) e un cliente senza riga (null) non ha scelto nulla — in
+ * entrambi i casi vale il comportamento di serie della Fase 1 (si invia).
+ * Riguarda la sola copia AUTOMATICA: l'invio manuale resta sempre libero.
+ */
+export function copiaAutomaticaConsentita(
+  client: { copia_cortesia_auto?: boolean | null } | null | undefined,
+): boolean {
+  return client?.copia_cortesia_auto !== false
+}
+
+/**
  * FASE 1 (modello Aruba, Eli 21 set): con la fatturazione elettronica ATTIVA,
  * l'invio al cliente di una fattura (o nota) è consentito solo DOPO l'esito
  * positivo dello SdI — prima esiste solo la bozza, che vive nell'app. È la

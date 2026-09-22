@@ -301,6 +301,9 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           ? ((doc as { doc_date?: string | null }).doc_date ?? null)
           : (((doc as { doc_date?: string | null }).doc_date ?? doc.created_at) ?? null),
         docPaidAt: (doc as { paid_at?: string | null }).paid_at ?? null,
+        // Fase 2 (scarto post-copia): con la copia già in giro, la card
+        // scartata avvisa che il cliente va aggiornato dopo la correzione.
+        copiaCircolata: !!doc.sent_at,
       }
     } catch { /* migration 044 assente, o card non pertinente su questa fattura */ }
   }
@@ -823,6 +826,25 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             }
           >
             <b>Modificata — il cliente non lo sa</b>
+          </Avviso>
+        )}
+
+        {/* ── FASE 2, SCARTO POST-COPIA: la fattura era stata corretta dopo
+            l'invio (updated_after_send_at), poi ritrasmessa — il banner qui
+            sopra ha il gate !sdiTransmitted e a quel punto SPARIVA proprio
+            quando serviva. All'esito positivo (Invia di nuovo attivo) il
+            promemoria torna: il cliente ha ancora i numeri vecchi. Con
+            l'esito ancora in attesa non si mostra (l'invio è bloccato e
+            «rimandagliela» sarebbe un invito impossibile). */}
+        {doc.updated_after_send_at && !!doc.sent_at && sdiTransmitted && sdiFlagOn && !copiaBloccata && !isCancelled && !editing && (
+          <Avviso
+            gravita="attenzione"
+            icon={<AlertTriangle size={16} />}
+            sotto={
+              <>Corretta il {new Date(doc.updated_after_send_at).toLocaleString('it-IT', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' } as Intl.DateTimeFormatOptions)}, dopo che il cliente aveva ricevuto la copia. Ora la {isNotaCredito ? 'nota' : 'fattura'} è emessa: rimandagli la copia aggiornata con «Invia» — dal link vede già la versione nuova, ma nessuno l&rsquo;ha avvisato.</>
+            }
+          >
+            <b>Il cliente ha la copia vecchia</b>
           </Avviso>
         )}
 

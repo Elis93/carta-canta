@@ -20,7 +20,7 @@
 // Tutte le letture SdI sono TOLLERANTI pre-044 (colonne non nei tipi).
 
 import React from 'react'
-import { copiaCortesiaBloccata, esitoPositivoSdi } from '@/lib/documents/copia-sdi'
+import { copiaAutomaticaConsentita, copiaCortesiaBloccata, esitoPositivoSdi } from '@/lib/documents/copia-sdi'
 import { checkFreeBlock } from '@/lib/free-trial'
 import { sendEmail } from '@/lib/email/send'
 import { PreventivoEmail } from '@/components/email/PreventivoEmail'
@@ -114,6 +114,16 @@ export async function inviaCopiaCortesiaAutomatica(
     const pagataMaiInviata = d.status === 'accepted' && !d.sent_at
     if ((!daBozza && !pagataMaiInviata) || d.sent_at) return
     const client = d.clients as Record<string, unknown> | null
+    // ── FASE 2: flag per cliente «Invia sempre la copia di cortesia» ──
+    // Spento in rubrica = rinuncia espressa (B2C) o preferenza del manuale:
+    // la copia automatica NON parte — sulla fattura resta l'invito a
+    // mandarla a mano. Solo un false ESPLICITO ferma (pre-089 la colonna
+    // manca e vale il comportamento di serie). La select è `clients(*)`:
+    // la colonna arriva da sola appena la 089 è applicata.
+    if (!copiaAutomaticaConsentita(client as { copia_cortesia_auto?: boolean | null } | null)) {
+      console.log('[copia-cortesia] copia automatica disattivata in rubrica per questo cliente', docId)
+      return
+    }
     const clientEmail = String(client?.email ?? '').trim()
     if (!clientEmail) return
 

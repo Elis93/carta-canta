@@ -191,15 +191,31 @@ l'invio al cliente. Come i concorrenti (decisione Eli, 20 set):
   trasmettere): si progetta e si costruisce dietro il flag `NEXT_PUBLIC_SDI_ENABLED`,
   e diventa il comportamento di serie al passaggio live. Nel frattempo vale la Fase 0.
 
-### Fase 2 — Parità coi concorrenti e rifiniture
-- Flag in rubrica cliente: «**Invia sempre la copia di cortesia** a questo cliente»
-  (con la rinuncia espressa del B2C coperta: flag spento = niente copia automatica).
-- Riga sul PDF di cortesia B2C: l'originale è nel cassetto fiscale (obbligo informativo
-  di prassi).
-- **Gestione scarto post-copia** (caso residuo): se una fattura viene scartata dopo che
-  una copia è circolata, avviso all'artigiano di rimandare la copia corretta.
-- Registrare la copia inviata in cronologia («Copia di cortesia inviata il …»).
-- FAQ + /novita + collaudo sandbox (T-nuovi in TEST_DA_FARE_ELI.md).
+### Fase 2 — Parità coi concorrenti e rifiniture — ✅ IMPLEMENTATA (22 set 2026)
+- ✅ **Flag in rubrica cliente** «**Invia sempre la copia di cortesia**» (migration
+  **089**, `clients.copia_cortesia_auto` default true — validata su PG16): spunta
+  nella scheda cliente (sezione Contatto, solo con SdI attivo), letta da
+  `inviaCopiaCortesiaAutomatica` via il helper puro `copiaAutomaticaConsentita`
+  (ferma SOLO un false esplicito: pre-089 vale il comportamento di serie). Flag
+  spento = rinuncia espressa B2C coperta — niente copia automatica, resta
+  l'invito manuale sulla fattura. Scrittura con sentinella + update separato
+  best-effort (la creazione rapida dal preventivo non la azzera; pre-089 il
+  resto della scheda si salva comunque; mai null esplicito — lezione 081).
+- ✅ **Riga cassetto fiscale sul PDF B2C**: era GIÀ coperta dalla Fase 0 — la
+  dicitura `copia_cortesia` («…consultabile nell'area riservata del sito
+  dell'Agenzia delle Entrate») sta su PDF, pagina cliente E nell'email della
+  copia automatica. Nessun lavoro nuovo: verificato, non dimenticato.
+- ✅ **Gestione scarto post-copia**: ① card SdI scartata con la riga «Il cliente
+  ha già ricevuto la copia…» quando `sent_at` è valorizzato (prop
+  `copiaCircolata`); ② stesso avviso nell'email di scarto (`SdiScartataEmail`);
+  ③ dopo correzione + ritrasmissione + esito positivo, banner «**Il cliente ha
+  la copia vecchia**» sulla pagina fattura — chiude il buco del banner
+  «Modificata», che col gate `!sdiTransmitted` spariva proprio alla
+  ritrasmissione; si spegne da solo quando la copia viene rimandata (il
+  reinvio azzera `updated_after_send_at`).
+- ✅ **Cronologia**: la voce `copia_cortesia` c'è dalla Fase 1 (già coperta).
+- ✅ FAQ #copia-cortesia (flag per cliente) e FAQ dello scarto (copia già in
+  giro) estese · /novita (2 punti) · collaudi **T20-T21** in TEST_DA_FARE_ELI.
 
 ## 6. Decisioni — ✅ TUTTE CHIUSE dalla regola «come i competitors» (Eli, 20 set: «Facciamo uguale»)
 - **D3 — Invio al cliente prima dell'esito SdI: BLOCCATO.** I concorrenti non lo

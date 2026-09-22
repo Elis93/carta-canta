@@ -386,7 +386,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
   {
     q: 'Quando arriva la fattura al cliente? Come funziona la copia di cortesia?',
     id: 'copia-cortesia',
-    parole: ['copia di cortesia', 'invia al cliente', 'copia', 'quando arriva', 'invio bloccato', 'prima la trasmissione', 'email al cliente', 'salva in bozze'],
+    parole: ['copia di cortesia', 'invia al cliente', 'copia', 'quando arriva', 'invio bloccato', 'prima la trasmissione', 'email al cliente', 'salva in bozze', 'rinuncia', 'copia automatica', 'non inviare la copia'],
     a: <>Con la fatturazione elettronica attiva l&rsquo;ordine è: <b>prima la trasmissione,
       poi la copia al cliente</b>{' '}— come negli altri programmi di fatturazione. Compili
       la fattura, la <b>salvi in bozze</b>{' '}(nessun effetto fiscale: la modifichi quando
@@ -398,6 +398,11 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       sulla fattura trovi «Invia» per mandarla tu (email, WhatsApp o link). La copia porta
       la dicitura di legge — «Copia di cortesia non valida ai fini fiscali…» — perché
       l&rsquo;originale è quello nel <b>cassetto fiscale</b>{' '}del cliente.
+      <br /><br />
+      Se un cliente <b>non vuole</b>{' '}la copia automatica (o preferisci mandarla tu),
+      apri la sua scheda in rubrica e togli la spunta a{' '}
+      <b>«Invia sempre la copia di cortesia»</b>: per quel cliente non partirà più nulla
+      da solo — sulla fattura resta l&rsquo;invito a mandarla a mano.
       <br /><br />
       Perché non prima? Una fattura <b>scartata</b>{' '}per l&rsquo;Agenzia non è mai
       esistita: se il cliente avesse già in mano la copia, avrebbe un documento che
@@ -417,7 +422,12 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       Correggi il dato segnalato e premi <b>Reinvia allo SdI</b>: va fatto{' '}
       <b>entro 5 giorni</b>{' '}dallo scarto, tenendo lo <b>stesso numero e la stessa data</b>.
       Le scartate le vedi anche in <b>Home</b>, nel riquadro «Scartate» accanto a quelle
-      da trasmettere, e in cima all&rsquo;elenco di <VaiA a="daTrasmettere" />.</>,
+      da trasmettere, e in cima all&rsquo;elenco di <VaiA a="daTrasmettere" />.
+      <br /><br />
+      Se il cliente aveva <b>già ricevuto la copia</b>{' '}della fattura scartata, ha in
+      mano un documento che per l&rsquo;Agenzia non è mai esistito: dopo la correzione e il
+      nuovo esito positivo, rimandagli la copia aggiornata con «Invia» — l&rsquo;app te lo
+      ricorda sulla fattura.</>,
   },
   ] : []),
   {

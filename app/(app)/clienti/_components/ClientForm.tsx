@@ -120,6 +120,34 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
   const [codDest, setCodDest] = useState((defaultValues as Record<string, unknown>)?.codice_destinatario as string ?? '')
   const [pecCli,  setPecCli]  = useState((defaultValues as Record<string, unknown>)?.pec as string ?? '')
   const [pivaCfErr, setPivaCfErr] = useState('')
+  // ── FASE 2 copia di cortesia: «Invia sempre la copia» per cliente ──
+  // Compare solo con la fatturazione elettronica attiva (col flag spento
+  // la copia automatica non esiste e la spunta sarebbe una promessa vuota).
+  // Solo un false ESPLICITO in DB spegne: pre-089 (colonna assente) vale
+  // il comportamento di serie, cioè acceso.
+  const sdiOn = process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
+  const [copiaAuto, setCopiaAuto] = useState(
+    (defaultValues as Record<string, unknown>)?.copia_cortesia_auto !== false,
+  )
+  const copiaAutoBox = useRef<HTMLInputElement>(null)
+  // Lo stato corrente letto dentro il gestore del reset (vedi sotto).
+  const copiaAutoRef = useRef(copiaAuto)
+  copiaAutoRef.current = copiaAuto
+  // ⚠️ React 19 chiama `form.reset()` dopo OGNI submit di una Server Action:
+  // su una spunta governata dallo stato il reset riporta il DOM al valore
+  // iniziale SENZA far ri-renderizzare React (regola §B.2, come la ritenuta
+  // condominio). Si riscrive sul NODO: lo stato è già giusto.
+  useEffect(() => {
+    const form = formRef.current
+    if (!form) return
+    const onReset = () => {
+      requestAnimationFrame(() => {
+        if (copiaAutoBox.current) copiaAutoBox.current.checked = copiaAutoRef.current
+      })
+    }
+    form.addEventListener('reset', onReset)
+    return () => form.removeEventListener('reset', onReset)
+  }, [])
   const [indirizzo, setIndirizzo] = useState(defaultValues?.indirizzo ?? '')
   const [paese,     setPaese]     = useState(defaultValues?.paese     ?? '')
   const [notes,     setNotes]     = useState(defaultValues?.notes     ?? '')
@@ -261,6 +289,37 @@ export function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
         <p style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 7 }}>
           Inserisci almeno email o telefono per poter inviare i documenti.
         </p>
+
+        {/* ── FASE 2 copia di cortesia: flag per cliente (standard FiC/Aruba).
+            La sentinella dice all'action che il campo era nel form: senza,
+            un salvataggio da un ALTRO form (creazione rapida dal preventivo)
+            azzererebbe la scelta in silenzio — la trappola dell'onboarding
+            /ATECO, regola §B.2. Il valore viaggia in un hidden governato
+            dallo stato, la casella è solo la vista. */}
+        {sdiOn && (
+          <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--cc-border-color)' }}>
+            <input type="hidden" name="copia_cortesia_auto_presente" value="1" />
+            <input type="hidden" name="copia_cortesia_auto" value={copiaAuto ? 'true' : 'false'} />
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+              <input
+                ref={copiaAutoBox}
+                type="checkbox"
+                checked={copiaAuto}
+                onChange={(e) => setCopiaAuto(e.target.checked)}
+                style={{ width: 18, height: 18, marginTop: 1, accentColor: '#1a1a2e', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 13, color: '#161616', fontWeight: 600 }}>
+                Invia sempre la copia di cortesia
+              </span>
+            </label>
+            <p style={{ fontSize: 12, color: 'var(--cc-muted)', lineHeight: 1.5, marginTop: 6 }}>
+              Quando una fattura per questo cliente riceve l&rsquo;esito positivo dallo SdI,
+              la copia di cortesia parte da sola all&rsquo;email qui sopra. Togli la spunta se
+              il cliente ha rinunciato alla copia o preferisci mandarla tu: sulla fattura
+              resta il tasto «Invia» per farlo a mano.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* ── Sezione DATI FISCALI ─────────────────────────────── */}

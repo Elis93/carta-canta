@@ -4,7 +4,7 @@
 // un refactoring.
 
 import { describe, it, expect } from 'vitest'
-import { statoCopiaSdi, dicituraCopiaSdi, esitoPositivoSdi, copiaCortesiaBloccata } from '@/lib/documents/copia-sdi'
+import { statoCopiaSdi, dicituraCopiaSdi, esitoPositivoSdi, copiaCortesiaBloccata, copiaAutomaticaConsentita } from '@/lib/documents/copia-sdi'
 
 describe('statoCopiaSdi', () => {
   it('preventivo → null (client-first intatto, mai una dicitura SdI)', () => {
@@ -114,5 +114,26 @@ describe('copiaCortesiaBloccata', () => {
 
   it('un esito futuro sconosciuto NON sblocca (mai fidarsi di un valore ignoto)', () => {
     expect(copiaCortesiaBloccata('fattura', 'accettata_con_riserva')).toBe(true)
+  })
+})
+
+// ── Fase 2: flag per cliente «Invia sempre la copia di cortesia» ───────────
+describe('copiaAutomaticaConsentita', () => {
+  it('ferma SOLO il false esplicito (la rinuncia espressa)', () => {
+    expect(copiaAutomaticaConsentita({ copia_cortesia_auto: false })).toBe(false)
+  })
+
+  it('flag acceso → si invia', () => {
+    expect(copiaAutomaticaConsentita({ copia_cortesia_auto: true })).toBe(true)
+  })
+
+  it('pre-089 (colonna assente) o cliente assente → comportamento di serie', () => {
+    // undefined = la colonna non esiste ancora · null = nessuna scelta
+    // registrata · cliente mancante: in nessuno di questi casi qualcuno ha
+    // RIFIUTATO la copia — si invia come da Fase 1.
+    expect(copiaAutomaticaConsentita({})).toBe(true)
+    expect(copiaAutomaticaConsentita({ copia_cortesia_auto: null })).toBe(true)
+    expect(copiaAutomaticaConsentita(null)).toBe(true)
+    expect(copiaAutomaticaConsentita(undefined)).toBe(true)
   })
 })

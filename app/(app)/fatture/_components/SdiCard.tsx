@@ -84,6 +84,10 @@ export interface SdiCardProps {
   docCreatedAt?: string | null
   /** Primo incasso registrato: se precedente, anticipa l'effettuazione (art. 6) */
   docPaidAt?: string | null
+  /** true = la copia è GIÀ in mano al cliente (sent_at valorizzato). Su una
+   * SCARTATA cambia il racconto: il cliente ha un documento che fiscalmente
+   * non è mai esistito — va avvisato con la copia corretta (Fase 2). */
+  copiaCircolata?: boolean
 }
 
 export function SdiCard({
@@ -103,6 +107,7 @@ export function SdiCard({
   isNotaCredito = false,
   docCreatedAt = null,
   docPaidAt = null,
+  copiaCircolata = false,
 }: SdiCardProps) {
   const nomeDoc = isNotaCredito ? 'nota di credito' : 'fattura'
   const router = useRouter()
@@ -277,7 +282,10 @@ export function SdiCard({
         return {
           gravita: 'errore' as const, icon: <AlertTriangle size={16} />,
           label: 'Scartata dallo SdI',
-          sub: `${sdiError ?? 'Il Sistema di Interscambio ha rifiutato la fattura.'} Correggi il dato segnalato e reinviala: va fatto entro 5 giorni, tenendo lo stesso numero e la stessa data.`,
+          // Fase 2 (scarto post-copia): se la copia è già in giro, il cliente
+          // ha in mano un documento che per l'Agenzia non è mai esistito —
+          // dopo la correzione va avvisato con la copia aggiornata.
+          sub: `${sdiError ?? 'Il Sistema di Interscambio ha rifiutato la fattura.'} Correggi il dato segnalato e reinviala: va fatto entro 5 giorni, tenendo lo stesso numero e la stessa data.${copiaCircolata ? ' Il cliente ha già ricevuto la copia di questo documento: dopo la correzione e il nuovo esito positivo, rimandagli la copia aggiornata con «Invia».' : ''}`,
         }
       default:
         return null
