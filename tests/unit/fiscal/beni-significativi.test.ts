@@ -228,6 +228,125 @@ describe('IVA predefinita del documento e prestazione', () => {
   })
 })
 
+// ── Il VALORE del bene è il COSTO (23 set — circ. 15/E/2018, decisione Eli) ─
+// La norma di interpretazione autentica (art. 1 c.19 L. 205/2017) esclude il
+// mark-up dal valore del bene: rileva solo il costo «originario». I numeri del
+// primo test sono l'ESEMPIO UFFICIALE della circolare (pagine 15-16).
+describe('valore del bene = costo (unit_cost), non prezzo', () => {
+  const bene = (unit_price: number, unit_cost: number | null, extra: Partial<VoceSplittabile> = {}): VoceSplittabile => ({
+    description: 'Caldaia', quantity: 1, unit_price, discount_pct: null, vat_rate: 10,
+    bene_significativo: true, unit_cost, ...extra,
+  })
+  const posa = (unit_price: number): VoceSplittabile => ({
+    description: 'Manodopera', quantity: 1, unit_price, discount_pct: null, vat_rate: 10,
+  })
+
+  it('esempio ufficiale 15/E: 1.800 = bene 1.000 (costo) + manodopera 600 + mark-up 200', () => {
+    // Il mark-up sta CON la manodopera, dalla parte agevolata.
+    const d = dettaglioBeniSignificativi([posa(600), bene(1200, 1000)], 'ordinario', 22)
+    expect(d?.valoreBeni).toBe(1000)
+    expect(d?.valorePrestazione).toBe(800)
+    expect(d?.imponibile10).toBe(1600)
+    expect(d?.imponibile22).toBe(200)
+    // IVA dell'esempio: 160 + 44 = 204 (col prezzo sarebbero stati 252)
+    const rows = espandiBeniSignificativi([posa(600), bene(1200, 1000)], 'ordinario', 22)
+    const iva = rows.reduce((s, r) => s + roundTo2(Number(r.total ?? r.unit_price) * Number(r.vat_rate) / 100), 0)
+    expect(roundTo2(iva)).toBe(204)
+    // Le due righe del bene sommano al suo PREZZO: il totale documento non cambia.
+    const righeBene = rows.filter((r) => r.description.startsWith('Caldaia'))
+    expect(roundTo2(righeBene.reduce((s, r) => s + Number(r.total ?? 0), 0))).toBe(1200)
+  })
+
+  it('COSTO ASSENTE → ripiego sul prezzo: identico al comportamento storico', () => {
+    const senzaCosto = dettaglioBeniSignificativi([posa(600), bene(1200, null)], 'ordinario', 22)
+    expect(senzaCosto?.valoreBeni).toBe(1200)
+    expect(senzaCosto?.imponibile10).toBe(1200)
+    expect(senzaCosto?.imponibile22).toBe(600)
+    // Costo a zero = non indicato (un bene significativo gratis non esiste)
+    const costoZero = dettaglioBeniSignificativi([posa(600), bene(1200, 0)], 'ordinario', 22)
+    expect(costoZero?.valoreBeni).toBe(1200)
+  })
+
+  it('costo su UNO dei due beni: ripiego per-voce, mai tutto-o-niente', () => {
+    const items = [posa(300), bene(900, 700), bene(400, null, { description: 'Sanitari' })]
+    // B = 700 (costo caldaia) + 400 (prezzo sanitari, ripiego) = 1.100
+    const d = dettaglioBeniSignificativi(items, 'ordinario', 22)
+    expect(d?.valoreBeni).toBe(1100)
+  })
+
+  it('costo > prezzo (venduto in perdita): il costo resta il valore del bene', () => {
+    // Infisso prezzo 800, costo 1.000, posa 600: C=1.400, B=1.000, P=400
+    const d = dettaglioBeniSignificativi([posa(600), bene(800, 1000, { description: 'Infisso' })], 'ordinario', 22)
+    expect(d?.valoreBeni).toBe(1000)
+    expect(d?.imponibile10).toBe(800)
+    expect(d?.imponibile22).toBe(600)
+    // Le righe dell'infisso sommano comunque al suo prezzo (800)
+    const rows = espandiBeniSignificativi([posa(600), bene(800, 1000, { description: 'Infisso' })], 'ordinario', 22)
+    const righeInfisso = rows.filter((r) => r.description.startsWith('Infisso'))
+    expect(roundTo2(righeInfisso.reduce((s, r) => s + Number(r.total ?? 0), 0))).toBe(800)
+  })
+
+  it('TETTO: l’eccedenza non supera mai il prezzo dei beni (sottocosto estremo)', () => {
+    // Bene prezzo 300 costo 1.000, posa 100: B=1.000 > C=400. Senza tetto la
+    // dicitura direbbe «al 22%: 1.000» su un documento da 400.
+    const items = [posa(100), bene(300, 1000)]
+    const d = dettaglioBeniSignificativi(items, 'ordinario', 22)
+    expect(d?.imponibile22).toBe(300)
+    expect(d?.imponibile10).toBe(100)
+    // …e le righe raccontano la stessa cosa della dicitura.
+    const rows = espandiBeniSignificativi(items, 'ordinario', 22)
+    expect(roundTo2(rows.filter((r) => r.vat_rate === 22).reduce((s, r) => s + Number(r.total ?? r.unit_price), 0))).toBe(300)
+    expect(roundTo2(rows.filter((r) => r.vat_rate === 10).reduce((s, r) => s + Number(r.total ?? r.unit_price), 0))).toBe(100)
+  })
+
+  it('più beni: l’eccedenza si ripartisce in proporzione al COSTO, residuo sull’ultima', () => {
+    // C=1.600, B=1.050 (700+350), P=550 → 22% = 500
+    const items = [posa(300), bene(900, 700), bene(400, 350, { description: 'Sanitari' })]
+    const rows = espandiBeniSignificativi(items, 'ordinario', 22)
+    expect(rows.find((r) => r.description === 'Caldaia (quota eccedente il valore della prestazione)')?.total).toBe(333.33)
+    expect(rows.find((r) => r.description === 'Sanitari (quota eccedente il valore della prestazione)')?.total).toBe(166.67)
+    // Ogni voce somma al suo prezzo, il 10% complessivo torna con la dicitura
+    expect(roundTo2(rows.filter((r) => r.vat_rate === 10).reduce((s, r) => s + Number(r.total ?? r.unit_price), 0))).toBe(1100)
+  })
+
+  it('lo SCONTO della voce riduce il prezzo, MAI il costo', () => {
+    // Caldaia listino 1.500 −20% = 1.200 venduti, costo 1.000: identico
+    // all'esempio ufficiale — lo sconto è sul prezzo, il costo resta quello.
+    const d = dettaglioBeniSignificativi(
+      [posa(600), bene(1500, 1000, { discount_pct: 20 })], 'ordinario', 22,
+    )
+    expect(d?.valoreBeni).toBe(1000)
+    expect(d?.imponibile22).toBe(200)
+  })
+
+  it('FORFETTARIO: null anche col costo presente', () => {
+    expect(dettaglioBeniSignificativi([posa(600), bene(1200, 1000)], 'forfettario', 22)).toBeNull()
+  })
+
+  it('le righe prodotte NON portano il costo (difesa §B.2)', () => {
+    const rows = espandiBeniSignificativi([posa(600), bene(1200, 1000)], 'ordinario', 22)
+    for (const r of rows.filter((x) => x.description.includes('quota'))) {
+      expect(r.unit_cost ?? null).toBeNull()
+    }
+  })
+
+  it('il motore fiscale usa il costo: IVA 204 sull’esempio ufficiale', () => {
+    const row = (description: string, unit_price: number, unit_cost: number | null, beneFlag = false) => ({
+      id: description, document_id: 'd', sort_order: 0, description, unit: 'pz',
+      quantity: 1, unit_price, discount_pct: null, vat_rate: 10, bonus_tipo: null,
+      bene_significativo: beneFlag, unit_cost, total: 0, ai_generated: false, ai_confidence: null,
+    })
+    const f = calcolaDocumento(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape minima
+      [row('Caldaia', 1200, 1000, true), row('Manodopera', 600, null)] as any,
+      { fiscal_regime: 'ordinario', currency: 'EUR', doc_type: 'fattura' },
+    )
+    expect(f.subtotal).toBe(1800)
+    expect(f.taxAmount).toBe(204)
+    expect(f.total).toBe(2004)
+  })
+})
+
 // ── A4 del ricontrollo: il flag stantio non deve più mordere ────────────────
 describe('flag stantio — voce marcata ma non più al 10%', () => {
   it('una voce marcata al 22% NON viene splittata né conta come bene', () => {

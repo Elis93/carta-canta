@@ -80,8 +80,11 @@ export type VoceItem = {
   /** Solo UI (non persistito): origine della quantità di una voce proposta dalle foto.
    *  'notes' = presa dalle note dell'artigiano · 'todo' = da compilare. */
   qty_source?: 'notes' | 'todo'
-  /** Costo d'acquisto (062) — SOLO per il margine privato dell'artigiano.
-   *  🔒 Regola B.2: non deve MAI comparire su PDF, pagine pubbliche o email. */
+  /** Costo d'acquisto (062) — per il margine privato dell'artigiano.
+   *  🔒 Regola B.2: non compare su PDF, pagine pubbliche o email — con UNA
+   *  eccezione di legge (23 set): sulla voce marcata «bene significativo» in
+   *  regime ordinario il costo è il VALORE fiscale del bene (circ. 15/E/2018)
+   *  e va indicato in fattura (71/E §5.1). Fuori da quel caso resta privato. */
   unit_cost?: number | null
   /** Listino fornitore di origine (063): aggancia la scadenza del listino
    *  alla validità del preventivo. Anche questo è SOLO privato. */
@@ -1198,6 +1201,9 @@ export function PreventivoForm({
       vat_rate: v.vat_rate,
       bonus_tipo: v.bonus_tipo ?? null,
       bene_significativo: v.bene_significativo ?? null,
+      // Valore del bene = costo (23 set): senza, l'anteprima dell'acconto
+      // userebbe un totale con lo split vecchio.
+      unit_cost: v.unit_cost ?? null,
       total: 0,
       ai_generated: false as boolean | null,
       ai_confidence: null as number | null,

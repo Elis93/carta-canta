@@ -41,6 +41,8 @@ export interface VoceConTier {
   vat_rate?: unknown
   bonus_tipo?: unknown
   bene_significativo?: unknown
+  /** Costo (062): sulle voci-bene è il valore fiscale (15/E) — serve al motore. */
+  unit_cost?: unknown
   option_tier?: unknown
 }
 
@@ -93,6 +95,9 @@ export function totaliPerProposta(
       vat_rate: (v.vat_rate as number | null) ?? null,
       bonus_tipo: (v.bonus_tipo as string | null) ?? null,
       bene_significativo: (v.bene_significativo as boolean | null) ?? null,
+      // Valore del bene = costo (23 set, 15/E): senza, i totali per proposta
+      // divergerebbero dal motore che salva (stessa classe del flag, 12 ago).
+      unit_cost: (v.unit_cost as number | null) ?? null,
       total: 0,
       ai_generated: false as boolean | null,
       ai_confidence: null as number | null,

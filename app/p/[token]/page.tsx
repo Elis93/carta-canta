@@ -76,6 +76,13 @@ export default async function PublicDocumentPage({ params }: Props) {
 
   // ── Carica documento con relazioni ─────────────────────────────────────
   // created_at e vat_rate_default sono richiesti da buildPdfHtml().
+  // ⚠️ `unit_cost` nella select è un'ECCEZIONE DELIBERATA alla regola §B.2
+  // («costo mai al cliente»): dal 23 set il valore del bene significativo si
+  // calcola sul COSTO (circ. 15/E/2018) e lo split di questa pagina deve
+  // combaciare con motore, PDF e XML — senza, il cliente vedrebbe quote IVA
+  // diverse dai totali salvati. Il campo entra SOLO in `espandiBeniSignificativi`
+  // e `ivaEffettivaVoci`: le prop dei componenti (mobileItems, TierPicker)
+  // restano a campi espliciti e NON lo portano.
   const { data: doc } = await admin
     .from('documents')
     .select(`
@@ -113,7 +120,8 @@ export default async function PublicDocumentPage({ params }: Props) {
         discount_pct,
         vat_rate,
         total,
-        bene_significativo
+        bene_significativo,
+        unit_cost
       ),
       workspaces!workspace_id (
         owner_id,
@@ -265,7 +273,7 @@ export default async function PublicDocumentPage({ params }: Props) {
         if (!opt?.options_enabled || opt.accepted_tier) return null
         const { data: items } = await db
           .from('document_items')
-          .select('description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, sort_order, bene_significativo')
+          .select('description, unit, quantity, unit_price, discount_pct, vat_rate, bonus_tipo, option_tier, sort_order, bene_significativo, unit_cost')
           .eq('document_id', (doc as Record<string, unknown>).id as string)
           .order('sort_order', { ascending: true })
         // refTier: SOLO per etichettare il totale — i documenti salvati con la
@@ -420,6 +428,10 @@ export default async function PublicDocumentPage({ params }: Props) {
             // CON: il cliente accettava un prezzo diverso da quello salvato
             // (ricontrollo 12 ago).
             bene_significativo: i.bene_significativo === true,
+            // ⚠️ E senza il COSTO (23 set: valore del bene = costo, 15/E) lo
+            // split della card divergerebbe da quello dell'accettazione
+            // (select('*')). Entra solo nel motore, mai nelle prop della card.
+            unit_cost: i.unit_cost ?? null,
             total: 0, ai_generated: false, ai_confidence: null,
           })) as any,
           {

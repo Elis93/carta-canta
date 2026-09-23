@@ -13,7 +13,19 @@
 // all'infisso → stanno nella prestazione; il bruciatore della caldaia NO →
 // sta nel valore del bene).
 //
-// LA FORMULA, con C = totale, B = valore del bene, P = C − B:
+// ⚠️ IL VALORE DEL BENE È IL SUO COSTO, NON IL PREZZO DI VENDITA (norma di
+// interpretazione autentica, art. 1 c.19 L. 205/2017, retroattiva; circolare
+// 15/E/2018 p.14: «escludere dal valore del bene significativo il margine
+// aggiunto dal prestatore… Ciò che rileva è solo il costo "originario"»).
+// Il mark-up sta CON la manodopera, dalla parte agevolata — è l'esempio
+// ufficiale della circolare: corrispettivo 1.800 = bene 1.000 (costo) +
+// manodopera 600 + mark-up 200 → 10% su 1.600, 22% su 200. Le circolari
+// 71/E §4.2 e 98/E §4.1.2 (che dicevano «prezzo pattuito») sono SUPERATE.
+// Qui il costo è `unit_cost × quantity`; se manca, RIPIEGO sul prezzo
+// (la vecchia regola del 2000: prudenziale, si versa IVA in più, mai in meno).
+//
+// LA FORMULA, con C = totale voci al 10%, B = valore del bene (costo),
+// P = C − B (la prestazione, mark-up del bene compreso):
 //     quota al 10% = P + min(B, P)
 //     quota al 22% = max(0, B − P)
 //
@@ -99,10 +111,11 @@ export function splitBeniSignificativi(
 /**
  * La quota di un ACCONTO che va imputata al bene significativo.
  * ⚠️ Il limite si calcola sull'INTERO corrispettivo dovuto, non sull'acconto:
- * in ogni fattura il valore del bene va riportato in misura PROPORZIONALE al
- * pagamento, con lo split 10/22 rifatto su quella proporzione (prassi AdE,
- * ripresa dalle guide 2026). Senza questo, fatturando a stati di avanzamento
- * si otterrebbe uno split diverso da quello del lavoro intero.
+ * in ogni fattura il valore del bene va riportato «nella quota percentuale
+ * corrispondente alla parte di corrispettivo pagata», con entrambe le parti
+ * 10/22 in evidenza (circolare 71/E/2000 §5.2, testuale). Senza questo,
+ * fatturando a stati di avanzamento si otterrebbe uno split diverso da
+ * quello del lavoro intero. Si cabla nella Fase 2 (TD02).
  */
 export function quotaAccontoBene(
   valoreBeneTotale: number,
@@ -138,6 +151,13 @@ export interface VoceSplittabile {
   vat_rate?: number | null
   unit?: string | null
   bene_significativo?: boolean | null
+  /** Costo d'acquisto del bene (062). Sulle voci marcate «bene significativo»
+   *  è LA fonte del valore del bene (circ. 15/E/2018): assente o non positivo
+   *  → ripiego sul prezzo. ⚠️ Eccezione dichiarata alla regola §B.2 «costo mai
+   *  al cliente», limitata al regime ordinario: il valore del bene (= costo)
+   *  finisce in fattura PER OBBLIGO DI LEGGE (71/E §5.1). Le select pubbliche
+   *  che lo portano ne fanno uso SOLO qui: mai nelle prop dei componenti. */
+  unit_cost?: number | null
   /** Importo di riga già calcolato. Le righe prodotte dallo split lo
    *  riscrivono: PDF e XML leggono `total`, e lasciarci quello della voce
    *  intera farebbe divergere le righe dai totali (e scartare la fattura). */
@@ -157,8 +177,7 @@ export function dettaglioBeniSignificativi(
   if (fiscalRegime === 'forfettario') return null
   const vatDef = vatRateDefault ?? ALIQUOTA_ORDINARIA
   if (!items.some((i) => eBene(i, vatDef))) return null
-  const { valoreBeni, valorePrestazione } = valoriPerSplit(items, vatDef)
-  return splitBeniSignificativi(valoreBeni, valorePrestazione)
+  return splitDocumento(items, vatDef).split
 }
 
 /** Aliquota su cui vale l'agevolazione dei beni significativi. */
@@ -170,6 +189,17 @@ const importoVoce = (i: VoceSplittabile) =>
   roundFiscale(
     Number(i.quantity ?? 0) * Number(i.unit_price ?? 0) * (1 - (Number(i.discount_pct ?? 0) / 100)),
   )
+
+/** Il VALORE del bene significativo di una voce: il suo COSTO (`unit_cost ×
+ *  quantity`, circ. 15/E/2018 — il costo non si sconta: lo sconto è sul
+ *  prezzo di vendita). Costo assente o non positivo → RIPIEGO sul prezzo:
+ *  è la vecchia regola del 2000, prudenziale (più IVA versata, mai meno),
+ *  e tiene identici tutti i documenti salvati senza costo. */
+const costoVoce = (i: VoceSplittabile) => {
+  const uc = Number(i.unit_cost ?? NaN)
+  if (Number.isFinite(uc) && uc > 0) return roundFiscale(Number(i.quantity ?? 0) * uc)
+  return importoVoce(i)
+}
 
 /** Separa le voci fra «bene significativo» e «prestazione».
  *  ⚠️ La PRESTAZIONE non è la sola manodopera: è tutto ciò che sta nel lavoro
@@ -190,14 +220,51 @@ function eBene(i: VoceSplittabile, vatRateDefault: number): boolean {
   return i.bene_significativo === true && (i.vat_rate ?? vatRateDefault) === ALIQUOTA_AGEVOLATA
 }
 
-function valoriPerSplit(items: VoceSplittabile[], vatRateDefault: number): { valoreBeni: number; valorePrestazione: number } {
-  const valorePrestazione = items
-    .filter((i) => !eBene(i, vatRateDefault) && (i.vat_rate ?? vatRateDefault) === ALIQUOTA_AGEVOLATA)
-    .reduce((s, i) => s + importoVoce(i), 0)
-  const valoreBeni = items
-    .filter((i) => eBene(i, vatRateDefault))
-    .reduce((s, i) => s + importoVoce(i), 0)
-  return { valoreBeni, valorePrestazione }
+function valoriPerSplit(items: VoceSplittabile[], vatRateDefault: number): {
+  valoreBeni: number
+  valorePrestazione: number
+  /** Prezzo di VENDITA dei beni marcati: il denaro che le loro righe portano
+   *  nel documento — è il tetto naturale dell'eccedenza al 22%. */
+  prezzoBeni: number
+  /** Corrispettivo complessivo delle voci al 10% (prezzi, sconti compresi). */
+  corrispettivo: number
+} {
+  const agevolate = items.filter((i) => (i.vat_rate ?? vatRateDefault) === ALIQUOTA_AGEVOLATA)
+  const corrispettivo = roundFiscale(agevolate.reduce((s, i) => s + importoVoce(i), 0))
+  const beni = agevolate.filter((i) => eBene(i, vatRateDefault))
+  const valoreBeni = roundFiscale(beni.reduce((s, i) => s + costoVoce(i), 0))
+  const prezzoBeni = roundFiscale(beni.reduce((s, i) => s + importoVoce(i), 0))
+  // P = C − B (98/E §4.1.4): la prestazione è l'intero corrispettivo meno il
+  // VALORE (costo) dei beni — così il mark-up del bene confluisce nella parte
+  // agevolata, come nell'esempio ufficiale della 15/E. Coi costi assenti
+  // (ripiego sul prezzo) torna esattamente la somma delle voci non-bene al 10%.
+  const valorePrestazione = Math.max(0, roundFiscale(corrispettivo - valoreBeni))
+  return { valoreBeni, valorePrestazione, prezzoBeni, corrispettivo }
+}
+
+/** Lo split del DOCUMENTO, con il tetto di coerenza: l'eccedenza al 22% non
+ *  può superare il PREZZO dei beni, perché è il denaro che quelle righe
+ *  portano nel documento. Col valore = costo il caso può presentarsi (vendita
+ *  sottocosto estrema: costo del bene sopra l'intero corrispettivo) — il
+ *  vecchio codice ne era immune per costruzione (valore = prezzo). Senza il
+ *  tetto, la dicitura dichiarerebbe al 22% più denaro di quanto il documento
+ *  ne contenga e le righe (che il tetto ce l'hanno per forza) divergerebbero. */
+function splitDocumento(items: VoceSplittabile[], vatRateDefault: number): {
+  split: SplitBeniSignificativi
+  valoreBeni: number
+  prezzoBeni: number
+} {
+  const { valoreBeni, valorePrestazione, prezzoBeni, corrispettivo } = valoriPerSplit(items, vatRateDefault)
+  let split = splitBeniSignificativi(valoreBeni, valorePrestazione)
+  if (split.imponibile22 > prezzoBeni) {
+    split = {
+      ...split,
+      imponibile22: prezzoBeni,
+      imponibile10: roundFiscale(Math.max(0, corrispettivo - prezzoBeni)),
+      beneAl10: 0,
+    }
+  }
+  return { split, valoreBeni, prezzoBeni }
 }
 
 /**
@@ -216,29 +283,46 @@ export function espandiBeniSignificativi<T extends VoceSplittabile>(
 ): T[] {
   if (fiscalRegime === 'forfettario') return items
   const vatDef = vatRateDefault ?? ALIQUOTA_ORDINARIA
-  const marcate = items.filter((i) => eBene(i, vatDef))
-  if (marcate.length === 0) return items
+  const idxMarcate = items.map((v, i) => (eBene(v, vatDef) ? i : -1)).filter((i) => i >= 0)
+  if (idxMarcate.length === 0) return items
 
-  const { valoreBeni, valorePrestazione } = valoriPerSplit(items, vatDef)
-  const split = splitBeniSignificativi(valoreBeni, valorePrestazione)
+  const { split, valoreBeni } = splitDocumento(items, vatDef)
   // Tutto agevolato: le voci restano com'erano (una riga sola per bene).
   // ⚠️ L'obbligo di INDICARE il valore del bene resta anche in questo caso:
   // lo assolve il PDF con la riga descrittiva, non lo split.
   if (!split.haEccedenza) return items
 
   // L'eccedenza si ripartisce fra le voci marcate in proporzione al loro
-  // valore (residuo sull'ultima, come per lo sconto di documento: così la
-  // somma torna al centesimo).
+  // VALORE (il costo, che è ciò che l'ha generata), residuo sull'ultima —
+  // e MAI oltre il PREZZO della voce: le due righe prodotte devono sommare
+  // al prezzo, che è il denaro che la voce porta nel documento. Se il cap
+  // per-voce lascia un residuo (costi molto diversi dai prezzi), un secondo
+  // giro lo versa dove c'è ancora spazio: il tetto a livello documento
+  // (imponibile22 ≤ prezzo dei beni, in splitDocumento) garantisce che lo
+  // spazio complessivo basti sempre.
+  const quote = new Map<number, number>()
+  idxMarcate.forEach((idx, ord) => {
+    const val = importoVoce(items[idx])
+    const teorica = ord === idxMarcate.length - 1
+      ? roundFiscale(split.imponibile22 - [...quote.values()].reduce((s, q) => s + q, 0))
+      : roundFiscale((split.imponibile22 * costoVoce(items[idx])) / (valoreBeni || 1))
+    quote.set(idx, Math.min(Math.max(0, teorica), val))
+  })
+  let residuo = roundFiscale(split.imponibile22 - [...quote.values()].reduce((s, q) => s + q, 0))
+  for (const idx of idxMarcate) {
+    if (residuo <= 0) break
+    const spazio = roundFiscale(importoVoce(items[idx]) - (quote.get(idx) ?? 0))
+    if (spazio <= 0) continue
+    const extra = Math.min(spazio, residuo)
+    quote.set(idx, roundFiscale((quote.get(idx) ?? 0) + extra))
+    residuo = roundFiscale(residuo - extra)
+  }
+
   const out: T[] = []
-  let eccedenzaAssegnata = 0
-  const ultimaMarcata = marcate[marcate.length - 1]
-  for (const voce of items) {
+  for (const [i, voce] of items.entries()) {
     if (!eBene(voce, vatDef)) { out.push(voce); continue }
     const val = importoVoce(voce)
-    const quota = voce === ultimaMarcata
-      ? roundFiscale(split.imponibile22 - eccedenzaAssegnata)
-      : roundFiscale((split.imponibile22 * val) / (valoreBeni || 1))
-    eccedenzaAssegnata = roundFiscale(eccedenzaAssegnata + quota)
+    const quota = quote.get(i) ?? 0
     const agevolata = Math.max(0, roundFiscale(val - quota))
 
     // ⚠️ Le righe prodotte NON sono più «beni significativi»: sono già il
@@ -246,6 +330,10 @@ export function espandiBeniSignificativi<T extends VoceSplittabile>(
     // (il motore espande, poi espande anche il PDF) rifarebbe lo split su
     // righe già spezzate — la funzione dev'essere IDEMPOTENTE, perché viene
     // chiamata a più livelli apposta per non poter divergere.
+    // ⚠️ `unit_cost: null` sulle righe prodotte: lo spread `...voce` lo
+    // porterebbe con sé, e queste righe viaggiano verso superfici di lettura.
+    // Il costo serve SOLO al calcolo (qui sopra): sulle righe sintetiche è
+    // un dato in più che non deve poter trapelare (§B.2, difesa in profondità).
     // Riga 1 — la parte che resta al 10%
     if (agevolata > 0) {
       out.push({
@@ -257,6 +345,7 @@ export function espandiBeniSignificativi<T extends VoceSplittabile>(
         vat_rate: ALIQUOTA_AGEVOLATA,
         total: agevolata,
         bene_significativo: false,
+        unit_cost: null,
       } as T)
     }
     // Riga 2 — l'eccedenza, al 22%
@@ -270,6 +359,7 @@ export function espandiBeniSignificativi<T extends VoceSplittabile>(
         vat_rate: ALIQUOTA_ORDINARIA,
         total: quota,
         bene_significativo: false,
+        unit_cost: null,
       } as T)
     }
   }

@@ -195,10 +195,29 @@ tipologia — ma **rimandata** (decisione di Eli).
 
 ---
 
-## 2. FASE 1 — Il valore del bene significativo è il costo
+## 2. FASE 1 — Il valore del bene significativo è il costo — ✅ IMPLEMENTATA (23 set)
 
 > **Difetto già attivo in produzione, indipendente dagli acconti. Si fa per primo** perché ogni
 > fattura di acconto ne eredita il calcolo.
+>
+> **Esito della rivalutazione pre-implementazione** (tre aggiustamenti rispetto al piano):
+> ① le **due select esplicite di `/p/[token]`** (principale + TierPicker) non portavano
+> `unit_cost` → aggiunto (eccezione §B.2 commentata nel codice; le prop dei componenti restano
+> a campi espliciti, il costo entra SOLO nel motore) — tutte le altre superfici erano già
+> coperte (`select('*')` o voci del form);
+> ② **invariante nuova, il TETTO**: col valore = costo l'eccedenza `B − P` può superare il
+> *prezzo* dei beni (sottocosto patologico) — il vecchio codice ne era immune per costruzione.
+> `splitDocumento` la cappa al prezzo dei beni, su righe E dicitura insieme;
+> ③ la **ripartizione fra più beni** va in proporzione al costo (non al prezzo), residuo
+> sull'ultima, cap per-voce al prezzo con riconciliazione (le due righe di una voce sommano
+> SEMPRE al suo prezzo: il totale del documento non cambia).
+> In corsa sono emersi e chiusi anche: FiscalSummary/anteprima-acconto/`proposte.ts` che
+> STRIPPAVANO `unit_cost` nelle mappature verso il motore (stessa classe del flag mancante del
+> 12 ago), l'insert della **nota di credito** che lo perdeva (avrebbe fatto scattare la guardia
+> 00421 alla trasmissione), e la **NC parziale** che scalava il prezzo ma non il costo.
+> Verificata la conversione SQL (082 copia già `unit_cost`) → **nessuna migration**.
+> Test 855/855 (+10 sul costo, esempio ufficiale 15/E compreso) · render Chromium dei 4 preset:
+> 0 sbordi, dicitura col costo, IVA 204 sull'esempio ufficiale.
 
 ### 2.1 Il difetto, misurato
 `valoriPerSplit` (`lib/fiscal/beni-significativi.ts`) calcola `valoreBeni` con `importoVoce`,

@@ -3641,9 +3641,16 @@ export async function createNotaCreditoAction(
     ? vociFattura
     : vociFattura.map((v) => {
         const prezzoRidotto = scalaPrezzo(Number(v.unit_price ?? 0), fattoreResiduo)
+        // ⚠️ Anche il COSTO si scala (23 set): sulla voce-bene è il valore
+        // fiscale (15/E) — una nota parziale storna una FRAZIONE
+        // dell'operazione, e ogni parte va in proporzione (stesso principio
+        // della 71/E §5.2 sugli acconti). Col costo pieno contro prezzi
+        // ridotti, lo split della nota manderebbe al 22% più del dovuto.
+        const costo = (v as { unit_cost?: number | null }).unit_cost
         return {
           ...v,
           unit_price: prezzoRidotto,
+          unit_cost: costo != null && Number(costo) > 0 ? scalaPrezzo(Number(costo), fattoreResiduo) : costo ?? null,
           total: roundFiscale(Number(v.quantity ?? 1) * prezzoRidotto * (1 - ((v.discount_pct ?? 0) / 100))),
         }
       })
@@ -3738,6 +3745,10 @@ export async function createNotaCreditoAction(
     // senza il flag farebbero divergere l'XML della nota dai suoi stessi
     // totali (la guardia 00421 la bloccherebbe alla trasmissione).
     bene_significativo: (v as { bene_significativo?: boolean | null }).bene_significativo === true,
+    // ⚠️ E il COSTO viaggia con la marcatura (23 set): è il valore fiscale
+    // del bene (15/E) — i totali della nota sono calcolati sul costo, e voci
+    // salvate senza farebbero ricadere doc-xml sul prezzo → stesso 00421.
+    unit_cost: (v as { unit_cost?: number | null }).unit_cost ?? null,
     total: v.total,
   })) as unknown as DocumentItemInsert[]
 

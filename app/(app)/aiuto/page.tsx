@@ -444,17 +444,23 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
   },
   {
     q: 'Ho installato una caldaia: perché una parte è al 22% invece che al 10%?',
-    parole: ['beni significativi', 'caldaia', 'infissi', 'sanitari', 'iva 10', 'iva 22', 'aliquota', 'condizionatore', 'videocitofono'],
+    parole: ['beni significativi', 'caldaia', 'infissi', 'sanitari', 'iva 10', 'iva 22', 'aliquota', 'condizionatore', 'videocitofono', 'costo', 'valore del bene'],
     a: <>Perché la caldaia è un <b>bene significativo</b>. Sui lavori in casa con IVA
       agevolata al 10% ci sono sette beni — ascensori e montacarichi, infissi, caldaie,
       videocitofoni, condizionatori, sanitari e rubinetteria da bagno, impianti di
       sicurezza — per cui il 10% vale <b>solo fino al valore del lavoro</b>. Quello che
       avanza va al 22%.
       <br /><br />
-      Un esempio: caldaia 2.000&nbsp;€ e posa 800&nbsp;€. Il lavoro vale 800, quindi al
-      10% vanno 800 di posa più 800 di caldaia (1.600 in tutto) e i restanti
-      1.200&nbsp;€ di caldaia vanno al 22%. Se invece la caldaia costasse meno del
-      lavoro, sarebbe tutto al 10%.
+      Il <b>valore del bene è il tuo costo d&rsquo;acquisto</b>, non il prezzo che fai al
+      cliente: lo chiede l&rsquo;Agenzia delle Entrate (circolare 15/E del 2018), e il tuo
+      ricarico conta come lavoro, dalla parte agevolata. Per questo, quando spunti
+      «È un bene significativo», l&rsquo;app ti chiede il <b>costo</b> del bene.
+      <br /><br />
+      L&rsquo;esempio dell&rsquo;Agenzia: caldaia venduta a 1.200&nbsp;€ che hai pagato
+      1.000&nbsp;€, posa 600&nbsp;€. Il lavoro vale 800 (600 di posa più 200 di
+      ricarico), quindi al 10% vanno 1.600&nbsp;€ e al 22% i 200&nbsp;€ del bene che
+      avanzano. Se non indichi il costo, l&rsquo;app usa il prezzo di vendita: il calcolo
+      resta valido ma l&rsquo;IVA può risultare più alta del dovuto.
       <br /><br />
       Nel «valore del lavoro» ci sta tutto ciò che non è quel bene: manodopera,
       materiali, e anche tapparelle, zanzariere e grate, che si contano a parte
@@ -467,9 +473,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       parte, o tutto, va al 22% — l&rsquo;app te lo avvisa subito sotto la spunta, così lo capisci mentre
       compili invece di trovartelo diverso nel riepilogo. Sul preventivo e sulla fattura la voce resta quella
       vera, con accanto la sua <b>aliquota</b> (per la caldaia «22%» o «10% + 22%») e una
-      riga che spiega la parte al 22%; in fattura compare anche il valore del bene, come
-      chiede la legge. La spunta compare solo se non sei in forfettario e la voce è al
-      10%.</>,
+      riga che spiega la parte al 22%; in fattura compare anche il <b>valore del bene</b>{' '}
+      — cioè il costo che hai indicato — come chiede la legge. La spunta compare solo
+      se non sei in forfettario e la voce è al 10%.</>,
   },
   {
     q: 'Fatturo a un condominio: mi trattengono qualcosa?',

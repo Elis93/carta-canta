@@ -141,14 +141,33 @@ const ORO = '#b08d3e'
 // scelta del ricarico (12 ago). I costi continuano ad arrivare da soli da
 // catalogo, listini e suggerimenti (`unit_cost` resta nei dati e nel
 // salvataggio: nessun documento perde niente).
+// ⚠️ UNICA ECCEZIONE (23 set): sulla voce marcata «bene significativo» il
+// costo È il valore fiscale del bene (circ. 15/E/2018) e va in fattura per
+// legge — lì il campo torna nella card della voce, dentro VoceBene, con la
+// spiegazione. È lo stesso unit_cost: modificarlo qui o nel Margine è uguale.
 
 // ── Beni significativi (081) ────────────────────────────────────────────────
 // Compare SOLO dove ha senso: regime non forfettario (un forfettario non
 // addebita IVA) e voce al 10% (l'agevolazione vale lì). Fuori da quei due
 // casi la spunta non esiste proprio: un interruttore che non fa niente è
 // peggio di un interruttore assente.
+// ⚠️ Dal 23 set il VALORE del bene è il suo COSTO (circ. 15/E/2018, decisione
+// Eli «facciamo esattamente come richiede l'Agenzia»): la spunta apre il campo
+// Costo — è lo STESSO `unit_cost` della card Margine, una fonte sola — e qui
+// la pillola 🔒 si ribalta: per obbligo di legge (71/E §5.1) quel valore
+// COMPARE in fattura. Senza costo il motore ripiega sul prezzo (comportamento
+// storico) e l'avviso ambra dice che l'IVA può risultare più alta del dovuto.
 function VoceBene({ voce, onUpdate, info }: { voce: VoceItem; onUpdate: (u: Partial<VoceItem>) => void; info?: IvaVoceInfo }) {
   const attivo = voce.bene_significativo === true
+  // Campo costo semi-controllato: bozza libera mentre si scrive, formato
+  // it-IT fuori dal fuoco — e se il valore cambia ALTROVE (card Margine,
+  // stesso unit_cost) il campo si aggiorna da sé perché fuori dal fuoco
+  // mostra sempre il dato vero della voce.
+  const [costoDraft, setCostoDraft] = useState<string | null>(null)
+  const costoValido = voce.unit_cost != null && Number(voce.unit_cost) > 0
+  const costoMostrato = costoDraft ?? (costoValido
+    ? Number(voce.unit_cost).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : '')
   // ⚠️ Avviso contestuale (Eli, 12 set): con la spunta attiva l'IVA EFFETTIVA
   // può non essere il 10% impostato — la regola dei beni significativi manda
   // al 22% la parte che eccede il valore del lavoro. Il caso «P=0» (tutto al
@@ -172,6 +191,51 @@ function VoceBene({ voce, onUpdate, info }: { voce: VoceItem; onUpdate: (u: Part
           È un <b>bene significativo</b> (caldaia, infissi, sanitari…)
         </span>
       </label>
+      {/* Il COSTO del bene: è il suo VALORE fiscale (15/E/2018). Stesso
+          `unit_cost` della card Margine — due punti di modifica, un dato solo. */}
+      {attivo && (
+        <div style={{ marginLeft: 26, marginTop: 8 }}>
+          <label style={{ display: 'block', fontSize: 11, color: 'var(--cc-muted)', marginBottom: 3 }}>
+            Costo d’acquisto del bene (senza il tuo ricarico)
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Input
+              type="text"
+              inputMode="decimal"
+              placeholder="0,00"
+              value={costoMostrato}
+              onFocus={() => setCostoDraft(costoMostrato)}
+              onChange={(e) => {
+                setCostoDraft(e.target.value)
+                const n = parseImportoIt(e.target.value)
+                onUpdate({ unit_cost: Number.isFinite(n) && n > 0 ? n : null })
+              }}
+              onBlur={() => setCostoDraft(null)}
+              aria-label="Costo d’acquisto del bene significativo"
+              className="h-10 w-[130px] text-[16px]"
+            />
+            <span style={{ fontSize: 12, color: 'var(--cc-muted)' }}>
+              × {Number(voce.quantity ?? 1).toLocaleString('it-IT', { maximumFractionDigits: 2 })} {voce.unit || 'pz'}
+            </span>
+          </div>
+          {costoValido ? (
+            <div style={{ marginTop: 5, fontSize: 11.5, lineHeight: 1.4, color: 'var(--cc-muted)' }}>
+              Questo valore <b>comparirà in fattura</b>: la legge chiede di indicare
+              il valore del bene, che è il tuo costo senza ricarico. Il ricarico
+              resta nella parte agevolata al 10% e non viene mostrato come tale.
+            </div>
+          ) : (
+            <div style={{
+              marginTop: 5, fontSize: 11.5, lineHeight: 1.4, color: '#b0863e',
+              background: '#faf6ec', border: '1px solid #ecdcbb', borderRadius: 8, padding: '6px 9px',
+            }}>
+              <b>Costo non indicato.</b>{' '}Senza, il valore del bene si calcola sul
+              prezzo di vendita e l’IVA può risultare più alta del dovuto. Quando
+              lo inserisci, comparirà in fattura come richiede la legge.
+            </div>
+          )}
+        </div>
+      )}
       {/* P=0: il 10% impostato scompare del tutto → ambra, è la sorpresa. */}
       {pZero && (
         <div style={{
@@ -199,9 +263,14 @@ function VoceBene({ voce, onUpdate, info }: { voce: VoceItem; onUpdate: (u: Part
           agevolata vale <b>solo fino al valore del lavoro</b>: ascensori e
           montacarichi, infissi esterni e interni, caldaie, videocitofoni,
           condizionatori, sanitari e rubinetteria da bagno, impianti di sicurezza.
-          {' '}Se il bene costa più del resto del lavoro, la parte che avanza va al 22%.
+          {' '}Se il bene vale più del resto del lavoro, la parte che avanza va al 22%.
           {' '}Spuntando la casella lo calcola l’app e in fattura compaiono le due
           righe separate, come richiede la legge.
+          <br /><br />
+          Il <b>valore del bene è il tuo costo d’acquisto</b>, senza il ricarico
+          (lo chiede l’Agenzia delle Entrate, circolare 15/E del 2018): per questo
+          la spunta apre il campo Costo, e quel valore compare in fattura. Il
+          ricarico conta come lavoro, dalla parte al 10%.
           <br /><br />
           Nel «resto del lavoro» ci va tutto ciò che non è quel bene: manodopera,
           materiali di consumo, e anche tapparelle, zanzariere e grate, che si

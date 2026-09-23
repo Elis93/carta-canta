@@ -12,6 +12,14 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
     data: 'Fine settembre 2026',
+    titolo: 'Il bene significativo si calcola sul costo, come chiede l’Agenzia',
+    punti: [
+      'Sui lavori al 10% con un bene significativo (caldaia, infissi, sanitari…), il valore del bene che decide quanto va al 22% è ora il tuo costo d’acquisto, non il prezzo di vendita: è la regola dell’Agenzia delle Entrate (circolare 15/E del 2018), e il tuo ricarico conta come lavoro, dalla parte agevolata. Sull’esempio ufficiale dell’Agenzia — caldaia venduta a 1.200 € pagata 1.000, posa 600 — il cliente paga 48 € di IVA in meno rispetto al calcolo sul prezzo.',
+      'Quando spunti «È un bene significativo», la voce apre il campo del costo. Attenzione: quel valore compare in fattura, perché la legge chiede di indicare il valore del bene — è l’unico punto dell’app in cui il costo si vede sul documento. Se non lo indichi, l’app calcola come prima sul prezzo di vendita e te lo segnala: l’IVA può risultare più alta del dovuto.',
+    ],
+  },
+  {
+    data: 'Fine settembre 2026',
     titolo: 'La copia della fattura dice sempre la verità',
     punti: [
       'Su indicazione del commercialista, il PDF e la pagina del link di una fattura dichiarano ora in che stato è il documento. Finché la fattura non è stata trasmessa al Sistema di Interscambio, la copia porta la dicitura standard «non costituisce fattura valida ai fini del DPR 633/1972» — la stessa che usano i gestionali più diffusi sui documenti non ancora emessi. Chi la riceve sa esattamente cosa ha in mano.',

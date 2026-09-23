@@ -43,6 +43,10 @@ export function FiscalSummary({ voci, fiscalOpts, docNumber, docType = 'preventi
     vat_rate: v.vat_rate,
     bonus_tipo: v.bonus_tipo ?? null,
     bene_significativo: v.bene_significativo ?? null,
+    // ⚠️ Il VALORE del bene significativo è il suo COSTO (23 set, 15/E):
+    // senza unit_cost il riepilogo live calcolerebbe lo split vecchio mentre
+    // il server salva quello nuovo — stessa classe del flag mancante (12 ago).
+    unit_cost: v.unit_cost ?? null,
     total: 0,
     ai_generated: false as boolean | null,
     ai_confidence: null as number | null,
