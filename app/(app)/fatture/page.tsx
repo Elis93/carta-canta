@@ -22,7 +22,7 @@ import { BackButton } from '@/components/shared/BackButton'
 import { DraftSavedBanner } from '../preventivi/_components/DraftSavedBanner'
 import { formatDocNumber } from '@/lib/utils'
 import { getContextualDate } from '@/lib/utils/document-date'
-import { statusesFromQuery, coreQuery, sdiEsitoQuery, isNotaCreditoQuery, isNotaDebitoQuery, FATTURA_STATUS_KEYWORDS } from '@/lib/documents/status-search'
+import { statusesFromQuery, coreQuery, sdiEsitoQuery, isNotaCreditoQuery, isNotaDebitoQuery, isAccontoQuery, FATTURA_STATUS_KEYWORDS } from '@/lib/documents/status-search'
 import { CsvDownloadButton } from '@/components/shared/CsvDownloadButton'
 import { ordinaPerUrgenza } from '@/lib/documents/ordina-scadenza'
 import { fetchAllRows } from '@/lib/supabase/fetch-all'
@@ -145,7 +145,7 @@ export default async function FatturePage({ searchParams }: Props) {
     .from('documents')
     .select('id, doc_number, title, status, doc_type, origin_document_id, total, currency, created_at, sent_at, expires_at, accepted_at, updated_at, updated_after_send_at, clients(id, name, email)', { count: 'exact' })
     .eq('workspace_id', workspace.id)
-    .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+    .in('doc_type', ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'])
     .is('deleted_at', null)
 
   // Ordinamento — default 'recent' (updated_at DESC = ultima modifica),
@@ -249,6 +249,9 @@ export default async function FatturePage({ searchParams }: Props) {
       query = query.eq('doc_type', 'nota_credito')
     } else if (isNotaDebitoSearch) {
       query = query.eq('doc_type', 'nota_debito')
+    } else if (isAccontoQuery(qLow)) {
+      // «acconto», «acc», «td02»… → le fatture di acconto (Fase 2, 24 set).
+      query = query.eq('doc_type', 'fattura_acconto')
     } else if (sdiSearch) {
       query = query.not('sdi_status', 'is', null)
       if (sdiSearch.esiti) query = query.in('sdi_status', sdiSearch.esiti)
@@ -379,7 +382,9 @@ export default async function FatturePage({ searchParams }: Props) {
   // resta intatta e un errore lascia solo la mappa vuota.
   const ncOriginById = new Map<string, string>()
   {
-    const note = (fatture ?? []).filter((f) => f.doc_type === 'nota_credito' && f.origin_document_id)
+    // Anche le FATTURE DI ACCONTO: la loro origine è il PREVENTIVO, e la
+    // riga 3 dice «su preventivo N» (stessa forma dello «storna Fatt. N»).
+    const note = (fatture ?? []).filter((f) => (f.doc_type === 'nota_credito' || f.doc_type === 'fattura_acconto') && f.origin_document_id)
     if (note.length > 0) {
       const origini = await supabase
         .from('documents')
@@ -754,7 +759,8 @@ export default async function FatturePage({ searchParams }: Props) {
                     const meta = sdi ? (SDI_LABEL[sdi] ?? { text: `SdI · ${sdi}`, color: '#2f8a63' }) : null
                     const isNc = ft.doc_type === 'nota_credito'
                     const isNd = ft.doc_type === 'nota_debito'
-                    if (!meta && !isNc && !isNd) return null
+                    const isAcc = ft.doc_type === 'fattura_acconto'
+                    if (!meta && !isNc && !isNd && !isAcc) return null
                     // ⚠️ «Nota di credito» è una DICITURA come l'esito SdI, non una
                     // pillola (Eli, 9 ago): sta a sinistra, sulla stessa riga e con
                     // la stessa forma. Una pillola in più sulla riga dei badge
@@ -766,15 +772,15 @@ export default async function FatturePage({ searchParams }: Props) {
                             riferimento alla fattura stornata sborda a 320px in «Testo
                             grande» — misurato. `flex:1 1 auto` + `minWidth:0` le lasciano
                             lo spazio che c'è, l'icona resta in cima. */}
-                        {(isNc || isNd) && (
-                          <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 3, fontSize: 11, fontWeight: 600, color: isNd ? '#3f6fb0' : '#6b4fa8', flex: '1 1 auto', minWidth: 0, lineHeight: 1.35 }}>
-                            {isNd
+                        {(isNc || isNd || isAcc) && (
+                          <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 3, fontSize: 11, fontWeight: 600, color: isNd ? '#3f6fb0' : isAcc ? '#2f8a63' : '#6b4fa8', flex: '1 1 auto', minWidth: 0, lineHeight: 1.35 }}>
+                            {isNd || isAcc
                               ? <FilePlus2 style={{ width: 11, height: 11, flexShrink: 0, marginTop: 1 }} />
                               : <FileMinus2 style={{ width: 11, height: 11, flexShrink: 0, marginTop: 1 }} />}
                             <span>
-                              {isNd ? 'Nota di debito' : 'Nota di credito'}
+                              {isAcc ? 'Fattura di acconto' : isNd ? 'Nota di debito' : 'Nota di credito'}
                               {ncOriginById.get(ft.id)
-                                ? ` · ${isNd ? 'integra' : 'storna'} ${ncOriginById.get(ft.id)}`
+                                ? ` · ${isAcc ? 'su preventivo' : isNd ? 'integra' : 'storna'} ${ncOriginById.get(ft.id)}`
                                 : ''}
                             </span>
                           </span>

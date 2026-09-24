@@ -70,8 +70,10 @@ export type FiscalOptions = {
   bollo_auto?: boolean
   /** Tipo del documento: il bollo NON si applica ai preventivi (non sono
    *  documenti fiscali ex art. 13 tariffa DPR 642/1972 — ricerca 11 ago,
-   *  decisione Eli: «se non è prassi, non facciamolo»). Assente = fattura. */
-  doc_type?: 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito'
+   *  decisione Eli: «se non è prassi, non facciamolo»). Assente = fattura.
+   *  La fattura di ACCONTO (TD02) è una fattura a tutti gli effetti:
+   *  il bollo segue le sue regole (soglia 77,47 € per singolo documento). */
+  doc_type?: 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito' | 'fattura_acconto'
   currency: CurrencyCode
   exchange_rate?: number
 }

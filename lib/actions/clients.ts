@@ -443,7 +443,9 @@ export async function deleteClientAction(clientId: string): Promise<ActionResult
     .select('id', { count: 'exact', head: true })
     .eq('workspace_id', workspaceId)
     .eq('client_id', clientId)
-    .eq('doc_type', 'fattura')
+    // Tutti i documenti FISCALI: fatture, note di credito/debito e fatture
+    // di acconto (TD02) — la protezione vale per ognuno di loro.
+    .neq('doc_type', 'preventivo')
   if (countErr) return { error: 'Errore nella verifica delle fatture del cliente. Riprova.' }
   if ((fattureCount ?? 0) > 0) {
     return {

@@ -85,8 +85,9 @@ export async function trasmettiDocumentoSdi(opts: {
     .eq('workspace_id', workspace.id)
     // ⚠️ Anche le NOTE DI CREDITO: una TD04 che resta nell'app non storna
     // nulla — per l'Agenzia la fattura originale è ancora intera. È la
-    // trasmissione a farla esistere.
-    .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+    // trasmissione a farla esistere. E la FATTURA DI ACCONTO (TD02): nasce
+    // pronta da trasmettere, i 12 giorni corrono dall'incasso.
+    .in('doc_type', ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'])
     .is('deleted_at', null)
     .maybeSingle()
   if (!doc) return { status: 404, body: { error: 'Fattura non trovata' } }
@@ -452,7 +453,7 @@ export async function trasmettiDocumentoSdi(opts: {
     causale,
     // ⚠️ Gli importi restano POSITIVI anche nella TD04: è il tipo di documento
     // a dire che si tratta di uno storno (istruzioni AdE alla compilazione).
-    tipoDocumento: isNotaCredito ? 'TD04' : isNotaDebito ? 'TD05' : 'TD01',
+    tipoDocumento: isNotaCredito ? 'TD04' : isNotaDebito ? 'TD05' : doc.doc_type === 'fattura_acconto' ? 'TD02' : 'TD01',
     fatturaCollegata,
   }
 

@@ -105,12 +105,13 @@ export function DocumentTimeline({
   sdiStatus = null,
   sdiUpdatedAt = null,
 }: DocumentTimelineProps) {
-  const isFattura = docType === 'fattura'
+  const isFattura = docType === 'fattura' || docType === 'fattura_acconto'
   const isNotaCredito = docType === 'nota_credito'
   // Il genere delle etichette: fattura e nota di credito sono femminili.
   // ⚠️ Mai per esclusione: senza questo, la nota prendeva le parole del
   // preventivo («Inviato», «Rifiutato», «Accettato dal cliente»…).
-  const femm = isFattura || isNotaCredito
+  // Anche nota di debito e fattura di acconto sono femminili.
+  const femm = isFattura || isNotaCredito || docType === 'nota_debito'
   // Tendina chiusa di default (richiesta Eli 27 lug): la cronologia si apre
   // solo quando serve, la pagina resta corta.
   const [open, setOpen] = useState(false)

@@ -30,7 +30,10 @@ export function statoCopiaSdi(
   docType: string | null | undefined,
   sdiStatus: string | null | undefined,
 ): StatoCopiaSdi | null {
-  if (docType !== 'fattura' && docType !== 'nota_credito') return null
+  // Fatture, note di credito/debito e fatture di acconto (TD02): tutte
+  // dichiarano il proprio stato SdI sulla copia. (La nota di debito mancava:
+  // la sua copia usciva senza dicitura — chiusa col censimento Fase 2, 24 set.)
+  if (docType === 'preventivo' || !docType) return null
   const s = (sdiStatus ?? '').trim()
   if (!s || s === 'scartata') return 'non_emessa'
   if (s === 'consegnata' || s === 'mancata_consegna') return 'copia_cortesia'
@@ -47,12 +50,19 @@ export function statoCopiaSdi(
  */
 export function dicituraCopiaSdi(stato: StatoCopiaSdi, docType: string | null | undefined): string {
   const nc = docType === 'nota_credito'
-  const nome = nc ? 'nota di credito' : 'fattura'
+  const nome = nc
+    ? 'nota di credito'
+    : docType === 'nota_debito'
+      ? 'nota di debito'
+      : docType === 'fattura_acconto'
+        ? 'fattura di acconto'
+        : 'fattura'
+  const nomeCap = nome.charAt(0).toUpperCase() + nome.slice(1)
   switch (stato) {
     case 'non_emessa':
       return `Il presente documento non costituisce ${nome} valida ai fini del DPR 633/1972 e successive modifiche. La ${nome} definitiva viene emessa con la trasmissione al Sistema di Interscambio.`
     case 'in_attesa_esito':
-      return `${nc ? 'Nota di credito' : 'Fattura'} trasmessa al Sistema di Interscambio, in attesa di esito. Copia priva di valenza fiscale.`
+      return `${nomeCap} trasmessa al Sistema di Interscambio, in attesa di esito. Copia priva di valenza fiscale.`
     case 'copia_cortesia':
       return `Copia di cortesia non valida ai fini fiscali. L'originale della ${nome} è stato inviato al Sistema di Interscambio ed è consultabile nell'area riservata del sito dell'Agenzia delle Entrate.`
   }
@@ -98,6 +108,8 @@ export function copiaCortesiaBloccata(
   docType: string | null | undefined,
   sdiStatus: string | null | undefined,
 ): boolean {
-  if (docType !== 'fattura' && docType !== 'nota_credito' && docType !== 'nota_debito') return false
+  // Anche la FATTURA DI ACCONTO (TD02): la copia parte dopo l'esito, come
+  // per ogni altro documento fiscale.
+  if (docType === 'preventivo' || !docType) return false
   return !esitoPositivoSdi(sdiStatus)
 }

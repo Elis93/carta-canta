@@ -31,7 +31,7 @@ const SDI_ON = () => process.env.NEXT_PUBLIC_SDI_ENABLED === 'true'
 /** Il messaggio della guardia: cosa non si può fare, perché, cosa fare invece
  *  (schema §B.2). */
 export function messaggioCopiaBloccata(docType: string | null | undefined): string {
-  const nome = docType === 'nota_credito' ? 'nota di credito' : docType === 'nota_debito' ? 'nota di debito' : 'fattura'
+  const nome = docType === 'nota_credito' ? 'nota di credito' : docType === 'nota_debito' ? 'nota di debito' : docType === 'fattura_acconto' ? 'fattura di acconto' : 'fattura'
   return `Prima la trasmissione, poi la copia: con la fatturazione elettronica attiva, la ${nome} si invia allo SdI dalla card «Fattura elettronica». Appena arriva l'esito positivo, la copia di cortesia per il cliente si sblocca — e parte da sola se il cliente ha un'email in rubrica.`
 }
 
@@ -53,7 +53,8 @@ export async function bloccoInvioCliente(
   docType: string | null | undefined,
 ): Promise<string | null> {
   if (!SDI_ON()) return null
-  if (docType !== 'fattura' && docType !== 'nota_credito' && docType !== 'nota_debito') return null
+  // Tutti i documenti fiscali, fattura di acconto (TD02) compresa.
+  if (docType === 'preventivo' || !docType) return null
   const sdiStatus: string | null = await supabase
     .from('documents')
     .select('sdi_status')
@@ -98,7 +99,7 @@ export async function inviaCopiaCortesiaAutomatica(
       .select('*, document_items(*), clients!client_id(*)')
       .eq('id', docId)
       .is('deleted_at', null)
-      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'])
       .maybeSingle()
     // Ogni ramo che ferma la copia LOGGA il perché (22 set, collaudo T15):
     // senza, un «non è partita» dal telefono era indistinguibile fra sei
@@ -158,7 +159,9 @@ export async function inviaCopiaCortesiaAutomatica(
     // Quota Free: l'invio di una FATTURA consuma il contatore delle 8 — a
     // quota piena la copia non parte (resta l'invito, che mostra il paywall).
     const docType = String(d.doc_type)
-    if (ws.plan === 'free' && docType === 'fattura') {
+    // Anche la fattura di ACCONTO consuma il contatore delle 8 fatture: è
+    // una fattura vera inviata al cliente. Le note no.
+    if (ws.plan === 'free' && (docType === 'fattura' || docType === 'fattura_acconto')) {
       const trial = checkFreeBlock(ws, 'fattura')
       if (trial.blocked) {
         console.warn('[copia-cortesia] quota Free esaurita: copia automatica non inviata', docId)
@@ -235,7 +238,7 @@ export async function inviaCopiaCortesiaAutomatica(
       .getUserById(ws.owner_id as string)
       .then((r: { data: { user?: { email?: string | null } | null } }) => r.data.user?.email ?? null, () => null)
     const numero = d.doc_number ? stripPrefissoLegacy(String(d.doc_number)) : null
-    const nomeDoc = docType === 'nota_credito' ? 'nota di credito' : docType === 'nota_debito' ? 'nota di debito' : 'fattura'
+    const nomeDoc = docType === 'nota_credito' ? 'nota di credito' : docType === 'nota_debito' ? 'nota di debito' : docType === 'fattura_acconto' ? 'fattura di acconto' : 'fattura'
     const recipientName = String(client?.name ?? '').trim() || null
     const totale = Number(d.total ?? 0)
     const totalFormatted = `€ ${totale.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -248,7 +251,7 @@ export async function inviaCopiaCortesiaAutomatica(
 
     const result = await sendEmail({
       to: clientEmail,
-      subject: `${docType === 'nota_credito' ? 'Nota di credito' : docType === 'nota_debito' ? 'Nota di debito' : 'Fattura'}${numero ? ` ${numero}` : ''} da ${senderName}`,
+      subject: `${docType === 'nota_credito' ? 'Nota di credito' : docType === 'nota_debito' ? 'Nota di debito' : docType === 'fattura_acconto' ? 'Fattura di acconto' : 'Fattura'}${numero ? ` ${numero}` : ''} da ${senderName}`,
       react: React.createElement(PreventivoEmail, {
         senderName,
         recipientName,
@@ -256,10 +259,10 @@ export async function inviaCopiaCortesiaAutomatica(
         totalFormatted,
         message,
         publicUrl,
-        // Il tipo VERO (mai per esclusione, regola 9 ago): la nota di credito
-        // ha le sue parole anche nell'email — residuo chiuso il 22 set.
-        docType: (docType === 'nota_credito' || docType === 'nota_debito' ? docType : 'fattura') as
-          'fattura' | 'nota_credito' | 'nota_debito',
+        // Il tipo VERO (mai per esclusione, regola 9 ago): note e fattura di
+        // acconto hanno le loro parole anche nell'email.
+        docType: (docType === 'nota_credito' || docType === 'nota_debito' || docType === 'fattura_acconto' ? docType : 'fattura') as
+          'fattura' | 'nota_credito' | 'nota_debito' | 'fattura_acconto',
         ownerEmail,
       }),
       replyTo: ownerEmail ?? undefined,
@@ -283,7 +286,7 @@ export async function inviaCopiaCortesiaAutomatica(
     }
 
     // Quota Free della fattura: primo invio → incremento atomico (083).
-    if (ws.plan === 'free' && docType === 'fattura') {
+    if (ws.plan === 'free' && (docType === 'fattura' || docType === 'fattura_acconto')) {
       const { error: rpcErr } = await admin.rpc('increment_invoice_quota', { p_workspace_id: ws.id })
       if (rpcErr) {
         await admin

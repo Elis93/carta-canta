@@ -61,7 +61,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     .select('id, doc_number, sdi_status')
     .eq('id', id)
     .eq('workspace_id', ws.id)
-    .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+    .in('doc_type', ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'])
     .is('deleted_at', null)
     .maybeSingle()
   if (!doc) return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })

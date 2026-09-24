@@ -110,7 +110,7 @@ export async function getAppNotifications(
               .from('documents')
               .select('id, doc_number, doc_type, status, payment_status, sdi_status, sdi_error, sdi_updated_at, paid_at, accepted_at, created_at, doc_date')
               .eq('workspace_id', workspaceId)
-              .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+              .in('doc_type', ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'])
               .is('deleted_at', null)
               // scartate + non trasmesse fuori bozza: le seconde servono al
               // promemoria dei 12 giorni (art. 21 c.4), non solo se pagate.
@@ -542,7 +542,9 @@ export async function getAppNotifications(
       const termine = rif ? termineTrasmissione(rif) : null
       if (termine && termine.giorniRimasti <= 3) {
         const key = `sdi_termine:${doc.id}`
-        const cosa = doc.doc_type === 'nota_credito' ? 'Nota di credito' : 'Fattura'
+        // Il tipo VERO, mai per esclusione: la nota di debito e la fattura
+        // di acconto hanno il loro nome anche in campanella.
+        const cosa = docTypeLabel(doc.doc_type)
         notifications.push({
           key,
           type: 'sdi_da_trasmettere',

@@ -108,8 +108,8 @@ export interface SdiInvoice {
    * ⚠️ Gli importi restano POSITIVI anche per la TD04: il segno lo dà il
    * TIPO di documento, non il numero (istruzioni AdE alla compilazione).
    */
-  /** TD01 fattura · TD04 nota di credito · TD05 nota di debito */
-  tipoDocumento?: 'TD01' | 'TD04' | 'TD05'
+  /** TD01 fattura · TD02 fattura di acconto · TD04 nota di credito · TD05 nota di debito */
+  tipoDocumento?: 'TD01' | 'TD02' | 'TD04' | 'TD05'
   /** Solo TD04: la fattura stornata */
   fatturaCollegata?: SdiDocumentoCollegato | null
 }

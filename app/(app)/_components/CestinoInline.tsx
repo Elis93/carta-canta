@@ -55,7 +55,7 @@ interface DeletedItem {
   sdi_transmitted: boolean
 }
 
-const DOC_TYPES_FATTURA = ['fattura', 'nota_credito', 'nota_debito']
+const DOC_TYPES_FATTURA = ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto']
 
 export function CestinoInline({ scope = 'all', workspaceId: workspaceIdProp }: { scope?: CestinoScope; workspaceId?: string | null }) {
   const [items, setItems] = useState<DeletedItem[]>([])

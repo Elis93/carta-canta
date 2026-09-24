@@ -189,6 +189,7 @@ export default async function BilancioPage({
           .is('deleted_at', null)
           .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
           .neq('doc_type', 'nota_credito')
+          .neq('doc_type', 'fattura_acconto')
           .gte('updated_at', chartStart.toISOString()))
       : db
       .from('documents')
@@ -201,6 +202,10 @@ export default async function BilancioPage({
       // preventivi) non guarda il tipo di documento — senza questo filtro una
       // nota segnata «pagata» entrerebbe nei conti col segno sbagliato.
       .neq('doc_type', 'nota_credito')
+      // ⚠️ E mai le FATTURE DI ACCONTO (TD02, Fase 2): nascono «pagate» ma
+      // lo STESSO incasso è già contato sul preventivo (payment_status
+      // 'partial') — includerle lo conterebbe due volte.
+      .neq('doc_type', 'fattura_acconto')
       // Finestra temporale come per le spese: senza, la query scaricava
       // TUTTO lo storico e sopra il tetto righe dell'API (1.000 di default su
       // Supabase) le entrate sarebbero state troncate IN SILENZIO — numeri

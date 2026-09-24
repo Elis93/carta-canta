@@ -148,6 +148,20 @@ const NOTA_CREDITO_WORDS = ['nota', 'note', 'credito', 'crediti', 'nc', 'td04', 
 // note sarebbe peggio che non cercarle affatto.
 const NOTA_DEBITO_WORDS = ['nota', 'note', 'debito', 'debiti', 'nd', 'td05', 'integrazione', 'integrare']
 
+// Stesso schema per la FATTURA DI ACCONTO (TD02, Fase 2 acconti).
+// ⚠️ «acconto» da solo trova le fatture di acconto; «acconto caldaia» resta
+// una ricerca testuale (la parola serve anche nei titoli dei documenti).
+// «sal» NON c'è: troncherebbe «Sala» — una parola vera dei documenti.
+const ACCONTO_WORDS = ['acconto', 'acconti', 'anticipo', 'anticipi', 'acc', 'td02']
+
+export function isAccontoQuery(qLow: string): boolean {
+  const ts = tokens(qLow).filter((t) => !GENERIC_WORDS.has(t) && t !== 'di')
+  if (ts.length === 0) return false
+  return ts.every((t) =>
+    ACCONTO_WORDS.some((w) => (t.length <= 2 ? t === w : w.startsWith(t) && t.length >= 3))
+  )
+}
+
 export function isNotaDebitoQuery(qLow: string): boolean {
   const ts = tokens(qLow).filter((t) => !GENERIC_WORDS.has(t) && t !== 'di')
   if (ts.length === 0) return false

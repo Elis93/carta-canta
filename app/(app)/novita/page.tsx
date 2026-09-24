@@ -12,6 +12,15 @@ const AI_ATTIVA = process.env.NEXT_PUBLIC_AI_IMPORT_ENABLED === 'true'
 const NOVITA: Array<{ data: string; titolo: string; punti: string[] }> = [
   {
     data: 'Fine settembre 2026',
+    titolo: 'La fattura di acconto si fa da sola',
+    punti: [
+      'Quando registri un acconto ricevuto su un preventivo accettato («Acconto ricevuto»), l’app crea da sola la fattura di acconto: incassare un acconto obbliga a fatturarlo entro 12 giorni, e ora il documento nasce già pronto — con la sua numerazione (ACC 001/2026), la data dell’incasso, il riferimento al preventivo nella descrizione e lo stato «Pagata». La trovi fra le Fatture, e il promemoria sul preventivo ti dice entro quando trasmetterla.',
+      'Se il lavoro ha più aliquote IVA (per esempio una caldaia come bene significativo con la posa al 10%), l’acconto viene ripartito fra le aliquote in proporzione all’intero lavoro, come chiede l’Agenzia (circolare 71/E), e la fattura riporta il valore del bene nella quota corrispondente. Con la ritenuta o l’inversione contabile ereditate dal preventivo, e il bollo dove dovuto.',
+      'Se sbagli l’importo, elimini la fattura di acconto e l’acconto sul preventivo si azzera: lo registri di nuovo con la cifra giusta. E finché un preventivo ha una fattura di acconto, «Converti in fattura» resta bloccato: la fattura piena conterebbe due volte la parte già fatturata — la fattura di saldo con l’acconto scomputato arriva con un prossimo aggiornamento.',
+    ],
+  },
+  {
+    data: 'Fine settembre 2026',
     titolo: 'Il bene significativo si calcola sul costo, come chiede l’Agenzia',
     punti: [
       'Sui lavori al 10% con un bene significativo (caldaia, infissi, sanitari…), il valore del bene che decide quanto va al 22% è ora il tuo costo d’acquisto, non il prezzo di vendita: è la regola dell’Agenzia delle Entrate (circolare 15/E del 2018), e il tuo ricarico conta come lavoro, dalla parte agevolata. Sull’esempio ufficiale dell’Agenzia — caldaia venduta a 1.200 € pagata 1.000, posa 600 — il cliente paga 48 € di IVA in meno rispetto al calcolo sul prezzo.',

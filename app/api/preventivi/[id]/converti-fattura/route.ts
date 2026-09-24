@@ -77,6 +77,39 @@ export async function POST(
     )
   }
 
+  // ── BLOCCO-PONTE Fase 2 acconti (24 set): con una FATTURA DI ACCONTO già
+  // emessa, la conversione classica produrrebbe una fattura PIENA — e
+  // acconto + fattura piena = la stessa parte di lavoro fatturata DUE volte
+  // (3.900 dichiarati su un lavoro da 3.000). Il saldo a CONGUAGLIO (righe
+  // negative che scomputano gli acconti, 71/E §5.2) è la Fase 3: fino ad
+  // allora qui si blocca, fail-closed anche sull'errore di lettura.
+  {
+    const { data: acconti, error: accErr } = await supabase
+      .from('documents')
+      .select('id')
+      .eq('origin_document_id', id)
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'fattura_acconto')
+      .is('deleted_at', null)
+      .limit(1)
+    if (accErr) {
+      return NextResponse.json(
+        { error: 'Non riesco a verificare le fatture di acconto del preventivo. Riprova tra qualche istante.' },
+        { status: 500 }
+      )
+    }
+    if ((acconti ?? []).length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            'Questo preventivo ha già una fattura di acconto: la fattura piena conterebbe due volte la parte già fatturata. ' +
+            'La fattura di saldo con l’acconto scomputato arriva con un prossimo aggiornamento — intanto parlane col commercialista.',
+        },
+        { status: 409 }
+      )
+    }
+  }
+
   // ── Opzioni a livelli (041): serve una proposta scelta ──────────────────
   // Un preventivo con più proposte e nessuna scelta (accettazione forzata
   // dall'app, non dal cliente) diventerebbe una fattura con le voci di

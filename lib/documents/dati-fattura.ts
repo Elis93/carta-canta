@@ -28,9 +28,11 @@ export interface ClienteFattura {
   codice_fiscale?: string | null
 }
 
-/** true se il tipo documento è una fattura ai fini dell'art. 21. */
+/** true se il tipo documento è una fattura ai fini dell'art. 21
+ *  (fattura, note di credito/debito, fattura di acconto TD02). */
 export function richiedeDatiFattura(docType: string | null | undefined): boolean {
   return docType === 'fattura' || docType === 'nota_credito' || docType === 'nota_debito'
+    || docType === 'fattura_acconto'
 }
 
 /**
@@ -56,6 +58,7 @@ export function datiFatturaMancanti(c: ClienteFattura | null | undefined): strin
 export function messaggioDatiFattura(mancanti: string[], docType?: string): string {
   const docLabel = docType === 'nota_credito' ? 'Nota di credito non inviabile'
     : docType === 'nota_debito' ? 'Nota di debito non inviabile'
+    : docType === 'fattura_acconto' ? 'Fattura di acconto non inviabile'
     : 'Fattura non inviabile'
   const elenco = mancanti.length === 1 ? mancanti[0] : mancanti.slice(0, -1).join(', ') + ' e ' + mancanti[mancanti.length - 1]
   return `${docLabel}: nella scheda del cliente ${mancanti.length === 1 ? 'manca' : 'mancano'} ${elenco} — dati obbligatori in fattura (art. 21 DPR 633/1972). Completa la scheda del cliente in rubrica e riprova.`

@@ -163,13 +163,15 @@ export async function POST(request: NextRequest, { params }: Params) {
   // Per le FATTURE anche expired e accepted (review 25 lug #2): "scaduta" è
   // solo il pagamento in ritardo (il sollecito via email è proprio il caso
   // d'uso) e "pagata" è la copia di cortesia/quietanza — non ha senso vietarle.
-  const resendable = doc.doc_type === 'fattura'
+  // La fattura di ACCONTO nasce «pagata» (accepted): l'invio è sempre la
+  // copia di cortesia — stessa lista delle fatture.
+  const resendable = doc.doc_type === 'fattura' || doc.doc_type === 'fattura_acconto'
     ? ['draft', 'sent', 'viewed', 'expired', 'accepted']
     : ['draft', 'sent', 'viewed']
   if (!resendable.includes(doc.status)) {
     return NextResponse.json(
       {
-        error: doc.doc_type === 'fattura'
+        error: doc.doc_type === 'fattura' || doc.doc_type === 'fattura_acconto'
           ? 'Impossibile inviare: la fattura è annullata.'
           : 'Impossibile inviare: il documento è già stato accettato, rifiutato o scaduto.',
       },
@@ -505,9 +507,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       // ⚠️ Il tipo VERO, mai per esclusione (regola 9 ago): una nota di
       // credito col template del preventivo usciva con l'invito ad
       // «accettarlo o rifiutarlo» — residuo chiuso il 22 set.
-      docType:       (['fattura', 'nota_credito', 'nota_debito'].includes(doc.doc_type ?? '')
+      docType:       (['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'].includes(doc.doc_type ?? '')
         ? doc.doc_type
-        : 'preventivo') as 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito',
+        : 'preventivo') as 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito' | 'fattura_acconto',
       ownerEmail:    user.email ?? null,
     }),
     replyTo: user.email ?? undefined,
@@ -554,7 +556,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // Fattura PAGATA reinviata = copia di cortesia/quietanza: la scadenza
   // di pagamento NON deve ripartire (review 25 lug C1 — su una fattura
   // incassata una nuova scadenza è un controsenso).
-  const keepExpiry = doc.doc_type === 'fattura' && doc.status === 'accepted'
+  const keepExpiry = (doc.doc_type === 'fattura' || doc.doc_type === 'fattura_acconto') && doc.status === 'accepted'
 
   const updatedLog = isFirstSend
     ? [...existingLog, { type: 'expiry_set', at: sentAt.toISOString(), expires: firstExpiry.toISOString() }]
@@ -632,7 +634,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     if (doc.doc_type === 'preventivo') {
       const { error: rpcErr } = await sb.rpc('increment_sent_quota', { p_workspace_id: workspace.id })
       if (rpcErr) await supabase.from('workspaces').update({ sent_quota_used: workspace.sent_quota_used + 1 }).eq('id', workspace.id)
-    } else if (doc.doc_type === 'fattura') {
+    } else if (doc.doc_type === 'fattura' || doc.doc_type === 'fattura_acconto') {
       const { error: rpcErr } = await sb.rpc('increment_invoice_quota', { p_workspace_id: workspace.id })
       if (rpcErr) await supabase.from('workspaces').update({ sent_invoice_quota_used: ((workspace as { sent_invoice_quota_used?: number }).sent_invoice_quota_used ?? 0) + 1 }).eq('id', workspace.id)
     }

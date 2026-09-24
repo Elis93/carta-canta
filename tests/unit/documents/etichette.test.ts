@@ -79,3 +79,18 @@ describe('badgeLabel — la pillola corta di mobile', () => {
     }
   })
 })
+
+// ── FATTURA DI ACCONTO (TD02, Fase 2 acconti — 24 set) ─────────────────────
+// Stessa classe del difetto della nota: senza il suo ramo, l'acconto finiva
+// nel «tutto il resto» e prendeva le parole del preventivo.
+describe('fattura di acconto — etichette', () => {
+  it('è femminile e «pagata», mai «accettata»', () => {
+    expect(isFemminile('fattura_acconto')).toBe(true)
+    expect(eventoLabel('accepted', 'fattura_acconto')).toBe('Fattura di acconto pagata')
+    expect(badgeLabel('accepted', 'fattura_acconto')).toBe('Pagata')
+  })
+  it('annullata, non «rifiutato»', () => {
+    expect(eventoLabel('rejected', 'fattura_acconto')).toBe('Fattura di acconto annullata')
+    expect(badgeLabel('rejected', 'fattura_acconto')).toBe('Annullata')
+  })
+})

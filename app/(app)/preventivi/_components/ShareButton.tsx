@@ -196,7 +196,7 @@ export function ShareButton({
   // che corre dalla data del documento: prorogare il pagamento non sposta
   // di un giorno l'obbligo di trasmettere (e la scadenza di pagamento non
   // entra nell'XML, quindi non diverge da ciò che è stato trasmesso).
-  const isFatturaLike = docType === 'fattura' || docType === 'nota_credito'
+  const isFatturaLike = docType === 'fattura' || docType === 'nota_credito' || docType === 'nota_debito' || docType === 'fattura_acconto'
 
   function handleTriggerClick() {
     if (!hasVociLocal) {

@@ -37,8 +37,12 @@ export function EliminaDocumentoButton({ documentId, docType, docNumber, signedP
   const bloccato = sdiTransmitted
     ? (docType === 'nota_credito'
       ? 'Nota di credito non eliminabile: è stata trasmessa allo SdI, quindi risulta emessa.'
-      : 'Fattura non eliminabile: è stata trasmessa allo SdI, quindi risulta emessa. Per annullarne gli effetti, crea una nota di credito.')
-    : hasIncasso
+      : docType === 'fattura_acconto'
+        ? 'Fattura di acconto non eliminabile: è stata trasmessa allo SdI, quindi risulta emessa.'
+        : 'Fattura non eliminabile: è stata trasmessa allo SdI, quindi risulta emessa. Per annullarne gli effetti, crea una nota di credito.')
+    // ⚠️ La FATTURA DI ACCONTO non si blocca sull'incasso: eliminarla È la
+    // correzione (azzera l'acconto sul preventivo — l'avviso sta nel dialog).
+    : hasIncasso && docType !== 'fattura_acconto'
       ? 'Fattura non eliminabile: l’incasso registrato è nelle Entrate del Bilancio. Se è errato, seleziona «Segna come non pagata».'
       : null
 
@@ -75,6 +79,12 @@ export function EliminaDocumentoButton({ documentId, docType, docNumber, signedP
               nel cestino. {femm ? 'Potrai recuperarla' : 'Potrai recuperarlo'} entro 15 giorni.
             </DialogDescription>
           </DialogHeader>
+          {docType === 'fattura_acconto' && (
+            <Avviso gravita="attenzione" dentro>
+              Eliminando la fattura di acconto, l&apos;<b>acconto registrato sul preventivo viene azzerato</b>:
+              esce dalle Entrate del Bilancio e potrai registrarlo di nuovo con l&apos;importo giusto.
+            </Avviso>
+          )}
           {signedProof && (
             <Avviso gravita="attenzione" dentro sotto="Se resta nel cestino 15 giorni viene cancellato per sempre e la prova va persa. Elimina solo se sei sicuro.">
               <b>{femm ? 'Questa fattura è firmata' : 'Questo preventivo è firmato'} dal cliente</b>: è la tua prova dell&apos;accordo.

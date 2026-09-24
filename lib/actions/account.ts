@@ -128,20 +128,25 @@ export async function deleteAccountAction(confirmText: string): Promise<Result> 
       }
     }
 
-    // ── 3. Preventivi (NON fiscali): tutto ciò che non è una fattura ─────
+    // ── 3. Preventivi (NON fiscali): SOLO i preventivi ───────────────────
     //     document_items dei preventivi cascadono (ON DELETE CASCADE).
-    const { error: docsErr } = await db.from('documents').delete().eq('workspace_id', wsId).neq('doc_type', 'fattura')
+    // ⚠️ `.eq('preventivo')`, MAI `.neq('fattura')`: per esclusione il vecchio
+    //    filtro cancellava anche note di credito/debito e fatture di acconto —
+    //    documenti FISCALI da conservare 10 anni come le fatture (difetto
+    //    emerso col censimento della Fase 2 acconti, 24 set).
+    const { error: docsErr } = await db.from('documents').delete().eq('workspace_id', wsId).eq('doc_type', 'preventivo')
     if (docsErr) {
       console.error('[deleteAccount] delete preventivi fallita:', docsErr.message)
       return { error: 'Errore durante la cancellazione dei preventivi. Nessun account è stato eliminato: riprova o scrivi a privacy@cartacanta.app.' }
     }
 
-    // ── 4. Clienti: elimina quelli NON referenziati da una fattura ───────
+    // ── 4. Clienti: elimina quelli NON referenziati da un documento ──────
+    //     FISCALE conservato (fatture, note, fatture di acconto).
     const { data: retainedFatture } = await db
       .from('documents')
       .select('client_id')
       .eq('workspace_id', wsId)
-      .eq('doc_type', 'fattura')
+      .neq('doc_type', 'preventivo')
     const keepClientIds = new Set(
       ((retainedFatture ?? []) as Array<{ client_id: string | null }>)
         .map((d) => d.client_id)

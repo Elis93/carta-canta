@@ -93,7 +93,7 @@ export async function GET() {
       .eq('workspace_id', workspace.id)
       // ⚠️ Anche le NOTE DI CREDITO: un export che le omette mostra un
       // fatturato più alto di quello reale (stessa ragione del registro).
-      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'])
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
   )
@@ -160,7 +160,10 @@ export async function GET() {
             // La nota di DEBITO integra: segno PIÙ come una fattura, ma
             // riconoscibile nella colonna dello stato.
             ? (ft.status === 'rejected' ? 'Nota di debito annullata' : 'Nota di debito')
-            : statoLabel,
+            : ft.doc_type === 'fattura_acconto'
+              // La fattura di ACCONTO (TD02): segno PIÙ, etichetta sua.
+              ? (ft.status === 'rejected' ? 'Fattura di acconto annullata' : 'Fattura di acconto')
+              : statoLabel,
       ),
       escapeCsv(date),
     ].join(';')

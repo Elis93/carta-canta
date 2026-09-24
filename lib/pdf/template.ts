@@ -245,8 +245,18 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // diciture di regime) ma DEVE dirlo in testata: è il documento che storna,
   // e chi lo riceve deve capirlo al primo sguardo.
   const isNotaCredito   = doc.doc_type === 'nota_credito'
-  const isFattura       = doc.doc_type === 'fattura' || isNotaCredito
-  const docTypeLabel    = isNotaCredito ? 'NOTA DI CREDITO' : (isFattura ? 'FATTURA' : 'PREVENTIVO')
+  const isNotaDebito    = doc.doc_type === 'nota_debito'
+  const isAcconto       = doc.doc_type === 'fattura_acconto'
+  // «Fattura» in senso lato = tutto ciò che non è un preventivo: note di
+  // credito/debito e fattura di acconto seguono le regole delle fatture
+  // (diciture di regime, bollo, filigrana annullata, «Scadenza»).
+  // ⚠️ La nota di DEBITO mancava: il suo PDF usciva intitolato «PREVENTIVO»
+  // (difetto emerso col censimento della Fase 2 acconti, 24 set).
+  const isFattura       = doc.doc_type !== 'preventivo'
+  const docTypeLabel    = isNotaCredito ? 'NOTA DI CREDITO'
+    : isNotaDebito ? 'NOTA DI DEBITO'
+    : isAcconto ? 'FATTURA DI ACCONTO'
+    : isFattura ? 'FATTURA' : 'PREVENTIVO'
 
   // Dicitura ritenuta d'acconto (fase 1, 27 lug): i forfettari sono ESENTI
   // (art. 1, c. 67, L.190/2014) ma devono dichiararlo in fattura, altrimenti
@@ -277,7 +287,10 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   const docNumberClean = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
 
   // Titolo pagina → nome file quando l'utente salva come PDF dal dialogo stampa
-  const docTypeTitleCase = isNotaCredito ? 'Nota di credito' : isFattura ? 'Fattura' : 'Preventivo'
+  const docTypeTitleCase = isNotaCredito ? 'Nota di credito'
+    : isNotaDebito ? 'Nota di debito'
+    : isAcconto ? 'Fattura di acconto'
+    : isFattura ? 'Fattura' : 'Preventivo'
   const pageTitle = docNumberClean
     ? `${docTypeTitleCase} ${docNumberClean} - Carta Canta`
     : `${docTypeTitleCase} - Carta Canta`
@@ -818,9 +831,12 @@ export function buildPdfHtml(data: PdfDocumentData): string {
   // (per l'incasso dell'acconto) — decisione Eli 5 lug 2026.
   // ⚠️ MAI su una NOTA DI CREDITO: è denaro che torna al cliente, e stampargli
   // IBAN e «come pagare» sotto lo storno gli chiederebbe di pagare di nuovo.
+  // ⚠️ E MAI su una FATTURA DI ACCONTO: documenta un incasso GIÀ avvenuto —
+  // chiedere «come pagare» inviterebbe a pagare due volte.
   const showPaymentSection =
     !!payment &&
     !isNotaCredito &&
+    !isAcconto &&
     !!(payment.iban || payment.paypalUrl || payment.satispayUrl || payment.notes) &&
     (isFattura || doc.status === 'accepted')
   const paymentCausale = `${docTypeTitleCase}${docNumberClean ? ` ${docNumberClean}` : ''}`
@@ -1096,7 +1112,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
 
           <div style="display:flex;justify-content:flex-end;">
             <div style="background:${color};color:${onColor};padding:10px 18px;border-radius:7px;text-align:center;min-width:150px;">
-              <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:3px;">${isNotaCredito ? 'Totale della nota' : isFattura ? (docExtra.payment_status === 'partial' && Number(docExtra.paid_amount) > 0 ? 'Totale fattura' : 'Totale da pagare') : 'Totale'}</div>
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.68;margin-bottom:3px;">${isNotaCredito ? 'Totale della nota' : isAcconto ? 'Totale acconto' : isFattura ? (docExtra.payment_status === 'partial' && Number(docExtra.paid_amount) > 0 ? 'Totale fattura' : 'Totale da pagare') : 'Totale'}</div>
               <div style="font-size:24px;font-weight:800;letter-spacing:0.01em;line-height:1;">${fmt(total)}&nbsp;€</div>
             </div>
           </div>`}

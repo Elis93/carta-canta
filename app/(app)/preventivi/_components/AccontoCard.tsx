@@ -3,8 +3,9 @@
 // ============================================================
 // AccontoCard — dettaglio preventivo accettato con acconto richiesto
 // (mockup ciclo incasso 3c): acconto richiesto/saldo + "Acconto ricevuto".
-// Alla registrazione l'app suggerisce la fattura d'acconto (obbligo
-// fiscale all'incasso — nota in DECISIONI_E_FEEDBACK.md).
+// Dalla Fase 2 acconti (24 set) la registrazione CREA anche la fattura
+// di acconto TD02 (sezionale ACC), già pronta da trasmettere: la card
+// la linka e il promemoria dei 12 giorni parla della trasmissione.
 // ============================================================
 
 import { useState, useTransition } from 'react'
@@ -59,6 +60,7 @@ export function AccontoCard({
   acconto,
   saldo,
   received,
+  fatturaAcconto = null,
   bare = false,
 }: {
   documentId: string
@@ -68,6 +70,10 @@ export function AccontoCard({
   bare?: boolean
   /** Acconto già registrato: importo + data ISO (payment_status 'partial') */
   received: { amount: number; at: string | null } | null
+  /** La fattura di acconto TD02 nata dalla registrazione (Fase 2, 24 set).
+   *  Null anche sugli acconti registrati PRIMA della Fase 2: lì resta la
+   *  vecchia strada («Converti in fattura» col trasferimento dell'acconto). */
+  fatturaAcconto?: { id: string; numero: string | null; trasmessa: boolean } | null
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -96,15 +102,22 @@ export function AccontoCard({
         closeButton: true,
       })
       // ⚠️ L'INCASSO dell'acconto è un fatto fiscale (art. 6 DPR 633/1972):
-      // da quel giorno decorrono i 12 giorni per emettere e trasmettere la
-      // fattura d'acconto. Chiedere l'acconto non fa scattare niente —
-      // incassarlo sì, e l'artigiano deve saperlo NEL MOMENTO in cui lo
-      // registra (Eli, 11 ago). Al commercialista resta la conferma (N11).
-      toast.info('Da oggi hai 12 giorni per la fattura d’acconto', {
-        description: 'Incassare un acconto obbliga a emettere la fattura per la parte incassata. Convertilo in fattura da qui, oppure parlane col commercialista.',
-        duration: 12000,
-        closeButton: true,
-      })
+      // da quel giorno decorrono i 12 giorni per trasmettere la fattura di
+      // acconto — che dalla Fase 2 (24 set) l'app CREA da sé, già pronta.
+      // L'artigiano deve saperlo NEL MOMENTO in cui registra (Eli, 11 ago).
+      if (result?.accontoNumero) {
+        toast.info(`Fattura di acconto ${result.accontoNumero} creata`, {
+          description: 'È già pronta: trasmettila allo SdI entro 12 giorni dall’incasso. La trovi fra le Fatture.',
+          duration: 12000,
+          closeButton: true,
+        })
+      } else {
+        toast.info('Da oggi hai 12 giorni per la fattura d’acconto', {
+          description: 'Incassare un acconto obbliga a emettere la fattura per la parte incassata.',
+          duration: 12000,
+          closeButton: true,
+        })
+      }
       setOpen(false)
       router.refresh()
     })
@@ -113,14 +126,33 @@ export function AccontoCard({
   return (
     <div style={bare ? undefined : { background: '#fff', borderRadius: 14, boxShadow: SH, padding: '13px 14px' }}>
       {/* Promemoria dei 12 giorni: compare finché l'acconto è incassato —
-          il toast lo si legge una volta sola, questo resta. */}
-      {received && (() => {
+          il toast lo si legge una volta sola, questo resta. Con la TD02
+          già creata (Fase 2) il promemoria riguarda la TRASMISSIONE;
+          trasmessa → nessun avviso, è tutto a posto. */}
+      {received && !fatturaAcconto?.trasmessa && (() => {
         const rif = giornoItaliano(received.at ? new Date(received.at) : new Date())
         const t = termineTrasmissione(rif)
+        const numeroAcc = fatturaAcconto?.numero ?? null
         return (
           <Avviso gravita={t.fuoriTermine ? 'errore' : t.giorniRimasti <= 3 ? 'attenzione' : 'info'} icon={<Clock size={16} />} dentro style={{ marginBottom: 11 }}>
             <span>
-              {t.fuoriTermine ? (
+              {fatturaAcconto ? (
+                t.fuoriTermine ? (
+                  <><b>Fattura di acconto oltre il termine</b>: andava trasmessa entro il{' '}
+                    {scadenzaLabel(t.scadenza)}.{' '}
+                    <a href={`/fatture/${fatturaAcconto.id}#sdi`} style={{ textDecoration: 'underline' }}>
+                      Trasmettila comunque
+                    </a>{' '}
+                    e segnala il ritardo al commercialista.</>
+                ) : (
+                  <>La <b>fattura di acconto{numeroAcc ? ` ${numeroAcc}` : ''}</b>{' '}è pronta:{' '}
+                    <a href={`/fatture/${fatturaAcconto.id}#sdi`} style={{ textDecoration: 'underline' }}>
+                      trasmettila allo SdI
+                    </a>{' '}
+                    <b>entro il {scadenzaLabel(t.scadenza)}</b>{' '}
+                    ({t.giorniRimasti === 0 ? 'oggi è l’ultimo giorno' : t.giorniRimasti === 1 ? 'manca 1 giorno' : `mancano ${t.giorniRimasti} giorni`}).</>
+                )
+              ) : t.fuoriTermine ? (
                 <><b>Fattura d’acconto oltre il termine</b>: andava emessa entro il{' '}
                   {scadenzaLabel(t.scadenza)}. Falla comunque e parlane col commercialista.</>
               ) : (
@@ -171,8 +203,16 @@ export function AccontoCard({
 
       {received && (
         <p style={{ fontSize: 12, color: '#767676', lineHeight: 1.5, marginTop: 9 }}>
-          All&rsquo;incasso di un acconto va emessa la <b>fattura d&rsquo;acconto</b>: puoi crearla
-          con &ldquo;Converti in fattura&rdquo; indicando l&rsquo;importo dell&rsquo;acconto.
+          {fatturaAcconto ? (
+            <>La fattura di acconto{fatturaAcconto.numero ? <> <b>{fatturaAcconto.numero}</b></> : null}{' '}
+              {fatturaAcconto.trasmessa ? 'è stata trasmessa allo SdI.' : 'è pronta fra le Fatture.'}{' '}
+              <a href={`/fatture/${fatturaAcconto.id}`} style={{ textDecoration: 'underline', color: 'inherit' }}>
+                Aprila
+              </a></>
+          ) : (
+            <>All&rsquo;incasso di un acconto va emessa la <b>fattura d&rsquo;acconto</b>: puoi crearla
+              con &ldquo;Converti in fattura&rdquo; indicando l&rsquo;importo dell&rsquo;acconto.</>
+          )}
         </p>
       )}
 

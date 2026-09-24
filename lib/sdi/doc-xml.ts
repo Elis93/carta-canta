@@ -71,7 +71,8 @@ export async function buildInvoiceXmlForDoc(
     .eq('workspace_id', workspaceId)
     // Anche le NOTE DI CREDITO: sono documenti fiscali a tutti gli effetti e
     // il commercialista ne ha bisogno esattamente come delle fatture.
-    .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+    // E la FATTURA DI ACCONTO (TD02, Fase 2 acconti): idem.
+    .in('doc_type', ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'])
     .is('deleted_at', null)
     .maybeSingle()
   if (!doc) return { ok: false, status: 404, error: 'Fattura non trovata.' }
@@ -82,7 +83,11 @@ export async function buildInvoiceXmlForDoc(
   // diminuzione, mai il segno degli importi.
   const isNd = doc.doc_type === 'nota_debito'
   const isNota = isNc || isNd
-  const nomeDoc = isNc ? 'La nota di credito' : isNd ? 'La nota di debito' : 'La fattura'
+  // Fattura di ACCONTO (TD02): struttura da fattura normale. Il riferimento
+  // al preventivo sta nelle descrizioni delle righe (il tracciato lo prevede);
+  // `DatiFattureCollegate` è degli acconti visti DAL SALDO — Fase 3.
+  const isAcc = doc.doc_type === 'fattura_acconto'
+  const nomeDoc = isNc ? 'La nota di credito' : isNd ? 'La nota di debito' : isAcc ? 'La fattura di acconto' : 'La fattura'
   if (doc.status === 'draft') {
     return { ok: false, status: 422, error: `${nomeDoc} è ancora una bozza: l’XML si scarica dopo l’invio.` }
   }
@@ -308,7 +313,7 @@ export async function buildInvoiceXmlForDoc(
     // Inversione contabile (081): righe e riepilogo escono a natura N6.7.
     reverseCharge: (doc as { reverse_charge?: boolean | null }).reverse_charge === true,
     causale,
-    tipoDocumento: isNc ? 'TD04' : isNd ? 'TD05' : 'TD01',
+    tipoDocumento: isNc ? 'TD04' : isNd ? 'TD05' : isAcc ? 'TD02' : 'TD01',
     fatturaCollegata,
   }
 

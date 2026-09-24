@@ -137,3 +137,28 @@ describe('copiaAutomaticaConsentita', () => {
     expect(copiaAutomaticaConsentita(undefined)).toBe(true)
   })
 })
+
+// ── FATTURA DI ACCONTO e NOTA DI DEBITO (censimento Fase 2, 24 set) ────────
+// La nota di debito era FUORI da statoCopiaSdi: la sua copia usciva senza
+// nessuna dicitura di verità. Stessa classe, chiusa insieme alla TD02.
+import { statoCopiaSdi as scs, dicituraCopiaSdi as dcs, copiaCortesiaBloccata as ccb } from '@/lib/documents/copia-sdi'
+
+describe('copia-sdi — fattura di acconto e nota di debito', () => {
+  it('la TD02 dichiara il suo stato come una fattura', () => {
+    expect(scs('fattura_acconto', null)).toBe('non_emessa')
+    expect(scs('fattura_acconto', 'inviata')).toBe('in_attesa_esito')
+    expect(scs('fattura_acconto', 'consegnata')).toBe('copia_cortesia')
+    expect(dcs('non_emessa', 'fattura_acconto')).toContain('fattura di acconto')
+  })
+  it('la nota di debito non resta più muta', () => {
+    expect(scs('nota_debito', null)).toBe('non_emessa')
+    expect(dcs('non_emessa', 'nota_debito')).toContain('nota di debito')
+  })
+  it('il preventivo resta fuori (client-first intatto)', () => {
+    expect(scs('preventivo', 'consegnata')).toBeNull()
+  })
+  it('la copia della TD02 è bloccata fino all’esito positivo', () => {
+    expect(ccb('fattura_acconto', null)).toBe(true)
+    expect(ccb('fattura_acconto', 'consegnata')).toBe(false)
+  })
+})

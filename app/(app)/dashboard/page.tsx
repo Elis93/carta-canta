@@ -315,7 +315,7 @@ export default async function DashboardPage() {
           .from('documents')
           .select('id, doc_number, doc_type, status, sdi_status, paid_at, created_at' + extraCols)
           .eq('workspace_id', workspace.id)
-          .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+          .in('doc_type', ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'])
           .is('deleted_at', null)
           // + le BOZZE con un incasso registrato (Fase 1, 22 set): il timer
           // dei 12 giorni corre dall'incasso anche in bozza.
@@ -632,10 +632,10 @@ export default async function DashboardPage() {
   // ── Blocchi SdI della Home (Eli, 11 ago) ──────────────────────────────────
   // «Da trasmettere» ordinato per urgenza (chi ha meno giorni per primo);
   // il numero porta il tipo vero (una NC non si traveste da fattura — 10 ago).
-  const sdiNumberLabel = (d: SdiHomeRow) =>
-    d.doc_type === 'nota_credito'
-      ? stripPrefissoLegacy(d.doc_number ?? '') || '—'
-      : formatDocNumber(d.doc_number, 'fattura')
+  // ⚠️ Il tipo VERO, mai a mano: col ternario la nota di DEBITO e la fattura
+  // di ACCONTO uscivano «Fatt. ND 001/2026» / «Fatt. ACC 001/2026» — il
+  // marcatore delle fatture sopra un sezionale che si spiega da solo.
+  const sdiNumberLabel = (d: SdiHomeRow) => formatDocNumber(d.doc_number, d.doc_type)
   const sdiRows: SdiHomeRow[] = (sdiHomeRows ?? []) as SdiHomeRow[]
   const sdiDaTrasmettereAll: SdiHomeDaTrasmettere[] = sdiRows
     .filter((d) => !d.sdi_status)

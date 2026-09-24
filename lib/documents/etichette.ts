@@ -20,6 +20,7 @@ import { docTypeLabel } from '@/lib/utils'
  */
 export function isFemminile(docType: string | null | undefined): boolean {
   return docType === 'fattura' || docType === 'nota_credito' || docType === 'nota_debito'
+    || docType === 'fattura_acconto'
 }
 
 /**
@@ -36,7 +37,11 @@ export function eventoLabel(status: string, docType: string | null | undefined):
     // ⚠️ Solo la FATTURA si incassa. Su una nota di credito il denaro TORNA al
     // cliente — e infatti «Segna pagata» lì non esiste (9 ago): chiamarla
     // «pagata» la farebbe leggere col segno sbagliato.
-    case 'accepted': return docType === 'fattura' ? 'Fattura pagata' : `${nome} accettat${f ? 'a' : 'o'}`
+    case 'accepted':
+      if (docType === 'fattura') return 'Fattura pagata'
+      // La fattura di ACCONTO nasce già pagata: è l'incasso, non un'accettazione.
+      if (docType === 'fattura_acconto') return 'Fattura di acconto pagata'
+      return `${nome} accettat${f ? 'a' : 'o'}`
     case 'rejected': return f ? `${nome} annullata` : `${nome} rifiutato`
     case 'expired':  return `${nome} scadut${f ? 'a' : 'o'}`
     default:         return nome
@@ -53,7 +58,9 @@ export function badgeLabel(status: string, docType: string | null | undefined): 
     case 'draft':    return 'Bozza'
     case 'sent':     return 'Inviato'
     case 'viewed':   return 'Visto'
-    case 'accepted': return docType === 'fattura' ? 'Pagata' : (f ? 'Accettata' : 'Accettato')
+    case 'accepted':
+      if (docType === 'fattura' || docType === 'fattura_acconto') return 'Pagata'
+      return f ? 'Accettata' : 'Accettato'
     case 'rejected': return f ? 'Annullata' : 'Rifiutato'
     case 'expired':  return 'Scaduto'
     default:         return status

@@ -108,7 +108,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     if (ownerEmail) {
       const wsName      = ws.ragione_sociale ?? ws.name
       const appUrl      = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cartacanta.app'
-      const isPreventivo = (doc.doc_type as string) !== 'fattura'
+      // ⚠️ Mai per esclusione (regola 9 ago): con `!== 'fattura'` le note e
+      // le fatture di acconto uscivano come «Il preventivo è stato aperto»
+      // con un link a /preventivi/{id} che non esiste.
+      const isPreventivo = (doc.doc_type as string) === 'preventivo'
       const viewedAt    = new Date().toLocaleString('it-IT', {
         day: '2-digit', month: 'long', year: 'numeric',
         hour: '2-digit', minute: '2-digit',

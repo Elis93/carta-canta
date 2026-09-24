@@ -18,8 +18,9 @@ import { normalizzaTesto } from '@/lib/documents/suggerimenti-voce'
 import { isMissingColumnError } from '@/lib/supabase/errors'
 import { normalizzaWorkDays } from '@/lib/documents/termine-lavori'
 import { tierDuplicateSendError } from '@/lib/documents/tier-check'
-import { DOC_NUMBER_RE, formatNotaCreditoNumber, formatNotaDebitoNumber } from '@/lib/documents/numero'
+import { DOC_NUMBER_RE, formatNotaCreditoNumber, formatNotaDebitoNumber, formatAccontoNumber } from '@/lib/documents/numero'
 import { notaAttiva, residuoStornabile, sommaNoteAttive, scalaPrezzo, baseStornabile, importoRitenuta, TOLLERANZA_STORNO } from '@/lib/documents/storno'
+import { righeAcconto } from '@/lib/fiscal/acconto'
 
 // La conferma fiscale della bozza (080) vive in lib/documents/conferma-fiscale.ts:
 // NON in questo file, che e' 'use server' — ogni export async di un file
@@ -42,10 +43,12 @@ type DocumentItemInsert = Database['public']['Tables']['document_items']['Insert
 // 044 non esiste (SdI mai attivato), la guardia è trasparente (ritorna false).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function isSdiTransmitted(supabase: any, documentId: string, docType: string | null): Promise<boolean> {
-  // ⚠️ Anche le NOTE DI CREDITO: una TD04 trasmessa è un documento fiscale
-  // emesso esattamente come una fattura, e modificarla dopo l'invio farebbe
-  // divergere l'app da ciò che l'Agenzia ha ricevuto.
-  if (docType !== 'fattura' && docType !== 'nota_credito') return false
+  // ⚠️ Anche NOTE (TD04/TD05) e FATTURE DI ACCONTO (TD02): un documento
+  // trasmesso è emesso esattamente come una fattura, e modificarlo dopo
+  // l'invio farebbe divergere l'app da ciò che l'Agenzia ha ricevuto.
+  // (La nota di debito mancava dall'elenco — difetto emerso col censimento
+  // della Fase 2 acconti, 24 set: stessa classe, chiuso qui.)
+  if (docType === 'preventivo' || !docType) return false
   const { data, error } = await supabase
     .from('documents').select('sdi_status').eq('id', documentId).maybeSingle()
   if (error) return false // colonna assente / errore transiente → non blocca
@@ -549,6 +552,23 @@ export async function allocateNotaDebitoNumber(workspaceId: string): Promise<str
     throw new Error('Impossibile generare il numero della nota di debito')
   }
   return formatNotaDebitoNumber(data as number, year)
+}
+
+/** Numero della FATTURA DI ACCONTO (TD02): sezionale «ACC 001/2026»,
+ *  sequenza propria dalla stessa RPC atomica, chiavata sul doc_type.
+ *  Nessuna migration: `invoice_sequences` è già parametrica (028). */
+export async function allocateAccontoNumber(workspaceId: string): Promise<string> {
+  const supabase = await createClient()
+  const year = new Date().getFullYear()
+  const { data, error } = await supabase.rpc('next_invoice_number', {
+    p_workspace: workspaceId,
+    p_year: year,
+    p_doc_type: 'fattura_acconto',
+  })
+  if (error || data === null) {
+    throw new Error('Impossibile generare il numero della fattura di acconto')
+  }
+  return formatAccontoNumber(data as number, year)
 }
 
 // Legge il prossimo numero preventivo disponibile SENZA incrementare.
@@ -1691,10 +1711,11 @@ export async function deleteDocumentAction(
   const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
 
-  // Leggi doc_type prima di eliminare per redirect corretto
+  // Leggi doc_type prima di eliminare per redirect corretto (e, per la
+  // fattura di acconto, il preventivo d'origine da riallineare).
   const { data: docMeta } = await supabase
     .from('documents')
-    .select('doc_type')
+    .select('doc_type, origin_document_id')
     .eq('id', documentId)
     .eq('workspace_id', workspace.id)
     .maybeSingle()
@@ -1708,10 +1729,11 @@ export async function deleteDocumentAction(
   // ⚠️ ECCEZIONE: `scartata`. Una fattura scartata è considerata NON EMESSA —
   // si corregge e si ritrasmette entro 5 giorni, stesso numero e stessa data —
   // quindi lì l'eliminazione resta possibile.
-  // ⚠️ Vale anche per le NOTE DI CREDITO: una TD04 trasmessa è a sua volta un
-  // documento emesso, e cancellarla lascerebbe la fattura stornata senza la
-  // prova dello storno.
-  if (docMeta?.doc_type === 'fattura' || docMeta?.doc_type === 'nota_credito') {
+  // ⚠️ Vale anche per le NOTE (TD04/TD05) e per le FATTURE DI ACCONTO (TD02):
+  // una nota o un acconto trasmessi sono a loro volta documenti emessi, e
+  // cancellarli lascerebbe l'archivio senza la prova. (La nota di debito
+  // mancava — stessa classe, chiusa col censimento della Fase 2 acconti.)
+  if (docMeta?.doc_type && docMeta.doc_type !== 'preventivo') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 044 non ancora in types/database.ts
     const trasmessa = await (supabase as any)
       .from('documents')
@@ -1742,6 +1764,27 @@ export async function deleteDocumentAction(
     .eq('workspace_id', workspace.id)
 
   if (error) return { error: 'Errore durante l\'eliminazione' }
+
+  // ⚠️ FATTURA DI ACCONTO eliminata = l'acconto registrato per sbaglio si
+  // annulla (è l'unica strada di correzione: la TD02 «pagata» non ha
+  // transizioni di stato). Senza questo azzeramento il preventivo direbbe
+  // ancora «acconto ricevuto» di un incasso la cui fattura non esiste più —
+  // e il Bilancio lo conterebbe. Best-effort con retry (schema converti-
+  // fattura): se fallisce due volte, il log lo dice.
+  if (docMeta?.doc_type === 'fattura_acconto' && docMeta.origin_document_id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+    const db = supabase as any
+    const clearPatch = { payment_status: 'unpaid', paid_amount: null, paid_at: null }
+    const { error: clearErr } = await db.from('documents').update(clearPatch)
+      .eq('id', docMeta.origin_document_id).eq('workspace_id', workspace.id).eq('doc_type', 'preventivo')
+    if (clearErr) {
+      const { error: retryErr } = await db.from('documents').update(clearPatch)
+        .eq('id', docMeta.origin_document_id).eq('workspace_id', workspace.id).eq('doc_type', 'preventivo')
+      if (retryErr) console.error('[acconto] azzeramento acconto sul preventivo fallito due volte:', retryErr, docMeta.origin_document_id)
+    }
+    revalidatePath(`/preventivi/${docMeta.origin_document_id}`)
+    revalidatePath('/bilancio')
+  }
 
   revalidatePath('/preventivi')
   revalidatePath('/fatture')
@@ -1841,8 +1884,9 @@ export async function purgeDeletedDocumentAction(
     .then(
       (r: { data: { doc_type?: string; sdi_status?: string | null } | null }) => {
         const st = r.data?.sdi_status
-        // Anche le note di credito: una TD04 trasmessa è emessa a sua volta.
-        const tipoFiscale = r.data?.doc_type === 'fattura' || r.data?.doc_type === 'nota_credito'
+        // Anche note (TD04/TD05) e fatture di acconto (TD02): trasmesse sono
+        // emesse a loro volta. Fiscale = tutto ciò che non è un preventivo.
+        const tipoFiscale = !!r.data?.doc_type && r.data.doc_type !== 'preventivo'
         return tipoFiscale && !!st && st !== 'scartata'
       },
       () => false,
@@ -1918,7 +1962,9 @@ async function incrementaQuotaFree(
   if (docType === 'preventivo') {
     const { error } = await supabase.rpc('increment_sent_quota', { p_workspace_id: ws.id })
     if (error) await supabase.from('workspaces').update({ sent_quota_used: ws.sent_quota_used + 1 }).eq('id', ws.id)
-  } else if (docType === 'fattura') {
+  } else if (docType === 'fattura' || docType === 'fattura_acconto') {
+    // La fattura di ACCONTO consuma il contatore delle fatture: è una fattura
+    // vera inviata al cliente (il piano gratuito conta le «8 fatture inviate»).
     const { error } = await supabase.rpc('increment_invoice_quota', { p_workspace_id: ws.id })
     if (error) await supabase.from('workspaces').update({ sent_invoice_quota_used: (ws.sent_invoice_quota_used ?? 0) + 1 }).eq('id', ws.id)
   }
@@ -2138,14 +2184,15 @@ export async function registerManualSendAction(
 
   // Piano Free: blocco all'INVIO se la quota del tipo è piena (preventivi e
   // fatture: 8 ciascuno, contatori separati — 083). Le note di credito non
-  // consumano. Questo è il varco WhatsApp/«Copia link» delle bozze.
-  if (workspace.plan === 'free' && (tipoDoc === 'preventivo' || tipoDoc === 'fattura')) {
-    const trial = checkFreeBlock(workspace, tipoDoc)
+  // consumano; la fattura di ACCONTO consuma il contatore delle fatture.
+  // Questo è il varco WhatsApp/«Copia link» delle bozze.
+  if (workspace.plan === 'free' && (tipoDoc === 'preventivo' || tipoDoc === 'fattura' || tipoDoc === 'fattura_acconto')) {
+    const trial = checkFreeBlock(workspace, tipoDoc === 'preventivo' ? 'preventivo' : 'fattura')
     if (trial.blocked) {
       return {
-        error: tipoDoc === 'fattura'
-          ? 'Hai inviato le 8 fatture del piano gratuito. Torna a Pro per inviarne altre.'
-          : 'Piano Free terminato. Passa a Pro per registrare preventivi illimitati.',
+        error: tipoDoc === 'preventivo'
+          ? 'Piano Free terminato. Passa a Pro per registrare preventivi illimitati.'
+          : 'Hai inviato le 8 fatture del piano gratuito. Torna a Pro per inviarne altre.',
       }
     }
   }
@@ -2162,9 +2209,11 @@ export async function registerManualSendAction(
         ? await allocateNotaCreditoNumber(workspace.id)
         : tipoDoc === 'nota_debito'
           ? await allocateNotaDebitoNumber(workspace.id)
-          : tipoDoc === 'fattura'
-            ? await allocateInvoiceNumber(workspace.id)
-            : await allocateDocNumber(workspace.id)
+          : tipoDoc === 'fattura_acconto'
+            ? await allocateAccontoNumber(workspace.id)
+            : tipoDoc === 'fattura'
+              ? await allocateInvoiceNumber(workspace.id)
+              : await allocateDocNumber(workspace.id)
     } catch {
       return { error: 'Impossibile generare il numero documento. Riprova.' }
     }
@@ -2422,6 +2471,13 @@ export async function duplicateDocumentAction(
     if (trial.blocked) {
       return { error: 'Piano Free terminato. Passa a Pro per creare nuovi preventivi illimitati.' }
     }
+  }
+
+  // ⚠️ La FATTURA DI ACCONTO non si duplica: nasce dall'incasso registrato
+  // sul preventivo, e una copia sarebbe una fattura di un incasso mai
+  // avvenuto (e pescherebbe dal sezionale sbagliato).
+  if (original.doc_type === 'fattura_acconto') {
+    return { error: 'Le fatture di acconto non si duplicano: nascono dal tasto «Acconto ricevuto» sul preventivo.' }
   }
 
   // Genera nuovo numero atomico per la copia — dalla sequenza del TIPO giusto
@@ -3065,15 +3121,32 @@ export async function allineaClienteDaPreventivoAction(
 
 // ============================================================
 // ACCONTI — registra l'acconto ricevuto su un preventivo accettato
-// (payment_status 'partial' + paid_amount/paid_at, colonne 038).
-// L'incasso entra nelle Entrate del Bilancio (criterio di cassa).
+// (payment_status 'partial' + paid_amount/paid_at, colonne 038) e
+// CREA LA FATTURA DI ACCONTO TD02 (Fase 2 di PROGETTO_ACCONTI, 24 set).
+//
+// ⚖️ Incassare un acconto obbliga a fatturarlo (art. 6 DPR 633/1972:
+// per i servizi l'operazione si considera effettuata al pagamento).
+// Decisione di Eli: la fattura nasce GIÀ PRONTA DA TRASMETTERE — non
+// come bozza — con `doc_date` = giorno dell'incasso, status «pagata»
+// (l'acconto È incassato) e sezionale ACC. Da lì la card SdI col
+// conto alla rovescia dei 12 giorni fa il resto.
+//
+// L'incasso resta scritto ANCHE sul preventivo, come prima: è ciò che
+// leggono AccontoCard, il saldo restante e il Bilancio. La TD02 è
+// ESCLUSA dalle query di cassa del Bilancio (come la nota di credito),
+// altrimenti lo stesso incasso conterebbe due volte.
+//
+// ORDINE: prima la TD02, poi l'incasso sul preventivo — se l'incasso
+// fallisce, la TD02 si elimina (rollback). Successo = tutti e due,
+// fallimento = nessuno dei due; il numero ACC consumato dal rollback
+// lascia un buco di sequenza, come le bozze cancellate (accettato).
 // ============================================================
 
 export async function registerDepositReceivedAction(
   documentId: string,
   amount: number,
   dateYmd?: string
-): Promise<{ error?: string; success?: string } | null> {
+): Promise<{ error?: string; success?: string; accontoId?: string; accontoNumero?: string } | null> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autenticato.' }
@@ -3085,7 +3158,7 @@ export async function registerDepositReceivedAction(
   // RLS garantisce che solo i membri del workspace vedano il documento
   const { data: doc } = await supabase
     .from('documents')
-    .select('id, doc_type, status, total')
+    .select('*')
     .eq('id', documentId)
     .maybeSingle()
   if (!doc) return { error: 'Documento non trovato.' }
@@ -3098,12 +3171,19 @@ export async function registerDepositReceivedAction(
     // dalla fattura con "Segna pagata", non da qui (residuo 0 bloccherebbe tutto).
     return { error: 'L’importo copre l’intero preventivo: converti in fattura e usa "Segna pagata".' }
   }
-  // Con una fattura già collegata l'acconto si registra SULLA fattura:
-  // qui creerebbe un doppio conteggio nel Bilancio.
+  // Un acconto GIÀ registrato non si sovrascrive: la sua fattura di acconto
+  // esiste. Più acconti (SAL) arrivano con lo scomputo del saldo — Fase 3.
+  if ((doc as { payment_status?: string | null }).payment_status === 'partial') {
+    return { error: 'C’è già un acconto registrato su questo preventivo, con la sua fattura di acconto.' }
+  }
+  // Con una FATTURA vera già collegata l'acconto si registra SULLA fattura:
+  // qui creerebbe un doppio conteggio nel Bilancio. (Le fatture di acconto
+  // non contano: sono figlie di questo stesso flusso.)
   const { data: linkedFattura } = await supabase
     .from('documents')
     .select('id')
     .eq('origin_document_id', documentId)
+    .eq('doc_type', 'fattura')
     .is('deleted_at', null)
     .limit(1)
     .maybeSingle()
@@ -3111,28 +3191,178 @@ export async function registerDepositReceivedAction(
     return { error: 'Questo preventivo ha già una fattura collegata: registra l’incasso dalla fattura.' }
   }
 
-  const paidAtIso = dateYmd && /^\d{4}-\d{2}-\d{2}$/.test(dateYmd)
+  const dataValida = !!dateYmd && /^\d{4}-\d{2}-\d{2}$/.test(dateYmd)
+  const paidAtIso = dataValida
     ? new Date(`${dateYmd}T12:00:00`).toISOString()
     : new Date().toISOString()
+  // La data FISCALE della TD02 è il giorno dell'incasso (art. 6): retrodatabile
+  // quanto il campo del dialog. Formato YYYY-MM-DD per la colonna DATE (080).
+  const docDateYmd = dataValida ? (dateYmd as string) : new Date().toLocaleDateString('sv-SE')
+  const importo = Math.round(amount * 100) / 100
 
+  // ── Le voci del preventivo → le righe della TD02 ────────────────────────
+  const { data: vociPrev } = await supabase
+    .from('document_items')
+    .select('*')
+    .eq('document_id', documentId)
+    .order('sort_order', { ascending: true })
+  // Con più proposte contano le voci della proposta ACCETTATA (o della Base):
+  // le altre restano sul preventivo per il «Segna come non accettato», ma
+  // l'acconto è sul lavoro scelto — come fa la conversione in fattura.
+  const tuttiTier = new Set(
+    (vociPrev ?? []).map((v) => ((v as { option_tier?: string | null }).option_tier ?? 'base')),
+  )
+  const tierScelto = ((doc as { accepted_tier?: string | null }).accepted_tier ?? 'base')
+  const vociBase = tuttiTier.size > 1
+    ? (vociPrev ?? []).filter((v) => (((v as { option_tier?: string | null }).option_tier ?? 'base')) === tierScelto)
+    : (vociPrev ?? [])
+
+  const reverse = (doc as { reverse_charge?: boolean | null }).reverse_charge === true
+  const workspaceId = doc.workspace_id
+  const { data: ws } = await supabase
+    .from('workspaces')
+    .select('fiscal_regime')
+    .eq('id', workspaceId)
+    .maybeSingle()
+  const regime = ws?.fiscal_regime ?? 'forfettario'
+
+  const numeroPrev = doc.doc_number ? stripPrefissoLegacy(doc.doc_number) : null
+  const dataPrev = (doc as { doc_date?: string | null }).doc_date ?? doc.created_at
+  const esito = righeAcconto(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- righe lette con select('*')
+    (vociBase ?? []) as any,
+    {
+      fiscal_regime: regime,
+      vat_rate_default: doc.vat_rate_default,
+      discount_pct: doc.discount_pct,
+      discount_fixed: doc.discount_fixed,
+      reverse_charge: reverse,
+    },
+    importo,
+    {
+      titolo: doc.title,
+      numero: numeroPrev,
+      dataLabel: dataPrev
+        ? new Date(dataPrev).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome' })
+        : null,
+    },
+  )
+  if (esito.righe.length === 0) {
+    return { error: 'Non riesco a costruire la fattura di acconto da questo importo. Riprova.' }
+  }
+
+  const fiscal = calcolaDocumento(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- righe sintetiche del modulo acconto
+    esito.righe as any,
+    {
+      fiscal_regime: regime as FiscalOptions['fiscal_regime'],
+      currency: 'EUR',
+      vat_rate_default: doc.vat_rate_default ?? undefined,
+      reverse_charge: reverse,
+      doc_type: 'fattura_acconto',
+    },
+  )
+
+  let numeroAcc: string
+  try {
+    numeroAcc = await allocateAccontoNumber(workspaceId)
+  } catch {
+    return { error: 'Impossibile generare il numero della fattura di acconto. Riprova.' }
+  }
+
+  // ── La TD02: nasce PAGATA (è l'incasso) e pronta da trasmettere ─────────
+  const { data: acconto, error: insertErr } = await supabase
+    .from('documents')
+    .insert({
+      workspace_id: workspaceId,
+      created_by: user.id,
+      client_id: doc.client_id,
+      doc_type: 'fattura_acconto',
+      status: 'accepted',
+      accepted_at: paidAtIso,
+      doc_number: numeroAcc,
+      title: doc.title ? `Acconto su ${doc.title}` : 'Fattura di acconto',
+      // La dicitura 71/E §5.2 (valore del bene significativo in quota) va
+      // SUL DOCUMENTO: le righe sintetiche non portano la marcatura, quindi
+      // la dicitura di legge del PDF da sola qui non scatterebbe.
+      notes: esito.dicituraBeni,
+      origin_document_id: documentId,
+      currency: doc.currency,
+      vat_rate_default: doc.vat_rate_default,
+      subtotal: fiscal.subtotal,
+      tax_amount: fiscal.taxAmount,
+      bollo_amount: fiscal.bollo,
+      total: fiscal.total,
+    })
+    .select('id')
+    .single()
+  if (insertErr || !acconto) {
+    console.error('[acconto] creazione TD02 fallita:', insertErr)
+    return { error: 'Non sono riuscito a creare la fattura di acconto. Riprova.' }
+  }
+
+  const itemsAcc = esito.righe.map((r, idx) => ({
+    document_id: acconto.id,
+    sort_order: idx,
+    description: r.description,
+    unit: r.unit,
+    quantity: r.quantity,
+    unit_price: r.unit_price,
+    discount_pct: r.discount_pct,
+    vat_rate: r.vat_rate,
+    bene_significativo: false,
+    unit_cost: null,
+    total: r.unit_price,
+  })) as unknown as DocumentItemInsert[]
+  const { error: itemsErr } = await insertDocumentItemsTollerante(supabase, itemsAcc)
+  if (itemsErr) {
+    await supabase.from('documents').delete().eq('id', acconto.id)
+    console.error('[acconto] voci TD02 fallite:', itemsErr)
+    return { error: 'Non sono riuscito a scrivere le voci della fattura di acconto. Riprova.' }
+  }
+
+  // Colonne fuori dai tipi generati, in scritture separate e TOLLERANTI
+  // (pre-migration il documento resta valido, manca solo il dettaglio):
+  // · doc_date (080) = giorno dell'incasso → da lì i 12 giorni della card SdI;
+  // · payment_status/paid_amount/paid_at (038) = la TD02 è già incassata
+  //   (paid_amount = l'importo ricevuto, quello dichiarato dall'artigiano);
+  // · reverse_charge (081) ereditato → l'XML esce a natura N6.7.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
+  await db.from('documents').update({ doc_date: docDateYmd }).eq('id', acconto.id)
+    .then(() => undefined, () => undefined)
+  await db.from('documents').update({ payment_status: 'paid', paid_amount: importo, paid_at: paidAtIso }).eq('id', acconto.id)
+    .then(() => undefined, () => undefined)
+  if (reverse) {
+    await applyFiscaliExtra(supabase, acconto.id, { ritenuta_causale: null, reverse_charge: true })
+  }
+
+  // ── L'incasso sul PREVENTIVO (com'era prima della Fase 2) ───────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
   const { error } = await (supabase as any)
     .from('documents')
     .update({
       payment_status: 'partial',
-      paid_amount: Math.round(amount * 100) / 100,
+      paid_amount: importo,
       paid_at: paidAtIso,
     })
     .eq('id', documentId)
 
   if (error) {
+    // ROLLBACK: senza l'incasso registrato la fattura di acconto non deve
+    // esistere — un TD02 orfano racconterebbe un incasso che l'app non ha.
+    await supabase.from('document_items').delete().eq('document_id', acconto.id)
+    await supabase.from('documents').delete().eq('id', acconto.id)
     return { error: 'Registrazione non riuscita. La migration 038 potrebbe non essere ancora applicata.' }
   }
 
   revalidatePath(`/preventivi/${documentId}`)
   revalidatePath('/preventivi')
+  revalidatePath('/fatture')
+  revalidatePath(`/fatture/${acconto.id}`)
   revalidatePath('/bilancio')
-  return { success: 'Acconto registrato' }
+  revalidatePath('/dashboard')
+  return { success: 'Acconto registrato', accontoId: acconto.id, accontoNumero: numeroAcc }
 }
 
 // ── posticipaSollecitoAction / riprendiSollecitoAction ────────────────────
@@ -3385,8 +3615,9 @@ export async function registerManualResendAction(
   const newExpiry = new Date(now)
   newExpiry.setDate(newExpiry.getDate() + validity)
   // Fattura PAGATA: è una copia di cortesia, la scadenza di pagamento non
-  // riparte (stessa eccezione della route email).
-  const keepExpiry = doc.doc_type === 'fattura' && doc.status === 'accepted'
+  // riparte (stessa eccezione della route email). La fattura di ACCONTO è
+  // pagata per costruzione: idem.
+  const keepExpiry = (doc.doc_type === 'fattura' || doc.doc_type === 'fattura_acconto') && doc.status === 'accepted'
 
   const existingLog = Array.isArray(doc.document_log) ? doc.document_log : []
   // Col reinvio la validità riparte → anche la NUOVA scadenza va in

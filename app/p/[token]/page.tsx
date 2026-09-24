@@ -51,7 +51,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const isPrev = doc?.doc_type === 'preventivo'
-  const label = isPrev ? 'Preventivo' : 'Fattura'
+  const label = isPrev ? 'Preventivo'
+    : doc?.doc_type === 'nota_credito' ? 'Nota di credito'
+    : doc?.doc_type === 'nota_debito' ? 'Nota di debito'
+    : doc?.doc_type === 'fattura_acconto' ? 'Fattura di acconto'
+    : 'Fattura'
   const num = doc?.doc_number ? formatDocNumber(doc.doc_number) : ''
   const title = `${label}${num ? ` ${num}` : ''} · ${wsName}`
   const description = `Apri per visualizzare ${isPrev ? 'il preventivo' : 'la fattura'} di ${wsName}.`
@@ -161,7 +165,11 @@ export default async function PublicDocumentPage({ params }: Props) {
   // proposta) e non si paga (è denaro che TORNA al cliente). Prima cadeva nel
   // ramo «preventivo» per esclusione, e la pagina le offriva «Accetta».
   const isNotaCredito = (doc as Record<string, unknown>).doc_type === 'nota_credito'
-  const docLabelCap = isNotaCredito ? 'Nota di credito' : isPreventivo ? 'Preventivo' : 'Fattura'
+  const isAcconto = (doc as Record<string, unknown>).doc_type === 'fattura_acconto'
+  const docLabelCap = isNotaCredito ? 'Nota di credito'
+    : (doc as Record<string, unknown>).doc_type === 'nota_debito' ? 'Nota di debito'
+    : isAcconto ? 'Fattura di acconto'
+    : isPreventivo ? 'Preventivo' : 'Fattura'
 
   // Redirect a pagine dedicate per stati terminali — SOLO per i preventivi:
   // per una FATTURA expires_at è la scadenza di PAGAMENTO, non dell'offerta.
@@ -477,7 +485,7 @@ export default async function PublicDocumentPage({ params }: Props) {
   // ── Recensione (mockup crescita §2): si sblocca DA SOLA a fattura
   //    pagata per intero (mai per acconti) — solo domande chiuse ─────────
   const fullyPaid =
-    !isPreventivo && !isNotaCredito &&
+    !isPreventivo && !isNotaCredito && !isAcconto &&
     (depositRow?.payment_status === 'paid' ||
       (doc.status === 'accepted' && depositRow?.payment_status !== 'partial'))
   const showReview = fullyPaid && !reviewExists
@@ -684,7 +692,7 @@ export default async function PublicDocumentPage({ params }: Props) {
               workspaceName={workspaceName}
               messages={conversation}
               canWrite={canWriteMessages}
-              docType={isNotaCredito ? 'nota_credito' : isPreventivo ? 'preventivo' : 'fattura'}
+              docType={isNotaCredito ? 'nota_credito' : isPreventivo ? 'preventivo' : 'fattura'} /* la TD02 parla da fattura */
             />
             {canWriteMessages && ownerEmail && (
               <a

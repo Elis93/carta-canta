@@ -192,7 +192,7 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
               server rifiutava, ma solo DOPO la conferma: si scopriva il divieto
               a cose fatte. Spento e spiegato è più onesto che assente — dice
               che quel comando esiste e perché oggi non si può usare. */}
-          {sdiTransmitted || hasIncasso ? (
+          {sdiTransmitted || (hasIncasso && docType !== 'fattura_acconto') ? (
             <>
               <DropdownMenuItem disabled>
                 <Trash2 className="size-4" />
@@ -202,10 +202,14 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
                 {sdiTransmitted
                   ? (docType === 'nota_credito'
                       ? 'Nota di credito non eliminabile: è stata trasmessa allo SdI, quindi risulta emessa.'
-                      : 'Fattura non eliminabile: è stata trasmessa allo SdI, quindi risulta emessa. Per annullarne gli effetti, crea una nota di credito.')
+                      : docType === 'fattura_acconto'
+                        ? 'Fattura di acconto non eliminabile: è stata trasmessa allo SdI, quindi risulta emessa.'
+                        : 'Fattura non eliminabile: è stata trasmessa allo SdI, quindi risulta emessa. Per annullarne gli effetti, crea una nota di credito.')
                   /* Incasso registrato: quei soldi sono nelle Entrate del
                      Bilancio, e cancellarli farebbe sbagliare i conti del
-                     mese senza che nulla lo dica. Prima si azzera l'incasso. */
+                     mese senza che nulla lo dica. Prima si azzera l'incasso.
+                     ⚠️ La FATTURA DI ACCONTO non passa di qui: eliminarla È
+                     la strada di correzione (azzera l'acconto sul preventivo). */
                   : 'Fattura non eliminabile: l’incasso registrato è nelle Entrate del Bilancio. Se è errato, seleziona «Segna come non pagata».'}
               </p>
             </>
@@ -232,6 +236,12 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
               nel cestino. Potrai recuperarlo entro 15 giorni.
             </DialogDescription>
           </DialogHeader>
+          {docType === 'fattura_acconto' && (
+            <Avviso gravita="attenzione" dentro>
+              Eliminando la fattura di acconto, l&apos;<b>acconto registrato sul preventivo viene azzerato</b>:
+              esce dalle Entrate del Bilancio e potrai registrarlo di nuovo con l&apos;importo giusto.
+            </Avviso>
+          )}
           {doc.signedProof && (
             <Avviso gravita="attenzione" dentro sotto="Se resta nel cestino 15 giorni viene cancellato per sempre e la prova va persa. Elimina solo se sei sicuro.">
               <b>{docType === 'fattura' ? 'Questa fattura è firmata' : 'Questo preventivo è firmato'} dal cliente</b>: è la tua prova dell&apos;accordo.

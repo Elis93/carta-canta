@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionWorkspace } from '@/lib/workspace-context'
 import { CheckCircle2, Send, Clock, AlertTriangle } from 'lucide-react'
-import { formatCurrency, formatDocNumber, stripPrefissoLegacy } from '@/lib/utils'
+import { formatCurrency, formatDocNumber } from '@/lib/utils'
 import { BackButton } from '@/components/shared/BackButton'
 import { riferimentoTrasmissione, termineTrasmissione, scadenzaLabel } from '@/lib/sdi/termini'
 
@@ -64,7 +64,7 @@ export default async function FattureDaTrasmetterePage({
       .from('documents')
       .select(base + extra)
       .eq('workspace_id', workspace.id)
-      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'])
       .is('deleted_at', null)
       // Anche le BOZZE con un incasso registrato (Fase 1, 22 set): il timer
       // dei 12 giorni corre dall'incasso anche se la fattura non è mai
@@ -185,10 +185,9 @@ export default async function FattureDaTrasmetterePage({
 
           {/* Una card per documento */}
           {mostrate.map(({ doc, termine, scartata }) => {
-            const isNota = doc.doc_type === 'nota_credito'
-            const numero = isNota
-              ? stripPrefissoLegacy(doc.doc_number ?? '') || '—'
-              : formatDocNumber(doc.doc_number, 'fattura')
+            // Il tipo VERO: «Fatt.» solo sulle fatture — nota di debito e
+            // fattura di acconto tengono il loro sezionale (ND/ACC) pulito.
+            const numero = formatDocNumber(doc.doc_number, doc.doc_type)
             const cliente = doc.clients?.name ?? null
             const urgente = scartata || !!termine?.fuoriTermine || (termine != null && termine.giorniRimasti <= 3)
             return (

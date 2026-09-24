@@ -32,7 +32,11 @@ export async function registraConfermaFiscale(
   docId: string,
   docType: string | null | undefined,
 ): Promise<void> {
-  if (docType !== 'fattura' && docType !== 'nota_credito') return
+  // Tutti i documenti FISCALI: fatture, note di credito/debito e fatture di
+  // acconto. (La nota di debito mancava — chiusa col censimento della Fase 2
+  // acconti, 24 set. La TD02 nasce già con doc_date = giorno dell'incasso:
+  // la guardia `.is('doc_date', null)` qui sotto la lascia intatta.)
+  if (docType === 'preventivo' || !docType) return
   try {
     await supabase
       .from('documents')

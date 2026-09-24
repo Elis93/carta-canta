@@ -166,3 +166,22 @@ describe('isNotaDebitoQuery — la gemella della nota di credito (11 ago)', () =
     expect(isNotaCreditoQuery('debito')).toBe(false)
   })
 })
+
+// ── «acconto» nel cerca (Fase 2, 24 set) ───────────────────────────────────
+import { isAccontoQuery } from '@/lib/documents/status-search'
+
+describe('isAccontoQuery', () => {
+  it('trova gli acconti con la parola intera, il prefisso, la sigla', () => {
+    expect(isAccontoQuery('acconto')).toBe(true)
+    expect(isAccontoQuery('acconti')).toBe(true)
+    expect(isAccontoQuery('acco')).toBe(true)
+    expect(isAccontoQuery('acc')).toBe(true)
+    expect(isAccontoQuery('td02')).toBe(true)
+    expect(isAccontoQuery('fattura acconto')).toBe(true) // «fattura» è generica
+  })
+  it('una parola fuori vocabolario = ricerca testuale, non filtro', () => {
+    expect(isAccontoQuery('acconto caldaia')).toBe(false)
+    expect(isAccontoQuery('sala')).toBe(false)
+    expect(isAccontoQuery('caldaia')).toBe(false)
+  })
+})

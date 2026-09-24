@@ -54,8 +54,10 @@ export async function buildBilancioCsv(
       .eq('workspace_id', workspaceId)
       .is('deleted_at', null)
       .or('and(doc_type.eq.fattura,status.eq.accepted),payment_status.in.(partial,paid)')
-      // Mai le note di credito fra le entrate (vedi bilancio/page.tsx)
+      // Mai le note di credito fra le entrate (vedi bilancio/page.tsx);
+      // e mai le fatture di ACCONTO: lo stesso incasso è già sul preventivo.
       .neq('doc_type', 'nota_credito')
+      .neq('doc_type', 'fattura_acconto')
   )
   if (richError && !isMissingColumnError(richError as { code?: string; message?: string })) {
     throw new Error('Non è stato possibile leggere tutte le entrate: riprova tra qualche secondo. Il bilancio non viene creato incompleto.')

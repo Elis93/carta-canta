@@ -243,7 +243,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
   },
   {
     q: 'Posso far comparire l’acconto già impostato su ogni preventivo?',
-    parole: ['acconto', 'anticipo', 'caparra', '30%', 'default', 'sempre uguale', 'impostazioni'],
+    // ⚠️ Niente «caparra» fra le parole chiave (ricerca 23 set): la caparra
+    // NON è un acconto — è una garanzia, fuori campo IVA, e non si fattura.
+    parole: ['acconto', 'anticipo', '30%', 'default', 'sempre uguale', 'impostazioni'],
     a: <>Sì. In <VaiA a="impGenerale" />, sezione <b>Dati dell&rsquo;attività</b>, c&rsquo;è{' '}
       <b>Acconto da chiedere</b>: scegli <b>Percentuale</b>{' '}(del totale, per esempio 30%) oppure{' '}<b>Cifra fissa</b>{' '}in euro, e da lì in avanti ogni preventivo <b>nuovo</b>{' '}nasce con
       quell&rsquo;acconto già scritto. Su ciascun preventivo puoi comunque cambiarlo o
@@ -688,19 +690,41 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
   },
   {
     q: 'Ho incassato un acconto: devo fare qualcosa entro una data?',
-    parole: ['acconto', 'anticipo', 'caparra', 'fattura di acconto', '12 giorni', 'incasso'],
+    parole: ['acconto', 'anticipo', 'fattura di acconto', '12 giorni', 'incasso', 'acc', 'td02'],
     a: <>Sì. <b>Chiedere</b>{' '}un acconto non fa scattare
       nulla: è solo una richiesta. <b>Incassarlo</b>{' '}sì — per la legge l&rsquo;operazione
       si considera effettuata al pagamento, quindi da quel giorno hai <b>12 giorni</b>{' '}per
-      emettere (e trasmettere) la <b>fattura per la parte incassata</b>.
+      trasmettere la <b>fattura per la parte incassata</b>.
       <br /><br />
-      Per questo, quando registri l&rsquo;acconto sul preventivo, l&rsquo;app te lo dice e
-      lascia il promemoria con la data entro cui farlo. Da lì converti il preventivo in
-      fattura, oppure ne parli col commercialista se preferisci gestirla diversamente.
+      Quando registri l&rsquo;acconto sul preventivo (tasto «Acconto ricevuto»), l&rsquo;app{' '}
+      <b>crea da sola la fattura di acconto</b>{' '}(numero{' '}<b>ACC&nbsp;001/2026</b>, la trovi
+      fra le Fatture): nasce già pagata e pronta — resta solo da <b>trasmetterla allo SdI
+      entro i 12 giorni</b>, e il promemoria con la data ti segue finché non è fatto.
+      <br /><br />
+      ⚠️ La <b>caparra</b>{' '}è un&rsquo;altra cosa: è una garanzia, non un anticipo del
+      prezzo, e da sola non si fattura. Se però i soldi ricevuti sono un anticipo del
+      lavoro, sono un acconto — nel dubbio chiedi al commercialista.
       <br /><br />
       ⚠️ Quando poi incassi il <b>saldo</b>, la fattura finale deve tenere conto
-      dell&rsquo;acconto già fatturato: altrimenti lo stesso importo risulterebbe fatturato
-      due volte.</>,
+      dell&rsquo;acconto già fatturato: la fattura di saldo con l&rsquo;acconto scomputato
+      arriva con un prossimo aggiornamento — fino ad allora l&rsquo;app blocca «Converti in
+      fattura» sui preventivi con un acconto fatturato, per non fatturare due volte.</>,
+  },
+  {
+    q: 'Cos’è la fattura di acconto (numero ACC)? Posso correggerla?',
+    parole: ['fattura di acconto', 'acconto', 'acc', 'td02', 'sbagliato importo', 'elimina acconto'],
+    a: <>È la fattura che documenta l&rsquo;<b>acconto incassato</b>{' '}su un preventivo
+      accettato. Nasce da sola quando registri l&rsquo;acconto: ha una numerazione tutta sua
+      (<b>ACC&nbsp;001/2026</b>), risulta già <b>pagata</b>{' '}(è l&rsquo;incasso) e riporta
+      il preventivo da cui viene. Se il lavoro ha più aliquote IVA (per esempio coi beni
+      significativi), l&rsquo;acconto viene ripartito in proporzione, come chiede
+      l&rsquo;Agenzia.
+      <br /><br />
+      Non si modifica e non ha «Segna pagata»: l&rsquo;incasso vive sul preventivo. Se
+      l&rsquo;importo è <b>sbagliato</b>, elimina la fattura di acconto (dal suo menu o dalla
+      pagina): l&rsquo;acconto sul preventivo <b>si azzera</b>{' '}e puoi registrarlo di nuovo
+      con la cifra giusta. Una fattura di acconto <b>già trasmessa</b>{' '}allo SdI invece è
+      emessa: non si elimina — parlane col commercialista.</>,
   },
   {
     q: 'Cosa entra nelle Entrate e nelle Uscite del Bilancio?',
@@ -711,7 +735,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <b>Entrate</b> = gli <b>incassi</b>{' '}che hai registrato (con «Segna pagata» o
       registrando un acconto), nel mese in cui li hai incassati. Una fattura inviata ma non
       ancora pagata <b>non</b>{' '}è un&rsquo;entrata; un preventivo accettato nemmeno. Le{' '}
-      <b>note di credito</b>{' '}restano fuori dalle entrate.
+      <b>note di credito</b>{' '}restano fuori dalle entrate, e l&rsquo;acconto conta{' '}
+      <b>una volta sola</b>: la fattura di acconto che ne nasce non si somma all&rsquo;incasso
+      già registrato sul preventivo.
       <br /><br />
       <b>Uscite</b> = le <b>spese che registri tu</b>{' '}(Bilancio › Aggiungi spesa), divise in{' '}
       <b>Costi dei lavori</b>{' '}(quelle che colleghi a un lavoro) e <b>Spese generali</b>.

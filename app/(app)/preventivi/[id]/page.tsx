@@ -63,7 +63,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
   // round trip (prima erano due onde in serie). Il cliente è JOINato nel
   // documento; fattura collegata e aperture si filtrano dopo in base allo
   // stato (stessa visibilità di prima, fetch anticipato).
-  const [{ data: doc }, { data: templates }, { data: fatturaOriginRaw }, { data: viewsRaw }, supplierLists] = await Promise.all([
+  const [{ data: doc }, { data: templates }, { data: fatturaOriginRaw }, { data: viewsRaw }, supplierLists, fatturaAccontoRaw] = await Promise.all([
     supabase
       .from('documents')
       .select('*, document_items(*), clients(id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia)')
@@ -103,7 +103,24 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       .from('supplier_lists')
       .select('id, name, valid_until')
       .eq('workspace_id', workspace.id)
-      .then((r: { data: Array<{ id: string; name: string; valid_until: string | null }> | null }) => r.data ?? [], () => [] as Array<{ id: string; name: string; valid_until: string | null }>)
+      .then((r: { data: Array<{ id: string; name: string; valid_until: string | null }> | null }) => r.data ?? [], () => [] as Array<{ id: string; name: string; valid_until: string | null }>),
+    // Fattura di ACCONTO (TD02) nata da questo preventivo (Fase 2 acconti,
+    // 24 set) — query a sé e TOLLERANTE: sdi_status (044) non è nei tipi.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonna 044 non ancora in types/database.ts
+    (supabase as any)
+      .from('documents')
+      .select('id, doc_number, sdi_status')
+      .eq('origin_document_id', id)
+      .eq('workspace_id', workspace.id)
+      .eq('doc_type', 'fattura_acconto')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(
+        (r: { data: { id: string; doc_number: string | null; sdi_status?: string | null } | null }) => r.data ?? null,
+        () => null,
+      )
   ])
 
   if (!doc) notFound()
@@ -331,6 +348,16 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       }
     } catch { /* migration non ancora applicata */ }
   }
+
+  // La fattura di ACCONTO collegata (Fase 2): la card la mostra e la linka,
+  // e finché non è trasmessa il promemoria dei 12 giorni punta lì.
+  const fatturaAcconto = fatturaAccontoRaw
+    ? {
+        id: fatturaAccontoRaw.id as string,
+        numero: (fatturaAccontoRaw.doc_number as string | null) ?? null,
+        trasmessa: !!fatturaAccontoRaw.sdi_status && fatturaAccontoRaw.sdi_status !== 'scartata',
+      }
+    : null
 
   // ── Foto lavoro (041) + lavoro collegato (048) — tolleranti pre-migration ──
   let workPhotos: Array<{ id: string; storage_path: string; label: 'prima' | 'dopo' | null; visible_to_client: boolean; sopralluogo_id: string | null }> = []
@@ -911,6 +938,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                 acconto={accontoInfo.acconto}
                 saldo={accontoInfo.saldo}
                 received={accontoInfo.received}
+                fatturaAcconto={fatturaAcconto}
                 bare
               />
             </CardTendina>
@@ -1308,6 +1336,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
               acconto={accontoInfo.acconto}
               saldo={accontoInfo.saldo}
               received={accontoInfo.received}
+              fatturaAcconto={fatturaAcconto}
             />
           </div>
         )}

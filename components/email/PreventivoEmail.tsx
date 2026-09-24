@@ -23,7 +23,7 @@ interface PreventivoEmailProps {
    *  ⚠️ Mai dedurre per esclusione (regola 9 ago): note di credito e di
    *  debito hanno le loro parole — chiamarle «preventivo» invitava perfino
    *  ad «accettarle o rifiutarle». */
-  docType?: 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito'
+  docType?: 'preventivo' | 'fattura' | 'nota_credito' | 'nota_debito' | 'fattura_acconto'
   /** Email dell'artigiano (reply-to) — mostrata come link cliccabile nel corpo email */
   ownerEmail?: string | null
 }
@@ -43,12 +43,14 @@ export function PreventivoEmail({
     docType === 'fattura' ? 'Fattura'
     : docType === 'nota_credito' ? 'Nota di credito'
     : docType === 'nota_debito' ? 'Nota di debito'
+    : docType === 'fattura_acconto' ? 'Fattura di acconto'
     : 'Preventivo'
   // «la fattura» / «la nota di credito» / «il preventivo» — per le frasi.
   const docConArticolo =
     docType === 'fattura' ? 'la fattura'
     : docType === 'nota_credito' ? 'la nota di credito'
     : docType === 'nota_debito' ? 'la nota di debito'
+    : docType === 'fattura_acconto' ? 'la fattura di acconto'
     : 'il preventivo'
   const title = docNumber ? `${docLabel} n. ${docNumber}` : docLabel
 

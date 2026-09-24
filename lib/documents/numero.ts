@@ -50,6 +50,16 @@ export function formatNotaDebitoNumber(seq: number, year: number): string {
   return `${ND_PREFIX} ${String(seq).padStart(3, '0')}/${year}`
 }
 
+/** Sezionale della FATTURA DI ACCONTO (TD02): «ACC 001/2026» — decisione di
+ *  Eli (PROGETTO_ACCONTI §1.10, ris. 1/E/2013: qualsiasi numerazione
+ *  progressiva che garantisca l'identificazione univoca). 12 caratteri:
+ *  dentro lo String20Type del tracciato, e il controllo 00425 (almeno una
+ *  cifra) è sempre soddisfatto. */
+export const ACC_PREFIX = 'ACC'
+export function formatAccontoNumber(seq: number, year: number): string {
+  return `${ACC_PREFIX} ${String(seq).padStart(3, '0')}/${year}`
+}
+
 /**
  * Come si scrive un numero dentro un NOME DI FILE (PDF, XML).
  * Lo slash non è ammesso nei nomi di file; lo spazio sì, ma un allegato che si

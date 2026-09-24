@@ -74,7 +74,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
       .select('*, document_items(*), clients(id, name, surname, email, phone, piva, indirizzo, cap, citta, provincia)')
       .eq('id', id)
       .eq('workspace_id', workspace.id)
-      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'])
       .is('deleted_at', null)
       .maybeSingle(),
     supabase
@@ -312,6 +312,12 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   // e niente storno di sé stessa. Lo SdI invece SERVE — una nota che resta
   // nell'app non storna nulla: per l'Agenzia la fattura è ancora intera.
   const isNotaCredito = doc.doc_type === 'nota_credito'
+  // Fattura di ACCONTO (TD02, Fase 2 acconti 24 set): nasce «pagata»
+  // dall'incasso registrato sul preventivo. Niente Segna pagata/non pagata
+  // (lo stato di pagamento vive sul preventivo), niente Collega/Cambia
+  // preventivo (l'origine è fissa), niente note di credito da qui (il
+  // server le ammette solo sulle fatture piene — residuo dichiarato).
+  const isAcconto = doc.doc_type === 'fattura_acconto'
   // ── Avviso dei 12 giorni (Eli, 11 ago) — dal ritiro del pilota (Fase 1,
   // 21 set) è un booleano: la trasmissione è sempre un gesto manuale, e
   // l'avviso ha senso solo finché la fattura NON è già stata trasmessa.
@@ -349,7 +355,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   type NotaSorella = { id: string; doc_number: string | null; total: number | null; bollo_amount: number | null; status: string }
   let noteFattura: NotaSorella[] = []
   let residuoStorno: number | null = null
-  if (sdiTransmitted && !isNotaCredito) {
+  if (sdiTransmitted && !isNotaCredito && !isAcconto) {
     const { data: nf } = await supabase
       .from('documents')
       .select('id, doc_number, total, bollo_amount, status')
@@ -506,8 +512,8 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
   const fmtShort = (iso: string) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Rome' }).replace('.', '')
   const numeroBreve = formatDocNumber(doc.doc_number)
   const headerTitle = numeroBreve !== '—'
-    ? `${isNotaCredito ? 'Nota di credito' : 'Fattura'} ${numeroBreve}`
-    : (isNotaCredito ? 'Nota di credito' : 'Bozza')
+    ? `${isNotaCredito ? 'Nota di credito' : isAcconto ? 'Fattura di acconto' : 'Fattura'} ${numeroBreve}`
+    : (isNotaCredito ? 'Nota di credito' : isAcconto ? 'Fattura di acconto' : 'Bozza')
   // La data della riga di stato: quella che conta per QUELLO stato — incasso
   // sulla pagata, data fiscale (o invio) sulle altre, niente sulla bozza.
   const statoData: string | null = doc.status === 'accepted'
@@ -735,7 +741,11 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               transitions={
                 isNotaCredito
                   ? (sdiTransmitted ? {} : NOTA_CREDITO_TRANSITIONS)
-                  : (sdiTransmitted ? FATTURA_TRANSITIONS_TRASMESSA : FATTURA_TRANSITIONS)
+                  // La TD02 non ha transizioni: nasce pagata dall'incasso sul
+                  // preventivo, e si corregge eliminandola (azzera l'acconto).
+                  : isAcconto
+                    ? {}
+                    : (sdiTransmitted ? FATTURA_TRANSITIONS_TRASMESSA : FATTURA_TRANSITIONS)
               }
               apiPath={`/api/fatture/${id}/status`}
               docType={doc.doc_type}
@@ -784,7 +794,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
             icon={<Send size={16} />}
             sotto={<>La copia di cortesia non è ancora stata mandata al cliente: usa «Invia» qui sotto (email, WhatsApp o link).</>}
           >
-            <b>{isNotaCredito ? 'Nota di credito emessa.' : 'Fattura emessa.'}</b>
+            <b>{isNotaCredito ? 'Nota di credito emessa.' : isAcconto ? 'Fattura di acconto emessa.' : 'Fattura emessa.'}</b>
           </Avviso>
         )}
 
@@ -854,7 +864,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         {docItems.length > 0 && !editing && (
           <div className="lg:hidden" style={{ background: '#fff', border: '1px solid #e6e1d5', borderTop: '3px solid #c9a44c', borderBottom: '3px solid #c9a44c', borderRadius: 14, boxShadow: '0 10px 26px -16px rgba(20,20,40,.5)', padding: '15px 15px' }}>
             <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.16em', textTransform: 'uppercase', color: '#8a6b28' }}>
-              {isNotaCredito ? 'Nota di credito' : 'Fattura'}
+              {isNotaCredito ? 'Nota di credito' : isAcconto ? 'Fattura di acconto' : 'Fattura'}
             </div>
             {doc.doc_number && (
               <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 22, color: '#161616', margin: '3px 0 1px' }}>
@@ -1069,7 +1079,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 <EliminaDocumentoButton documentId={id} docType={doc.doc_type} docNumber={doc.doc_number} sdiTransmitted={sdiTransmitted} hasIncasso={hasIncasso} menu />
               </MenuAltro>
             </div>
-            {!isNotaCredito && (doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && (
+            {!isNotaCredito && !isAcconto && (doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed' || doc.status === 'expired') && (
               <SegnaPagataButton
                 documentId={id}
                 total={doc.total}
@@ -1080,7 +1090,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 triggerStyle={isDraft ? btnBiancoPieno : btnNavyPieno}
               />
             )}
-            {!isNotaCredito && doc.status === 'accepted' && (
+            {!isNotaCredito && !isAcconto && doc.status === 'accepted' && (
               <SegnaNonPagataButton documentId={id} fullWidth triggerStyle={btnSoft} />
             )}
             {canReactivate && <RiattivaFatturaButton documentId={id} fullWidth triggerStyle={btnNavyPieno} />}
@@ -1158,7 +1168,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                     <div style={{ fontSize: 14, color: 'var(--cc-muted)' }}>Nessuno</div>
                   )}
                 </div>
-                {!isNotaCredito && (
+                {!isNotaCredito && !isAcconto && (
                   <LinkToPreventivoButton
                     fatturaId={id}
                     workspaceId={workspace.id}
@@ -1186,7 +1196,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
         {/* ── MOBILE: tendina «Note di credito» (fattura TRASMESSA) — al posto
             di «Annulla» c'è il documento che la storna davvero (Eli 8 ago);
             da chiusa dice quante note ci sono e quanto resta da stornare. ── */}
-        {sdiTransmitted && !isNotaCredito && !editing && (
+        {sdiTransmitted && !isNotaCredito && !isAcconto && !editing && (
           <CardTendina
             label="Note di credito"
             className="lg:hidden"
@@ -1242,8 +1252,8 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
                 PDF. «creata il» resta solo per le bozze, dove la data
                 fiscale non è ancora nata. */}
             {(doc as { doc_date?: string | null }).doc_date
-              ? `${isNotaCredito ? 'Nota di credito del' : 'Fattura del'} ${new Date((doc as { doc_date?: string | null }).doc_date!).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' })}`
-              : `${isNotaCredito ? 'Nota di credito creata il' : 'Fattura creata il'} ${new Date(doc.created_at!).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' })}`}
+              ? `${isNotaCredito ? 'Nota di credito del' : isAcconto ? 'Fattura di acconto del' : 'Fattura del'} ${new Date((doc as { doc_date?: string | null }).doc_date!).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' })}`
+              : `${isNotaCredito ? 'Nota di credito creata il' : isAcconto ? 'Fattura di acconto creata il' : 'Fattura creata il'} ${new Date(doc.created_at!).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Rome' })}`}
           </p>
         </div>
 
@@ -1291,7 +1301,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               )}
               {/* Sulla nota di credito il riferimento è fiscale: non si cambia
                   (vedi la card mobile qui sopra). */}
-              {!isNotaCredito && (
+              {!isNotaCredito && !isAcconto && (
                 <LinkToPreventivoButton
                   fatturaId={id}
                   workspaceId={workspace.id}
@@ -1300,7 +1310,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
               )}
             </div>
           </div>
-        ) : !isNotaCredito ? (
+        ) : !isNotaCredito && !isAcconto ? (
           <div className="flex items-center gap-3 rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground flex-wrap">
             <FileText className="size-4 shrink-0 text-muted-foreground/60" />
             <span className="flex-1">Fattura non collegata a nessun preventivo.</span>
@@ -1321,7 +1331,7 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* ⚠️ «Crea nota di credito» esisteva SOLO su mobile: su computer una
             fattura trasmessa non aveva alcun modo di essere stornata. */}
-        {sdiTransmitted && !isNotaCredito && !editing && (
+        {sdiTransmitted && !isNotaCredito && !isAcconto && !editing && (
           <div className="hidden lg:block">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {noteFattura.length > 0 && (
@@ -1365,8 +1375,8 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
 
         {/* Form fattura — su mobile visibile solo con ?edit=1 (e non per accepted/rejected) */}
         {sdiTransmitted ? (
-          <Avviso gravita="info" desktopOnly sotto={isNotaCredito ? undefined : 'Per correggerla usa la nota di credito, qui sopra.'}>
-            <b>{isNotaCredito ? 'Nota di credito trasmessa allo SdI' : 'Fattura trasmessa allo SdI'}</b>: non è più modificabile.
+          <Avviso gravita="info" desktopOnly sotto={isNotaCredito || isAcconto ? undefined : 'Per correggerla usa la nota di credito, qui sopra.'}>
+            <b>{isNotaCredito ? 'Nota di credito trasmessa allo SdI' : isAcconto ? 'Fattura di acconto trasmessa allo SdI' : 'Fattura trasmessa allo SdI'}</b>: non è più modificabile.
           </Avviso>
         ) : (
         <div

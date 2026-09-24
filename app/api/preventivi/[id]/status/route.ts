@@ -150,11 +150,13 @@ export async function PATCH(
     // lascerebbe una fattura che nasce da un documento non più accettato.
     // Guardia di coerenza → FAIL-CLOSED: se la verifica stessa fallisce
     // non si procede (review 22 lug B1).
+    // Anche la FATTURA DI ACCONTO (Fase 2): un preventivo con un TD02 emesso
+    // non può tornare «non accettato» — l'acconto incassato lo contraddice.
     const { data: linkedFattura, error: linkErr } = await supabase
       .from('documents')
-      .select('id')
+      .select('id, doc_type')
       .eq('origin_document_id', id)
-      .eq('doc_type', 'fattura')
+      .in('doc_type', ['fattura', 'fattura_acconto'])
       .is('deleted_at', null)
       .limit(1)
       .maybeSingle()
@@ -164,7 +166,11 @@ export async function PATCH(
     }
     if (linkedFattura) {
       return NextResponse.json(
-        { error: 'C’è una fattura collegata a questo preventivo: eliminala (o scollegala) prima di segnarlo come non accettato.' },
+        {
+          error: linkedFattura.doc_type === 'fattura_acconto'
+            ? 'C’è una fattura di acconto emessa da questo preventivo: finché esiste, il preventivo resta accettato. Se l’acconto è sbagliato, elimina prima la fattura di acconto.'
+            : 'C’è una fattura collegata a questo preventivo: eliminala (o scollegala) prima di segnarlo come non accettato.',
+        },
         { status: 409 }
       )
     }

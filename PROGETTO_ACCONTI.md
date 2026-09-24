@@ -263,7 +263,62 @@ Motore · PDF (4 preset) · pagina cliente `/p/[token]` · fogli interni · `Fis
 
 ---
 
-## 3. FASE 2 — La fattura di acconto TD02
+## 3. FASE 2 — La fattura di acconto TD02 — ✅ IMPLEMENTATA (24 set)
+
+> **Esito dell'implementazione** (scostamenti e conferme rispetto al piano):
+> - **Nessuna migration** (confermato §3.1): `doc_type` è TEXT senza vincolo, la RPC
+>   `next_invoice_number` era già chiavata sul tipo, `origin_document_id` esiste.
+>   Nessuna colonna nuova: «acconto scomputato» si ricava da
+>   `doc_type='fattura_acconto'` + `origin_document_id`, come previsto.
+> - **Modulo puro nuovo `lib/fiscal/acconto.ts`**: `righeAcconto()` — dall'importo
+>   incassato (lordo) alle righe della TD02. Secchielli per aliquota da
+>   `riepilogoIva` sulle voci ESPANSE dei beni significativi (stessa fonte dei
+>   totali → mai divergenti), ripartizione proporzionale (71/E §5.2), scorporo a
+>   ritroso con quadratura al centesimo (scarto ≤ 1 cent dichiarato quando il
+>   lordo non è raggiungibile — es. 100,01 al 22%), descrizioni specifiche
+>   («Acconto su {titolo} — preventivo {N} del {data}», mai il generico che la
+>   Guida vieta), `dicituraBeni` col valore del bene in quota (`quotaAccontoBene`
+>   finalmente cablata) scritta nelle note del documento. Forfettario/reverse:
+>   una riga, importo = imponibile. 21 test nuovi (esempio ufficiale col 30%,
+>   quadrature, sconto documento, degeneri) + 4 sull'XML TD02.
+> - **`registerDepositReceivedAction` crea la TD02**: ordine TD02-prima-incasso-poi
+>   con ROLLBACK (se l'incasso sul preventivo fallisce, la TD02 si elimina —
+>   successo = tutti e due, fallimento = nessuno). Nasce `status='accepted'`
+>   (pagata), `paid_amount` = importo, `doc_date` = giorno dell'incasso
+>   (scrittura tollerante 080), reverse ereditato, multi-proposta → voci della
+>   proposta accettata. Guardia nuova: un acconto GIÀ registrato non si
+>   sovrascrive (N acconti = Fase 3). Il controllo «fattura collegata» ora
+>   filtra `doc_type='fattura'` (le TD02 non bloccano il flusso).
+> - **Correzione = eliminazione**: la TD02 non ha transizioni di stato («pagata»
+>   per costruzione, l'incasso vive sul preventivo); eliminarla (non trasmessa)
+>   AZZERA l'acconto sul preventivo — dialog che lo dice, retry sul reset.
+> - **Blocco-ponte**: `converti-fattura` rifiuta (409, fail-closed) i preventivi
+>   con TD02 attive — la fattura piena conterebbe due volte l'acconto. Cade
+>   con la Fase 3 (saldo a conguaglio).
+> - **Bilancio**: TD02 ESCLUSA dalle 3 query di cassa (come la NC — l'incasso
+>   resta contato sul preventivo, zero doppi conteggi); INCLUSA nel registro
+>   fatture e nell'export CSV col segno + ed etichetta propria.
+> - **~90 punti in ~45 file** (censimento: 185 punti, molti [AUTO] via gli
+>   helper centrali): docTypeLabel/docTypePath/isFemminile/eventoLabel/
+>   badgeLabel/StatusBadge col ramo nuovo; SdI (doc-xml, trasmetti, types,
+>   esito/reclaim/forza-esito) → TD02; copia di cortesia (blocco pre-esito,
+>   copia automatica all'esito, quota Free consumata come una fattura);
+>   PDF «FATTURA DI ACCONTO» senza il riquadro «Come pagare» (è già incassata);
+>   liste/Home/da-trasmettere/campanella; ricerca `isAccontoQuery`
+>   («acconto», «acc», «td02»); email col tipo vero.
+> - **Difetti pre-esistenti della NOTA DI DEBITO chiusi in corsa** (stessa
+>   classe, trovati dal censimento): PDF intitolato «PREVENTIVO», nessuna
+>   dicitura SdI sulla copia, doc_date mai scritta, niente guardie di
+>   trasmissione/eliminazione/purge, **cancellata con l'account** (account.ts
+>   usava `.neq('fattura')` — ora `.eq('preventivo')`), «Fatt. ND» in Home.
+> - ⚠️ **Residui dichiarati**: con SdI spento la TD02 nasce comunque (giusto:
+>   numerazione e registro) ma non è trasmissibile dall'app — la card SdI
+>   compare solo col flag; niente NC/ND su una TD02 (il server le ammette solo
+>   sulle fatture piene); il form in sola lettura della TD02 parla da
+>   «fattura»; il Fatturato della Home non conta gli acconti (decisione da
+>   prendere con la Fase 3, quando il saldo esce al netto); il ripristino dal
+>   cestino di una TD02 NON ri-registra l'acconto sul preventivo.
+> - Collaudi **T22-T25** in TEST_DA_FARE_ELI.
 
 ### 3.1 Migration 090
 ```

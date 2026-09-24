@@ -83,7 +83,7 @@ export async function PATCH(
       .from('documents')
       .select(cols)
       .eq('id', id)
-      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito'])
+      .in('doc_type', ['fattura', 'nota_credito', 'nota_debito', 'fattura_acconto'])
       .is('deleted_at', null)
       .maybeSingle()
     let res = await runSelect('id, status, doc_type, workspace_id, total, sent_at, sdi_status, document_log')
@@ -102,6 +102,17 @@ export async function PATCH(
   if (doc.doc_type === 'nota_credito' && ('reset_payment' in body || body.status === 'accepted')) {
     return NextResponse.json(
       { error: 'Una nota di credito non si incassa: è denaro che torna al cliente, non che arriva.' },
+      { status: 422 }
+    )
+  }
+
+  // ⚠️ La FATTURA DI ACCONTO nasce dall'incasso registrato sul preventivo:
+  // il suo stato di pagamento non si tocca da qui — «Segna pagata» non serve
+  // (è già pagata) e azzerare l'incasso da qui la farebbe divergere dal
+  // preventivo, che continuerebbe a dire «acconto ricevuto».
+  if (doc.doc_type === 'fattura_acconto' && ('reset_payment' in body || body.status === 'accepted' || body.status === 'sent' || body.status === 'draft')) {
+    return NextResponse.json(
+      { error: 'La fattura di acconto documenta un incasso già registrato sul preventivo: il suo stato di pagamento non si cambia da qui.' },
       { status: 422 }
     )
   }

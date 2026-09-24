@@ -81,6 +81,17 @@ export function StatusBadge({ status, showTooltip = true, className, docType }: 
     if (status === 'expired')  { overrideLabel = 'Scaduta'; overrideDescription = 'La nota di credito ha superato la data indicata.' }
   }
 
+  // La FATTURA DI ACCONTO (TD02) nasce già pagata — è l'incasso dell'acconto,
+  // registrato dal preventivo. «Inviata» qui vuol dire copia di cortesia.
+  if (docType === 'fattura_acconto') {
+    if (status === 'draft')    { overrideDescription = 'Fattura di acconto in bozza.' }
+    if (status === 'sent')     { overrideLabel = 'Inviata'; overrideDescription = 'Il cliente ha ricevuto la copia della fattura di acconto.' }
+    if (status === 'viewed')   { overrideLabel = 'Inviata'; overrideDescription = 'Il cliente ha aperto la fattura di acconto.' }
+    if (status === 'accepted') { overrideLabel = 'Pagata'; overrideDescription = 'Acconto incassato: la fattura di acconto è nata da quell’incasso.' }
+    if (status === 'rejected') { overrideLabel = 'Annullata'; overrideDescription = 'La fattura di acconto è stata annullata.' }
+    if (status === 'expired')  { overrideLabel = 'Scaduta'; overrideDescription = 'La fattura di acconto ha superato la data indicata.' }
+  }
+
   // La nota di DEBITO invece si incassa come una fattura: qui cambiano solo
   // le parole, «Pagata» compresa.
   if (docType === 'nota_debito') {
