@@ -319,6 +319,27 @@ Motore · PDF (4 preset) · pagina cliente `/p/[token]` · fogli interni · `Fis
 >   prendere con la Fase 3, quando il saldo esce al netto); il ripristino dal
 >   cestino di una TD02 NON ri-registra l'acconto sul preventivo.
 > - Collaudi **T22-T25** in TEST_DA_FARE_ELI.
+> - ⏳ **DA VALUTARE (Eli, 26 set, dal collaudo T22) — correzione di un acconto
+>   e cosa può fare l'artigiano.** Il banner della TD02 diceva «Se l'incasso è
+>   sbagliato: «Segna come non pagata»» — comando che sulla TD02 NON esiste
+>   (è pagata per costruzione). Il testo è stato corretto subito (TD02 non
+>   trasmessa → «usa Elimina fattura di acconto: l'acconto sul preventivo si
+>   azzera»; trasmessa → «parlane col commercialista»), ma va progettato il
+>   FLUSSO intero, con ogni caso spiegato in parole semplici:
+>   ① incasso registrato + TD02 creata, NON trasmessa → oggi: si elimina la
+>   TD02 e l'acconto si azzera. Serve anche la strada inversa: dal PREVENTIVO
+>   un comando «l'acconto era sbagliato» che chieda «eliminare anche la
+>   fattura di acconto ACC …?» (oggi sul preventivo non c'è nessun comando di
+>   azzeramento dell'acconto);
+>   ② TD02 GIÀ TRASMESSA allo SdI → non si elimina; la correzione fiscale è
+>   una nota di credito sulla TD02 (oggi il server le ammette solo sulle
+>   fatture piene) o l'assorbimento nel saldo a conguaglio della Fase 3 —
+>   decisione da prendere col commercialista;
+>   ③ acconto rimborsato perché il lavoro salta → TD04 DOPO la restituzione
+>   (§6 casi limite);
+>   ④ dove si spiega: banner della TD02, AccontoCard sul preventivo, dialog di
+>   eliminazione, FAQ «Cos'è la fattura di acconto… Posso correggerla?».
+>   Da decidere con Eli PRIMA della Fase 3 (i casi ② e ③ la toccano).
 
 ### 3.1 Migration 090
 ```

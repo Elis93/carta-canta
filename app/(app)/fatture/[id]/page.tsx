@@ -806,12 +806,19 @@ export default async function FatturaDetailPage({ params, searchParams }: Props)
           <Avviso
             gravita={doc.status === 'accepted' ? 'ok' : 'errore'}
             sotto={doc.status === 'accepted'
-              ? <>Se l&rsquo;incasso è sbagliato: «Segna come non pagata».</>
+              ? isAcconto
+                // La TD02 non ha «Segna come non pagata» (è pagata per
+                // costruzione, l'incasso vive sul preventivo): la correzione
+                // è ELIMINARLA, che azzera l'acconto sul preventivo.
+                ? sdiTransmitted
+                  ? 'È già trasmessa allo SdI: se l’importo è sbagliato, parlane col commercialista prima di fare altro.'
+                  : 'Se l’importo è sbagliato, usa «Elimina fattura di acconto»: l’acconto sul preventivo si azzera e puoi registrarlo di nuovo.'
+                : <>Se l&rsquo;incasso è sbagliato: «Segna come non pagata».</>
               : canReactivate
                 ? 'Puoi riattivarla (torna in bozza) finché non è stata trasmessa allo SdI.'
                 : 'Già trasmessa allo SdI: per correggerla serve una nota di credito.'}
           >
-            <b>{doc.status === 'accepted' ? 'Fattura pagata' : 'Fattura annullata'}</b>
+            <b>{doc.status === 'accepted' ? (isAcconto ? 'Fattura di acconto incassata' : 'Fattura pagata') : 'Fattura annullata'}</b>
             {doc.status === 'accepted' ? ' — non si modifica più.' : ''}
           </Avviso>
         )}
