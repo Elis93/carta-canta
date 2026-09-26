@@ -523,6 +523,7 @@ IVA.
 | **Risposta 216/2020** del 14 luglio 2020 | L'acconto generico resta ad aliquota ordinaria · errori correggibili entro **un anno** (art. 26 c. 3 citato per esteso) |
 | **Risoluzione 1/E** del 10 gennaio 2013 | Numerazione: qualsiasi progressione che garantisca l'univocità |
 | **Guida AdE alla compilazione**, v1.10 aprile 2025 | TD02 trattato come TD01 · 12 giorni · `DatiFattureCollegate` imposto solo per TD04/TD05 · registri precompilati |
+| **DPR 633/1972 e Testo unico IVA** (D.Lgs. 10/2026), da Normattiva, letti il 26 set 2026 | art. 26 c.3: il limite di **un anno** vale per l'errore di fatturazione **e** per il «sopravvenuto accordo fra le parti»; la riduzione già prevista dal contratto sta nel c.2 · art. 6 c.4: operazione effettuata «limitatamente all'importo fatturato o pagato» · ⚠️ dal **1° gennaio 2027** vale la nuova numerazione: 6→24, 21→72, 26→92, 17 c.6 a-ter→64 c.6 lett. c) (domanda N23) |
 | **Specifiche tecniche FatturaPA** v1.4, 31 gennaio 2025 + **Rappresentazione tabellare** | `Numero` alfanumerico max 20 · 2.1.6 `<0.N>` e il suo caso d'uso dichiarato · 2.2.1.4 la **riga negativa** · controlli 00418, 00423, 00425 · `DatiRitenuta` molteplicità N |
 
 ---

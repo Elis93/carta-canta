@@ -669,10 +669,33 @@ trasmessa non si elimina più.)* Il nostro riassunto dalle fonti, da confermare:
   succede, con l'aliquota della fattura di acconto. Il termine di un anno (c.3) resta per
   l'errore vero (importo scritto sbagliato). Confermi che la distinzione vale anche per un
   artigiano con un preventivo (l'interpello riguarda un contratto quadro fra imprese)?
+- ①-ter (dal **testo di legge letto su Normattiva**, 26 set): l'art. 26 c.3 mette il limite
+  di un anno su DUE casi, non uno: la rettifica di un errore di fatturazione **e** la
+  riduzione che nasce da un **accordo arrivato dopo** («sopravvenuto accordo fra le parti»).
+  Quindi: riduzione già prevista dal preventivo/contratto (es. «a consuntivo») → c.2, senza
+  quel limite; sconto o riduzione concordati **dopo** col cliente → entro un anno. Confermi?
 - ③ **Il lavoro salta e l'acconto viene restituito**: nota di credito TD04 sull'intera
-  fattura di acconto, **dopo** la restituzione (art. 26 c.2). Confermi?
+  fattura di acconto, **dopo** la restituzione (art. 26 c.2). Confermi? ⚠️ Se il lavoro
+  salta perché artigiano e cliente si **mettono d'accordo** per annullarlo (non per
+  inadempimento), rientra nel «sopravvenuto accordo» del c.3 → entro un anno?
 - ④ Nel **forfettario** cambia qualcosa (bollo sulla nota, quote)? Per noi la nota di
   credito sulla fattura di acconto segue le stesse regole della nota sulla fattura piena.
+
+**N23 — Dal 1° gennaio 2027 cambia la numerazione delle norme IVA** *(scoperto il 26 set
+leggendo Normattiva)*. Il **D.Lgs. 19 gennaio 2026 n. 10** («Testo unico IVA») riordina il
+DPR 633/1972 e **si applica dal 1° gennaio 2027** (art. 171); da quella data gli artt. 1-27
+del DPR 633 sono abrogati (art. 170) e i rinvii alle vecchie norme si leggono come rinvii
+alle nuove (art. 170 c.3). Corrispondenze che ci riguardano: art. 6 → **art. 24** · art. 21
+→ **art. 72** (il vecchio c.7 diventa c.9; i 12 giorni restano al c.4) · art. 26 → **art. 92**
+(commi invariati) · art. 17 c.6 lett. a-ter (reverse charge installazione impianti) →
+**art. 64 c.6 lett. c)** · art. 15 → **art. 29** · art. 10 → **art. 37**. L'app cita oggi il DPR
+633 in: dicitura del reverse charge (PDF + XML `RiferimentoNormativo`), dicitura «non
+costituisce fattura valida ai fini del DPR 633/1972», riga «Bollo» N2.1 (art. 15), testi
+suggeriti del Template, FAQ. Domande: ① sulle fatture emesse dal 2027 conviene citare il
+nuovo testo unico, o il vecchio riferimento resta accettabile (il c.3 dell'art. 170 lo
+«traduce»)? ② La forma che consigli: «art. 64, comma 6, lett. c), D.Lgs. 10/2026»? Da parte
+nostra: le fatture del 2026 restano col DPR 633 (è la legge in vigore alla loro data); il
+cambio si farebbe **per data del documento**, non retroattivo.
 
 **Segnalati come OPPORTUNITÀ, non come rischi** (non servono risposte, ma un parere se
 capita): la **fattura differita TD24** entro il 15 del mese successivo, che ci calzerebbe

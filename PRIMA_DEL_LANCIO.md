@@ -60,6 +60,12 @@ Redis). Restano:
   c'è solo la riga della verifica P.IVA, corretta finché lo SdI è spento:
   nessun dato parte). Stesso momento del gate avvocato sui testi OpenAPI.
 - **Piano di ritenzione dati / cancellazione** confermato con l'avvocato.
+- **📅 ENTRO IL 1° GENNAIO 2027 — Testo unico IVA (D.Lgs. 10/2026):** da quella data
+  i riferimenti al DPR 633/1972 stampati sulle fatture (reverse charge art. 17 c.6
+  lett. a-ter, «non costituisce fattura valida ai fini del DPR 633/1972», riga «Bollo»
+  N2.1 art. 15, testi suggeriti del Template, FAQ) vanno aggiornati alla nuova
+  numerazione **per data del documento** (le fatture 2026 restano col DPR 633).
+  Tabella delle corrispondenze e domanda in `COSE_DA_FARE_ELI.md` **N23**.
 
 ---
 
