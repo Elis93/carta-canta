@@ -330,19 +330,24 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
 >   contratto di servizio, il manuale lo scrive il conservatore; all'uscita servono i
 >   pacchetti di archiviazione trasferibili. ❓ Resta: testo dell'accettazione nell'onboarding
 >   (avvocato) e clausola di restituzione nel contratto OpenAPI.
-> - **N15 ① 🟡 ② 🟡 ③ ✅ — ⚠️ DUE DIFFERENZE fra l'app e la prassi** (NESSUNA fa scartare la
->   fattura; il codice NON è stato toccato: decisione di Eli):
+> - **N15 ① ✅ ② ❓ ③ ❓ — ⚠️ RIVISTO il 26 set sera: le «due differenze» NON sono provate**
+>   (ricerca rifatta su richiesta di Eli prima di correggere: i risultati nuovi smentiscono la
+>   «prassi» data per certa nel primo giro). Il codice NON si tocca finché non si legge la fonte
+>   ufficiale o risponde il commercialista.
 >   · **CausalePagamento «W»** confermata: è la codifica del modello CU per gli appalti con la
 >     ritenuta dell'art. 25-ter (il tracciato dice «codifiche come da Mod. CU»). ✅ come l'app.
->   · **TipoRitenuta**: RT01 «persone fisiche» / RT02 «persone giuridiche» (tracciato, letto).
->     La prassi dei gestionali mette le **società di persone (snc, sas) su RT01** — le loro
->     ritenute si versano col codice tributo dei percipienti IRPEF (1019), le srl/spa col
->     1020. ⚠️ **L'app oggi manda snc e sas su RT02**: proposta di correzione (una riga).
->   · **ImportoTotaleDocumento**: il tracciato (letto) lo definisce «al netto dell'eventuale
->     sconto e comprensivo di imposta» — la ritenuta non è nominata; la prassi prevalente lo
->     scrive **al LORDO** della ritenuta (il netto da bonificare, se serve, va in
->     ImportoPagamento). ⚠️ **L'app oggi scrive il NETTO.** Verificato sull'Elenco controlli
->     1.9 (letto): lo SdI **non controlla** questo campo. Proposta: passare al lordo.
+>   · **TipoRitenuta ❓**: RT01 «persone fisiche» / RT02 «persone giuridiche» (tracciato, letto).
+>     Sul **codice tributo** le fonti sono concordi: snc/sas → **1019** (percipienti IRPEF),
+>     srl/spa → **1020** (IRES). Sul **TipoRitenuta** invece si **contraddicono**: alcuni
+>     gestionali mettono snc/sas su RT01 (IRPEF), altri scrivono «società (snc, sas, srl o spa)
+>     → RT02». Nessuna fonte ufficiale letta lo dice. L'app oggi manda snc/sas su RT02: non è
+>     dimostrato che sia sbagliato. Lo SdI non scarta per questo.
+>   · **ImportoTotaleDocumento ❓**: il tracciato (letto) lo definisce «al netto dell'eventuale
+>     sconto e comprensivo di imposta» — la ritenuta non è nominata. Le fonti si **dividono**:
+>     alcune lo scrivono al lordo della ritenuta, mentre le linee guida di un'amministrazione
+>     pubblica (Università di Ferrara) chiedono l'importo **al netto della ritenuta** — cioè
+>     ciò che fa già l'app. Lo SdI **non controlla** il campo (Elenco controlli 1.9, letto).
+>     ⚠️ Correzione rispetto al primo giro: non è vero che «la prassi prevalente è il lordo».
 > - **N16 ② 🟡 ③ ❓** Contratto unico con prestazioni in reverse charge e ordinarie: la circ.
 >   14/E/2015 chiede di **scomporre** (due fatture o parti distinte), salvo il contratto unico
 >   di costruzione/recupero sostanziale di un edificio, che va tutto a IVA ordinaria. Il
@@ -396,9 +401,17 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
 >   1.9.1: Eli può scaricarlo). **SAL**: nessuna fonte ufficiale dice TD01+DatiSAL o TD02 —
 >   invariato: non regge scelte.
 >
-> **Da scaricare dal browser, se Eli vuole chiudere gli ultimi 🟡:** ① la FAQ AdE «Fatture
-> verso e da soggetti stranieri (transfrontaliere)» (N21 ②) · ② l'Elenco controlli della
-> versione 1.9.1 · ③ la circ. 37/E del 22 dicembre 2015 (caldaia e reverse charge, N25 ③).
+> **Da scaricare dal browser** (dall'ambiente di lavoro i siti ufficiali sono bloccati: niente
+> download diretto). In ordine di utilità, con cosa chiude ciascuno:
+> ① **Istruzioni CU 2026** (Agenzia › Certificazione unica 2026 › Modello e istruzioni) → la
+>   causale «W» (N15 ①) · ② **Allegato A — Specifiche tecniche 1.9.1** e **Elenco controlli
+>   1.9.1** (Agenzia › Specifiche tecniche versione 1.9.1) → TipoRitenuta, ImportoTotaleDocumento,
+>   controlli 00418-00423 (N15 ②③, specifiche) · ③ **FAQ AdE «Compilazione della fattura
+>   elettronica»** e **«Fatture verso e da soggetti stranieri»** → ritenuta nel totale, privato
+>   estero senza CF (N15 ③, N21 ②) · ④ **ris. 47/E del 5 luglio 2013** e **Redditi PF 2026
+>   fascicolo 3** → forfettario e ritenuta della banca (N10) · ⑤ **circ. 37/E del 22 dicembre
+>   2015** e **circ. 14/E del 27 marzo 2015** → caldaia e reverse charge (N25 ③, N16) · ⑥ **Guida
+>   alla compilazione v1.10 (aprile 2025)** → rettifica della TD02 (N22).
 
 **N1 — Si può cancellare una fattura già emessa?** *(7 ago)*
 Oggi l'app lo permette: qualsiasi fattura può finire nel cestino e, da lì, essere eliminata per
@@ -678,8 +691,8 @@ forfettari (esenti, art. 1 c.67 L. 190/2014 — la loro fattura porta già la di
 esenzione). Nel ⓘ è scritto che il 4% e la ritenuta della banca sul bonifico parlante (**11%** dal 1° marzo
 2024) **non si cumulano** (circ. 40/E/2010).
 *Da confermare, tre punti tecnici* (🔎 esito del controllo del 26 set nel riquadro in testa
-alle N: «W» confermata; per snc/sas e per ImportoTotaleDocumento la prassi è diversa da
-quella dell'app — proposte di correzione in attesa dell'ok di Eli):
+alle N: «W» confermata; per TipoRitenuta delle snc/sas e per ImportoTotaleDocumento le
+fonti si dividono — l'app NON è stata corretta, le domande ② e ③ restano valide così):
 - ① **CausalePagamento**: abbiamo messo **W** (corrispettivi per contratti d'appalto).
   Confermi? La «A» è lavoro autonomo e ci sembra sbagliata.
 - ② **TipoRitenuta**: RT01 (persona fisica) o RT02 (soggetti diversi) lo deduciamo dalla
