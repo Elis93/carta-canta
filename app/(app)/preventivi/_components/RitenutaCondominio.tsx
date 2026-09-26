@@ -14,9 +14,11 @@ import { SpiegaCampo } from '@/components/shared/SpiegaCampo'
 // spunta non si mostra, e il suo PDF porta già la dicitura di esenzione — che
 // serve proprio a impedire al condominio di trattenere per sbaglio.
 //
-// ⚠️ 4% e 11% NON si cumulano: se il pagamento arriva con bonifico parlante
-// (lavori agevolati), la banca opera l'11% e il condominio NON applica il 4%
-// (circ. AdE 40/E/2010). È scritto nel ⓘ perché è il caso in cui l'artigiano
+// ⚠️ 4% e ritenuta bancaria NON si cumulano: se il pagamento arriva con bonifico
+// parlante (lavori agevolati), la banca opera la sua ritenuta — 8% dal 1° gennaio
+// 2015 (scheda AdE «Prestazioni soggette a ritenuta» del condominio) — e il
+// condominio NON applica il 4% (circ. AdE 40/E/2010, «Somme già assoggettate a
+// ritenuta»). È scritto nel ⓘ perché è il caso in cui l'artigiano
 // rischia di vedersi trattenere due volte.
 
 export function RitenutaCondominio({
@@ -92,7 +94,7 @@ export function RitenutaCondominio({
           bonificare, così tu e l’amministratore vedete la stessa cifra.
           <br /><br />
           <b>Attenzione:</b> se il condominio paga con <b>bonifico parlante</b>
-          {' '}per un lavoro agevolato, la banca trattiene già l’11% e il 4%
+          {' '}per un lavoro agevolato, la banca trattiene già l’8% e il 4%
           {' '}<b>non</b> si applica — le due ritenute non si sommano mai.
         </SpiegaCampo>
       </div>

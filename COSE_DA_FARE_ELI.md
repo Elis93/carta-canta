@@ -445,15 +445,21 @@ forfettario NON la subisce, ma deve dichiararlo (in pratica una dicitura in fatt
   **CausalePagamento** va scritta nell'XML? (Su questo le fonti non sono univoche.)
 - ③ Nel PDF va esposto il «netto a pagare» (totale − ritenuta): è la prassi che si aspetta?
 
-**N10 — RITENUTA BANCARIA 11% sul bonifico parlante (bonus casa).**
-Quando il cliente privato paga con bonifico parlante per la detrazione, la banca trattiene
-l'**11%**: l'artigiano fattura 10.000 e sul conto ne trova ~8.900. Non è un campo della
+**N10 — RITENUTA BANCARIA sul bonifico parlante (bonus casa).** *(riscritta il 26 set 2026 sulle
+fonti lette: circ. 40/E/2010, comunicato AdE 28 lug 2010, scheda AdE sulle ritenute dei condomini)*
+Quando il cliente paga con bonifico parlante per la detrazione, la banca trattiene una ritenuta
+d'acconto: nata al 10% (DL 78/2010), **oggi l'8% dal 1° gennaio 2015** (scheda AdE). ⚠️ Fino al
+26 set nei nostri testi c'era scritto «11%»: era sbagliato, corretto in app (ⓘ della ritenuta
+condominio e FAQ). La base è l'importo del bonifico **senza IVA**, e la banca — che non conosce
+l'aliquota — scorpora sempre l'IVA all'aliquota più alta (circ. 40/E). Non è un campo della
 fattura, ma **falsa i nostri incassi** (sembra un pagamento parziale).
-- ① **Il forfettario la subisce o no?** Le fonti si CONTRADDICONO apertamente: alcune dicono
-  che con una dichiarazione alla banca è esonerato, altre che le banche la applicano comunque
-  e si recupera in dichiarazione. Ci serve la tua risposta prima di scrivere qualunque cosa.
-- ② Se la subisce: ha senso che l'app avvisi al momento dell'incasso e permetta di registrare
-  l'incasso al netto senza far risultare la fattura «non saldata»?
+- ① **Il forfettario la subisce?** La circ. 40/E dice che per chi ha un'imposta **sostitutiva**
+  la ritenuta della banca «potrà essere scomputata dalla medesima imposta sostitutiva» → quindi
+  **la subisce** e la recupera in dichiarazione. Ti chiediamo solo la conferma.
+- ② Col condominio: la circ. 40/E («Somme già assoggettate a ritenuta») dice che col bonifico
+  parlante si applica **solo** la ritenuta della banca e il condominio **non** opera il 4%.
+- ③ Ha senso che l'app avvisi al momento dell'incasso e permetta di registrarlo al netto senza
+  far risultare la fattura «non saldata»?
 
 **N11 — FATTURA DI ACCONTO: è il punto dove la nostra app può portare fuori strada.**
 L'app mette l'acconto nel PREVENTIVO. Ma incassare un acconto è un **fatto fiscale**: fa
@@ -545,8 +551,8 @@ rifacciamo lo split su quella proporzione: è la prassi che ha in mente anche lu
 d'acconto 4% −X €» nel PDF, dicitura che dice chi la versa, e nell'XML il blocco
 `DatiRitenuta` con `<Ritenuta>SI</Ritenuta>` su ogni riga (senza, scarto 00415). Mai ai
 forfettari (esenti, art. 1 c.67 L. 190/2014 — la loro fattura porta già la dicitura di
-esenzione). Nel ⓘ è scritto che 4% e 11% del bonifico parlante **non si cumulano**
-(circ. 40/E/2010).
+esenzione). Nel ⓘ è scritto che il 4% e la ritenuta della banca sul bonifico parlante (**8%**, non 11%
+come scritto fino al 26 set) **non si cumulano** (circ. 40/E/2010).
 *Da confermare, tre punti tecnici:*
 - ① **CausalePagamento**: abbiamo messo **W** (corrispettivi per contratti d'appalto).
   Confermi? La «A» è lavoro autonomo e ci sembra sbagliata.
@@ -745,13 +751,18 @@ voci piene E sulle righe negative degli acconti, così il 4% esce sul **netto** 
 deve riportare anch'essa la ritenuta (oggi l'app non la mette)? ③ La circolare (§3, rinvio alla
 circ. 37/E/2006) esclude la ritenuta sulla **fornitura di beni con posa in opera accessoria**:
 per una caldaia venduta e installata, come capisce l'artigiano se la posa è «accessoria» e
-quindi il 4% non va applicato? Oggi la spunta è manuale e l'app non lo spiega.
+quindi il 4% non va applicato? Oggi la spunta è manuale e l'app non lo spiega. *(Letta anche
+la circ. 37/E/2006: dice solo che nelle «forniture di beni con posa in opera» la posa «assume una
+funzione accessoria rispetto alla cessione del bene» e che ai fini IVA sono cessioni di beni — non
+dà un criterio per distinguerle da un appalto. La scheda AdE sulle ritenute dei condomini ripete
+l'esclusione senza aggiungere criteri.)*
 
 **N26 — Bollo sul saldo a conguaglio** *(26 set)*. Se acconto 900 € e saldo 2.100 € sono due
 fatture forfettarie, il bollo lo mettiamo su entrambe (2 € + 2 €). Se invece il saldo, dopo aver
 tolto gli acconti con le righe negative, scende **sotto 77,47 €**, non lo mettiamo: la guida
 dell'Agenzia sul bollo calcola la soglia sulla **somma dei «Prezzo totale»** della fattura, righe
-negative comprese. Confermi?
+negative comprese (confermato anche nell'edizione **giugno 2026** della guida, letta per intero:
+nessuna eccezione per le righe negative, ma nemmeno un esempio di conguaglio). Confermi?
 
 **Segnalati come OPPORTUNITÀ, non come rischi** (non servono risposte, ma un parere se
 capita): la **fattura differita TD24** entro il 15 del mese successivo, che ci calzerebbe

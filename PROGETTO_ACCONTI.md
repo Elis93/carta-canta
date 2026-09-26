@@ -166,8 +166,9 @@ il costo della caldaia, **non** il margine sulla manodopera.
 ### 1.9 Ritenuta, reverse charge, bollo
 - **Ritenuta 4% del condominio** (art. 25-ter DPR 600/1973): si applica **su ogni pagamento,
   acconti compresi**, sull'imponibile al netto dell'IVA. Sul saldo si calcola **sul residuo** e
-  torna da sé: 4% acconto + 4% saldo = 4% del totale. **Non si cumula** con l'11% trattenuto
-  dalla banca sul bonifico parlante dei bonus edilizi (regola già nel nostro ⓘ).
+  torna da sé: 4% acconto + 4% saldo = 4% del totale. **Non si cumula** con la ritenuta della banca
+  sul bonifico parlante dei bonus edilizi — **8% dal 2015**, non 11% (corretto il 26 set 2026 sulla
+  scheda AdE; circ. 40/E/2010: col bonifico parlante si applica solo quella).
 - **Reverse charge** (art. 17 c. 6 lett. a-ter): l'acconto segue lo stesso regime — TD02 **senza
   IVA**, natura **N6.7**, dicitura «inversione contabile». Solo B2B.
 - **Bollo**: la soglia di **77,47 €** si valuta **per singolo documento**. Acconto 900 + saldo
@@ -465,8 +466,9 @@ Tutto il resto del percorso di trasmissione non cambia.
 > stesso comportamento del nostro motore (bollo su `afterDiscount`, che col conguaglio è il
 > netto). La guida non parla espressamente del conguaglio: resta una **conferma** da chiedere.
 > ④ **SAL** — la frase «S.A.L. = quasi sempre TD02» veniva da siti non ufficiali (26 set 2026):
-> tolta come fonte. Documento ufficiale indicato a Eli da scaricare: **circ. 16/E del 21 maggio
-> 2013**. Non regge nessuna scelta: progettare per N acconti rimane la strada prudente a prescindere.
+> tolta come fonte. La **circ. 16/E/2013**, letta, riguarda i servizi con non residenti e per le
+> operazioni fra italiani ribadisce solo l'art. 6 c.3-4 (pagamento o fattura anticipata): nessuna
+> fonte ufficiale letta qualifica il SAL come TD02. Non regge nessuna scelta: progettare per N acconti rimane la strada prudente a prescindere.
 >
 > **Decisioni di Eli (26 set 2026):** ① il **Fatturato della Home conta anche le fatture di
 > acconto** — da fare nella Fase 3 insieme al saldo, che uscirà al netto (niente doppio
@@ -486,8 +488,8 @@ migration 062 + 082). Con acconti già fatturati deve produrre il **saldo**:
 *«la fatturazione di S.A.L. costituisce, nella quasi totalità dei casi, una fatturazione in acconto
 con TD02»* citata qui prima veniva da **siti non ufficiali** (verificato il 26 set 2026: nessun
 documento dell'AdE letto la contiene; il tracciato ufficiale prevede solo il blocco `DatiSAL`,
-«da valorizzare nei casi di fattura per stato di avanzamento»). Fonte ufficiale da leggere per i
-SAL: **circ. 16/E del 21 maggio 2013** (prestazioni con corrispettivi a stati di avanzamento). Resta
+«da valorizzare nei casi di fattura per stato di avanzamento»); anche la **circ. 16/E/2013**,
+letta, non lo dice (tratta i servizi con non residenti). Resta
 vero che chi incassa più acconti sullo stesso lavoro esiste: costruire per un acconto solo
 significherebbe rifare il motore dello scomputo.
 
@@ -584,6 +586,12 @@ IVA.
 | **Elenco controlli FatturaPA** v1.9, 12/12/2023 (versione inglese, letta il 26 set 2026) | Algoritmi di 00421 (Imposta per riepilogo, ±1 cent) · 00422 (somma algebrica dei PrezzoTotale per aliquota, ±1 euro) · 00423 (prezzo × quantità, sconti a cascata) · 00418 solo TD04 · 00411/00415 presenza di `DatiRitenuta` · nessun controllo sul segno delle righe |
 | **Circolare 7/E** del 7 febbraio 2007 (letta il 26 set 2026) | Ritenuta 4% del condominio: all'atto del pagamento, **su acconti e saldo**, qualunque importo, anche se la fattura non la indica · esclusa la fornitura di beni con posa accessoria (circ. 37/E/2006) · esclusi i vecchi regimi agevolati con dichiarazione |
 | **Guida AdE imposta di bollo sulle fatture elettroniche** (testo copiato da Eli, 26 set 2026) | Elenco A (BolloVirtuale SI) ed Elenco B (somma dei PrezzoTotale > 77,47 € con nature N2.1/N2.2/N3.5/N3.6/N4, esclusi TD16-TD19, TD28, RF05-RF11) · trimestre per data di consegna · codici tributo 2521-2526 |
+| **Guida AdE «L'imposta di bollo sulle fatture elettroniche», giugno 2026** (PDF, letto) | Stesse regole dell'elenco B: soglia sulla somma di **tutti** i «Prezzo totale», nessuna eccezione per righe negative, nessun esempio di conguaglio (→ N26 resta conferma) |
+| **Risoluzione 42/E del 9 aprile 2019** (letta) | Codici tributo F24 2521-2526; pagamento del bollo trimestrale entro il 20 del mese successivo (art. 6 c.2 DM 17/06/2014 come sostituito dal DM 28/12/2018) |
+| **Circolare 16/E del 21 maggio 2013** (letta) | ⚠️ Riguarda i servizi **con soggetti non residenti** (art. 6 c.6). Per le operazioni fra italiani ribadisce la regola generale (art. 6 c.3-4): effettuazione al **pagamento** o, se prima, all'**emissione della fattura**. Non dice che il SAL sia un TD02 → la frase «SAL = quasi sempre TD02» resta **senza fonte ufficiale** |
+| **Circolare 37/E del 29 dicembre 2006** (letta) | Reverse charge edilizia; «forniture di beni con posa in opera» = **cessioni di beni** perché la posa è accessoria — nessun criterio per distinguerle dall'appalto (→ N25 ③) |
+| **Circolare 40/E del 28 luglio 2010 + comunicato stampa** (letti) | Ritenuta della banca sul bonifico parlante: base = bonifico **senza IVA** all'aliquota più alta; col condominio si applica **solo** quella (niente 4%); per i regimi a imposta sostitutiva è scomputabile. Aliquota oggi **8% dal 2015** (scheda AdE «Prestazioni soggette a ritenuta», testo copiato da Eli) — i nostri testi dicevano 11%, corretti |
+| **Circolare 39/E del 1° luglio 2010** (letta) | IRPEF, detrazioni: nulla di pertinente agli acconti né alle ritenute |
 | **Specifiche tecniche FatturaPA** v1.4, 31 gennaio 2025 + **Rappresentazione tabellare** | `Numero` alfanumerico max 20 · 2.1.6 `<0.N>` e il suo caso d'uso dichiarato · 2.2.1.4 la **riga negativa** · controlli 00418, 00423, 00425 · `DatiRitenuta` molteplicità N |
 
 ---
