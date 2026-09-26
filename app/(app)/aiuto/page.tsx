@@ -490,7 +490,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
   },
   {
     q: 'Fatturo a un condominio: mi trattengono qualcosa?',
-    parole: ['condominio', 'ritenuta', '4%', 'amministratore', 'trattenuta', 'sostituto d’imposta', 'bonifico parlante', '8%'],
+    parole: ['condominio', 'ritenuta', '4%', 'amministratore', 'trattenuta', 'sostituto d’imposta', 'bonifico parlante', '11%'],
     a: <>Sì. Il condominio è <b>sostituto d&rsquo;imposta</b>: trattiene il <b>4%</b>{' '}
       dell&rsquo;imponibile e lo versa lui all&rsquo;Agenzia per conto tuo. Non è un costo
       — te lo ritrovi come credito nella dichiarazione — ma è denaro che sul conto non
@@ -505,7 +505,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       all&rsquo;amministratore di trattenere per sbaglio.
       <br /><br />
       <b>Attenzione al doppio conto:</b>{' '}se il condominio paga con <b>bonifico
-      parlante</b>{' '}per un lavoro agevolato, la banca trattiene già l&rsquo;8% e il 4%
+      parlante</b>{' '}per un lavoro agevolato, la banca trattiene già l&rsquo;11% e il 4%
       non si applica. Le due ritenute non si sommano mai.</>,
   },
   {

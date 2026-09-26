@@ -167,8 +167,8 @@ il costo della caldaia, **non** il margine sulla manodopera.
 - **Ritenuta 4% del condominio** (art. 25-ter DPR 600/1973): si applica **su ogni pagamento,
   acconti compresi**, sull'imponibile al netto dell'IVA. Sul saldo si calcola **sul residuo** e
   torna da sé: 4% acconto + 4% saldo = 4% del totale. **Non si cumula** con la ritenuta della banca
-  sul bonifico parlante dei bonus edilizi — **8% dal 2015**, non 11% (corretto il 26 set 2026 sulla
-  scheda AdE; circ. 40/E/2010: col bonifico parlante si applica solo quella).
+  sul bonifico parlante dei bonus edilizi — **11% dal 1° marzo 2024** (L. 213/2023; circ. 5/E/2024;
+  circ. 40/E/2010: col bonifico parlante si applica solo quella).
 - **Reverse charge** (art. 17 c. 6 lett. a-ter): l'acconto segue lo stesso regime — TD02 **senza
   IVA**, natura **N6.7**, dicitura «inversione contabile». Solo B2B.
 - **Bollo**: la soglia di **77,47 €** si valuta **per singolo documento**. Acconto 900 + saldo
@@ -590,7 +590,7 @@ IVA.
 | **Risoluzione 42/E del 9 aprile 2019** (letta) | Codici tributo F24 2521-2526; pagamento del bollo trimestrale entro il 20 del mese successivo (art. 6 c.2 DM 17/06/2014 come sostituito dal DM 28/12/2018) |
 | **Circolare 16/E del 21 maggio 2013** (letta) | ⚠️ Riguarda i servizi **con soggetti non residenti** (art. 6 c.6). Per le operazioni fra italiani ribadisce la regola generale (art. 6 c.3-4): effettuazione al **pagamento** o, se prima, all'**emissione della fattura**. Non dice che il SAL sia un TD02 → la frase «SAL = quasi sempre TD02» resta **senza fonte ufficiale** |
 | **Circolare 37/E del 29 dicembre 2006** (letta) | Reverse charge edilizia; «forniture di beni con posa in opera» = **cessioni di beni** perché la posa è accessoria — nessun criterio per distinguerle dall'appalto (→ N25 ③) |
-| **Circolare 40/E del 28 luglio 2010 + comunicato stampa** (letti) | Ritenuta della banca sul bonifico parlante: base = bonifico **senza IVA** all'aliquota più alta; col condominio si applica **solo** quella (niente 4%); per i regimi a imposta sostitutiva è scomputabile. Aliquota oggi **8% dal 2015** (scheda AdE «Prestazioni soggette a ritenuta», testo copiato da Eli) — i nostri testi dicevano 11%, corretti |
+| **Circolare 40/E del 28 luglio 2010 + comunicato stampa** (letti) | Ritenuta della banca sul bonifico parlante: base = bonifico **senza IVA** all'aliquota più alta; col condominio si applica **solo** quella (niente 4%); per i regimi a imposta sostitutiva è scomputabile. Aliquota oggi **11% per i bonifici dal 1° marzo 2024** (L. 213/2023 art. 1 c. 88; circ. 5/E del 7 mar 2024). ⚠️ La scheda AdE «Prestazioni soggette a ritenuta» dice ancora 8%: è superata |
 | **Circolare 39/E del 1° luglio 2010** (letta) | IRPEF, detrazioni: nulla di pertinente agli acconti né alle ritenute |
 | **Specifiche tecniche FatturaPA** v1.4, 31 gennaio 2025 + **Rappresentazione tabellare** | `Numero` alfanumerico max 20 · 2.1.6 `<0.N>` e il suo caso d'uso dichiarato · 2.2.1.4 la **riga negativa** · controlli 00418, 00423, 00425 · `DatiRitenuta` molteplicità N |
 

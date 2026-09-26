@@ -448,9 +448,9 @@ forfettario NON la subisce, ma deve dichiararlo (in pratica una dicitura in fatt
 **N10 — RITENUTA BANCARIA sul bonifico parlante (bonus casa).** *(riscritta il 26 set 2026 sulle
 fonti lette: circ. 40/E/2010, comunicato AdE 28 lug 2010, scheda AdE sulle ritenute dei condomini)*
 Quando il cliente paga con bonifico parlante per la detrazione, la banca trattiene una ritenuta
-d'acconto: nata al 10% (DL 78/2010), **oggi l'8% dal 1° gennaio 2015** (scheda AdE). ⚠️ Fino al
-26 set nei nostri testi c'era scritto «11%»: era sbagliato, corretto in app (ⓘ della ritenuta
-condominio e FAQ). La base è l'importo del bonifico **senza IVA**, e la banca — che non conosce
+d'acconto: nata al 10% (DL 78/2010), poi 8% dal 2015, **oggi l'11% per i bonifici dal 1° marzo
+2024** (L. 213/2023, art. 1 c. 88; circ. AdE 5/E del 7 mar 2024). ⚠️ La scheda AdE sulle ritenute
+dei condomini dice ancora «8%»: è rimasta indietro. La base è l'importo del bonifico **senza IVA**, e la banca — che non conosce
 l'aliquota — scorpora sempre l'IVA all'aliquota più alta (circ. 40/E). Non è un campo della
 fattura, ma **falsa i nostri incassi** (sembra un pagamento parziale).
 - ① **Il forfettario la subisce?** La circ. 40/E dice che per chi ha un'imposta **sostitutiva**
@@ -551,8 +551,8 @@ rifacciamo lo split su quella proporzione: è la prassi che ha in mente anche lu
 d'acconto 4% −X €» nel PDF, dicitura che dice chi la versa, e nell'XML il blocco
 `DatiRitenuta` con `<Ritenuta>SI</Ritenuta>` su ogni riga (senza, scarto 00415). Mai ai
 forfettari (esenti, art. 1 c.67 L. 190/2014 — la loro fattura porta già la dicitura di
-esenzione). Nel ⓘ è scritto che il 4% e la ritenuta della banca sul bonifico parlante (**8%**, non 11%
-come scritto fino al 26 set) **non si cumulano** (circ. 40/E/2010).
+esenzione). Nel ⓘ è scritto che il 4% e la ritenuta della banca sul bonifico parlante (**11%** dal 1° marzo
+2024) **non si cumulano** (circ. 40/E/2010).
 *Da confermare, tre punti tecnici:*
 - ① **CausalePagamento**: abbiamo messo **W** (corrispettivi per contratti d'appalto).
   Confermi? La «A» è lavoro autonomo e ci sembra sbagliata.
