@@ -681,6 +681,22 @@ trasmessa non si elimina più.)* Il nostro riassunto dalle fonti, da confermare:
 - ④ Nel **forfettario** cambia qualcosa (bollo sulla nota, quote)? Per noi la nota di
   credito sulla fattura di acconto segue le stesse regole della nota sulla fattura piena.
 
+- ⑤ *(fonti lette il 26 set: risposte 663 e 762/2021, circolare 20/E/2021)* Il nostro
+  riassunto: la **nota di credito** è lo strumento normale per correggere; va emessa **entro
+  la dichiarazione IVA dell'anno** in cui nasce il motivo (circ. 20/E §3) e, se è un errore o
+  un accordo arrivato dopo, **entro un anno** dall'operazione (art. 26 c.3). Passato l'anno la
+  nota non si fa più e l'IVA **non** si recupera con la dichiarazione integrativa (risp.
+  663/2021); resta solo il rimborso dell'art. 30-ter, eccezionale (risp. 762/2021). Per
+  questo, se la fattura di acconto è sbagliata, conviene correggerla **subito**. Confermi?
+
+**N24 — Data della fattura quando il cliente ha già pagato** *(26 set)*. La circ. 14/E/2019
+§3.1 dice che il campo «Data» della fattura elettronica è sempre la **data dell'operazione**;
+per i servizi è il **pagamento**, se viene prima della fattura (art. 6 c.3-4). L'app ora
+fa così: se registri «Segna pagata» con un incasso del 10 e lo premi il 20, la fattura è
+datata **10** (prima usava il giorno del tocco, 20), e il conto dei 12 giorni parte dal 10.
+Se sulla bozza c'era già un **acconto**, la data è quella dell'acconto. Confermi che è
+corretto anche quando la fattura copre tutto il lavoro ma prima era arrivato solo l'acconto?
+
 **N23 — Dal 1° gennaio 2027 cambia la numerazione delle norme IVA** *(scoperto il 26 set
 leggendo Normattiva)*. Il **D.Lgs. 19 gennaio 2026 n. 10** («Testo unico IVA») riordina il
 DPR 633/1972 e **si applica dal 1° gennaio 2027** (art. 171); da quella data gli artt. 1-27

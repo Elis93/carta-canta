@@ -31,16 +31,40 @@ export async function registraConfermaFiscale(
   workspaceId: string,
   docId: string,
   docType: string | null | undefined,
+  /** Giorno (YYYY-MM-DD) dell'incasso che si sta registrando in questo
+   *  momento, se c'è (es. «Segna pagata» con una data nel passato). */
+  dataIncasso?: string | null,
 ): Promise<void> {
   // Tutti i documenti FISCALI: fatture, note di credito/debito e fatture di
   // acconto. (La nota di debito mancava — chiusa col censimento della Fase 2
   // acconti, 24 set. La TD02 nasce già con doc_date = giorno dell'incasso:
   // la guardia `.is('doc_date', null)` qui sotto la lascia intatta.)
   if (docType === 'preventivo' || !docType) return
+  // ⚖️ La data della fattura è la data di EFFETTUAZIONE dell'operazione
+  // (circ. 14/E/2019 §3.1: «la data riportata nel campo "Data" … sia sempre e
+  // comunque la data di effettuazione dell'operazione»). Per i servizi
+  // l'operazione è effettuata al PAGAMENTO, o prima se la fattura è emessa
+  // prima (art. 6 c.3-4). Quindi: il giorno PIÙ VECCHIO fra oggi e gli incassi
+  // già registrati — la stessa regola del conto dei 12 giorni (termini.ts).
+  // Prima qui c'era sempre «oggi»: «Segna pagata» con incasso del 10 premuto
+  // il 20 dava una fattura datata 20 e un conto alla rovescia partito il 10.
+  const candidati: string[] = [giornoItaliano(new Date())]
+  if (dataIncasso && /^\d{4}-\d{2}-\d{2}$/.test(dataIncasso)) candidati.push(dataIncasso)
+  try {
+    const { data } = await supabase
+      .from('documents')
+      .select('paid_at')
+      .eq('id', docId)
+      .eq('workspace_id', workspaceId)
+      .maybeSingle()
+    const paidAt = (data as { paid_at?: string | null } | null)?.paid_at
+    if (paidAt && !Number.isNaN(Date.parse(paidAt))) candidati.push(giornoItaliano(new Date(paidAt)))
+  } catch { /* colonna assente: resta oggi */ }
+  const docDate = candidati.sort()[0]!
   try {
     await supabase
       .from('documents')
-      .update({ doc_date: giornoItaliano(new Date()) })
+      .update({ doc_date: docDate })
       .eq('id', docId)
       .eq('workspace_id', workspaceId)
       .is('doc_date', null)

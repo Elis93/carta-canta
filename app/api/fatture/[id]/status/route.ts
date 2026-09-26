@@ -397,7 +397,7 @@ export async function PATCH(
   //    data né trasmissioni in programma — rinascono alla prossima conferma.
   if (statusRows && statusRows.length > 0) {
     if (doc.status === 'draft' && body.status === 'accepted') {
-      await registraConfermaFiscale(supabase, doc.workspace_id, id, doc.doc_type)
+      await registraConfermaFiscale(supabase, doc.workspace_id, id, doc.doc_type, body.paid_date ?? null)
     } else if (targetStatus === 'draft') {
       await azzeraConfermaFiscale(supabase, doc.workspace_id, id)
     } else if (targetStatus === 'rejected') {

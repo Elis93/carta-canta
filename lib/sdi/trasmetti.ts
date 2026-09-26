@@ -409,7 +409,12 @@ export async function trasmettiDocumentoSdi(opts: {
       () => null,
     )
   if (!dataFiscale) {
-    dataFiscale = giornoItaliano(new Date())
+    // Stessa regola della conferma (circ. 14/E/2019): data = effettuazione →
+    // il giorno più vecchio fra oggi e l'incasso già registrato sulla bozza.
+    const paidAtDoc = (doc as { paid_at?: string | null }).paid_at
+    const oggi = giornoItaliano(new Date())
+    const incasso = paidAtDoc && !Number.isNaN(Date.parse(paidAtDoc)) ? giornoItaliano(new Date(paidAtDoc)) : null
+    dataFiscale = incasso && incasso < oggi ? incasso : oggi
     await supabase
       .from('documents')
       .update({ doc_date: dataFiscale })

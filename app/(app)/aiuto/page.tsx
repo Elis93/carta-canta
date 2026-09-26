@@ -369,7 +369,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       cliente paga <b>prima</b>{' '}della trasmissione (anche solo un acconto), i{' '}
       <b>12 giorni</b>{' '}partono dal giorno dell&rsquo;incasso (la legge dà 12 giorni
       dall&rsquo;operazione per completare l&rsquo;emissione: incassi il 10, va trasmessa
-      entro il 22). ⚠️ L&rsquo;app <b>non vede i pagamenti</b>{' '}che arrivano sul tuo
+      entro il 22) e la fattura prende come <b>data</b>{' '}quella dell&rsquo;incasso, perché è
+      la data dell&rsquo;operazione (circolare 14/E del 2019). ⚠️ L&rsquo;app{' '}
+      <b>non vede i pagamenti</b>{' '}che arrivano sul tuo
       conto: quando il cliente paga, registralo tu sulla fattura («Segna pagata», o
       l&rsquo;acconto) — il conteggio può partire solo dalle date che l&rsquo;app conosce.
       Per non fartelo tenere a mente, sulla fattura la card <b>Fattura elettronica</b>{' '}
