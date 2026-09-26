@@ -459,7 +459,7 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
 > **due documenti ufficiali nuovi letti per intero**: la **Rappresentazione tabellare 1.9.1**
 > (31 mar 2026, caricata da Eli) e l'**Allegato A — Specifiche tecniche 1.9.1** (copia dal
 > repository pubblico GitHub `kouga00/opentax-it`, che registra l'URL AdE e l'impronta sha256:
-> ⚠️ copia di terzi, non confrontata col sito AdE; il contenuto combacia con la tabellare).
+> copia di terzi; Eli ha scaricato l'originale dal sito AdE: **stessa dimensione, 3,2 MB** → verificata; il contenuto combacia con la tabellare).
 > Proxy: AdE, Normattiva, GU, eur-lex bloccati → il resto è da estratti di ricerca.
 >
 > **Cosa cambia la 1.9.1** (Allegato A, «Stato del documento», letto): solo il controllo
