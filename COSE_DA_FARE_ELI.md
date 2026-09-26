@@ -318,10 +318,14 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
 >   con la dicitura di esenzione che l'app già scrive.
 > - **N10 ① 🟡 CORRETTA** (vedi il punto): esistono **tutte e due** le strade e non si
 >   escludono — il forfettario può consegnare alla banca la **dichiarazione** per non subire
->   l'11% (art. 1 c.67 L. 190/2014, ris. 47/E/2013 per analogia); se la banca la trattiene lo
->   stesso, la recupera nel **rigo RS40 riportato in LM41** (modello Redditi PF 2026). In
->   pratica molte banche non gestiscono la dichiarazione: il caso più frequente è «trattenuta e
->   recuperata». ❓ Al commercialista resta solo: cosa consiglia ai suoi clienti.
+>   l'11% (art. 1 c.67 L. 190/2014); se la banca la trattiene lo stesso, la recupera in
+>   dichiarazione. ✅ **Letti il 26 set sera**: la **ris. 47/E/2013** riguarda il vecchio
+>   «regime di vantaggio» (non il forfettario, che vale per analogia): dichiarazione alla banca
+>   → niente ritenuta; se trattenuta lo stesso → recupero in dichiarazione. Il **modello Redditi
+>   PF 2026 fascicolo 3** ha davvero un rigo dedicato: **RS40 «Ritenute regime di vantaggio e
+>   regime forfetario»**. (Il passaggio da RS40 al quadro LM sta nelle istruzioni, che non sono
+>   fra i file letti.) In pratica molte banche non gestiscono la dichiarazione: il caso più
+>   frequente è «trattenuta e recuperata». ❓ Al commercialista resta solo: cosa consiglia.
 > - **N12 🟡** La **doppia conservazione è ammessa** (provider privato + servizio gratuito AdE,
 >   secondo una FAQ AdE riportata dalle fonti): consigliare all'artigiano di aderire ANCHE al
 >   servizio AdE lo protegge se lascia Carta Canta (le fatture SdI restano conservate lì). Con
@@ -330,48 +334,70 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
 >   contratto di servizio, il manuale lo scrive il conservatore; all'uscita servono i
 >   pacchetti di archiviazione trasferibili. ❓ Resta: testo dell'accettazione nell'onboarding
 >   (avvocato) e clausola di restituzione nel contratto OpenAPI.
-> - **N15 ① ✅ ② ❓ ③ ❓ — ⚠️ RIVISTO il 26 set sera: le «due differenze» NON sono provate**
->   (ricerca rifatta su richiesta di Eli prima di correggere: i risultati nuovi smentiscono la
->   «prassi» data per certa nel primo giro). Il codice NON si tocca finché non si legge la fonte
->   ufficiale o risponde il commercialista.
->   · **CausalePagamento «W»** confermata: è la codifica del modello CU per gli appalti con la
->     ritenuta dell'art. 25-ter (il tracciato dice «codifiche come da Mod. CU»). ✅ come l'app.
->   · **TipoRitenuta ❓**: RT01 «persone fisiche» / RT02 «persone giuridiche» (tracciato, letto).
->     Sul **codice tributo** le fonti sono concordi: snc/sas → **1019** (percipienti IRPEF),
->     srl/spa → **1020** (IRES). Sul **TipoRitenuta** invece si **contraddicono**: alcuni
->     gestionali mettono snc/sas su RT01 (IRPEF), altri scrivono «società (snc, sas, srl o spa)
->     → RT02». Nessuna fonte ufficiale letta lo dice. L'app oggi manda snc/sas su RT02: non è
->     dimostrato che sia sbagliato. Lo SdI non scarta per questo.
->   · **ImportoTotaleDocumento ❓**: il tracciato (letto) lo definisce «al netto dell'eventuale
->     sconto e comprensivo di imposta» — la ritenuta non è nominata. Le fonti si **dividono**:
->     alcune lo scrivono al lordo della ritenuta, mentre le linee guida di un'amministrazione
->     pubblica (Università di Ferrara) chiedono l'importo **al netto della ritenuta** — cioè
->     ciò che fa già l'app. Lo SdI **non controlla** il campo (Elenco controlli 1.9, letto).
->     ⚠️ Correzione rispetto al primo giro: non è vero che «la prassi prevalente è il lordo».
-> - **N16 ② 🟡 ③ ❓** Contratto unico con prestazioni in reverse charge e ordinarie: la circ.
->   14/E/2015 chiede di **scomporre** (due fatture o parti distinte), salvo il contratto unico
->   di costruzione/recupero sostanziale di un edificio, che va tutto a IVA ordinaria. Il
->   committente deve agire **per la sua attività**: con la P.IVA ma per la casa in cui abita →
->   IVA ordinaria (copy dell'app corretta il 26 set). Dichiarazione del committente: nessuna
->   fonte la impone ❓. ATECO 2025: **nessuna tabella ufficiale aggiornata** per il reverse
->   charge; le rassegne riportano un chiarimento AdE (sezione F dell'ATECO vigente) solo per il
->   subappalto → la spunta manuale resta la scelta giusta.
+> - **N15 ① ✅ ② ❓ ③ 🟡 — ⚠️ RIVISTO DUE VOLTE il 26 set: la seconda volta sui PDF letti.**
+>   Il codice NON si tocca senza l'ok di Eli.
+>   · **CausalePagamento «W» ✅ letta**: istruzioni CU 2026 (quadro lavoro autonomo): «W –
+>     corrispettivi erogati nel 2025 per prestazioni relative a contratti d'appalto cui si sono
+>     resi applicabili le disposizioni contenute nell'art. 25-ter del D.P.R. n. 600». È l'app.
+>   · **TipoRitenuta ❓**: il tracciato (letto) dice solo RT01 «persone fisiche» / RT02 «persone
+>     giuridiche». Né le istruzioni CU né la Guida 1.10 né le specifiche parlano di snc/sas.
+>     Codice tributo: snc/sas → 1019 (IRPEF), srl/spa → 1020 (IRES). L'app manda snc/sas su
+>     RT02: né dimostrato giusto né sbagliato. Lo SdI non scarta per questo.
+>   · **ImportoTotaleDocumento 🟡 — ORA PENDE VERSO IL LORDO.** ⚠️ Correzione della sera: la
+>     frase «l'Università di Ferrara chiede il netto» veniva da una sintesi di ricerca ed era
+>     **sbagliata**. Il PDF letto (Allegato 3, fattura d'esempio con ritenuta 20%) dice il
+>     contrario: **Importo totale documento 2.277,62 = imponibile 1.866,90 + IVA 410,72**, cioè
+>     **al lordo** della ritenuta (359,02), con la nota «verificare che corrisponda all'importo
+>     lordo»; il **netto** (1.918,60) sta nel blocco **DatiPagamento › ImportoPagamento**, con la
+>     nota «deve corrispondere al netto a pagare». Le specifiche tecniche (lette) definiscono il
+>     campo «importo totale del documento comprensivo di imposta a debito del
+>     cessionario/committente» — la ritenuta non è nominata. La FAQ AdE (testo incollato da Eli)
+>     conferma che lo SdI **non lo controlla**. **L'app oggi scrive il NETTO** e non emette
+>     DatiPagamento. Proposta per Eli (non fatta): scrivere il lordo nel totale e il netto in
+>     DatiPagamento, come l'esempio. Da far confermare al commercialista.
+> - **N16 ② ✅ ③ ❓** Contratto unico con prestazioni in reverse charge e ordinarie. ✅ **Lette
+>   il 26 set sera la circ. 14/E/2015 (§1.1) e la circ. 37/E/2015 (§1-2)**: si **scompone** —
+>   le prestazioni in reverse charge «devono essere distinte dalle altre prestazioni di servizi
+>   ai fini della fatturazione», perché l'inversione contabile «costituisce la regola
+>   prioritaria» (antifrode). Con un corrispettivo unico, la parte in reverse charge si
+>   individua «sulla base di criteri oggettivi». **Eccezione** (semplificazione): il contratto
+>   unico di **costruzione**, **restauro, risanamento conservativo, ristrutturazione edilizia**
+>   (art. 3 c.1 lett. c-d DPR 380/2001) e — dal 2015 — il **frazionamento/accorpamento** di
+>   unità (37/E §1) va **tutto a IVA ordinaria**, impianti compresi. Idem demolizione + nuova
+>   costruzione (37/E §2). Nell'app la spunta vale per l'intero documento → il caso misto si fa
+>   con **due documenti**: da dire nella FAQ (proposta, non fatta). Il committente deve agire
+>   **per la sua attività** (copy già corretta). ✅ Letto anche: la **manutenzione e riparazione**
+>   di impianti su edifici è reverse charge (37/E §7, parere ISTAT) e la **sostituzione di parti**
+>   per riparare o ammodernare un impianto pure (37/E §10). ❓ Resta: dichiarazione del
+>   committente (nessuna fonte letta la impone) e la tabella ATECO 2025 (nessuna aggiornata).
+> - **N16-bis NUOVA ✅ da fonte, proposta per Eli.** Circ. 37/E/2015 §13, letta: l'**IVA
+>   agevolata sui beni significativi NON si applica** alle prestazioni in reverse charge a-ter,
+>   perché l'agevolazione riguarda solo i consumatori finali e il reverse charge solo i rapporti
+>   fra imprese (71/E/2000 citata). Nell'app, se una voce è marcata «bene significativo» e la
+>   spunta reverse charge è accesa, PDF e XML stampano comunque la dicitura dei beni significativi
+>   (verificato nel codice: `template.ts` e `causale.ts` non guardano il reverse charge). Gli
+>   importi non cambiano (in reverse charge l'IVA è zero), ma la dicitura sarebbe fuori luogo.
+>   Correzione piccola, da fare solo con l'ok di Eli.
 > - **N17 ✅** Confermata dalla guida AdE sul bollo **giugno 2026, letta**: il calcolo del bollo
 >   considera solo le nature N2.1, N2.2, N3.5, N3.6, N4 — le N6.x (reverse charge) no.
 > - **N20 🟡** Split payment prorogato al **30 giugno 2029** (Decisione UE 2026/1728 del 10
 >   luglio 2026); i forfettari ne sono esclusi (circ. 6/E/2015 §8.5, 15/E/2015).
-> - **N21 ① ✅ ③ 🟡 ④ 🟡 ② ❓** Conta la **residenza/domicilio**, non la cittadinanza (art. 7
+> - **N21 ① ✅ ② ✅ ③ 🟡 ④ 🟡** Conta la **residenza/domicilio**, non la cittadinanza (art. 7
 >   DPR 633/72). Lavori su immobili in Italia: IVA italiana qualunque sia il cliente (art.
 >   7-quater); ⚠️ con un'**impresa estera non stabilita** NON c'è reverse charge (il c.2
 >   dell'art. 17 vale nel verso opposto): fattura con IVA italiana. Forfettario verso privato
->   svizzero: N2.2 e bollo come sempre, e conta nel limite dei ricavi. Dal 1° luglio 2022 queste
->   fatture passano dallo SdI con codice destinatario «XXXXXXX». ❓ L'anagrafica del privato
->   estero SENZA codice fiscale: le fonti si dividono (FAQ AdE: IdPaese + IdCodice
->   identificativo; altre: solo CF) → **da leggere sulla FAQ AdE originale** («Fatture verso e
->   da soggetti stranieri»), Eli può scaricarla dal browser.
+>   svizzero: N2.2 e bollo come sempre, e conta nel limite dei ricavi. ✅ **② chiusa il 26 set
+>   sera dalla FAQ AdE «Fatture verso e da soggetti stranieri» (testo incollato da Eli)**: per
+>   un cliente senza identificativo italiano → codice destinatario **«XXXXXXX»**, **IdPaese** =
+>   sigla del suo Stato, **IdCodice** = il suo identificativo (fino a 28 caratteri, lo SdI non
+>   lo controlla); per un **privato** estero si compila solo IdCodice e **si lascia vuoto il
+>   CodiceFiscale**; CAP **«00000»**, provincia non serve. Obbligo di fattura elettronica solo
+>   fra soggetti residenti o stabiliti. ⚠️ Nel codice oggi `xml.ts` scrive **Nazione IT fissa**
+>   per il cliente: i clienti esteri non sono ancora gestiti (feature rimandata da Eli).
 > - **N22 ✅ in gran parte** (risposte AdE lette per intero, v. sotto). In più la **Guida alla
->   compilazione 1.10 (aprile 2025)** conferma che una TD02 si rettifica in negativo con una
->   **TD04** (o TD08 semplificata). ❓ Restano le conferme dei tre casi del lavoro saltato.
+>   compilazione 1.10 (aprile 2025)**, riletta il 26 set sera, dice che la TD04 (o TD08
+>   semplificata) serve a «variare in diminuzione quanto fatturato in precedenza», indicando in
+>   `DatiFattureCollegate` la fattura da rettificare — in generale, senza nominare la TD02. ❓ Restano le conferme dei tre casi del lavoro saltato.
 > - **N23 🟡** Testo unico IVA: si applica dal **1° gennaio 2027**, riordino senza cambi di
 >   sostanza; nessuna circolare AdE sulle nuove diciture trovata; l'**art. 170 c.3** fa valere i
 >   vecchi rinvii in «contratti, fatture o documenti» → una fattura 2027 col vecchio «DPR 633»
@@ -381,37 +407,52 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
 >   nella dicitura della copia di cortesia). ❓ Resta la forma di citazione consigliata.
 > - **N24 ✅** Circ. 14/E/2019 §3.1 letta: «Data» = data dell'operazione, per i servizi il
 >   pagamento se viene prima. È ciò che fa l'app.
-> - **N25 ② 🟡 ③ ❓ — ⚠️ incide sulla Fase 3.** ② La ritenuta si opera **su ogni pagamento,
+> - **N25 ② 🟡 ③ 🟡 — ⚠️ incide sulla Fase 3.** ② La ritenuta si opera **su ogni pagamento,
 >   acconti compresi** (circ. 7/E/2007, letta): quindi la **fattura di acconto intestata a un
 >   condominio va emessa con la ritenuta** (DatiRitenuta + Ritenuta SI sulle righe), come la
 >   fattura normale — oggi l'app non lo fa. E attenzione: l'incasso registrato arriva già
 >   **al netto del 4%**, quindi lo scorporo deve ricostruire il lordo — il 4% è sul solo
 >   imponibile, perciò imponibile = incassato ÷ (1 + aliquota IVA − 0,04), non «÷ 0,96» —
->   altrimenti imponibile e IVA escono più bassi del dovuto. ③ Il criterio ufficiale per la
->   posa «accessoria» è la **prevalenza secondo la volontà delle parti** (circ. 37/E/2006, ris.
->   148/E, circ. 14/E/2015): prevale il dare (cessione con posa) → niente 4% e niente reverse
->   charge; prevale il fare (appalto) → sì. Per la **caldaia** le fonti divergono (circ.
->   37/E/2015 via EC News: la mera sostituzione è cessione con posa; una fonte condominiale la
->   tratta sempre come appalto) → ❓ al commercialista.
+>   altrimenti imponibile e IVA escono più bassi del dovuto. ③ ✅ **Criterio letto il 26 set
+>   sera nella circ. 37/E/2015 §3**: decide la **causa del contratto**, cioè cosa hanno voluto le
+>   parti. Se lo scopo è **vendere il bene** e il lavoro serve solo a farlo funzionare «senza
+>   modificarne la natura» → **cessione con posa** (niente 4%, niente reverse charge). Se lo
+>   scopo è un **risultato nuovo** → appalto. Il rapporto fra prezzo del bene e prezzo del lavoro
+>   conta ma **non basta da solo** (Corte UE C-111/05, Cass. 6925/2001). E §10: la sostituzione
+>   di parti per **riparare o ammodernare** un impianto è prestazione («prevale il fare»).
+>   ⚠️ Correzione: nel primo giro avevo scritto, citando una rassegna, che per la 37/E/2015 «la
+>   mera sostituzione della caldaia è cessione con posa». **Il testo letto non lo dice**: dà il
+>   criterio, non la risposta sulla caldaia. ❓ Resta al commercialista applicarlo al caso tipo.
 > - **N26 ✅** Guida bollo giugno 2026 letta: la soglia somma tutti i «Prezzo totale», righe
 >   negative comprese. Confermato.
+> - **N27 NUOVA ⚠️ — la dicitura del bollo cita l'articolo sbagliato?** La guida AdE «L'imposta
+>   di bollo sulle fatture elettroniche» di **giugno 2026** (letta per intero) dice, in un
+>   riquadro ATTENZIONE: la modalità del bollo sulle fatture elettroniche (**art. 6 DM 17 giugno
+>   2014**: campo BolloVirtuale = SI e versamento con F24) «**non deve essere confusa** con il
+>   cosiddetto "bollo virtuale"» dell'**art. 15 DPR 642/1972**, che richiede un'autorizzazione
+>   dell'Agenzia e una dichiarazione annuale. La FAQ AdE «Compilazione della fattura
+>   elettronica» (testo incollato da Eli) aggiunge che sulle fatture elettroniche il bollo si
+>   assolve «esclusivamente» col DM 17/06/2014. **La nostra dicitura** (prescritta per iscritto
+>   dallo studio il 18 set, in `BOLLO_VIRTUALE_NOTICE`) dice: «assolta in modo virtuale ai sensi
+>   dell'**art. 15 del DPR 642/1972** e del DM 17/06/2014» — mescola le due cose. Formula che
+>   segue la guida: «Imposta di bollo assolta ai sensi dell'art. 6 del DM 17 giugno 2014».
+>   ❓ **Non si cambia senza lo studio**, che l'ha prescritta: va mostrato loro il riquadro della
+>   guida. Nessun effetto su importi e XML (il campo BolloVirtuale = SI resta giusto).
 > - **Specifiche FatturaPA 🟡** Versione **1.9.1** obbligatoria dal 15 maggio 2026: novità
 >   su codici destinatario, «ESENZSPORT», controllo 00327 sui Gruppi IVA. Nessuna fonte cita
 >   modifiche ai controlli 00418/00421/00422/00423 (non l'abbiamo letto nell'Elenco controlli
 >   1.9.1: Eli può scaricarlo). **SAL**: nessuna fonte ufficiale dice TD01+DatiSAL o TD02 —
 >   invariato: non regge scelte.
 >
-> **Da scaricare dal browser** (dall'ambiente di lavoro i siti ufficiali sono bloccati: niente
-> download diretto). In ordine di utilità, con cosa chiude ciascuno:
-> ① **Istruzioni CU 2026** (Agenzia › Certificazione unica 2026 › Modello e istruzioni) → la
->   causale «W» (N15 ①) · ② **Allegato A — Specifiche tecniche 1.9.1** e **Elenco controlli
->   1.9.1** (Agenzia › Specifiche tecniche versione 1.9.1) → TipoRitenuta, ImportoTotaleDocumento,
->   controlli 00418-00423 (N15 ②③, specifiche) · ③ **FAQ AdE «Compilazione della fattura
->   elettronica»** e **«Fatture verso e da soggetti stranieri»** → ritenuta nel totale, privato
->   estero senza CF (N15 ③, N21 ②) · ④ **ris. 47/E del 5 luglio 2013** e **Redditi PF 2026
->   fascicolo 3** → forfettario e ritenuta della banca (N10) · ⑤ **circ. 37/E del 22 dicembre
->   2015** e **circ. 14/E del 27 marzo 2015** → caldaia e reverse charge (N25 ③, N16) · ⑥ **Guida
->   alla compilazione v1.10 (aprile 2025)** → rettifica della TD02 (N22).
+> **Scaricati da Eli e letti il 26 set sera** (grazie): istruzioni e modelli CU 2026, Redditi PF
+> 2026 fascicolo 3, ris. 47/E/2013, circ. 14/E e 37/E del 2015, Allegato 3 dell'Università di
+> Ferrara, Guida alla compilazione 1.10, più il testo delle due FAQ AdE e alcuni messaggi SdI
+> d'esempio (ricevute di consegna, scarto, impossibilità di recapito: coincidono coi formati che
+> l'app si aspetta). **Manca ancora uno solo, il più utile**: ② **Allegato A — Specifiche
+> tecniche 1.9.1** e **Elenco controlli 1.9.1** (Agenzia › Specifiche tecniche versione 1.9.1,
+> utilizzabili dal 15 maggio 2026) → versione aggiornata delle definizioni dei campi e dei
+> controlli 00418-00423 (oggi abbiamo letto la 1.9). Utile ma non urgente: le **istruzioni** del
+> fascicolo 3 di Redditi PF 2026 (per il passaggio RS40 → quadro LM).
 
 **N1 — Si può cancellare una fattura già emessa?** *(7 ago)*
 Oggi l'app lo permette: qualsiasi fattura può finire nel cestino e, da lì, essere eliminata per
@@ -691,15 +732,18 @@ forfettari (esenti, art. 1 c.67 L. 190/2014 — la loro fattura porta già la di
 esenzione). Nel ⓘ è scritto che il 4% e la ritenuta della banca sul bonifico parlante (**11%** dal 1° marzo
 2024) **non si cumulano** (circ. 40/E/2010).
 *Da confermare, tre punti tecnici* (🔎 esito del controllo del 26 set nel riquadro in testa
-alle N: «W» confermata; per TipoRitenuta delle snc/sas e per ImportoTotaleDocumento le
-fonti si dividono — l'app NON è stata corretta, le domande ② e ③ restano valide così):
+alle N: «W» confermata dalle istruzioni CU 2026 lette; per TipoRitenuta delle snc/sas nessuna
+fonte letta decide; per ImportoTotaleDocumento l'esempio letto dell'Università di Ferrara lo
+mette al LORDO — l'app NON è stata corretta, in attesa dell'ok di Eli e della conferma):
 - ① **CausalePagamento**: abbiamo messo **W** (corrispettivi per contratti d'appalto).
   Confermi? La «A» è lavoro autonomo e ci sembra sbagliata.
 - ② **TipoRitenuta**: RT01 (persona fisica) o RT02 (soggetti diversi) lo deduciamo dalla
   ragione sociale, con default RT01. Va bene, o conviene chiederlo all'artigiano?
-- ③ **ImportoTotaleDocumento**: lo scriviamo AL NETTO della ritenuta (= la cifra da
-  bonificare, la stessa del PDF). Le fonti si dividono su lordo/netto e lo SdI non lo
-  valida: confermi la scelta?
+- ③ **ImportoTotaleDocumento**: oggi lo scriviamo AL NETTO della ritenuta (= la cifra da
+  bonificare, la stessa del PDF). Lo SdI non lo valida. L'esempio ufficiale di un ente pubblico
+  che abbiamo letto (Università di Ferrara) lo mette invece **al lordo** (imponibile + IVA) e
+  scrive il netto nel blocco **DatiPagamento › ImportoPagamento**. Conviene fare come
+  l'esempio?
 
 **N16 — INVERSIONE CONTABILE in edilizia** (art. 17 c.6 lett. a-ter DPR 633/1972).
 *Cosa fa l'app ora:* spunta manuale sulla fattura → nessuna IVA addebitata, natura
@@ -894,7 +938,12 @@ quindi il 4% non va applicato? Oggi la spunta è manuale e l'app non lo spiega. 
 la circ. 37/E/2006: dice solo che nelle «forniture di beni con posa in opera» la posa «assume una
 funzione accessoria rispetto alla cessione del bene» e che ai fini IVA sono cessioni di beni — non
 dà un criterio per distinguerle da un appalto. La scheda AdE sulle ritenute dei condomini ripete
-l'esclusione senza aggiungere criteri.)*
+l'esclusione senza aggiungere criteri.)* ✅ *Letta il 26 set sera la **circ. 37/E/2015 §3**, che
+il criterio lo dà: conta la **causa del contratto** — bene venduto e lavoro che serve solo a farlo
+funzionare «senza modificarne la natura» = cessione con posa; risultato nuovo = appalto; il
+rapporto fra i prezzi aiuta ma «non può, da solo, assumere un'importanza decisiva». E §10: la
+sostituzione di parti per riparare o ammodernare un impianto è prestazione. Domanda che resta:
+per la **sostituzione di una caldaia** in casa, lei come la inquadra di solito?*
 
 **N26 — Bollo sul saldo a conguaglio** *(26 set)*. Se acconto 900 € e saldo 2.100 € sono due
 fatture forfettarie, il bollo lo mettiamo su entrambe (2 € + 2 €). Se invece il saldo, dopo aver
@@ -905,6 +954,17 @@ nessuna eccezione per le righe negative, ma nemmeno un esempio di conguaglio). �
 precisano che su una fattura **mista** (voci con IVA e voci senza) la soglia vale sulla sola parte
 senza IVA: per noi il bollo nasce solo in forfettario, dove tutte le voci sono senza IVA, quindi
 le due letture coincidono. Confermi?
+
+**N27 — La dicitura del bollo che ci avete prescritto** *(26 set sera)*. Il 18 settembre lo studio
+ci ha prescritto per iscritto: «Imposta di bollo assolta in modo virtuale ai sensi dell'art. 15
+del DPR 642/1972 e del DM 17/06/2014», e l'app la stampa così su PDF e XML. La guida dell'Agenzia
+«L'imposta di bollo sulle fatture elettroniche» di **giugno 2026** ha però un riquadro ATTENZIONE:
+la modalità delle fatture elettroniche (**art. 6 DM 17 giugno 2014**, campo BolloVirtuale = SI e
+F24) «non deve essere confusa con il cosiddetto "bollo virtuale"» dell'**art. 15 DPR 642/1972**,
+che richiede un'autorizzazione e una dichiarazione annuale. Anche la FAQ AdE sulla compilazione
+della fattura elettronica dice che sulle fatture elettroniche il bollo si assolve «esclusivamente»
+col DM 17/06/2014. Domanda: togliamo il riferimento all'art. 15 e scriviamo «Imposta di bollo
+assolta ai sensi dell'art. 6 del DM 17 giugno 2014»? (Importi e XML non cambiano.)
 
 **Segnalati come OPPORTUNITÀ, non come rischi** (non servono risposte, ma un parere se
 capita): la **fattura differita TD24** entro il 15 del mese successivo, che ci calzerebbe
