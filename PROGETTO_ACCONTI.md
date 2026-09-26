@@ -372,7 +372,7 @@ Motore · PDF (4 preset) · pagina cliente `/p/[token]` · fogli interni · `Fis
 >   `DatiFattureCollegate` con numero e data della ACC, controllo 00418). Domanda di
 >   conferma al commercialista: **N22** in COSE_DA_FARE_ELI. Nessun codice toccato.
 
-### 3.1 Migration 090
+### 3.1 Migration 090 — ⚠️ NON servita (la Fase 2 è uscita senza migration: tipo TEXT, `origin_document_id` già esistente, RPC già chiavata per `doc_type`)
 ```
 documents.doc_type: nessun vincolo a DB (è TEXT) → nessuna migration sul tipo
 ```
@@ -424,6 +424,20 @@ Tutto il resto del percorso di trasmissione non cambia.
 ---
 
 ## 4. FASE 3 — Il saldo a conguaglio
+
+> **Verifica delle premesse (26 set 2026), PRIMA di scrivere codice.** Coperte da fonti lette:
+> riga negativa (tracciato 2.2.1.4) · `DatiFattureCollegate` `<0.N>` per i conguagli (tabellare
+> 2.1.6, che parla di fatture «precedentemente trasmesse» → il saldo richiama TD02 già
+> trasmesse) · quota del bene in ogni fattura (71/E §5.2) · 00418 solo TD04 · 00443 aliquote.
+> **NON coperte da una fonte letta**, da chiudere prima dell'implementazione:
+> ① l'algoritmo esatto dei controlli **00421/00422** con righe negative nello stesso riepilogo:
+> la tabellare rimanda all'«Elenco controlli», documento a parte mai letto;
+> ② la base della **ritenuta 4%** sul saldo («sul residuo»): viene da sintesi, serve la
+> **circolare 7/E del 7 febbraio 2007**;
+> ③ il **bollo** sul saldo ridotto sotto 77,47 € dalla riga negativa: nessuna fonte letta lo dice
+> per il documento di conguaglio (se la guida AdE non lo tratta → domanda al commercialista);
+> ④ la frase sui **SAL** «nella quasi totalità dei casi TD02» (§4.1) non ha fonte in §8: non
+> regge nessuna scelta (progettare per N acconti è comunque la strada prudente).
 
 ### 4.1 «Converti in fattura» diventa il conguaglio
 Oggi porta il preventivo intero in fattura (funzione SQL `convert_preventivo_to_fattura`,

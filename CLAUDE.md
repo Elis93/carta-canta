@@ -30,6 +30,11 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 26 set (12) — T28 superato + verifica delle premesse della Fase 3 (nessun codice)
+- **T28 ✅** (preventivo con fattura di acconto non eliminabile).
+- Eli: «prima della fase 3, hai dubbi o informazioni non da fonti ufficiali?». Rilette le premesse del §4 di `PROGETTO_ACCONTI.md` contro spec14/tabellare/guida110 già estratte. **Quattro premesse senza fonte letta**, annotate in testa al §4: ① algoritmo 00421/00422 con righe negative (la tabellare rimanda all'«Elenco controlli», documento separato mai letto) · ② base della ritenuta 4% sul saldo (serve circ. 7/E del 7 feb 2007) · ③ bollo sul saldo ridotto sotto soglia dalla riga negativa · ④ frase sui SAL senza fonte (non regge scelte). Chiesti a Eli 3 PDF. Corretto anche il titolo stantio «3.1 Migration 090» (la Fase 2 non l'ha usata).
+- Dalla tabellare (già letta): `DatiFattureCollegate` riguarda fatture «**precedentemente trasmesse**» → il saldo deve richiamare TD02 già trasmesse (vincolo di progetto per la Fase 3).
+
 ### ✅ 26 set (11) — T27 superato + 5 risposte AdE LETTE per N22 (nessun codice)
 - **T27 ✅** («Salva e invia» in modifica torna all'anteprima).
 - Eli ha caricato i 5 PDF (estratti con pypdf + stub cryptography, testi in scratchpad `fonti5/`). Esiti in `COSE_DA_FARE_ELI.md` **N22 ③ riscritto + nuovo ⑥** e riga in `PROGETTO_ACCONTI.md` §8:
