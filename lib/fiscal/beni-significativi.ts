@@ -127,6 +127,26 @@ export function quotaAccontoBene(
   return roundFiscale(valoreBeneTotale * proporzione)
 }
 
+/**
+ * La quota del bene significativo da riportare nella fattura di SALDO
+ * (71/E §5.2: «in ogni fattura relativa al singolo pagamento»). Si calcola
+ * PER DIFFERENZA — valore totale meno le quote già dichiarate negli acconti,
+ * ciascuna calcolata con `quotaAccontoBene` come nella sua TD02 — così la
+ * somma delle quote dichiarate torna esatta col valore del bene, senza il
+ * centesimo perso negli arrotondamenti.
+ */
+export function quotaBeneSaldo(
+  valoreBeneTotale: number,
+  corrispettivoTotale: number,
+  importiAcconti: number[],
+): number {
+  const giaDichiarata = importiAcconti.reduce(
+    (s, a) => s + quotaAccontoBene(valoreBeneTotale, corrispettivoTotale, a),
+    0,
+  )
+  return Math.max(0, roundFiscale(valoreBeneTotale - giaDichiarata))
+}
+
 // ── Come lo split entra nel documento ───────────────────────────────────────
 //
 // ⚠️ NON si tocca il motore fiscale: la voce marcata come bene significativo
@@ -162,6 +182,21 @@ export interface VoceSplittabile {
    *  riscrivono: PDF e XML leggono `total`, e lasciarci quello della voce
    *  intera farebbe divergere le righe dai totali (e scartare la fattura). */
   total?: number | null
+  /** Riga di SCOMPUTO di un acconto già fatturato (Fase 3, migration 090):
+   *  l'id della fattura di acconto (TD02) che la riga negativa scala dal
+   *  saldo. Non è prestazione e non è bene: vedi `eScomputo`. */
+  scomputo_acconto_id?: string | null
+}
+
+/**
+ * Una riga di scomputo di un acconto (Fase 3). ⚠️ Va TOLTA dal calcolo dello
+ * split: la circolare 71/E/2000 §5.2 vuole il limite del bene calcolato
+ * «in relazione all'intero corrispettivo dovuto dal committente e non ad un
+ * singolo acconto o al solo saldo». Se la riga negativa al 10% restasse
+ * dentro la prestazione, abbasserebbe P e sposterebbe IVA dal 10 al 22%.
+ */
+export function eScomputo(i: { scomputo_acconto_id?: string | null }): boolean {
+  return typeof i.scomputo_acconto_id === 'string' && i.scomputo_acconto_id.length > 0
 }
 
 /** Il valore complessivo delle voci marcate come bene significativo, e quello
@@ -230,7 +265,9 @@ const costoVoce = (i: VoceSplittabile) => {
 // una dicitura di legge FALSA («l'intero corrispettivo è al 10%») accanto a
 // un riepilogo al 22% (ricontrollo 12 ago).
 function eBene(i: VoceSplittabile, vatRateDefault: number): boolean {
-  return i.bene_significativo === true && (i.vat_rate ?? vatRateDefault) === ALIQUOTA_AGEVOLATA
+  return i.bene_significativo === true
+    && !eScomputo(i)
+    && (i.vat_rate ?? vatRateDefault) === ALIQUOTA_AGEVOLATA
 }
 
 function valoriPerSplit(items: VoceSplittabile[], vatRateDefault: number): {
@@ -242,7 +279,11 @@ function valoriPerSplit(items: VoceSplittabile[], vatRateDefault: number): {
   /** Corrispettivo complessivo delle voci al 10% (prezzi, sconti compresi). */
   corrispettivo: number
 } {
-  const agevolate = items.filter((i) => (i.vat_rate ?? vatRateDefault) === ALIQUOTA_AGEVOLATA)
+  // Le righe di scomputo degli acconti non sono corrispettivo del lavoro:
+  // lo split si fa sull'intero corrispettivo (71/E §5.2, vedi `eScomputo`).
+  const agevolate = items.filter(
+    (i) => !eScomputo(i) && (i.vat_rate ?? vatRateDefault) === ALIQUOTA_AGEVOLATA,
+  )
   const corrispettivo = roundFiscale(agevolate.reduce((s, i) => s + importoVoce(i), 0))
   const beni = agevolate.filter((i) => eBene(i, vatRateDefault))
   const valoreBeni = roundFiscale(beni.reduce((s, i) => s + costoVoce(i), 0))

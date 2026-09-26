@@ -78,6 +78,27 @@ export interface EsitoAcconto {
   dicituraBeni: string | null
 }
 
+/**
+ * Le righe IVA per aliquota dell'INTERO lavoro: voci espanse (split dei beni
+ * significativi, Fase 1: valore = costo) → `riepilogoIva`, la STESSA funzione
+ * che fa i totali del preventivo. Solo regime ordinario senza inversione.
+ */
+function righeIvaLavoro(items: VoceSplittabile[], opts: OpzioniAcconto) {
+  const espanse = espandiBeniSignificativi(items, opts.fiscal_regime, opts.vat_rate_default)
+  const conTotale = espanse.map((i) => ({
+    total: roundFiscale(
+      Number(i.quantity ?? 0) * Number(i.unit_price ?? 0) * (1 - (Number(i.discount_pct ?? 0) / 100)),
+    ),
+    vat_rate: i.vat_rate ?? null,
+  }))
+  return riepilogoIva(conTotale, {
+    fiscal_regime: 'ordinario',
+    discount_pct: opts.discount_pct ?? undefined,
+    discount_fixed: opts.discount_fixed ?? undefined,
+    vat_rate_default: opts.vat_rate_default ?? undefined,
+  })
+}
+
 const fmtEuro = (v: number) =>
   v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
@@ -141,22 +162,8 @@ export function righeAcconto(
   }
 
   // ── Ordinario: i «secchielli» per aliquota dell'intero lavoro ──────────
-  // Voci espanse (split dei beni significativi, Fase 1: valore = costo) →
-  // righe IVA per aliquota dalla STESSA funzione che fa i totali.
   const vatDef = opts.vat_rate_default ?? undefined
-  const espanse = espandiBeniSignificativi(items, opts.fiscal_regime, opts.vat_rate_default)
-  const conTotale = espanse.map((i) => ({
-    total: roundFiscale(
-      Number(i.quantity ?? 0) * Number(i.unit_price ?? 0) * (1 - (Number(i.discount_pct ?? 0) / 100)),
-    ),
-    vat_rate: i.vat_rate ?? null,
-  }))
-  const righeIva = riepilogoIva(conTotale, {
-    fiscal_regime: 'ordinario',
-    discount_pct: opts.discount_pct ?? undefined,
-    discount_fixed: opts.discount_fixed ?? undefined,
-    vat_rate_default: vatDef,
-  })
+  const righeIva = righeIvaLavoro(items, opts)
 
   // Lordo per aliquota e corrispettivo totale del lavoro (senza bollo:
   // il bollo è un'imposta, non corrispettivo — e i preventivi non lo
@@ -247,4 +254,90 @@ export function righeAcconto(
     : null
 
   return { righe, corrispettivo, scarto: roundFiscale(corrispettivo - A), dicituraBeni }
+}
+
+// ── Acconto da un CONDOMINIO: l'importo ricevuto è già senza il 4% ─────────
+//
+// Il condominio trattiene la ritenuta d'acconto del 4% su OGNI pagamento,
+// acconti compresi (art. 25-ter DPR 600/1973; circ. 7/E/2007 §5: «indipen-
+// dentemente dall'importo del pagamento effettuato e dall'imputazione del
+// pagamento stesso ad acconto o saldo»). L'artigiano vede sul conto il
+// NETTO: è quella la cifra che scrive (decisione D5 dello schema Fase 3).
+// Da lì si ricostruisce il corrispettivo lordo della TD02.
+//
+// ⚠️ La ritenuta è sul solo IMPONIBILE, non sull'IVA: con k = lordo ÷
+// imponibile del lavoro (1 + aliquota media), vale
+//     ricevuto = lordo − r × lordo ÷ k   →   lordo = ricevuto ÷ (1 − r ÷ k)
+// — NON «ricevuto ÷ 0,96», che è giusto solo senza IVA. Poi si cercano i
+// centesimi: il ricevuto ricalcolato COME FA IL MOTORE (ritenuta
+// arrotondata sull'imponibile delle righe) deve tornare con quello scritto.
+
+export interface EsitoAccontoConRitenuta extends EsitoAcconto {
+  /** Corrispettivo lordo della TD02 (imponibili + IVA, prima della ritenuta). */
+  lordo: number
+  /** Ritenuta calcolata sulle righe, come la calcolerà il motore. */
+  ritenuta: number
+  /** `lordo − ritenuta`: ciò che il condominio ha pagato secondo i conti. */
+  ricevutoCalcolato: number
+}
+
+export function righeAccontoDaRicevuto(
+  items: VoceSplittabile[],
+  opts: OpzioniAcconto,
+  ricevuto: number,
+  rif: RiferimentoAcconto,
+  ritenutaPct: number,
+): EsitoAccontoConRitenuta {
+  const vuoto: EsitoAccontoConRitenuta = {
+    righe: [], corrispettivo: 0, scarto: 0, dicituraBeni: null, lordo: 0, ritenuta: 0, ricevutoCalcolato: 0,
+  }
+  if (!Number.isFinite(ricevuto) || ricevuto <= 0) return vuoto
+  const N = roundFiscale(ricevuto)
+  const r = Number.isFinite(ritenutaPct) && ritenutaPct > 0 ? ritenutaPct / 100 : 0
+  // I forfettari sono ESENTI dalla ritenuta (art. 1 c.67 L. 190/2014): qui
+  // non si arriva mai con una percentuale, ma se succedesse l'importo resta
+  // quello scritto — mai inventare una trattenuta che non c'è stata.
+  if (r === 0 || opts.fiscal_regime === 'forfettario') {
+    const esito = righeAcconto(items, opts, N, rif)
+    return { ...esito, lordo: esito.corrispettivo, ritenuta: 0, ricevutoCalcolato: esito.corrispettivo }
+  }
+
+  // k = lordo ÷ imponibile dell'intero lavoro. Senza IVA (inversione
+  // contabile — che verso un condominio non esiste, ma la funzione resta
+  // pura) k vale 1.
+  let k = 1
+  if (opts.reverse_charge !== true) {
+    const righeIva = righeIvaLavoro(items, opts)
+    const imp = righeIva.reduce((s, x) => s + x.imponibile, 0)
+    const lordo = righeIva.reduce((s, x) => s + x.imponibile + x.imposta, 0)
+    if (imp > 0 && lordo > 0) k = lordo / imp
+    else k = 1 + (opts.vat_rate_default ?? 22) / 100
+  }
+
+  const stima = roundFiscale(N / (1 - r / k))
+  const prova = (lordo: number): EsitoAccontoConRitenuta => {
+    const esito = righeAcconto(items, opts, lordo, rif)
+    const imponibile = roundFiscale(esito.righe.reduce((s, x) => s + x.unit_price, 0))
+    // Stessa espressione del motore (calcoli.ts, passo 5): mai divergere di un centesimo.
+    const ritenuta = roundFiscale(imponibile * ritenutaPct / 100)
+    const ricevutoCalcolato = roundFiscale(esito.corrispettivo - ritenuta)
+    return {
+      ...esito,
+      lordo: esito.corrispettivo,
+      ritenuta,
+      ricevutoCalcolato,
+      scarto: roundFiscale(ricevutoCalcolato - N),
+    }
+  }
+  // Si prova la stima e i centesimi vicini: vince il primo che torna esatto,
+  // altrimenti quello con lo scarto più piccolo (al più un centesimo).
+  let migliore = prova(stima)
+  for (let d = 1; d <= 5 && migliore.scarto !== 0; d++) {
+    for (const segno of [-1, 1]) {
+      const c = prova(roundFiscale(stima + segno * d * 0.01))
+      if (Math.abs(c.scarto) < Math.abs(migliore.scarto)) migliore = c
+      if (migliore.scarto === 0) break
+    }
+  }
+  return migliore
 }

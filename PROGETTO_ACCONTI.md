@@ -519,9 +519,35 @@ Tutto il resto del percorso di trasmissione non cambia.
 | **D7** | Più acconti: limite | Somma degli acconti **< totale**; se il nuovo importo chiude il totale → «questo è il saldo: converti in fattura e segna pagata» | Stessa regola già attiva per l'acconto singolo (§6) |
 | **D8** | Dove vive l'incasso | **Invariato**: gli acconti restano sul preventivo (una voce `payment` per acconto nel log), il saldo nasce **non pagato** col totale al netto e si incassa con «Segna pagata». Nessun trasferimento dell'acconto sulla fattura quando esistono TD02 | Zero doppi conteggi: TD02 fuori dalla cassa, preventivo = acconti, saldo = residuo |
 
+> ✅ **Valutazione delle D1-D8 (26 set notte, delegata da Eli: «valuta tu… poi parti con il
+> punto 1»).** Confermate D1, D2, D3, D8. Rifinite o cambiate:
+> - **D1**: prima della migration 090 la conversione in saldo **resta bloccata** (fail-closed,
+>   come oggi): senza la colonna le righe di scomputo non si potrebbero riconoscere.
+> - **D4**: le due spunte si **escludono** (un condominio non è soggetto passivo IVA, quindi non
+>   può esserci inversione contabile verso di lui); la ritenuta non compare mai ai forfettari.
+> - **D5**: il pop-up mostra il **riepilogo prima di confermare** (imponibile · IVA · ritenuta ·
+>   ricevuto), così l'artigiano controlla che torni con il bonifico.
+> - **D6 CAMBIATA**: basta che le TD02 siano **trasmesse** (non scartate e non mai partite), non
+>   serve aspettare l'esito positivo. Motivo: lo SdI non verifica i documenti collegati, il
+>   tracciato chiede fatture «precedentemente trasmesse», e aspettare gli esiti potrebbe
+>   mangiare i 12 giorni del saldo. Una TD02 scartata dopo si ritrasmette con **stesso numero e
+>   stessa data** (circ. 13/E/2018): il riferimento nel saldo resta valido.
+> - **D7**: il confronto col totale si fa sul **lordo** degli acconti (prima della ritenuta).
+
 #### B. Lavori, in ordine (ognuno si chiude con tsc · build · test verdi)
 
-**3A — Motore puro** (nessuna superficie; tutto testato)
+**3A — Motore puro** (nessuna superficie; tutto testato) — ✅ **FATTO il 26 set notte** (+38 test →
+949). `lib/fiscal/saldo.ts` nuovo (righeScomputo, verificaScomputi, verificaRiepilogoSaldo,
+verificaDateCollegate, verificaNuovoAcconto, residuoDopoAcconti) · `calcoli.ts`: scomputi fuori
+dalla base dello sconto, sommati per aliquota senza clamp, `FiscalResult.lavori/scomputi` ·
+`beni-significativi.ts`: `eScomputo`, scomputi fuori dallo split, `quotaBeneSaldo` ·
+`acconto.ts`: `righeAccontoDaRicevuto` (condominio, dal netto al lordo, stessa formula della
+ritenuta del motore) · `incassi.ts`: `payment_removed` con `ref`. **Nessun comportamento
+cambiato oggi**: le righe di scomputo non esistono finché non c'è la migration 090 (3D).
+⚠️ **Da ricordare in 3G**: tutti i chiamanti di `riepilogoIva` (template.ts ×2, `p/[token]`,
+`FiscalSummary`, `preventivi/[id]`, `fatture/[id]`) devono passare `scomputo` e partire dalle
+voci ESPANSE — senza, la riga negativa verrebbe trattata come voce del lavoro (azzerata dal
+limite a zero) e l'IVA mostrata sarebbe quella del lavoro intero.
 - Nuovo `lib/fiscal/saldo.ts`: `righeScomputo(td02[])` (dalle righe delle TD02 alle righe
   negative, D2) · `verificaScomputi(vociSaldo, td02Attive)` (una riga per riga di TD02, importi
   identici, niente orfane) · `residuoPerAliquota` e l'invariante **nessun riepilogo negativo** ·

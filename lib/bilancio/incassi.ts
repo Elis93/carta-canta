@@ -34,6 +34,9 @@ interface LogEntryLike {
   type?: string
   at?: string
   amount?: number
+  /** Id della fattura di acconto (TD02) a cui l'incasso corrisponde: lega la
+   *  voce `payment` alla sua eventuale `payment_removed` (Fase 3). */
+  ref?: string
 }
 
 export interface IncassoDocLike {
@@ -54,8 +57,15 @@ export interface IncassoDocLike {
  */
 export function incassiFromDoc(doc: IncassoDocLike): IncassoEvent[] {
   const log = Array.isArray(doc.document_log) ? (doc.document_log as LogEntryLike[]) : []
+  // `payment_removed` (Fase 3, più acconti sullo stesso preventivo): un
+  // SINGOLO acconto tolto — perché la sua fattura di acconto è stata
+  // eliminata. Annulla solo quell'incasso, nel suo mese d'origine (stessa
+  // regola dei reset: «mai esistito»); gli altri acconti restano. Il
+  // `payment_reset` invece azzera tutto, com'è sempre stato.
   const moneyEntries = log.filter(
-    (e) => e && (e.type === 'payment' || e.type === 'payment_reset') && typeof e.at === 'string'
+    (e) => e
+      && (e.type === 'payment' || e.type === 'payment_reset' || e.type === 'payment_removed')
+      && typeof e.at === 'string'
   )
   const hasPayments = moneyEntries.some((e) => e.type === 'payment')
   const hasResets = moneyEntries.some((e) => e.type === 'payment_reset')
@@ -68,12 +78,31 @@ export function incassiFromDoc(doc: IncassoDocLike): IncassoEvent[] {
     const sorted = [...moneyEntries].sort(
       (a, b) => new Date(a.at as string).getTime() - new Date(b.at as string).getTime()
     )
-    let active: IncassoEvent[] = []
+    let active: Array<IncassoEvent & { ref?: string }> = []
     for (const e of sorted) {
       if (e.type === 'payment') {
         const amt = Number(e.amount ?? 0)
         const kind = (e as { kind?: string }).kind
-        if (amt) active.push({ when: new Date(e.at as string), amount: amt, kind: kind === 'acconto' || kind === 'saldo' ? kind : null })
+        if (amt) active.push({
+          when: new Date(e.at as string),
+          amount: amt,
+          kind: kind === 'acconto' || kind === 'saldo' ? kind : null,
+          ...(typeof e.ref === 'string' ? { ref: e.ref } : {}),
+        })
+      } else if (e.type === 'payment_removed') {
+        // Si toglie l'incasso con lo stesso riferimento; senza riferimento
+        // (voci vecchie) il più recente con lo stesso importo. Nessuna
+        // corrispondenza → non si toglie niente (mai un evento negativo).
+        const amt = Math.round(Number(e.amount ?? 0) * 100) / 100
+        let idx = typeof e.ref === 'string'
+          ? active.map((a) => a.ref).lastIndexOf(e.ref)
+          : -1
+        if (idx < 0) {
+          for (let i = active.length - 1; i >= 0; i--) {
+            if (Math.round(active[i].amount * 100) / 100 === amt) { idx = i; break }
+          }
+        }
+        if (idx >= 0) active.splice(idx, 1)
       } else {
         // payment_reset: azzera TUTTO il registrato fino a quel momento
         // (correzione / annullamento / riattivazione / non pagata).
@@ -100,7 +129,7 @@ export function incassiFromDoc(doc: IncassoDocLike): IncassoEvent[] {
         active.push({ when, amount: delta, kind: 'acconto' })
       }
     }
-    return active
+    return active.map((a) => ({ when: a.when, amount: a.amount, kind: a.kind }))
   }
 
   // Fallback storico: nessuna voce di incasso nel log → un solo evento dai

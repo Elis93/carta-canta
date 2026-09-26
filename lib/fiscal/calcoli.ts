@@ -6,7 +6,7 @@
 
 import type { FiscalOptions, FiscalResult } from '@/types/index'
 import type { Database } from '@/types/database'
-import { espandiBeniSignificativi } from './beni-significativi'
+import { espandiBeniSignificativi, eScomputo } from './beni-significativi'
 
 type DocumentItemRow = Database['public']['Tables']['document_items']['Row']
 
@@ -51,8 +51,18 @@ export const VAT_RATES = [
 // sommavano al totale (trovato dalla revisione del 10 ago).
 export interface RigaIva { rate: number; imponibile: number; imposta: number }
 
+/**
+ * @param righe le righe del documento; `scomputo: true` marca le righe
+ *   NEGATIVE che scalano dal saldo un acconto già fatturato (Fase 3).
+ *   ⚠️ Lo sconto di documento si ripartisce SOLO sulle voci del lavoro:
+ *   l'acconto era già stato calcolato sul prezzo scontato, e scontare di
+ *   nuovo il residuo toglierebbe due volte la stessa parte (voci 1.000,
+ *   sconto 10%, acconto 270 → saldo 630, non 657). Le righe di scomputo si
+ *   sommano DOPO, per aliquota, così l'imponibile di ogni aliquota è
+ *   «pieno − acconti»: è la somma algebrica che ricalcola lo SdI (00422).
+ */
 export function riepilogoIva(
-  righe: Array<{ total: number; vat_rate: number | null }>,
+  righeTutte: Array<{ total: number; vat_rate: number | null; scomputo?: boolean }>,
   opts: Pick<FiscalOptions, 'fiscal_regime' | 'discount_pct' | 'discount_fixed' | 'vat_rate_default' | 'reverse_charge'>,
 ): RigaIva[] {
   if (opts.fiscal_regime === 'forfettario') return []
@@ -60,6 +70,8 @@ export function riepilogoIva(
   // riga «IVA x%» nel riepilogo — al suo posto il documento porta la
   // dicitura di legge e la natura N6.7.
   if (opts.reverse_charge) return []
+  const righe = righeTutte.filter((r) => !r.scomputo)
+  const scomputi = righeTutte.filter((r) => r.scomputo)
   const subtotal = roundFiscale(righe.reduce((s, r) => s + r.total, 0))
   const afterDiscount = Math.max(
     0,
@@ -83,6 +95,14 @@ export function riepilogoIva(
     const imponibile = Math.max(0, roundFiscale(r.total - quota))
     perAliquota.set(rate, roundFiscale((perAliquota.get(rate) ?? 0) + imponibile))
   })
+  // Scomputi degli acconti: NIENTE clamp a zero — sono negativi per natura.
+  // Un imponibile d'aliquota che scende sotto zero è un saldo incoerente:
+  // lo segnala `verificaRiepilogoSaldo` (lib/fiscal/saldo.ts), non lo si
+  // nasconde qui.
+  for (const r of scomputi) {
+    const rate = r.vat_rate ?? opts.vat_rate_default ?? 22
+    perAliquota.set(rate, roundFiscale((perAliquota.get(rate) ?? 0) + r.total))
+  }
   // Una moltiplicazione PER ALIQUOTA: è il ricalcolo dello SdI (00421, ±1 cent).
   return [...perAliquota.entries()].map(([rate, imponibile]) => ({
     rate,
@@ -127,17 +147,30 @@ export function calcolaDocumento(
   // 2. Subtotale
   // Identico nei due insiemi (lo split ripartisce, non aggiunge): si usa
   // quello spezzato perché è la base del riepilogo per aliquota.
-  const subtotal = roundFiscale(perAliquota.reduce((s, i) => s + i.total, 0))
+  // ⚠️ FASE 3 (saldo a conguaglio): le righe di SCOMPUTO degli acconti già
+  // fatturati (negative, `scomputo_acconto_id`) stanno FUORI dalla base
+  // dello sconto di documento — l'acconto era già calcolato sul prezzo
+  // scontato. Il subtotale resta la somma algebrica di tutte le righe, così
+  // `subtotal − afterDiscount` continua a valere esattamente lo sconto.
+  // Senza righe di scomputo il calcolo è identico a prima.
+  const scomputoDi = (i: DocumentItemRow) => eScomputo(i as { scomputo_acconto_id?: string | null })
+  const lavori = roundFiscale(perAliquota.filter((i) => !scomputoDi(i)).reduce((s, i) => s + i.total, 0))
+  const scomputi = roundFiscale(perAliquota.filter(scomputoDi).reduce((s, i) => s + i.total, 0))
+  const subtotal = roundFiscale(lavori + scomputi)
 
   // 3. Sconto globale
   // Mai negativo: uno sconto (% e/o fisso) che superi il subtotale azzera
   // l'imponibile invece di produrre un totale negativo.
-  const afterDiscount = Math.max(
+  const afterDiscountLavori = Math.max(
     0,
     roundFiscale(
-      subtotal * (1 - ((opts.discount_pct ?? 0) / 100)) - (opts.discount_fixed ?? 0)
+      lavori * (1 - ((opts.discount_pct ?? 0) / 100)) - (opts.discount_fixed ?? 0)
     )
   )
+  // L'imponibile vero (base di ritenuta e bollo): lavori scontati meno gli
+  // acconti già fatturati. Mai sotto zero — un saldo in cui gli acconti
+  // superano il lavoro è incoerente e lo ferma `verificaScomputi`.
+  const afterDiscount = Math.max(0, roundFiscale(afterDiscountLavori + scomputi))
 
   // 4. IVA PER ALIQUOTA, sull'imponibile GIÀ SCONTATO
   //
@@ -169,7 +202,7 @@ export function calcolaDocumento(
   // un solo calcolo, impossibile che il riepilogo mostrato diverga dal totale.
   const taxAmount = roundFiscale(
     riepilogoIva(
-      perAliquota.map((i) => ({ total: i.total, vat_rate: i.vat_rate })),
+      perAliquota.map((i) => ({ total: i.total, vat_rate: i.vat_rate, scomputo: scomputoDi(i) })),
       opts,
     ).reduce((s, r) => s + r.imposta, 0)
   )
@@ -214,5 +247,5 @@ export function calcolaDocumento(
   // 7. Totale finale
   const total = roundFiscale(afterDiscount + taxAmount + bollo - ritenuta)
 
-  return { subtotal, afterDiscount, taxAmount, ritenuta, bollo, total, itemTotals }
+  return { subtotal, afterDiscount, taxAmount, ritenuta, bollo, total, itemTotals, lavori, scomputi }
 }

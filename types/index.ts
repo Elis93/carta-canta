@@ -89,6 +89,13 @@ export type FiscalResult = {
   bollo: number
   total: number
   itemTotals: Array<DocumentItemRow & { total: number }>
+  /** Somma delle voci del lavoro (senza le righe di scomputo degli acconti,
+   *  prima dello sconto di documento). Uguale a `subtotal` quando non ci
+   *  sono acconti scomputati. */
+  lavori?: number
+  /** Somma (negativa) delle righe che scalano gli acconti già fatturati —
+   *  Fase 3, saldo a conguaglio. 0 su ogni altro documento. */
+  scomputi?: number
 }
 
 // ============================================================
