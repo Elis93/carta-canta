@@ -180,6 +180,19 @@ export function dettaglioBeniSignificativi(
   return splitDocumento(items, vatDef).split
 }
 
+/**
+ * La dicitura di legge dei beni significativi (art. 1 c.19 L. 205/2017) —
+ * UNA sola stringa per PDF e XML: la fattura elettronica è il documento
+ * fiscale vero, e deve dire le stesse cose del PDF che il cliente ha in mano.
+ * `fmt` = il formattatore degli importi del chiamante (it-IT, due decimali).
+ */
+export function testoDicituraBeni(split: SplitBeniSignificativi, fmt: (n: number) => string): string {
+  return `Beni significativi (art. 1, comma 19, L. 205/2017): valore dei beni significativi ${fmt(split.valoreBeni)} €; corrispettivo al netto dei beni significativi ${fmt(split.valorePrestazione)} €. `
+    + (split.haEccedenza
+        ? `Imponibile con IVA 10% ${fmt(split.imponibile10)} €; imponibile con IVA 22% ${fmt(split.imponibile22)} €.`
+        : `L'intero corrispettivo di ${fmt(split.imponibile10)} € è soggetto a IVA 10%: il valore dei beni significativi non supera quello della prestazione.`)
+}
+
 /** Aliquota su cui vale l'agevolazione dei beni significativi. */
 export const ALIQUOTA_AGEVOLATA = 10
 /** Aliquota ordinaria a cui scivola l'eccedenza del bene. */

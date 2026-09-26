@@ -8,7 +8,7 @@ import type { Database } from '@/types/database'
 import { calcolaDocumento, riepilogoIva, FORFETTARIO_LEGAL_NOTICE, BOLLO_VIRTUALE_NOTICE } from '@/lib/fiscal/calcoli'
 import { stripPrefissoLegacy } from '@/lib/utils'
 import { terminePrevisto } from '@/lib/documents/termine-lavori'
-import { espandiBeniSignificativi, dettaglioBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
+import { espandiBeniSignificativi, dettaglioBeniSignificativi, testoDicituraBeni, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
 import { ivaEffettivaVoci, notaBeneSplit, type IvaVoceInfo } from '@/lib/fiscal/iva-voce'
 import { statoCopiaSdi, dicituraCopiaSdi } from '@/lib/documents/copia-sdi'
 
@@ -718,12 +718,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
         doc.vat_rate_default,
       )
     : null
-  const beniNotice = beniSplit
-    ? `Beni significativi (art. 1, comma 19, L. 205/2017): valore dei beni significativi ${fmt(beniSplit.valoreBeni)} €; corrispettivo al netto dei beni significativi ${fmt(beniSplit.valorePrestazione)} €. `
-      + (beniSplit.haEccedenza
-          ? `Imponibile con IVA 10% ${fmt(beniSplit.imponibile10)} €; imponibile con IVA 22% ${fmt(beniSplit.imponibile22)} €.`
-          : `L'intero corrispettivo di ${fmt(beniSplit.imponibile10)} € è soggetto a IVA 10%: il valore dei beni significativi non supera quello della prestazione.`)
-    : null
+  const beniNotice = beniSplit ? testoDicituraBeni(beniSplit, fmt) : null
 
   // ⚖️ Dicitura del bollo assolto in modo virtuale (prescrizione scritta dello
   // studio, 18 set 2026): ogni documento FISCALE col bollo addebitato deve

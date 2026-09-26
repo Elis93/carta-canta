@@ -40,6 +40,20 @@ export function soloLatin1(s: string): string {
   return out
 }
 
+/** Spezza un testo in pezzi di al massimo `max` caratteri, fra le parole. */
+export function spezzaCausale(testo: string, max: number): string[] {
+  const out: string[] = []
+  let resto = testo.trim()
+  while (resto.length > max) {
+    let taglio = resto.lastIndexOf(' ', max)
+    if (taglio <= 0) taglio = max
+    out.push(resto.slice(0, taglio).trim())
+    resto = resto.slice(taglio).trim()
+  }
+  if (resto) out.push(resto)
+  return out
+}
+
 function esc(s: string | null | undefined): string {
   if (!s) return ''
   return soloLatin1(s)
@@ -295,9 +309,14 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
       : []),
     ...(inv.bollo > 0 ? [BOLLO_VIRTUALE_NOTICE] : []),
   ]
+  // Una riga oltre i 200 caratteri (la dicitura dei beni significativi) si
+  // spezza su più <Causale> fra una parola e l'altra: troncarla toglierebbe
+  // proprio le cifre che la legge chiede. Il conteggio si fa sul testo GIÀ
+  // traslitterato (soloLatin1: «€» → «EUR» allunga).
   const causaleXml = causaleRighe
+    .flatMap((c) => spezzaCausale(soloLatin1(c), 200))
     .map((c) => `
-      <Causale>${esc(c.slice(0, 200))}</Causale>`)
+      <Causale>${esc(c)}</Causale>`)
     .join('')
 
   // ── Nota di credito (TD04) ────────────────────────────────────────────

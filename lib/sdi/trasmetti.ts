@@ -17,7 +17,7 @@ import { getSdiProvider, buildFatturaPaXml, ritenutaPerXml, type SdiInvoice } fr
 import { numeroFiscale } from '@/lib/sdi/doc-xml'
 import { superaIlTetto, baseStornabile, importoRitenuta } from '@/lib/documents/storno'
 import { SDI_SEND_ATTEMPT_MARKER } from '@/lib/sdi/types'
-import { forfettarioCausale } from '@/lib/sdi/causale'
+import { forfettarioCausale, causaleBeniSignificativi, unisciCausale } from '@/lib/sdi/causale'
 import { isValidPivaFormat } from '@/lib/fiscal/piva'
 import { getSdiQuota, recordSdiUse, sdiQuotaMessage } from '@/lib/sdi/quota'
 import { logSecurityEvent } from '@/lib/security/events'
@@ -275,6 +275,17 @@ export async function trasmettiDocumentoSdi(opts: {
   const causale = isForf
     ? forfettarioCausale()
     : isReverse ? 'Inversione contabile - art. 17, comma 6, lett. a-ter, DPR 633/1972 - IVA assolta dal committente' : null
+  // ⚖️ Dicitura dei beni significativi anche nell'XML (la fattura vera):
+  // stessa frase del PDF — vedi causaleBeniSignificativi.
+  const causaleConBeni = unisciCausale(causale, causaleBeniSignificativi(
+    doc.doc_type as string,
+    ((doc.document_items ?? []) as Array<Record<string, unknown>>).filter(
+      (i) => String(i.description ?? '').trim() !== ''
+    ) as unknown as VoceSplittabile[],
+    workspace.fiscal_regime,
+    (doc as { vat_rate_default?: number | null }).vat_rate_default,
+    (doc as { notes?: string | null }).notes,
+  ))
 
   // ⚠️ `numeroFiscale` toglie solo i prefissi storici Prev/Fatt, NON «NC»:
   // la nota di credito ha una numerazione separata e «NC001/2026» non è
@@ -450,7 +461,7 @@ export async function trasmettiDocumentoSdi(opts: {
     ),
     // Inversione contabile (081): righe e riepilogo escono a natura N6.7.
     reverseCharge: (doc as { reverse_charge?: boolean | null }).reverse_charge === true,
-    causale,
+    causale: causaleConBeni,
     // ⚠️ Gli importi restano POSITIVI anche nella TD04: è il tipo di documento
     // a dire che si tratta di uno storno (istruzioni AdE alla compilazione).
     tipoDocumento: isNotaCredito ? 'TD04' : isNotaDebito ? 'TD05' : doc.doc_type === 'fattura_acconto' ? 'TD02' : 'TD01',

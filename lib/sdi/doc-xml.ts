@@ -10,7 +10,7 @@
 // ============================================================
 
 import { buildFatturaPaXml, type SdiInvoice } from '@/lib/sdi'
-import { forfettarioCausale } from '@/lib/sdi/causale'
+import { forfettarioCausale, causaleBeniSignificativi, unisciCausale } from '@/lib/sdi/causale'
 import { isValidPivaFormat } from '@/lib/fiscal/piva'
 import { riepilogoPerAliquota, ritenutaPerXml } from '@/lib/sdi/xml'
 import { espandiBeniSignificativi, type VoceSplittabile } from '@/lib/fiscal/beni-significativi'
@@ -222,6 +222,17 @@ export async function buildInvoiceXmlForDoc(
   const causale = isForf
     ? forfettarioCausale()
     : isReverse ? 'Inversione contabile - art. 17, comma 6, lett. a-ter, DPR 633/1972 - IVA assolta dal committente' : null
+  // ⚖️ Dicitura dei beni significativi anche nell'XML (la fattura vera):
+  // stessa frase del PDF — vedi causaleBeniSignificativi.
+  const causaleConBeni = unisciCausale(causale, causaleBeniSignificativi(
+    doc.doc_type as string,
+    ((doc.document_items ?? []) as Array<Record<string, unknown>>).filter(
+      (i) => String(i.description ?? '').trim() !== ''
+    ) as unknown as VoceSplittabile[],
+    ws.fiscal_regime,
+    (doc as { vat_rate_default?: number | null }).vat_rate_default,
+    (doc as { notes?: string | null }).notes,
+  ))
 
   // L'inversione contabile vale SOLO fra soggetti IVA: senza la P.IVA del
   // cliente la fattura sarebbe sbagliata (e l'IVA non l'avrebbe pagata
@@ -312,7 +323,7 @@ export async function buildInvoiceXmlForDoc(
     ),
     // Inversione contabile (081): righe e riepilogo escono a natura N6.7.
     reverseCharge: (doc as { reverse_charge?: boolean | null }).reverse_charge === true,
-    causale,
+    causale: causaleConBeni,
     tipoDocumento: isNc ? 'TD04' : isNd ? 'TD05' : isAcc ? 'TD02' : 'TD01',
     fatturaCollegata,
   }
