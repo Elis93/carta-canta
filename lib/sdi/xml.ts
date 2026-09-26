@@ -8,9 +8,41 @@
 import type { SdiInvoice, SdiRitenuta } from './types'
 import { BOLLO_VIRTUALE_NOTICE } from '@/lib/fiscal/calcoli'
 
+// ⚠️ CARATTERI AMMESSI: i campi di testo del tracciato FatturaPA (Descrizione,
+// Causale, Denominazione, Indirizzo…) accettano SOLO Basic Latin e Latin-1
+// Supplement (U+0000-U+00FF): «—», «’», «“», «…», «€» fanno RIFIUTARE la
+// fattura dal provider/SdI (collaudo T25, 26 set 2026: la descrizione della
+// fattura di acconto «Acconto su … — preventivo …» non partiva). Qui ogni
+// carattere fuori tabella si traduce nel suo equivalente leggibile; quelli
+// senza equivalente (emoji, simboli) si tolgono. Il PDF resta com'è: la
+// traslitterazione vale solo per l'XML.
+const SOSTITUTI_LATIN1: Record<string, string> = {
+  '\u2012': '-', '\u2013': '-', '\u2014': '-', '\u2015': '-', '\u2212': '-', '\u2010': '-', '\u2011': '-',
+  '\u2018': "'", '\u2019': "'", '\u201A': "'", '\u201B': "'", '\u2032': "'",
+  '\u201C': '"', '\u201D': '"', '\u201E': '"', '\u201F': '"', '\u2033': '"',
+  '\u2026': '...', '\u20AC': 'EUR', '\u2022': '-', '\u2023': '-', '\u2043': '-',
+  '\u2009': ' ', '\u200A': ' ', '\u202F': ' ', '\u2007': ' ', '\u2002': ' ', '\u2003': ' ',
+  '\u200B': '', '\u200C': '', '\u200D': '', '\u2060': '', '\uFEFF': '',
+  '\u2122': 'TM', '\u2248': '~', '\u2264': '<=', '\u2265': '>=', '\u2192': '->',
+}
+
+export function soloLatin1(s: string): string {
+  let out = ''
+  for (const ch of s.normalize('NFC')) {
+    const cp = ch.codePointAt(0) ?? 0
+    if (cp <= 0xff) { out += ch; continue }
+    const sost = SOSTITUTI_LATIN1[ch]
+    if (sost !== undefined) { out += sost; continue }
+    // Lettere accentate fuori tabella (es. «ł», «ő»): la lettera base.
+    const base = ch.normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    out += [...base].every((c) => (c.codePointAt(0) ?? 0) <= 0xff) ? base : ''
+  }
+  return out
+}
+
 function esc(s: string | null | undefined): string {
   if (!s) return ''
-  return s
+  return soloLatin1(s)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -294,6 +326,12 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
       <PECDestinatario>${esc(cess.pec)}</PECDestinatario>`
     : ''
 
+  // ⚠️ ImportoTotaleDocumento è FACOLTATIVO e lo SdI non lo valida. Qui è il
+  // totale NETTO della ritenuta, cioè la cifra che il cliente deve davvero
+  // bonificare e quella stampata sul PDF: le due rappresentazioni non devono
+  // divergere. Le fonti si dividono su lordo/netto — domanda N15 al
+  // commercialista. (Era un commento DENTRO l'XML: portava «⚠️» e «—», fuori
+  // dal Latin-1 ammesso — tolto dall'output il 26 set 2026.)
   return `<?xml version="1.0" encoding="UTF-8"?>
 <p:FatturaElettronica versione="FPR12" xmlns:p="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2">
   <FatturaElettronicaHeader>
@@ -338,11 +376,6 @@ export function buildFatturaPaXml(inv: SdiInvoice): string {
         <Divisa>EUR</Divisa>
         <Data>${inv.data}</Data>
         <Numero>${esc(inv.numero)}</Numero>${ritenutaXml}${bolloXml}
-        <!-- ⚠️ ImportoTotaleDocumento è FACOLTATIVO e lo SdI non lo valida.
-             Qui è il totale NETTO della ritenuta, cioè la cifra che il cliente
-             deve davvero bonificare e quella stampata sul PDF: le due
-             rappresentazioni non devono divergere. Le fonti si dividono su
-             lordo/netto — domanda N15 al commercialista. -->
         <ImportoTotaleDocumento>${num(inv.totale)}</ImportoTotaleDocumento>${causaleXml}
       </DatiGeneraliDocumento>${collegataXml}
     </DatiGenerali>
