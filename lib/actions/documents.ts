@@ -3314,7 +3314,14 @@ export async function registerDepositReceivedAction(
     unit_cost: null,
     total: r.unit_price,
   })) as unknown as DocumentItemInsert[]
-  const { error: itemsErr } = await insertDocumentItemsTollerante(supabase, itemsAcc)
+  // ⚠️ ADMIN CLIENT obbligatorio: la TD02 nasce già 'accepted' e il trigger
+  // trg_protect_accepted_items (057) vieta al client di sessione di scrivere
+  // le voci di un documento accettato — è la protezione delle prove, e il suo
+  // stesso commento prescrive il service role per le scritture legittime
+  // (come la pulizia dei tier all'accettazione). Nessun IDOR: il documento
+  // l'abbiamo appena creato NOI, passando dalla RLS, nel workspace dell'utente.
+  const adminDb = createAdminClient() as unknown as Awaited<ReturnType<typeof createClient>>
+  const { error: itemsErr } = await insertDocumentItemsTollerante(adminDb, itemsAcc)
   if (itemsErr) {
     await supabase.from('documents').delete().eq('id', acconto.id)
     console.error('[acconto] voci TD02 fallite:', itemsErr)
@@ -3351,7 +3358,10 @@ export async function registerDepositReceivedAction(
   if (error) {
     // ROLLBACK: senza l'incasso registrato la fattura di acconto non deve
     // esistere — un TD02 orfano racconterebbe un incasso che l'app non ha.
-    await supabase.from('document_items').delete().eq('document_id', acconto.id)
+    // Le voci si tolgono con l'ADMIN (il trigger 057 blocca il client di
+    // sessione sui documenti accettati); il delete del documento poi
+    // completerebbe comunque via CASCADE.
+    await adminDb.from('document_items').delete().eq('document_id', acconto.id)
     await supabase.from('documents').delete().eq('id', acconto.id)
     return { error: 'Registrazione non riuscita. La migration 038 potrebbe non essere ancora applicata.' }
   }
