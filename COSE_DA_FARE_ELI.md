@@ -675,9 +675,18 @@ trasmessa non si elimina più.)* Il nostro riassunto dalle fonti, da confermare:
   Quindi: riduzione già prevista dal preventivo/contratto (es. «a consuntivo») → c.2, senza
   quel limite; sconto o riduzione concordati **dopo** col cliente → entro un anno. Confermi?
 - ③ **Il lavoro salta e l'acconto viene restituito**: nota di credito TD04 sull'intera
-  fattura di acconto, **dopo** la restituzione (art. 26 c.2). Confermi? ⚠️ Se il lavoro
-  salta perché artigiano e cliente si **mettono d'accordo** per annullarlo (non per
-  inadempimento), rientra nel «sopravvenuto accordo» del c.3 → entro un anno?
+  fattura di acconto, **dopo** la restituzione. *(Aggiornato il 26 set con 4 risposte
+  dell'Agenzia lette per intero — vedi ⑥.)* Il nostro riassunto, da confermare:
+  · lavoro annullato **di comune accordo** (anche con una transazione scritta) → è il
+    «sopravvenuto accordo» → **art. 26 c.3, entro un anno** dall'operazione, che per un
+    acconto è il **giorno dell'incasso** (risp. 386/2022 punto e, 832/2021);
+  · lavoro saltato per **inadempimento** del cliente, con diffida scritta rimasta senza
+    risposta o clausola risolutiva espressa nel preventivo → **c.2, senza il limite di un
+    anno** (risp. 386/2022, principio di diritto n. 11/2021);
+  · l'artigiano **tiene l'acconto** (es. come penale o indennizzo) → **nessuna nota**: la
+    base imponibile è il corrispettivo davvero incassato e non c'è restituzione (risp.
+    268/2023, che però riguarda un concordato fra imprese: da confermare per noi).
+  Confermi i tre casi? E per il secondo: basta una diffida via email/PEC dell'artigiano?
 - ④ Nel **forfettario** cambia qualcosa (bollo sulla nota, quote)? Per noi la nota di
   credito sulla fattura di acconto segue le stesse regole della nota sulla fattura piena.
 
@@ -688,6 +697,20 @@ trasmessa non si elimina più.)* Il nostro riassunto dalle fonti, da confermare:
   nota non si fa più e l'IVA **non** si recupera con la dichiarazione integrativa (risp.
   663/2021); resta solo il rimborso dell'art. 30-ter, eccezionale (risp. 762/2021). Per
   questo, se la fattura di acconto è sbagliata, conviene correggerla **subito**. Confermi?
+- ⑥ *(fonti lette il 26 set: risposte AdE 832/2021, 386/2022, 268/2023, 359/2023, 403/2022)*
+  Cosa aggiungono: **832/2021** — il limite di un anno vale per errori e accordi, e si
+  conta dall'**effettuazione** dell'operazione (per i servizi il pagamento, o la fattura se
+  viene prima): passato l'anno la nota non si può più emettere. **386/2022** — distingue la
+  risoluzione per **inadempimento** (c.2, nessun limite di un anno; basta la diffida
+  scaduta o la clausola risolutiva espressa, senza sentenza) dalla risoluzione **concordata
+  con una transazione** (c.3, entro un anno); la nota vale quanto la somma a cui si rinuncia,
+  divisa in proporzione fra imponibile e IVA. **268/2023** — se il corrispettivo è stato
+  incassato per intero e non viene restituito, lo scioglimento del contratto **non** dà
+  diritto alla nota. **359/2023** — sul mancato pagamento puro la nota si fa solo con le
+  procedure (concorsuali o esecutive infruttuose, art. 26 c.3-bis); se il cliente poi paga,
+  serve una nota di debito. **403/2022** — riguarda l'imposta di registro: conferma solo
+  che l'annullamento «di comune accordo» è un nuovo contratto fra le parti. ⚠️ Sono
+  risposte a casi singoli (interpelli), non circolari: orientano, non vincolano.
 
 **N24 — Data della fattura quando il cliente ha già pagato** *(26 set)*. La circ. 14/E/2019
 §3.1 dice che il campo «Data» della fattura elettronica è sempre la **data dell'operazione**;

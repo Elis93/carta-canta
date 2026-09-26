@@ -30,6 +30,15 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 26 set (11) — T27 superato + 5 risposte AdE LETTE per N22 (nessun codice)
+- **T27 ✅** («Salva e invia» in modifica torna all'anteprima).
+- Eli ha caricato i 5 PDF (estratti con pypdf + stub cryptography, testi in scratchpad `fonti5/`). Esiti in `COSE_DA_FARE_ELI.md` **N22 ③ riscritto + nuovo ⑥** e riga in `PROGETTO_ACCONTI.md` §8:
+  · **832/2021**: il limite di un anno (errore **o** accordo) si conta dall'**effettuazione** — per l'acconto il giorno dell'incasso; oltre, niente nota.
+  · **386/2022** (la più utile): risoluzione per **inadempimento** (diffida scaduta o clausola risolutiva espressa, senza sentenza) = **c.2, nessun limite di un anno**; risoluzione **concordata/transattiva** = **c.3, entro un anno**; nota = somma rinunciata ripartita fra imponibile e IVA → risponde al dubbio ③ «lavoro annullato di comune accordo».
+  · **268/2023**: corrispettivo incassato e **non restituito** → nessuna nota (conferma «TD04 solo DOPO la restituzione»; caso fra imprese in concordato, da confermare per noi).
+  · **359/2023**: mancato pagamento solo via procedure (c.3-bis) + nota di debito se poi paga — marginale. **403/2022**: imposta di registro, fuori tema.
+- ⚠️ Sono interpelli (orientano, non vincolano): tutto resta DOMANDA al commercialista (B.0). FAQ rilette: la FAQ ACC dice «trasmessa → parlane col commercialista» → ancora vera, nessuna toccata.
+
 ### ✅ 26 set (10) — T26 superato + un preventivo con una fattura collegata NON si elimina più
 - **T26 ✅** (acconto registrabile anche se non richiesto nel preventivo).
 - **[RICHIESTA Eli] «Posso eliminare un preventivo di cui è stata creata una fattura di acconto non trasmessa»** → ora no. Nuovo `lib/documents/collegati.ts` (`fattureCollegateAttive` + `messaggioPreventivoCollegato`, +4 test → **911**): un preventivo con una **fattura o fattura di acconto ATTIVA** (fuori dal cestino, `origin_document_id` = preventivo) non si elimina — è l'origine della fattura e, per l'acconto, il posto dove vive l'incasso del Bilancio. Guardia **server fail-closed** in `deleteDocumentAction` + `purgeDeletedDocumentAction` (caso storico: preventivo già nel cestino → «ripristinalo e archivialo»); UI **spenta e spiegata** su pagina (in fondo + menu ⋯) e menu ⋯ della lista (query `convertedRows` estesa a `fattura_acconto`, la dicitura «bozza fattura» resta solo sulle fatture piene). Le note (NC/ND) non contano: nascono dalla fattura.
