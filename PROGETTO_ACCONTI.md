@@ -464,8 +464,9 @@ Tutto il resto del percorso di trasmissione non cambia.
 > nella somma, quindi un saldo il cui netto scende sotto soglia **non** è nell'elenco. È lo
 > stesso comportamento del nostro motore (bollo su `afterDiscount`, che col conguaglio è il
 > netto). La guida non parla espressamente del conguaglio: resta una **conferma** da chiedere.
-> ④ **SAL** — resta senza fonte e non regge nessuna scelta: progettare per N acconti rimane la
-> strada prudente a prescindere.
+> ④ **SAL** — la frase «S.A.L. = quasi sempre TD02» veniva da siti non ufficiali (26 set 2026):
+> tolta come fonte. Documento ufficiale indicato a Eli da scaricare: **circ. 16/E del 21 maggio
+> 2013**. Non regge nessuna scelta: progettare per N acconti rimane la strada prudente a prescindere.
 >
 > **Decisioni di Eli (26 set 2026):** ① il **Fatturato della Home conta anche le fatture di
 > acconto** — da fare nella Fase 3 insieme al saldo, che uscirà al netto (niente doppio
@@ -481,9 +482,14 @@ migration 062 + 082). Con acconti già fatturati deve produrre il **saldo**:
    che richiama numero e data della TD02.
 3. **`DatiFattureCollegate` ripetuto**, uno per acconto (`IdDocumento` + `Data`).
 
-⚠️ **Progettare per N dall'inizio**: in edilizia *«la fatturazione di S.A.L. costituisce, nella
-quasi totalità dei casi, una fatturazione in acconto con l'utilizzo del codice TD02»*. Costruirlo
-per un acconto solo significa rifare il motore dello scomputo.
+⚠️ **Progettare per N dall'inizio** — ma per ragioni di prodotto, non per una fonte: la frase
+*«la fatturazione di S.A.L. costituisce, nella quasi totalità dei casi, una fatturazione in acconto
+con TD02»* citata qui prima veniva da **siti non ufficiali** (verificato il 26 set 2026: nessun
+documento dell'AdE letto la contiene; il tracciato ufficiale prevede solo il blocco `DatiSAL`,
+«da valorizzare nei casi di fattura per stato di avanzamento»). Fonte ufficiale da leggere per i
+SAL: **circ. 16/E del 21 maggio 2013** (prestazioni con corrispettivi a stati di avanzamento). Resta
+vero che chi incassa più acconti sullo stesso lavoro esiste: costruire per un acconto solo
+significherebbe rifare il motore dello scomputo.
 
 ### 4.2 XML
 `lib/sdi/xml.ts:277` — `inv.fatturaCollegata` passa da **oggetto singolo a array**. È l'unica
