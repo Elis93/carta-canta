@@ -481,32 +481,150 @@ Tutto il resto del percorso di trasmissione non cambia.
 > conteggio: acconto + saldo = totale del lavoro) · ② il flusso completo di **correzione di un
 > acconto sbagliato** (§3 «da valutare», N22) si fa **dopo** la Fase 3.
 
-### 4.1 «Converti in fattura» diventa il conguaglio
-Oggi porta il preventivo intero in fattura (funzione SQL `convert_preventivo_to_fattura`,
-migration 062 + 082). Con acconti già fatturati deve produrre il **saldo**:
+### 4.1 SCHEMA DI LAVORO (scritto il 26 set 2026 notte, da rivedere con Eli PRIMA del codice)
 
-1. Voci del preventivo a importo pieno (come oggi).
-2. **Una riga negativa per ogni acconto**, con l'aliquota della voce originale e la descrizione
-   che richiama numero e data della TD02.
-3. **`DatiFattureCollegate` ripetuto**, uno per acconto (`IdDocumento` + `Data`).
+> Scritto dopo aver riletto il codice che la fase tocca. Sei cose che la traccia precedente
+> NON vedeva, tutte verificate sul codice:
+> 1. **Il form rifiuta i prezzi negativi** (`unit_price: z.number().nonnegative()`, documents.ts
+>    ~r.274) → un saldo con le righe di scomputo non si salverebbe al primo salvataggio, nemmeno
+>    automatico.
+> 2. **La trasmissione rifiuta le voci a prezzo ≤ 0** (`trasmetti.ts` ~r.148, guardia «voci da
+>    completare») → il saldo non partirebbe mai.
+> 3. **Lo sconto di documento** si applica al subtotale: con le righe negative dentro, lo sconto
+>    verrebbe calcolato sul residuo e toglierebbe una seconda volta la parte già scontata negli
+>    acconti (esempio: voci 1.000, sconto 10%, acconto 270 → saldo giusto 630, il motore darebbe
+>    657).
+> 4. **Lo split dei beni significativi** conta come «prestazione» tutte le voci al 10%: le righe
+>    negative al 10% abbasserebbero la prestazione e sposterebbero IVA dal 10 al 22%. La 71/E §5.2
+>    vuole lo split **sull'intero corrispettivo**.
+> 5. **Il reverse charge e la ritenuta non stanno sul preventivo** (le due spunte esistono solo
+>    sulle fatture, PreventivoForm ~r.2001; la funzione SQL 082 copia `ritenuta_pct` ma non
+>    `reverse_charge` né `ritenuta_causale`) → oggi una TD02 nasce SEMPRE con IVA e senza
+>    ritenuta, anche per un'impresa edile o un condominio, e il saldo dovrebbe poi dire il
+>    contrario.
+> 6. **Il Bilancio conta l'acconto dal preventivo con i campi denormalizzati** (il «Registra
+>    acconto» non scrive la voce `payment` nel log): con più acconti in mesi diversi, finirebbero
+>    tutti nel mese dell'ultimo. E l'eliminazione di una TD02 oggi **azzera tutto** l'acconto.
 
-⚠️ **Progettare per N dall'inizio** — ma per ragioni di prodotto, non per una fonte: la frase
-*«la fatturazione di S.A.L. costituisce, nella quasi totalità dei casi, una fatturazione in acconto
-con TD02»* citata qui prima veniva da **siti non ufficiali** (verificato il 26 set 2026: nessun
-documento dell'AdE letto la contiene; il tracciato ufficiale prevede solo il blocco `DatiSAL`,
-«da valorizzare nei casi di fattura per stato di avanzamento»); anche la **circ. 16/E/2013**,
-letta, non lo dice (tratta i servizi con non residenti). Resta
-vero che chi incassa più acconti sullo stesso lavoro esiste: costruire per un acconto solo
-significherebbe rifare il motore dello scomputo.
+#### A. Decisioni da prendere con Eli (prima di qualsiasi riga di codice)
 
-### 4.2 XML
-`lib/sdi/xml.ts:277` — `inv.fatturaCollegata` passa da **oggetto singolo a array**. È l'unica
-modifica strutturale: il blocco è già scritto (lo usa la nota di credito).
+| # | Domanda | Proposta | Perché |
+|---|---|---|---|
+| **D1** | Come si riconosce una riga di scomputo? | **Colonna nuova** `document_items.scomputo_acconto_id` → la TD02 scomputata (migration **090**) | Dedurlo dal prezzo negativo è fragile; con il riferimento si costruiscono `DatiFattureCollegate`, si blocca l'eliminazione della TD02 e si verifica la coerenza |
+| **D2** | Com'è fatta la riga di scomputo? | **Una riga per ogni riga della TD02** (una per aliquota), stesso importo col meno, stessa aliquota/natura, descrizione «Acconto già fatturato: ACC 001/2026 del 10/09/2026» (+ «quota IVA 10%» se più righe) | Per aliquota il saldo torna esatto per costruzione (00422); la descrizione richiama il documento come chiede il tracciato 2.2.1.4 |
+| **D3** | Righe di scomputo modificabili? | **No**: nel form si vedono bloccate col lucchetto, non si cancellano; il server le **ricostruisce** a ogni salvataggio dalle TD02 attive | Toglierne una = fatturare due volte la stessa parte di lavoro |
+| **D4** | Ritenuta del condominio e reverse charge per gli acconti | **Due spunte nel pop-up «Acconto ricevuto»** (stesse di fattura, stesse condizioni: mai forfettario); la seconda TD02 le propone come la prima; **il saldo le eredita dalle TD02** e non si possono cambiare se già ci sono acconti | Il pop-up è il momento in cui l'acconto diventa fattura; metterle sul preventivo mostrerebbe al cliente un prezzo diverso (decisione dell'11 ago) |
+| **D5** | Condominio: l'importo si scrive lordo o netto? | **L'importo effettivamente ricevuto (netto del 4%)**, e l'app ricostruisce l'imponibile: `imponibile = incassato ÷ (1 + aliquota media − 0,04)` | È la cifra che l'artigiano vede sul conto; chiedergli il lordo lo porterebbe a sbagliare |
+| **D6** | Saldo con acconti non ancora trasmessi | Il saldo **si crea sempre**; con SdI attivo **si trasmette solo dopo l'esito positivo di tutte le TD02** (messaggio che dice quali mancano); con SdI spento, avviso | Il tracciato: `DatiFattureCollegate` riguarda fatture «precedentemente trasmesse» |
+| **D7** | Più acconti: limite | Somma degli acconti **< totale**; se il nuovo importo chiude il totale → «questo è il saldo: converti in fattura e segna pagata» | Stessa regola già attiva per l'acconto singolo (§6) |
+| **D8** | Dove vive l'incasso | **Invariato**: gli acconti restano sul preventivo (una voce `payment` per acconto nel log), il saldo nasce **non pagato** col totale al netto e si incassa con «Segna pagata». Nessun trasferimento dell'acconto sulla fattura quando esistono TD02 | Zero doppi conteggi: TD02 fuori dalla cassa, preventivo = acconti, saldo = residuo |
 
-### 4.3 Il tetto
-Invariante nuova, gemella di quella delle note di credito: **Σ acconti fatturati ≤ totale del
-preventivo**. Si riusa lo schema di `lib/documents/storno.ts` (residuo, `superaIlTetto`,
-`scalaPrezzo`).
+#### B. Lavori, in ordine (ognuno si chiude con tsc · build · test verdi)
+
+**3A — Motore puro** (nessuna superficie; tutto testato)
+- Nuovo `lib/fiscal/saldo.ts`: `righeScomputo(td02[])` (dalle righe delle TD02 alle righe
+  negative, D2) · `verificaScomputi(vociSaldo, td02Attive)` (una riga per riga di TD02, importi
+  identici, niente orfane) · `residuoPerAliquota` e l'invariante **nessun riepilogo negativo** ·
+  `quotaBeneSaldo` (valore del bene sul saldo = valore totale − Σ quote degli acconti, così le
+  quote sommano esatte).
+- `lib/fiscal/calcoli.ts`: le righe di scomputo **fuori dalla base dello sconto documento**
+  (sconto sulle voci piene, poi si sottraggono gli scomputi) · IVA per aliquota invariata
+  (le basi negative entrano nella somma algebrica, come fa lo SdI).
+- `lib/fiscal/beni-significativi.ts`: le righe di scomputo **escluse dalla prestazione** e dallo
+  split; dicitura del saldo con la quota (71/E §5.2).
+- `lib/fiscal/acconto.ts`: scorporo col 4% (D5) e il caso reverse (N6.7).
+- `lib/bilancio/incassi.ts`: nuova voce di log **`payment_removed`** (acconto singolo tolto) che
+  annulla **solo quell'incasso**; `payment_reset` resta per l'azzeramento totale.
+- Test da scrivere (minimo): esempio 71/E (caldaia 3.500 + posa 1.500, acconto 30% → saldo 2.100
+  al 10% + 1.400 al 22%) · due acconti in aliquote miste · sconto 10% (saldo 630, non 657) ·
+  forfettario col bollo su acconto e saldo, e saldo sotto soglia senza bollo · reverse · condominio
+  (4% sul residuo: 4% acconti + 4% saldo = 4% del totale) · riepilogo mai negativo · verifica
+  scomputi (riga tolta, importo cambiato, TD02 in più/in meno).
+
+**3B — Più acconti sullo stesso preventivo**
+- `registerDepositReceivedAction`: via la guardia «acconto già registrato»; tetto D7;
+  `paid_amount` = somma; **voce `payment` (kind acconto) nel log per ogni acconto**, con la data
+  vera.
+- `deleteDocumentAction` su una TD02: toglie **solo il suo importo** (voce `payment_removed`);
+  se non resta nulla → `unpaid`. ⚠️ Rifiuta se la TD02 è già scomputata in un saldo attivo.
+- `restoreDocumentAction` / `verificaRipristinoAcconto`: riscritta per N acconti (rimette il suo
+  importo se il tetto regge e non esiste già un saldo).
+- `AccontoCard`: elenco delle fatture di acconto (numero · data · importo · stato SdI), totale
+  acconti, **residuo**, tasto «Registra un altro acconto», tasto «Fattura di saldo».
+
+**3C — Condominio e reverse charge sugli acconti** (D4, D5)
+- Pop-up «Acconto ricevuto»: le due spunte (componenti esistenti `RitenutaCondominio` e
+  `ReverseCharge`), proposte dalla TD02 precedente; testo che dice «scrivi quanto hai ricevuto
+  davvero».
+- La TD02 scrive `ritenuta_pct`, `ritenuta_causale 'W'`, `reverse_charge`; nell'XML
+  `DatiRitenuta` e `<Ritenuta>SI</Ritenuta>` (già supportati per le fatture).
+- Coerenza: tutte le TD02 dello stesso preventivo con le stesse spunte (altrimenti rifiuto con
+  spiegazione).
+
+**3D — «Converti in fattura» diventa il saldo** (⚠️ migration 090, D1)
+- Migration **090**: `document_items.scomputo_acconto_id UUID NULL REFERENCES documents(id)` +
+  indice; ridefinire `convert_preventivo_to_fattura` **solo se serve** (le righe di scomputo si
+  aggiungono nella route, non nella funzione). Validata su PG16.
+- Route `converti-fattura`: **via il blocco-ponte**; dopo la conversione, se ci sono TD02 attive:
+  aggiunge le righe di scomputo (D2), eredita ritenuta/reverse dalle TD02, ricalcola i totali col
+  motore 3A, **salta il trasferimento dell'acconto** (D8). Idempotente: una seconda chiamata non
+  duplica le righe. Acconti «vecchi» senza TD02 (prima del 24 set): comportamento attuale.
+- `registerDepositReceivedAction`: con un saldo già creato l'acconto resta rifiutato (esiste già).
+
+**3E — Protezioni sul saldo** (D3)
+- `updateDocumentAction` / `saveDraftAction`: le righe di scomputo **non arrivano dal form**; il
+  server le **ricostruisce** dalle TD02 attive a ogni salvataggio (lo Zod non-negativo resta
+  intatto per le voci normali).
+- `VociTable` / `PreventivoForm`: le righe di scomputo in sola lettura, col lucchetto e la nota
+  «Acconto già fatturato: non si modifica».
+- Trasmissione (`trasmetti.ts`, `doc-xml.ts`): la guardia «prezzo ≤ 0» esclude le righe di
+  scomputo · `verificaScomputi` prima di trasmettere (fail-closed) · D6.
+- TD02 scomputata in un saldo attivo: **non eliminabile** (spiegato); ripristino del saldo dal
+  cestino solo se le sue TD02 esistono ancora e non sono in un altro saldo.
+
+**3F — XML del saldo**
+- `lib/sdi/xml.ts`: `fatturaCollegata` → **array** (un blocco `DatiFattureCollegate` per TD02,
+  numero + data) · righe negative con `PrezzoUnitario`/`PrezzoTotale` negativi · `<Ritenuta>SI`
+  anche sulle righe negative quando c'è la ritenuta (circ. 7/E §5) · dicitura dei beni con la
+  quota del saldo in `<Causale>`.
+- Invariante 00418 (§4.4): la data del saldo non può essere precedente a quella di una TD02
+  collegata → rifiuto con spiegazione (oggi impossibile per costruzione, ma scritto e testato).
+- Test XML: due acconti → due blocchi collegati · riepiloghi per aliquota = pieno − scomputi ·
+  nessun carattere fuori Latin-1 nelle descrizioni di scomputo.
+
+**3G — Cosa vedono artigiano e cliente**
+- PDF (4 preset), pagina del cliente, fogli interni, `FiscalSummary`: le righe di scomputo col
+  meno e la dicitura; riepilogo in tre righe **«Totale lavori · Acconti già fatturati · Saldo»**
+  (mockup PRIMA di implementare — è un cambio visivo su tutte le superfici coi conti).
+- Lista fatture: riga 3 «Saldo · acconti ACC 001, ACC 002 scomputati».
+- Cronologia: «Acconto scomputato nel saldo Fatt. 014/2026» sulla TD02 e sul preventivo.
+- Pagina della TD02: «Scomputata nel saldo …» con collegamento.
+
+**3H — Numeri della Home e Bilancio**
+- **Fatturato della Home conta le TD02** (decisione Eli del 26 set): il saldo esce al netto,
+  quindi acconti + saldo = totale del lavoro.
+- Bilancio: verifica che acconti (dal preventivo, un evento per acconto) + saldo (dalla fattura)
+  = incassato vero, e nessun doppio conteggio. Test su `incassiFromDoc` con due acconti in mesi
+  diversi e uno eliminato.
+
+**3I — FAQ, /novita, collaudi**
+- FAQ: «Ho incassato più acconti: come faccio la fattura di saldo?» · FAQ ACC estesa (più
+  acconti, condominio, reverse) · FAQ bollo (bollo su acconto e saldo, saldo sotto soglia).
+- `/novita`, collaudi **T29 e seguenti** in `TEST_DA_FARE_ELI.md` (sandbox: due acconti →
+  saldo → trasmissione; condominio; reverse; forfettario sotto soglia; tentativo di eliminare
+  una TD02 scomputata).
+
+#### C. Fuori dalla Fase 3 (dichiarato)
+- Il flusso di **correzione di un acconto sbagliato** e la nota di credito su una TD02 (decisione
+  di Eli del 26 set: dopo la Fase 3).
+- Gli **sconti nell'XML** (limite già esistente: un documento con sconto non si trasmette).
+- La vista per lavoro del commercialista in `/studio`.
+
+#### D. Revisione dello schema (prima del via)
+Eli rilegge le decisioni D1-D8; poi un revisore esterno rilegge lo schema contro il codice
+(trova ciò che manca, come i sei punti in testa). Solo dopo: 3A.
+
+### 4.2 XML, 4.3 Il tetto — ⏩ assorbiti nello schema (3F e 3B/D7)
 
 ### 4.4 Invariante sulle date
 ⚠️ **Controllo SdI 00418**: *«se `TipoDocumento` vale "TD04", `Data` non deve essere antecedente
@@ -515,8 +633,8 @@ lette (Allegato A, §DatiFattureCollegate): «Data… Non può essere mai succes
 documento in oggetto; in caso contrario il file viene scartato con codice errore 00418» — senza
 limitarlo al TD04, mentre la tabella dei controlli lo lega al solo TD04. Nel dubbio: **vale
 anche per il SALDO che richiama le TD02**. Siamo al sicuro *per costruzione* (gli acconti
-vengono prima del saldo, la `doc_date` nasce alla conferma). Va scritta come invariante esplicita con un test: un'invariante non scritta è
-un'invariante che prima o poi si rompe.
+vengono prima del saldo, la `doc_date` nasce alla conferma). Va scritta come invariante
+esplicita con un test (3F).
 
 ---
 
