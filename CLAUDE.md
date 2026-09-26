@@ -30,6 +30,12 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 26 set (9) — T25-bis superato + «Acconto ricevuto» anche senza acconto richiesto + «Salva e invia» torna all'anteprima
+- **T25-bis ✅**: XML della ACC 005/2026 con la dicitura dei beni su DUE `<Causale>` (spezzata a 200), riepiloghi 584,79@10 + 292,40@22 = 1000,00 esatti.
+- **[RICHIESTA Eli] La card Acconto c'è SEMPRE sul preventivo accettato** (senza fattura collegata), anche se nel preventivo non era chiesto: prima `accontoInfo` nasceva solo con `deposit_type/value` → chi aveva dimenticato l'acconto (o se lo vedeva chiedere a voce dopo la FIRMA del cliente) doveva riaprire il preventivo — impossibile su un preventivo firmato. Con acconto 0: tendina «non richiesto» (chiusa), riga «Nessun acconto richiesto nel preventivo», niente pillola «In attesa», campo importo VUOTO. Il server (`registerDepositReceivedAction`) non guardava già i campi deposit: nessuna modifica lato server. FAQ acconto estesa.
+- **[BUG] «Salva e invia» in modifica restava nel modulo dopo l'invio**: tutti i successi del pop-up (ShareButton ×6, SendEmailDialog alla chiusura) facevano solo `router.refresh()` sulla pagina `?edit=1`. Nuovo `lib/documents/dopo-invio.ts` → `aggiornaDopoInvio(router)`: con `edit=1` nell'indirizzo toglie il parametro (`replace` + `refresh`), altrimenti refresh. Desktop invariato (lì il form è inline senza parametro).
+- **T26-T27** nuovi in TEST_DA_FARE_ELI. tsc · build · 907 test.
+
 ### ✅ 26 set (8) — Fonti N22 LETTE (663/2021, 762/2021, circ. 20/E/2021, circ. 14/E/2019) + [BUG] la data della fattura non era quella dell'incasso
 Eli ha caricato i 4 PDF (estratti con pypdf + stub cryptography; lo strumento Read non ne mostrava il testo). Esiti in `COSE_DA_FARE_ELI.md` N22 ⑤ e **N24**, `PROGETTO_ACCONTI.md` §8.
 - **663 e 762/2021**: citano l'art. 26 c.3 per intero (conferma ①-ter: un anno per errore E sopravvenuto accordo); nota = strumento generale; oltre l'anno NO dichiarazione integrativa (663), solo rimborso art. 30-ter residuale (762). **Circ. 20/E §3**: nota entro la dichiarazione IVA dell'anno del presupposto.

@@ -78,8 +78,10 @@ export function AccontoCard({
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
+  // Acconto non richiesto nel preventivo (acconto = 0): campo vuoto, la cifra
+  // la scrive l'artigiano — un «0,00» precompilato sarebbe un invito sbagliato.
   const [amount, setAmount] = useState(
-    acconto.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    acconto > 0 ? acconto.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''
   )
   const [date, setDate] = useState(new Date().toLocaleDateString('sv-SE'))
   const [error, setError] = useState<string | null>(null)
@@ -169,7 +171,7 @@ export function AccontoCard({
           <div style={{ fontSize: 13, fontWeight: 600, color: '#161616' }}>
             {received
               ? `Acconto ${fmtEuro(received.amount)} ricevuto${received.at ? ` il ${new Date(received.at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }).replace('.', '')}` : ''}`
-              : `Acconto richiesto: ${fmtEuro(acconto)}`}
+              : acconto > 0 ? `Acconto richiesto: ${fmtEuro(acconto)}` : 'Nessun acconto richiesto nel preventivo'}
           </div>
           <div style={{ fontSize: 12, color: 'var(--cc-muted)', marginTop: 2 }}>
             Saldo restante: {fmtEuro(received ? Math.max(0, acconto + saldo - received.amount) : saldo)}
@@ -179,11 +181,11 @@ export function AccontoCard({
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#d4efe2', color: '#2b2b2b', borderRadius: 999, padding: '3px 11px', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
             <CheckCircle2 size={13} style={{ color: '#2f8a63' }} /> Acconto
           </span>
-        ) : (
+        ) : acconto > 0 ? (
           <span style={{ background: '#f5e9d0', color: '#2b2b2b', borderRadius: 999, padding: '3px 11px', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
             In attesa
           </span>
-        )}
+        ) : null}
       </div>
 
       {!received && (

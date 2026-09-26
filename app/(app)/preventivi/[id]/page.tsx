@@ -332,10 +332,18 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
       const totalNum = Number(doc.total ?? 0)
       const t = depRow?.deposit_type
       const v = Number(depRow?.deposit_value)
-      if ((t === 'percent' || t === 'amount') && Number.isFinite(v) && v > 0 && totalNum > 0) {
+      // ⚠️ La card c'è SEMPRE sul preventivo accettato, anche senza acconto
+      // richiesto (Eli, 26 set): se l'acconto non era scritto nel preventivo
+      // — dimenticato, o chiesto a voce dopo la firma — l'artigiano deve
+      // poterlo registrare lo stesso. L'incasso è un fatto, non una clausola:
+      // riaprire un preventivo FIRMATO dal cliente per aggiungerlo non è
+      // possibile (e non deve esserlo). Con acconto 0 la card dice solo che
+      // non era richiesto e offre il tasto.
+      if (totalNum > 0) {
         const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100
-        const acconto = t === 'percent' ? r2((totalNum * Math.min(v, 100)) / 100) : r2(Math.min(v, totalNum))
-        if (acconto > 0) {
+        const richiesto = (t === 'percent' || t === 'amount') && Number.isFinite(v) && v > 0
+        const acconto = !richiesto ? 0 : t === 'percent' ? r2((totalNum * Math.min(v, 100)) / 100) : r2(Math.min(v, totalNum))
+        {
           accontoInfo = {
             acconto,
             saldo: r2(totalNum - acconto),
@@ -930,8 +938,10 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
             <CardTendina
               label="Acconto"
               style={{ margin: '14px 15px 0' }}
-              summary={`${euro(accontoInfo.received ? accontoInfo.received.amount : accontoInfo.acconto)} · ${accontoInfo.received ? 'ricevuto' : 'da ricevere'}`}
-              defaultOpen={!accontoInfo.received}
+              summary={accontoInfo.received
+                ? `${euro(accontoInfo.received.amount)} · ricevuto`
+                : accontoInfo.acconto > 0 ? `${euro(accontoInfo.acconto)} · da ricevere` : 'non richiesto'}
+              defaultOpen={!accontoInfo.received && accontoInfo.acconto > 0}
             >
               <AccontoCard
                 documentId={id}

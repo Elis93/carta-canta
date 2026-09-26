@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { registerManualSendAction, registerManualResendAction, resendExpiredAction, riapriRifiutatoAction } from '@/lib/actions/documents'
 import { stripPrefissoLegacy } from '@/lib/utils'
+import { aggiornaDopoInvio } from '@/lib/documents/dopo-invio'
 
 interface ShareButtonProps {
   documentId: string
@@ -257,7 +258,7 @@ export function ShareButton({
           setErrorClienteId(result.clienteDaCompletare ?? null)
           return
         }
-        router.refresh()
+        aggiornaDopoInvio(router)
         setOpen(false)
         // La registrazione fa RIPARTIRE la scadenza da oggi (expires_at =
         // oggi + validità, registerManualSendAction): va detto — «non mi
@@ -306,7 +307,7 @@ export function ShareButton({
         setError(result.error)
         return
       }
-      router.refresh()
+      aggiornaDopoInvio(router)
       setConfirmResend(false)
       setOpen(false)
       toast.success(isRejected
@@ -333,7 +334,7 @@ export function ShareButton({
         setErrorClienteId(result.clienteDaCompletare ?? null)
         return
       }
-      router.refresh()
+      aggiornaDopoInvio(router)
       setConfirmResent(false)
       setOpen(false)
       toast.success(docType === 'preventivo' ? 'Preventivo segnato come Inviato' : `${docType === 'nota_credito' ? 'Nota di credito' : 'Fattura'} segnata come Inviata`)
@@ -368,7 +369,7 @@ export function ShareButton({
             'rinviare il documento',
           )
           if (result.error) { setError(result.error); return }
-          router.refresh()
+          aggiornaDopoInvio(router)
         } finally {
           setChannelPending(null)
         }
@@ -398,7 +399,7 @@ export function ShareButton({
           setErrorClienteId(result.clienteDaCompletare ?? null)
           return
         }
-        router.refresh()
+        aggiornaDopoInvio(router)
         // Stessa conferma di «Copia» (Eli, 20 ago): senza, condividendo via
         // WhatsApp/Altre app il documento veniva segnato Inviato in silenzio.
         toast.success(docType === 'preventivo'
@@ -425,7 +426,7 @@ export function ShareButton({
           setError(result.error)
           return
         }
-        router.refresh()
+        aggiornaDopoInvio(router)
         // Stessa conferma che dà «Copia» dopo il rinvio (Eli, 20 ago)
         toast.success(isRejected
           ? `Il preventivo è di nuovo Inviato: il cliente può accettarlo. Scade tra ${validityDays} giorni.`

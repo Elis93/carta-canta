@@ -11,6 +11,7 @@
 //   - Selezionando un suggerimento si compilano nome, cognome ed email.
 // ============================================================
 
+import { aggiornaDopoInvio } from '@/lib/documents/dopo-invio'
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
@@ -402,7 +403,7 @@ export function SendEmailDialog({
     setOpen(next)
     // Refresh della pagina rimandato alla chiusura del dialog dopo un invio
     // riuscito (Chiudi, ✕ o Escape) — vedi commento sull'effetto del toast.
-    if (!next && sent) router.refresh()
+    if (!next && sent) aggiornaDopoInvio(router)
   }
 
   // ── Selezione cliente dall'autocomplete ────────────────────

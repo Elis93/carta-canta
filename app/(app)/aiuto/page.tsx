@@ -702,6 +702,8 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <b>crea da sola la fattura di acconto</b>{' '}(numero{' '}<b>ACC&nbsp;001/2026</b>, la trovi
       fra le Fatture): nasce già pagata e pronta — resta solo da <b>trasmetterla allo SdI
       entro i 12 giorni</b>, e il promemoria con la data ti segue finché non è fatto.
+      Il tasto c&rsquo;è su ogni preventivo <b>accettato</b>, anche se nel preventivo non
+      avevi chiesto un acconto: basta scrivere la cifra incassata.
       <br /><br />
       ⚠️ La <b>caparra</b>{' '}è un&rsquo;altra cosa: è una garanzia, non un anticipo del
       prezzo, e da sola non si fattura. Se però i soldi ricevuti sono un anticipo del
