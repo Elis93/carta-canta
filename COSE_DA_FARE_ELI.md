@@ -546,6 +546,31 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
 > (RS40/LM41) · ④ **Linee guida AgID sul documento informatico, versione 2024** (conservazione) ·
 > ⑤ quando esce, il **testo del TU IVA** per le corrispondenze degli articoli dal 2027.
 
+> ⚖️ **RIVALUTAZIONE del 26 set notte** (Eli: «non credo serva il commercialista in questa
+> fase: dimmi cosa DEVE assolutamente avere la sua approvazione»). Riletta ogni domanda col
+> criterio: la fonte ufficiale c'è ed è stata letta? e se scegliamo da soli e sbagliamo, qual è
+> il danno? **Esito: per l'APP nessuna domanda richiede in modo assoluto il commercialista.**
+> - **Decidibili da Eli su fonti ufficiali lette**: N16-bis (via la dicitura beni col reverse
+>   charge — 37/E/2015 §13) · N16 contratto misto = due documenti + FAQ (14/E/2015) · N19
+>   rivalsa: non si fa · N27 dicitura bollo art. 6 DM 17/6/2014 (tre fonti ufficiali concordi;
+>   unico riguardo: la frase attuale è una prescrizione SCRITTA dello studio → si cambia e si
+>   manda allo studio una riga con il passo della guida AdE, per informare, non per chiedere) ·
+>   N15 ③ totale al lordo + DatiPagamento col netto (esempio ufficiale, campo non validato) ·
+>   N25 ② TD02 del condominio CON ritenuta (7/E/2007 §5, letta) · SAL = TD02 (scelta di
+>   prodotto, lo SdI non distingue) · N10 e dichiarazione del committente → solo FAQ · N23:
+>   nulla fino a fine 2026 · N25 ③ caldaia: l'app NON prende posizione (spunta manuale + FAQ
+>   col criterio ufficiale della 212/2025 e 37/E/2015) → nessuna approvazione necessaria.
+> - **Senza fonte ufficiale ma NON bloccanti** (scelta reversibile, conseguenze piccole, si
+>   chiede conferma al prossimo contatto senza aspettare): N15 ② RT01 per snc/sas (deduzione
+>   7/E + art. 5 TUIR; lo SdI accetta entrambi) · N22 acconto trattenuto (default prudente:
+>   nessuna nota; il caso resta «parlane col commercialista» nella FAQ, com'è già).
+> - **Le uniche cose che DEVONO passare da un professionista**: sono tutte da **AVVOCATO**, non
+>   dal commercialista — testo di accettazione del preventivo (N3 + Cass. 20945/2026),
+>   designazione del conservatore e clausola OpenAPI (N12), testi legali del lancio. Più la
+>   posizione fiscale personale di Eli (A0), che riguarda lei e non l'app.
+> - Le N restano nel file come **lista di conferme da fare al prossimo contatto naturale** con
+>   lo studio (numerate, può rispondere coi numeri), non come blocchi.
+
 **N1 — Si può cancellare una fattura già emessa?** *(7 ago)*
 Oggi l'app lo permette: qualsiasi fattura può finire nel cestino e, da lì, essere eliminata per
 sempre. Le fatture **trasmesse allo SdI** mostrano un avviso e non vengono mai cancellate in
