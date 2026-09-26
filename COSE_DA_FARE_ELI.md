@@ -453,9 +453,12 @@ d'acconto: nata al 10% (DL 78/2010), poi 8% dal 2015, **oggi l'11% per i bonific
 dei condomini dice ancora «8%»: è rimasta indietro. La base è l'importo del bonifico **senza IVA**, e la banca — che non conosce
 l'aliquota — scorpora sempre l'IVA all'aliquota più alta (circ. 40/E). Non è un campo della
 fattura, ma **falsa i nostri incassi** (sembra un pagamento parziale).
-- ① **Il forfettario la subisce?** La circ. 40/E dice che per chi ha un'imposta **sostitutiva**
-  la ritenuta della banca «potrà essere scomputata dalla medesima imposta sostitutiva» → quindi
-  **la subisce** e la recupera in dichiarazione. Ti chiediamo solo la conferma.
+- ① **Il forfettario la subisce?** Le fonti si **dividono** (verifica web del 26 set 2026): la
+  circ. 40/E (2010, scritta per i vecchi regimi sostitutivi) dice che la ritenuta si scomputa;
+  diversi studi (Eutekne 2020, sulla scia della ris. 47/E/2013 per i «minimi») dicono che il
+  forfettario può consegnare alla banca una **dichiarazione** per non subirla, e che se la banca
+  la applica comunque si recupera in dichiarazione (righi RS40/LM41). Ci serve la tua risposta:
+  in pratica le banche accettano la dichiarazione?
 - ② Col condominio: la circ. 40/E («Somme già assoggettate a ritenuta») dice che col bonifico
   parlante si applica **solo** la ritenuta della banca e il condominio **non** opera il 4%.
 - ③ Ha senso che l'app avvisi al momento dell'incasso e permetta di registrarlo al netto senza
@@ -762,7 +765,10 @@ fatture forfettarie, il bollo lo mettiamo su entrambe (2 € + 2 €). Se invece
 tolto gli acconti con le righe negative, scende **sotto 77,47 €**, non lo mettiamo: la guida
 dell'Agenzia sul bollo calcola la soglia sulla **somma dei «Prezzo totale»** della fattura, righe
 negative comprese (confermato anche nell'edizione **giugno 2026** della guida, letta per intero:
-nessuna eccezione per le righe negative, ma nemmeno un esempio di conguaglio). Confermi?
+nessuna eccezione per le righe negative, ma nemmeno un esempio di conguaglio). ⚠️ Diversi studi
+precisano che su una fattura **mista** (voci con IVA e voci senza) la soglia vale sulla sola parte
+senza IVA: per noi il bollo nasce solo in forfettario, dove tutte le voci sono senza IVA, quindi
+le due letture coincidono. Confermi?
 
 **Segnalati come OPPORTUNITÀ, non come rischi** (non servono risposte, ma un parere se
 capita): la **fattura differita TD24** entro il 15 del mese successivo, che ci calzerebbe
