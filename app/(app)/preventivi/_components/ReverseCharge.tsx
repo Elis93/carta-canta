@@ -82,7 +82,9 @@ export function ReverseCharge({
           normalmente e questa casella non va spuntata.
           <br /><br />
           Non serve essere in subappalto: basta che il committente sia un
-          soggetto IVA. Nel dubbio su un lavoro specifico, chiedi al tuo
+          soggetto IVA e che il lavoro riguardi la <b>sua attività</b>.
+          {' '}Se con la partita IVA rifà la casa in cui abita, l’IVA va
+          addebitata normalmente. Nel dubbio su un lavoro specifico, chiedi al tuo
           commercialista: qui l’app fa quello che le dici, non indovina.
         </SpiegaCampo>
       </div>

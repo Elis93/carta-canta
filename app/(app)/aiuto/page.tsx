@@ -515,7 +515,9 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <b>su edifici</b>, quando il cliente è a sua volta <b>titolare di partita
       IVA</b>, la fattura si emette <b>senza IVA</b>: l&rsquo;imposta la versa lui. Si
       chiama <b>inversione contabile</b>{' '}(reverse charge) e non serve essere in
-      subappalto — basta che il committente sia un soggetto IVA.
+      subappalto — basta che il committente sia un soggetto IVA e che il lavoro
+      riguardi la <b>sua attività</b>.{' '}Se ha la partita IVA ma ti fa rifare la casa
+      in cui abita, l&rsquo;IVA va addebitata normalmente.
       <br /><br />
       Nella fattura in modifica trovi la spunta <b>«Lavoro edile per un&rsquo;altra
       impresa o professionista»</b>. Serve la partita IVA del cliente in rubrica: senza,

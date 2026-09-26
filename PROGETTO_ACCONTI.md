@@ -454,6 +454,12 @@ Tutto il resto del percorso di trasmissione non cambia.
 > condominio non dipende dall'indicazione in fattura), ma i conti no: il condominio versa
 > l'acconto **meno il 4%**, e l'artigiano che scrive l'importo ricevuto fa scorporare l'IVA da
 > una cifra sbagliata. Decisione di prodotto da prendere con Eli prima del codice.
+> 🔎 *Controllo incrociato del 26 set 2026*: le fonti trovate (circ. 7/E letta + tracciato, che
+> non limita `DatiRitenuta` per TipoDocumento) portano a emettere anche la **TD02 del
+> condominio con la ritenuta**, come la fattura normale. ⚠️ Lo scorporo va rifatto sul lordo:
+> la ritenuta è sul solo imponibile, quindi con una sola aliquota `imponibile = incassato ÷
+> (1 + aliquota − 0,04)` — **non** «incassato ÷ 0,96», che vale solo senza IVA — e con più
+> aliquote la stessa formula sul peso medio delle aliquote della 71/E §5.2.
 > ⚠️ Stessa circolare, §3: la ritenuta **non** si applica alle forniture di beni con posa in
 > opera quando la posa è **accessoria** (rinvio alla circ. 37/E/2006). Oggi la spunta del
 > condominio è manuale e l'app non lo dice → domanda **N25** al commercialista, e una riga
@@ -593,6 +599,7 @@ IVA.
 | **Circolare 40/E del 28 luglio 2010 + comunicato stampa** (letti) | Ritenuta della banca sul bonifico parlante: base = bonifico **senza IVA** all'aliquota più alta; col condominio si applica **solo** quella (niente 4%); per i regimi a imposta sostitutiva è scomputabile — ⚠️ scritto nel 2010, prima del forfettario: per il forfettario oggi le fonti si dividono (dichiarazione alla banca per non subirla oppure recupero in dichiarazione → N10 ①). Aliquota oggi **11% per i bonifici dal 1° marzo 2024** (L. 213/2023 art. 1 c. 88; circ. 5/E del 7 mar 2024). ⚠️ La scheda AdE «Prestazioni soggette a ritenuta» dice ancora 8%: è superata |
 | **Circolare 39/E del 1° luglio 2010** (letta) | IRPEF, detrazioni: nulla di pertinente agli acconti né alle ritenute |
 | **Verifica web del 26 set 2026 sulle conclusioni tratte dai PDF** (richiesta di Eli dopo l'errore 8%/11%) | Confermati come vigenti: valore del bene significativo = costo (15/E 2018) · acconti sui beni in quota dell'intero corrispettivo (71/E §5.2) · art. 26 c.3 un anno anche per sopravvenuto accordo · campo Data = effettuazione, 12 giorni (14/E 2019) · testo unico IVA dal 1° gen 2027 senza cambi di sostanza (12 giorni restano; note su operazioni 2026 = regole vecchie) · 4% condominio e forfettari esenti · bollo 2 € sopra 77,47 € · reverse charge a-ter N6.7 (mai dal forfettario; il committente forfettario integra e versa). **Superati**: ritenuta banca 8% → **11%** dal 1° mar 2024 · termini di pagamento del bollo della ris. 42/E. **Incerto**: forfettario e ritenuta della banca (N10). **Novità**: specifiche tecniche FatturaPA **1.9.1** in uso dal **15 maggio 2026** (nuovo controllo 00327 sui gruppi IVA; nessuna modifica nota ai controlli che usiamo — 00418/00421/00422/00423 — da confermare sull'Elenco controlli della 1.9.1) |
+| **Controllo incrociato del 26 set 2026** sulle domande aperte al commercialista (ricerca web + PDF già letti; siti AdE/Normattiva/AgID bloccati dal proxy → fonti ufficiali spesso solo da snippet) | Esiti in `COSE_DA_FARE_ELI.md`, riquadro in testa alle N. Per la Fase 3: TD02 del condominio **con** ritenuta (N25 ②) · una TD02 si rettifica con TD04 o TD08 (Guida compilazione **1.10, aprile 2025**) · la guida bollo **giugno 2026** (letta) conferma che le N6.x sono fuori dal calcolo del bollo · SAL: ancora nessuna fonte ufficiale. Emerse anche due differenze fuori dagli acconti: `TipoRitenuta` per snc/sas (prassi RT01, l'app RT02) e `ImportoTotaleDocumento` con ritenuta (prassi lordo, l'app netto) — non causano scarti, decisione di Eli · forfettario committente in reverse charge: versamento **trimestrale** dal 1° ott 2025 (D.Lgs. 81/2025) |
 | **Specifiche tecniche FatturaPA** v1.4, 31 gennaio 2025 + **Rappresentazione tabellare** | `Numero` alfanumerico max 20 · 2.1.6 `<0.N>` e il suo caso d'uso dichiarato · 2.2.1.4 la **riga negativa** · controlli 00418, 00423, 00425 · `DatiRitenuta` molteplicità N |
 
 ---

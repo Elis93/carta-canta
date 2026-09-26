@@ -281,6 +281,125 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
 > citando il numero, come faceva con le D1-D40.
 > **Man mano che ne emergono altre, Code le aggiunge qui.**
 
+> 🔎 **CONTROLLO INCROCIATO del 26 set 2026** (richiesta di Eli, prima della Fase 3: «risolviamo
+> i dubbi… controllo incrociato tra fonti ufficiali e pdf e una ricerca web per sapere le
+> informazioni più recenti»). Per ogni domanda aperta: i PDF ufficiali già letti + una ricerca
+> web sulla norma più recente. ⚠️ Il proxy blocca agenziaentrate.gov.it, normattiva e agid:
+> dove non avevamo il PDF caricato da Eli, la fonte ufficiale è nota solo dal frammento dei
+> risultati di ricerca («da snippet»), non letta per intero.
+>
+> **Esito, domanda per domanda** (✅ chiusa dalle fonti · 🟡 chiusa solo da fonti secondarie
+> concordi · ❓ resta al commercialista):
+> - **N1 ②③ ✅** Una fattura mandata al cliente ma MAI trasmessa allo SdI **non è emessa**
+>   (art. 1 c.6 D.Lgs. 127/2015); la scartata idem (circ. 13/E/2018: si riemette entro 5
+>   giorni, stesso numero e data). Una fattura emessa si conserva **10 anni** (art. 2220 c.c.)
+>   e oltre finché gli accertamenti non sono chiusi (art. 22 DPR 600/73), **anche se non viene
+>   mai pagata o il cliente la contesta**: la norma non distingue, e fra privati lo SdI non
+>   prevede il «rifiuto» (esiste solo verso la PA). Resta da far confermare solo se tenere il
+>   PDF delle non trasmesse (prudenza, non obbligo).
+> - **N3 ③ 🟡 → avvocato.** Il preventivo accettato è il contratto: si tiene almeno **10 anni
+>   dalla fine del lavoro** (prescrizione ordinaria, art. 2946 c.c.), di più per le opere su
+>   immobili (art. 1669 c.c., gravi difetti: 10 anni dal compimento). L'accettazione con clic
+>   e nome vale come prova a libera valutazione del giudice (art. 20 CAD). Oggi l'app lo lascia
+>   eliminare con l'avviso della prova: **decisione per l'avvocato**.
+> - **N5 ✅** Chiusa dalle risposte AdE lette per intero (663 e 762/2021, 832/2021, 386/2022) e
+>   dal testo dell'art. 26 su Normattiva: errore **e** accordo arrivato dopo → entro un anno
+>   dall'operazione; risoluzione per inadempimento, riduzioni già previste dal contratto,
+>   procedure infruttuose → senza quel limite. È quello che dice l'app.
+> - **N7 ① ✅ ③ ✅ + ⚠️ novità.** Il forfettario non applica mai il reverse charge in uscita
+>   (L. 190/2014 c.58; circ. 14/E/2015 e 10/E/2016). Quando lo **riceve** (es. da un
+>   subappaltatore) integra la fattura e versa l'IVA senza detrarla — e ⚠️ **dal 1° ottobre
+>   2025 il versamento è TRIMESTRALE** (D.Lgs. 81/2025, nuova lett. e-bis del c.58: entro il 16
+>   del secondo mese dopo il trimestre), non più il 16 del mese dopo. L'app non cita questo
+>   termine da nessuna parte (verificato). ② resta scelta di prodotto (fatto: N16).
+> - **N8 / N14 ✅** Valore del bene = COSTO (circ. 15/E/2018, letta), acconti in quota (circ.
+>   71/E §5.2, letta): già implementati. Perimetro delle parti staccate: 15/E e 98/E lette.
+> - **N9 ① ✅** I forfettari sono esenti dal 4% (art. 1 c.67 L. 190/2014) e la fattura lo dice
+>   con la dicitura di esenzione che l'app già scrive.
+> - **N10 ① 🟡 CORRETTA** (vedi il punto): esistono **tutte e due** le strade e non si
+>   escludono — il forfettario può consegnare alla banca la **dichiarazione** per non subire
+>   l'11% (art. 1 c.67 L. 190/2014, ris. 47/E/2013 per analogia); se la banca la trattiene lo
+>   stesso, la recupera nel **rigo RS40 riportato in LM41** (modello Redditi PF 2026). In
+>   pratica molte banche non gestiscono la dichiarazione: il caso più frequente è «trattenuta e
+>   recuperata». ❓ Al commercialista resta solo: cosa consiglia ai suoi clienti.
+> - **N12 🟡** La **doppia conservazione è ammessa** (provider privato + servizio gratuito AdE,
+>   secondo una FAQ AdE riportata dalle fonti): consigliare all'artigiano di aderire ANCHE al
+>   servizio AdE lo protegge se lascia Carta Canta (le fatture SdI restano conservate lì). Con
+>   la conservazione a un esterno il **responsabile della conservazione resta l'artigiano**
+>   (Linee guida AgID 2021, nessuna versione più recente trovata): l'affidamento si fa col
+>   contratto di servizio, il manuale lo scrive il conservatore; all'uscita servono i
+>   pacchetti di archiviazione trasferibili. ❓ Resta: testo dell'accettazione nell'onboarding
+>   (avvocato) e clausola di restituzione nel contratto OpenAPI.
+> - **N15 ① 🟡 ② 🟡 ③ ✅ — ⚠️ DUE DIFFERENZE fra l'app e la prassi** (NESSUNA fa scartare la
+>   fattura; il codice NON è stato toccato: decisione di Eli):
+>   · **CausalePagamento «W»** confermata: è la codifica del modello CU per gli appalti con la
+>     ritenuta dell'art. 25-ter (il tracciato dice «codifiche come da Mod. CU»). ✅ come l'app.
+>   · **TipoRitenuta**: RT01 «persone fisiche» / RT02 «persone giuridiche» (tracciato, letto).
+>     La prassi dei gestionali mette le **società di persone (snc, sas) su RT01** — le loro
+>     ritenute si versano col codice tributo dei percipienti IRPEF (1019), le srl/spa col
+>     1020. ⚠️ **L'app oggi manda snc e sas su RT02**: proposta di correzione (una riga).
+>   · **ImportoTotaleDocumento**: il tracciato (letto) lo definisce «al netto dell'eventuale
+>     sconto e comprensivo di imposta» — la ritenuta non è nominata; la prassi prevalente lo
+>     scrive **al LORDO** della ritenuta (il netto da bonificare, se serve, va in
+>     ImportoPagamento). ⚠️ **L'app oggi scrive il NETTO.** Verificato sull'Elenco controlli
+>     1.9 (letto): lo SdI **non controlla** questo campo. Proposta: passare al lordo.
+> - **N16 ② 🟡 ③ ❓** Contratto unico con prestazioni in reverse charge e ordinarie: la circ.
+>   14/E/2015 chiede di **scomporre** (due fatture o parti distinte), salvo il contratto unico
+>   di costruzione/recupero sostanziale di un edificio, che va tutto a IVA ordinaria. Il
+>   committente deve agire **per la sua attività**: con la P.IVA ma per la casa in cui abita →
+>   IVA ordinaria (copy dell'app corretta il 26 set). Dichiarazione del committente: nessuna
+>   fonte la impone ❓. ATECO 2025: **nessuna tabella ufficiale aggiornata** per il reverse
+>   charge; le rassegne riportano un chiarimento AdE (sezione F dell'ATECO vigente) solo per il
+>   subappalto → la spunta manuale resta la scelta giusta.
+> - **N17 ✅** Confermata dalla guida AdE sul bollo **giugno 2026, letta**: il calcolo del bollo
+>   considera solo le nature N2.1, N2.2, N3.5, N3.6, N4 — le N6.x (reverse charge) no.
+> - **N20 🟡** Split payment prorogato al **30 giugno 2029** (Decisione UE 2026/1728 del 10
+>   luglio 2026); i forfettari ne sono esclusi (circ. 6/E/2015 §8.5, 15/E/2015).
+> - **N21 ① ✅ ③ 🟡 ④ 🟡 ② ❓** Conta la **residenza/domicilio**, non la cittadinanza (art. 7
+>   DPR 633/72). Lavori su immobili in Italia: IVA italiana qualunque sia il cliente (art.
+>   7-quater); ⚠️ con un'**impresa estera non stabilita** NON c'è reverse charge (il c.2
+>   dell'art. 17 vale nel verso opposto): fattura con IVA italiana. Forfettario verso privato
+>   svizzero: N2.2 e bollo come sempre, e conta nel limite dei ricavi. Dal 1° luglio 2022 queste
+>   fatture passano dallo SdI con codice destinatario «XXXXXXX». ❓ L'anagrafica del privato
+>   estero SENZA codice fiscale: le fonti si dividono (FAQ AdE: IdPaese + IdCodice
+>   identificativo; altre: solo CF) → **da leggere sulla FAQ AdE originale** («Fatture verso e
+>   da soggetti stranieri»), Eli può scaricarla dal browser.
+> - **N22 ✅ in gran parte** (risposte AdE lette per intero, v. sotto). In più la **Guida alla
+>   compilazione 1.10 (aprile 2025)** conferma che una TD02 si rettifica in negativo con una
+>   **TD04** (o TD08 semplificata). ❓ Restano le conferme dei tre casi del lavoro saltato.
+> - **N23 🟡** Testo unico IVA: si applica dal **1° gennaio 2027**, riordino senza cambi di
+>   sostanza; nessuna circolare AdE sulle nuove diciture trovata; l'**art. 170 c.3** fa valere i
+>   vecchi rinvii in «contratti, fatture o documenti» → una fattura 2027 col vecchio «DPR 633»
+>   non è sbagliata. ⚠️ Novità: il **D.Lgs. 5 agosto 2026 n. 141** (Testo unico adempimenti e
+>   accertamento, anch'esso dal 1/1/2027) riordina il DPR 600/73 → anche i rinvii all'art. 22
+>   DPR 600 cambieranno numero; da verificare se tocca anche il D.Lgs. 127/2015 (che l'app cita
+>   nella dicitura della copia di cortesia). ❓ Resta la forma di citazione consigliata.
+> - **N24 ✅** Circ. 14/E/2019 §3.1 letta: «Data» = data dell'operazione, per i servizi il
+>   pagamento se viene prima. È ciò che fa l'app.
+> - **N25 ② 🟡 ③ ❓ — ⚠️ incide sulla Fase 3.** ② La ritenuta si opera **su ogni pagamento,
+>   acconti compresi** (circ. 7/E/2007, letta): quindi la **fattura di acconto intestata a un
+>   condominio va emessa con la ritenuta** (DatiRitenuta + Ritenuta SI sulle righe), come la
+>   fattura normale — oggi l'app non lo fa. E attenzione: l'incasso registrato arriva già
+>   **al netto del 4%**, quindi lo scorporo deve ricostruire il lordo — il 4% è sul solo
+>   imponibile, perciò imponibile = incassato ÷ (1 + aliquota IVA − 0,04), non «÷ 0,96» —
+>   altrimenti imponibile e IVA escono più bassi del dovuto. ③ Il criterio ufficiale per la
+>   posa «accessoria» è la **prevalenza secondo la volontà delle parti** (circ. 37/E/2006, ris.
+>   148/E, circ. 14/E/2015): prevale il dare (cessione con posa) → niente 4% e niente reverse
+>   charge; prevale il fare (appalto) → sì. Per la **caldaia** le fonti divergono (circ.
+>   37/E/2015 via EC News: la mera sostituzione è cessione con posa; una fonte condominiale la
+>   tratta sempre come appalto) → ❓ al commercialista.
+> - **N26 ✅** Guida bollo giugno 2026 letta: la soglia somma tutti i «Prezzo totale», righe
+>   negative comprese. Confermato.
+> - **Specifiche FatturaPA 🟡** Versione **1.9.1** obbligatoria dal 15 maggio 2026: novità
+>   su codici destinatario, «ESENZSPORT», controllo 00327 sui Gruppi IVA. Nessuna fonte cita
+>   modifiche ai controlli 00418/00421/00422/00423 (non l'abbiamo letto nell'Elenco controlli
+>   1.9.1: Eli può scaricarlo). **SAL**: nessuna fonte ufficiale dice TD01+DatiSAL o TD02 —
+>   invariato: non regge scelte.
+>
+> **Da scaricare dal browser, se Eli vuole chiudere gli ultimi 🟡:** ① la FAQ AdE «Fatture
+> verso e da soggetti stranieri (transfrontaliere)» (N21 ②) · ② l'Elenco controlli della
+> versione 1.9.1 · ③ la circ. 37/E del 22 dicembre 2015 (caldaia e reverse charge, N25 ③).
+
 **N1 — Si può cancellare una fattura già emessa?** *(7 ago)*
 Oggi l'app lo permette: qualsiasi fattura può finire nel cestino e, da lì, essere eliminata per
 sempre. Le fatture **trasmesse allo SdI** mostrano un avviso e non vengono mai cancellate in
@@ -457,8 +576,10 @@ fattura, ma **falsa i nostri incassi** (sembra un pagamento parziale).
   circ. 40/E (2010, scritta per i vecchi regimi sostitutivi) dice che la ritenuta si scomputa;
   diversi studi (Eutekne 2020, sulla scia della ris. 47/E/2013 per i «minimi») dicono che il
   forfettario può consegnare alla banca una **dichiarazione** per non subirla, e che se la banca
-  la applica comunque si recupera in dichiarazione (righi RS40/LM41). Ci serve la tua risposta:
-  in pratica le banche accettano la dichiarazione?
+  la applica comunque si recupera in dichiarazione (righi RS40/LM41). 🔎 *Controllo del 26 set:
+  le due strade non si escludono — dichiarazione alla banca (art. 1 c.67 L. 190/2014, ris.
+  47/E/2013) oppure recupero nel rigo RS40 riportato in LM41 (modello Redditi PF 2026).* Ci serve
+  la tua risposta: in pratica le banche accettano la dichiarazione, e cosa consigli?
 - ② Col condominio: la circ. 40/E («Somme già assoggettate a ritenuta») dice che col bonifico
   parlante si applica **solo** la ritenuta della banca e il condominio **non** opera il 4%.
 - ③ Ha senso che l'app avvisi al momento dell'incasso e permetta di registrarlo al netto senza
@@ -556,7 +677,9 @@ d'acconto 4% −X €» nel PDF, dicitura che dice chi la versa, e nell'XML il b
 forfettari (esenti, art. 1 c.67 L. 190/2014 — la loro fattura porta già la dicitura di
 esenzione). Nel ⓘ è scritto che il 4% e la ritenuta della banca sul bonifico parlante (**11%** dal 1° marzo
 2024) **non si cumulano** (circ. 40/E/2010).
-*Da confermare, tre punti tecnici:*
+*Da confermare, tre punti tecnici* (🔎 esito del controllo del 26 set nel riquadro in testa
+alle N: «W» confermata; per snc/sas e per ImportoTotaleDocumento la prassi è diversa da
+quella dell'app — proposte di correzione in attesa dell'ok di Eli):
 - ① **CausalePagamento**: abbiamo messo **W** (corrispettivi per contratti d'appalto).
   Confermi? La «A» è lavoro autonomo e ci sembra sbagliata.
 - ② **TipoRitenuta**: RT01 (persona fisica) o RT02 (soggetti diversi) lo deduciamo dalla
