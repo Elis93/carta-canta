@@ -30,6 +30,15 @@ Il job `/api/cron/orphan-files` gira il **1° di ogni mese alle 4:00** e da lì 
 
 ### ⏭️ PROMEMORIA PLAY STORE (29 lug, richiesta Eli): quando la TWA diventa app vera, ① attivare la "Location delegation" nel pacchetto (PWABuilder/Bubblewrap) così Posizione compare nel pannello Android dell'app; ② AGGIORNARE le istruzioni del pop-up "Attiva la posizione" in `NearMeButton` (variante standalone: oggi manda su Chrome→lucchetto perché le PWA delegano il permesso al sito). Annotato anche in COSE_DA_FARE_ELI.md §4.
 
+### ✅ 26 set (13) — Premesse della Fase 3 CHIUSE sulle fonti + due decisioni di Eli (nessun codice)
+Eli ha caricato la **circ. 7/E/2007** e l'**Elenco controlli FatturaPA v1.9** (EN), e ha incollato il testo della **guida AdE sul bollo** (estratti con pypdf + stub cryptography, scratchpad `fonti6/`). Esiti in `PROGETTO_ACCONTI.md` §4 (blocco premesse riscritto) e §8:
+- **① 00421/00422 con righe negative ✅** — 00422 = **somma algebrica** dei PrezzoTotale per aliquota (±1 €), 00421 = Imposta per riepilogo (±1 cent), nessun controllo sul segno → il riepilogo del saldo è il netto. Invariante da testare: per ogni aliquota lo scomputo ≤ voci piene (vero per costruzione con la 71/E §5.2).
+- **② Ritenuta 4% ✅** — circ. 7/E §5: «indipendentemente dall'importo… e dall'imputazione… ad acconto o saldo» → sul saldo `<Ritenuta>SI</Ritenuta>` anche sulle righe negative, `DatiRitenuta` sul netto. ⚠️ **Buco emerso**: la spunta condominio esiste solo sulle fatture → **la TD02 di un condominio nasce senza ritenuta** e l'importo ricevuto (meno 4%) falsa lo scorporo. Decisione di prodotto da prendere con Eli in Fase 3. ⚠️ §3: niente ritenuta sui **beni con posa accessoria** (circ. 37/E/2006) → **N25**.
+- **③ Bollo ✅ (conferma → N26)** — l'elenco B dell'AdE somma **tutti i PrezzoTotale**: un saldo netto sotto 77,47 € non ha bollo, come fa già il nostro motore.
+- **④ SAL**: resta senza fonte, non regge scelte.
+- **Decisioni di Eli** (in `DECISIONI_E_FEEDBACK.md`): **Fatturato Home conta anche le TD02** (si fa con la Fase 3, saldo al netto → niente doppio conteggio) · **correzione acconto sbagliato DOPO la Fase 3**.
+- ⏭️ Prossimo: Fase 3 (saldo a conguaglio) su via di Eli, con la decisione sulla ritenuta della TD02.
+
 ### ✅ 26 set (12) — T28 superato + verifica delle premesse della Fase 3 (nessun codice)
 - **T28 ✅** (preventivo con fattura di acconto non eliminabile).
 - Eli: «prima della fase 3, hai dubbi o informazioni non da fonti ufficiali?». Rilette le premesse del §4 di `PROGETTO_ACCONTI.md` contro spec14/tabellare/guida110 già estratte. **Quattro premesse senza fonte letta**, annotate in testa al §4: ① algoritmo 00421/00422 con righe negative (la tabellare rimanda all'«Elenco controlli», documento separato mai letto) · ② base della ritenuta 4% sul saldo (serve circ. 7/E del 7 feb 2007) · ③ bollo sul saldo ridotto sotto soglia dalla riga negativa · ④ frase sui SAL senza fonte (non regge scelte). Chiesti a Eli 3 PDF. Corretto anche il titolo stantio «3.1 Migration 090» (la Fase 2 non l'ha usata).

@@ -429,15 +429,48 @@ Tutto il resto del percorso di trasmissione non cambia.
 > riga negativa (tracciato 2.2.1.4) · `DatiFattureCollegate` `<0.N>` per i conguagli (tabellare
 > 2.1.6, che parla di fatture «precedentemente trasmesse» → il saldo richiama TD02 già
 > trasmesse) · quota del bene in ogni fattura (71/E §5.2) · 00418 solo TD04 · 00443 aliquote.
-> **NON coperte da una fonte letta**, da chiudere prima dell'implementazione:
-> ① l'algoritmo esatto dei controlli **00421/00422** con righe negative nello stesso riepilogo:
-> la tabellare rimanda all'«Elenco controlli», documento a parte mai letto;
-> ② la base della **ritenuta 4%** sul saldo («sul residuo»): viene da sintesi, serve la
-> **circolare 7/E del 7 febbraio 2007**;
-> ③ il **bollo** sul saldo ridotto sotto 77,47 € dalla riga negativa: nessuna fonte letta lo dice
-> per il documento di conguaglio (se la guida AdE non lo tratta → domanda al commercialista);
-> ④ la frase sui **SAL** «nella quasi totalità dei casi TD02» (§4.1) non ha fonte in §8: non
-> regge nessuna scelta (progettare per N acconti è comunque la strada prudente).
+> **Le quattro premesse senza fonte — CHIUSE il 26 set 2026 con i documenti caricati da Eli:**
+> ① **00421/00422 con righe negative** ✅ — *Elenco controlli* v1.9 (12/12/2023), pagg. 24-25:
+> 00422 confronta, **per ogni aliquota**, `ImponibileImporto` con la **somma algebrica** dei
+> `PrezzoTotale` di quell'aliquota (+ cassa + arrotondamento), tolleranza **±1 euro**; 00421
+> ricalcola `Imposta = Aliquota × ImponibileImporto / 100` per ogni riepilogo, arrotondamento
+> mezzo-in-su, tolleranza **±1 centesimo**. Nessun controllo sul segno: la riga negativa
+> sottrae da sé, e il riepilogo del saldo è il **netto**. Vincolo di progetto che ne deriva:
+> per OGNI aliquota lo scomputo non può superare le voci piene (con la ripartizione 71/E §5.2
+> è vero per costruzione) — va comunque scritto come invariante con un test, un riepilogo
+> negativo non ha senso. L'elenco dei controlli di contenuto (pag. 4-6) non ne contiene altri
+> che le righe negative possano far scattare: 00443/00444 chiedono solo che ogni aliquota o
+> natura delle righe abbia il suo riepilogo, 00418 resta solo TD04.
+> ② **Ritenuta 4% sul saldo** ✅ — *Circolare 7/E* del 7 feb 2007, §5: la ritenuta si opera
+> «all'atto del pagamento… **indipendentemente dall'importo del pagamento effettuato e
+> dall'imputazione del pagamento stesso ad acconto o saldo**», e «a prescindere dalla
+> indicazione in fattura della ritenuta medesima». Quindi: 4% su ogni incasso, saldo compreso;
+> sul saldo la base è ciò che il condominio paga allora, cioè il residuo — nell'XML le righe
+> negative portano anch'esse `<Ritenuta>SI</Ritenuta>` e `DatiRitenuta` esce sul netto.
+> ⚠️ **Buco che la lettura ha fatto emergere (Fase 2, da chiudere nella Fase 3)**: la spunta
+> «il cliente è un condominio» esiste solo sulle fatture, quindi la **TD02 di un condominio
+> nasce senza ritenuta**. La fattura resta valida (la circolare dice che l'obbligo del
+> condominio non dipende dall'indicazione in fattura), ma i conti no: il condominio versa
+> l'acconto **meno il 4%**, e l'artigiano che scrive l'importo ricevuto fa scorporare l'IVA da
+> una cifra sbagliata. Decisione di prodotto da prendere con Eli prima del codice.
+> ⚠️ Stessa circolare, §3: la ritenuta **non** si applica alle forniture di beni con posa in
+> opera quando la posa è **accessoria** (rinvio alla circ. 37/E/2006). Oggi la spunta del
+> condominio è manuale e l'app non lo dice → domanda **N25** al commercialista, e una riga
+> nel ⓘ della spunta quando ci risponde.
+> ③ **Bollo sul saldo ridotto dalla riga negativa** ✅ (con conferma del commercialista) —
+> *Guida AdE sull'imposta di bollo delle fatture elettroniche* (testo copiato da Eli): per
+> l'**Elenco B** l'Agenzia somma **tutti gli importi dei campi «Prezzo totale» (2.2.1.11)** delle
+> righe con natura N2.1/N2.2/N3.5/N3.6/N4 e confronta con 77,47 €; le righe negative entrano
+> nella somma, quindi un saldo il cui netto scende sotto soglia **non** è nell'elenco. È lo
+> stesso comportamento del nostro motore (bollo su `afterDiscount`, che col conguaglio è il
+> netto). La guida non parla espressamente del conguaglio: resta una **conferma** da chiedere.
+> ④ **SAL** — resta senza fonte e non regge nessuna scelta: progettare per N acconti rimane la
+> strada prudente a prescindere.
+>
+> **Decisioni di Eli (26 set 2026):** ① il **Fatturato della Home conta anche le fatture di
+> acconto** — da fare nella Fase 3 insieme al saldo, che uscirà al netto (niente doppio
+> conteggio: acconto + saldo = totale del lavoro) · ② il flusso completo di **correzione di un
+> acconto sbagliato** (§3 «da valutare», N22) si fa **dopo** la Fase 3.
 
 ### 4.1 «Converti in fattura» diventa il conguaglio
 Oggi porta il preventivo intero in fattura (funzione SQL `convert_preventivo_to_fattura`,
@@ -542,6 +575,9 @@ IVA.
 | **Circolare 20/E** del 29 dicembre 2021 (letta il 26 set 2026) | §3: la nota va **emessa entro la dichiarazione IVA dell'anno in cui si verifica il presupposto** (es. presupposto 2021 → entro il 30 aprile 2022); il resto riguarda le procedure concorsuali |
 | **Circolare 14/E** del 17 giugno 2019 (letta il 26 set 2026) | §3.1: il campo **Data** della fattura elettronica è **sempre la data di effettuazione** dell'operazione; i giorni successivi servono solo a trasmetterla → la conferma dell'app ora data la fattura al giorno dell'incasso se viene prima |
 | **Risposte 832/2021, 386/2022, 268/2023, 359/2023, 403/2022** (lette il 26 set 2026) | 832: il limite di un anno per errori e accordi si conta dall'**effettuazione** (pagamento o fattura, se viene prima) · 386: risoluzione per **inadempimento** (diffida o clausola risolutiva) = c.2 senza limite di un anno; risoluzione **concordata** = c.3 entro un anno; nota pari alla somma rinunciata, divisa fra imponibile e IVA · 268: corrispettivo incassato e **non restituito** → nessuna nota · 359: mancato pagamento solo con procedure (c.3-bis), nota di debito se poi il cliente paga · 403: registro, fuori tema IVA. Interpelli: orientano, non vincolano (N22 ③ e ⑥) |
+| **Elenco controlli FatturaPA** v1.9, 12/12/2023 (versione inglese, letta il 26 set 2026) | Algoritmi di 00421 (Imposta per riepilogo, ±1 cent) · 00422 (somma algebrica dei PrezzoTotale per aliquota, ±1 euro) · 00423 (prezzo × quantità, sconti a cascata) · 00418 solo TD04 · 00411/00415 presenza di `DatiRitenuta` · nessun controllo sul segno delle righe |
+| **Circolare 7/E** del 7 febbraio 2007 (letta il 26 set 2026) | Ritenuta 4% del condominio: all'atto del pagamento, **su acconti e saldo**, qualunque importo, anche se la fattura non la indica · esclusa la fornitura di beni con posa accessoria (circ. 37/E/2006) · esclusi i vecchi regimi agevolati con dichiarazione |
+| **Guida AdE imposta di bollo sulle fatture elettroniche** (testo copiato da Eli, 26 set 2026) | Elenco A (BolloVirtuale SI) ed Elenco B (somma dei PrezzoTotale > 77,47 € con nature N2.1/N2.2/N3.5/N3.6/N4, esclusi TD16-TD19, TD28, RF05-RF11) · trimestre per data di consegna · codici tributo 2521-2526 |
 | **Specifiche tecniche FatturaPA** v1.4, 31 gennaio 2025 + **Rappresentazione tabellare** | `Numero` alfanumerico max 20 · 2.1.6 `<0.N>` e il suo caso d'uso dichiarato · 2.2.1.4 la **riga negativa** · controlli 00418, 00423, 00425 · `DatiRitenuta` molteplicità N |
 
 ---

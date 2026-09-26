@@ -736,6 +736,23 @@ nuovo testo unico, o il vecchio riferimento resta accettabile (il c.3 dell'art. 
 nostra: le fatture del 2026 restano col DPR 633 (è la legge in vigore alla loro data); il
 cambio si farebbe **per data del documento**, non retroattivo.
 
+**N25 — Ritenuta 4% del condominio: acconti, saldo e caldaia con posa** *(26 set, dalla
+circ. 7/E/2007 letta per intero)*. La circolare dice che il condominio trattiene il 4% su
+**ogni pagamento, acconto o saldo, di qualunque importo**, anche se la fattura non lo indica.
+Tre punti da confermare: ① per il saldo a conguaglio pensiamo di mettere la ritenuta sulle
+voci piene E sulle righe negative degli acconti, così il 4% esce sul **netto** pagato al saldo
+(sugli acconti è già stato trattenuto): corretto? ② La fattura di acconto verso un condominio
+deve riportare anch'essa la ritenuta (oggi l'app non la mette)? ③ La circolare (§3, rinvio alla
+circ. 37/E/2006) esclude la ritenuta sulla **fornitura di beni con posa in opera accessoria**:
+per una caldaia venduta e installata, come capisce l'artigiano se la posa è «accessoria» e
+quindi il 4% non va applicato? Oggi la spunta è manuale e l'app non lo spiega.
+
+**N26 — Bollo sul saldo a conguaglio** *(26 set)*. Se acconto 900 € e saldo 2.100 € sono due
+fatture forfettarie, il bollo lo mettiamo su entrambe (2 € + 2 €). Se invece il saldo, dopo aver
+tolto gli acconti con le righe negative, scende **sotto 77,47 €**, non lo mettiamo: la guida
+dell'Agenzia sul bollo calcola la soglia sulla **somma dei «Prezzo totale»** della fattura, righe
+negative comprese. Confermi?
+
 **Segnalati come OPPORTUNITÀ, non come rischi** (non servono risposte, ma un parere se
 capita): la **fattura differita TD24** entro il 15 del mese successivo, che ci calzerebbe
 perché abbiamo già i rapportini firmati (= la «documentazione idonea» che la norma chiede);
