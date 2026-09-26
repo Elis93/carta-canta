@@ -454,6 +454,98 @@ Eli del 22/07). Tre prescrizioni operative — ✅ TUTTE IMPLEMENTATE il 18 set 
 > controlli 00418-00423 (oggi abbiamo letto la 1.9). Utile ma non urgente: le **istruzioni** del
 > fascicolo 3 di Redditi PF 2026 (per il passaggio RS40 → quadro LM).
 
+> 🔬 **RICERCA APPROFONDITA del 26 set 2026 notte** (richiesta di Eli: «fonti ufficiali
+> aggiornate… cosa vale oggi… i documenti sono sufficienti?»). Quattro ricerche parallele +
+> **due documenti ufficiali nuovi letti per intero**: la **Rappresentazione tabellare 1.9.1**
+> (31 mar 2026, caricata da Eli) e l'**Allegato A — Specifiche tecniche 1.9.1** (copia dal
+> repository pubblico GitHub `kouga00/opentax-it`, che registra l'URL AdE e l'impronta sha256:
+> ⚠️ copia di terzi, non confrontata col sito AdE; il contenuto combacia con la tabellare).
+> Proxy: AdE, Normattiva, GU, eur-lex bloccati → il resto è da estratti di ricerca.
+>
+> **Cosa cambia la 1.9.1** (Allegato A, «Stato del documento», letto): solo il controllo
+> **00327** (gruppi IVA), le procedure di accreditamento dei canali, la codifica **ESENZSPORT**,
+> più codici destinatario. **Nessun controllo che usiamo cambia**; nessuna versione successiva
+> trovata. Il ricalcolo di 00421/00422/00423 rimanda ancora all'Elenco controlli 1.8/1.9 (letto).
+>
+> **Esito aggiornato, domanda per domanda:**
+> - **N15 ② TipoRitenuta 🟡 → propendere per RT01 per snc/sas.** Nessuna fonte ufficiale lo dice
+>   in chiaro; ma la circ. 7/E/2007 §6 (letta) lega il codice tributo al tipo d'imposta (1019
+>   IRPEF / 1020 IRES) e le società di persone sono IRPEF per trasparenza (art. 5 TUIR). Aruba
+>   indica RT01 «ditte individuali, società di persone»; Wolters Kluwer dice RT02 per le
+>   «società» (in contrasto con la 7/E). Lo SdI non scarta. Il rischio vero: il software del
+>   condominio proponga il codice **1020** in F24. **Proposta** (attende ok + commercialista):
+>   RT02 solo per società di capitali, cooperative ed enti.
+> - **N15 ③ ImportoTotaleDocumento 🟡 → al LORDO**, netto in `DatiPagamento › ImportoPagamento`.
+>   Esempio Unife (letto), gestionale open source OCA l10n-italy (codice letto), prassi di forum
+>   concordi; lo SdI non lo controlla (1.9.1 letta). **Proposta**, non fatta.
+> - **N15 novità**: la **L. 199/2025** (bilancio 2026) introduce una ritenuta B2B dello **0,5% dal
+>   2028 e 1% dal 2029**, forfettari esclusi — coordinamento col 4% del condominio da seguire.
+>   Il 4% resta invariato nel 2026; dal 2027 l'art. 25-ter confluisce nel TU versamenti (D.Lgs.
+>   33/2025, rinviato al 1/1/2027): cambia il riferimento, non la sostanza (da verificare).
+> - **N27 bollo ✅ più forte**: la tabellare 1.9.1 definisce `BolloVirtuale` «Bollo assolto ai
+>   sensi del decreto MEF 17 giugno 2014 (art. 6)»; la guida bollo giugno 2026 dice che
+>   **l'annotazione si fa valorizzando BolloVirtuale = SI** (nessuna frase obbligatoria) e
+>   distingue l'art. 15 DPR 642/72; la guida AdE «La fattura elettronica» di dic. 2025 chiede al
+>   forfettario solo il campo, non una frase. Citare l'art. 15 è **impreciso, non sanzionato**
+>   (nessuna fonte trovata). ⚠️ Novità: il DPR 642/1972 **sarà abrogato dal 1/1/2027** (TU
+>   registro e tributi indiretti, D.Lgs. 123/2025, Parte IV; rinvio col DL 200/2025) → dal 2027
+>   l'art. 15 sarà due volte sbagliato. Formula proposta allo studio: «Imposta di bollo assolta
+>   ai sensi dell'art. 6 del D.M. 17 giugno 2014».
+> - **N16 ③ ATECO 2025 🟡 novità**: allo **Speciale Telefisco del 24 set 2026** l'Agenzia ha
+>   detto che per il reverse charge di **subappalto (lett. a)** vale la classificazione **ATECO
+>   2025** e la sezione F (es. restauro di edifici storici → 91.30.01, sezione S → IVA
+>   ordinaria). Per la **lett. a-ter** nessuna tabella ufficiale di raccordo → la spunta manuale
+>   resta giusta. **Dichiarazione del committente**: nessuna norma la impone (❓, prassi
+>   prudenziale). Sanzione per reverse charge errato dopo il D.Lgs. 87/2024: 250-10.000 €.
+> - **N7 forfettario committente**: versamento **trimestrale** confermato (D.Lgs. 81/2025 art. 6,
+>   lett. e-bis) anche per il reverse charge edile interno; ❓ codice tributo ancora incerto.
+> - **N25 ③ caldaia ❓ (resta al commercialista)**: nessun documento AdE 2020-2026 sulla caldaia.
+>   Il più recente sul criterio è la **risposta 212/2025** (infissi: bene ~74% del prezzo →
+>   cessione con posa, rapporto fra prezzi «non decisivo»). La scheda AdE sui condomini mette la
+>   «manutenzione di caldaie» fra le prestazioni soggette al 4%. Le fonti secondarie si dividono
+>   sulla sostituzione «uno a uno». Proposta per l'app: niente deduzione automatica.
+> - **N22 acconto e lavoro saltato 🟡**: acconto **restituito** → nota di credito sulla TD02
+>   (Cass. 22996/2023 e 637/2023, con gli interpelli già letti). Acconto **trattenuto** ❓: la
+>   giurisprudenza UE (C-250/14, C-43/19) va verso l'imponibilità → nessuna nota di credito;
+>   caparra confirmatoria pura fuori campo (Cass. 17232/2017). Resta al commercialista.
+> - **SAL ❓ invariato**: nessuna fonte ufficiale su TD01 o TD02.
+> - **N8/N14 beni significativi 🟡 invariati** nel 2026 (guida AdE Ristrutturazioni feb. 2026);
+>   dal 2027 il 10% passa nella Tabella A Parte IV del TU IVA; ❓ collocazione della regola.
+> - **N23 dal 2027**: TU IVA (D.Lgs. 10/2026), **nuovo TUIR (D.Lgs. 117/2026)** — il forfettario
+>   si sposta lì — e D.Lgs. 141/2026, tutti dal 1/1/2027. Nessuna indicazione AdE sulle nuove
+>   diciture; codici Natura invariati nella 1.9.1; l'art. 170 c.3 fa valere i vecchi rinvii.
+> - **N19 rivalsa INPS 4% 🟡 chiusa**: spetta solo agli iscritti alla **Gestione separata**
+>   (art. 1 c.212 L. 662/1996); **gli artigiani iscritti alla Gestione artigiani NON possono
+>   addebitarla**. Per Carta Canta: non va offerta.
+> - **N10 🟡**: istruzioni Redditi PF 2026 (estratti): RS40 → **LM41** (imposta sostitutiva) o
+>   RN33 col. 4. Aliquota 11% invariata 2026.
+> - **N12 conservazione 🟡**: l'adesione al servizio gratuito AdE va **accettata** (non è
+>   automatica), dal 4 giu 2021 non scade, copre solo le fatture SdI; doppia conservazione
+>   ammessa. Per un privato il responsabile della conservazione può essere esterno ma va
+>   **indicato nel contratto** col conservatore, e il manuale resta a suo carico (Linee guida
+>   AgID, testo letto da GitHub AgID ma versione 2020: da riscontrare) → il buco del DPA
+>   OpenAPI è confermato.
+> - **N20 PA 🟡**: split payment prorogato al **30/6/2029** (Decisione UE 2026/1728), forfettari
+>   esclusi; CIG obbligatorio per tutti gli affidamenti dal 2024 → la scelta di bloccare resta.
+> - **N21 🟡 dettaglio**: per il privato estero senza identificativo le fonti citano
+>   «99999999999» in IdCodice (FAQ AdE 63/2019); CodiceFiscale vuoto; la copia va consegnata
+>   fuori SdI (PDF).
+> - **N3 → avvocato, NOVITÀ**: **Cass. ord. 20945 del 20 giu 2026** (fonti concordi, non letta):
+>   nei contratti online il semplice flag, anche doppio, **non basta** per approvare le clausole
+>   vessatorie (art. 1341 c.2): serve almeno una firma elettronica semplice (es. OTP). Il
+>   contratto resta valido, le clausole vessatorie no. Da portare all'avvocato per il testo
+>   dell'accettazione del preventivo.
+>
+> **I documenti bastano?** Per le decisioni di prodotto e per la Fase 3 **sì**: tracciato,
+> controlli e bollo sono ora su fonti ufficiali lette e aggiornate a marzo-giugno 2026. Quello
+> che resta aperto **non si chiude con altri PDF**: sono valutazioni del commercialista (caldaia,
+> acconto trattenuto, SAL, TipoRitenuta, dichiarazione del committente) o dell'avvocato (firma).
+> **Utili ma non indispensabili**, se Eli vuole scaricarli: ① **risposta 212/2025** (criterio
+> cessione/appalto, il documento più recente) · ② **scheda AdE «F24 Ritenute Condomini –
+> Prestazioni soggette a ritenuta»** (per la caldaia) · ③ **istruzioni Redditi PF 2026 fasc. 3**
+> (RS40/LM41) · ④ **Linee guida AgID sul documento informatico, versione 2024** (conservazione) ·
+> ⑤ quando esce, il **testo del TU IVA** per le corrispondenze degli articoli dal 2027.
+
 **N1 — Si può cancellare una fattura già emessa?** *(7 ago)*
 Oggi l'app lo permette: qualsiasi fattura può finire nel cestino e, da lì, essere eliminata per
 sempre. Le fatture **trasmesse allo SdI** mostrano un avviso e non vengono mai cancellate in

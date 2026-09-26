@@ -429,7 +429,7 @@ Tutto il resto del percorso di trasmissione non cambia.
 > **Verifica delle premesse (26 set 2026), PRIMA di scrivere codice.** Coperte da fonti lette:
 > riga negativa (tracciato 2.2.1.4) · `DatiFattureCollegate` `<0.N>` per i conguagli (tabellare
 > 2.1.6, che parla di fatture «precedentemente trasmesse» → il saldo richiama TD02 già
-> trasmesse) · quota del bene in ogni fattura (71/E §5.2) · 00418 solo TD04 · 00443 aliquote.
+> trasmesse) · quota del bene in ogni fattura (71/E §5.2) · 00418 (vale anche per il saldo, v. §4.4) · 00443 aliquote.
 > **Le quattro premesse senza fonte — CHIUSE il 26 set 2026 con i documenti caricati da Eli:**
 > ① **00421/00422 con righe negative** ✅ — *Elenco controlli* v1.9 (12/12/2023), pagg. 24-25:
 > 00422 confronta, **per ogni aliquota**, `ImponibileImporto` con la **somma algebrica** dei
@@ -441,7 +441,7 @@ Tutto il resto del percorso di trasmissione non cambia.
 > è vero per costruzione) — va comunque scritto come invariante con un test, un riepilogo
 > negativo non ha senso. L'elenco dei controlli di contenuto (pag. 4-6) non ne contiene altri
 > che le righe negative possano far scattare: 00443/00444 chiedono solo che ogni aliquota o
-> natura delle righe abbia il suo riepilogo, 00418 resta solo TD04.
+> natura delle righe abbia il suo riepilogo; 00418 prudenzialmente anche sul saldo (§4.4).
 > ② **Ritenuta 4% sul saldo** ✅ — *Circolare 7/E* del 7 feb 2007, §5: la ritenuta si opera
 > «all'atto del pagamento… **indipendentemente dall'importo del pagamento effettuato e
 > dall'imputazione del pagamento stesso ad acconto o saldo**», e «a prescindere dalla
@@ -510,9 +510,12 @@ preventivo**. Si riusa lo schema di `lib/documents/storno.ts` (residuo, `superaI
 
 ### 4.4 Invariante sulle date
 ⚠️ **Controllo SdI 00418**: *«se `TipoDocumento` vale "TD04", `Data` non deve essere antecedente
-a quella in 2.1.6.3 `<Data>`»*. Vale **solo per il TD04**, non per il saldo — ma è la nostra
-nota di credito, e oggi siamo al sicuro solo *per costruzione* (la `doc_date` nasce alla
-conferma). Va scritta come invariante esplicita con un test: un'invariante non scritta è
+a quella in 2.1.6.3 `<Data>`»*. ⚠️ **Corretto il 26 set 2026 notte** sulle specifiche **1.9.1**
+lette (Allegato A, §DatiFattureCollegate): «Data… Non può essere mai successiva alla data del
+documento in oggetto; in caso contrario il file viene scartato con codice errore 00418» — senza
+limitarlo al TD04, mentre la tabella dei controlli lo lega al solo TD04. Nel dubbio: **vale
+anche per il SALDO che richiama le TD02**. Siamo al sicuro *per costruzione* (gli acconti
+vengono prima del saldo, la `doc_date` nasce alla conferma). Va scritta come invariante esplicita con un test: un'invariante non scritta è
 un'invariante che prima o poi si rompe.
 
 ---
