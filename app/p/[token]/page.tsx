@@ -142,6 +142,7 @@ export default async function PublicDocumentPage({ params }: Props) {
       ),
       clients!client_id (
         name,
+        surname,
         email,
         phone,
         piva,
@@ -318,6 +319,7 @@ export default async function PublicDocumentPage({ params }: Props) {
 
   const client = doc.clients as {
     name: string
+    surname: string | null
     email: string | null
     phone: string | null
     piva: string | null
@@ -645,7 +647,7 @@ export default async function PublicDocumentPage({ params }: Props) {
           })()}
           total={doc.total}
           status={doc.status}
-          clientName={client?.name ?? null}
+          clientName={client ? [client.name, client.surname].filter(Boolean).join(' ') : null}
           items={mobileItems}
           ownerEmail={ownerEmail}
           pdfSrc={`/api/p/${token}/pdf?preview=1`}

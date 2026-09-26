@@ -340,6 +340,25 @@ Motore · PDF (4 preset) · pagina cliente `/p/[token]` · fogli interni · `Fis
 >   ④ dove si spiega: banner della TD02, AccontoCard sul preventivo, dialog di
 >   eliminazione, FAQ «Cos'è la fattura di acconto… Posso correggerla?».
 >   Da decidere con Eli PRIMA della Fase 3 (i casi ② e ③ la toccano).
+>   🔎 **Ricerca del 26 set sul caso ② (TD02 già trasmessa con importo sbagliato).**
+>   Le due strade NON sono alternative in ogni caso — dipende dal verso dell'errore:
+>   · **fatturato PIÙ dell'incassato** → vanno bene entrambe: nota di credito TD04
+>     collegata alla TD02 per la differenza, **entro un anno** (art. 26 c.3 — errore; è la
+>     regola che la risposta 216/2020 cita per esteso), oppure si lascia la TD02 com'è
+>     (art. 6 c.4: la fattura emessa prima dell'incasso vale per l'importo fatturato) e il
+>     saldo la scomputa per intero (tabellare 2.1.6: `DatiFattureCollegate` ha proprio il
+>     caso d'uso «conguaglio a fronte di precedenti fatture di acconto»; 2.2.1.4 la riga
+>     negativa). L'interpello **488/2022** (visto solo in sintesi: il sito AdE è bloccato
+>     dal proxy — da leggere se Eli carica il PDF) conferma che in sede di conguaglio degli
+>     acconti la riduzione passa da una nota di variazione.
+>   · **fatturato MENO dell'incassato** → nessuna delle due: la parte incassata non
+>     fatturata è un'operazione effettuata (art. 6 c.4, pagamento) e richiede **un'altra
+>     TD02** per la differenza, entro 12 giorni. È il caso degli acconti multipli (Fase 3).
+>   · **lavoro saltato** → TD04 sull'intera TD02 dopo la restituzione (art. 26 c.2).
+>   ⇒ La TD04 su una TD02 serve comunque (caso ③ e caso «in eccesso»): oggi il server la
+>   ammette solo sulle fatture piene — da aprire alla TD02 (tetto con `baseStornabile`,
+>   `DatiFattureCollegate` con numero e data della ACC, controllo 00418). Domanda di
+>   conferma al commercialista: **N22** in COSE_DA_FARE_ELI. Nessun codice toccato.
 
 ### 3.1 Migration 090
 ```

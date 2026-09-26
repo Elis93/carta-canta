@@ -649,6 +649,24 @@ Il nostro riassunto, da confermare prima di costruire la funzione:
 - ④ **Il forfettario** che fattura a un privato svizzero per un lavoro fatto in Italia:
   resta tutto in N2.2 come oggi, o c'è qualcosa di diverso da dichiarare?
 
+**N22 — FATTURA DI ACCONTO (TD02) GIÀ TRASMESSA CON L'IMPORTO SBAGLIATO: come si corregge?**
+*(26 set — dal collaudo T22/T23. Oggi l'app crea la fattura di acconto «ACC» da sola quando
+l'artigiano registra un acconto; se è ancora da trasmettere si elimina e si rifà, ma una volta
+trasmessa non si elimina più.)* Il nostro riassunto dalle fonti, da confermare:
+- ① **Importo fatturato PIÙ ALTO dell'incasso vero** (es. scritto 1.000 invece di 100):
+  la nota di credito **TD04 collegata alla fattura di acconto** per la differenza, emessa
+  **entro un anno** perché è un errore (art. 26 c.3). In alternativa si lascia com'è: per
+  l'art. 6 c.4 una fattura emessa prima dell'incasso è legittima per l'importo fatturato, e
+  la fattura di saldo lo scomputa per intero. Quale delle due consigli? La seconda regge
+  solo se il lavoro poi vale almeno quanto l'acconto fatturato?
+- ② **Importo fatturato PIÙ BASSO dell'incasso vero**: qui non c'è scelta, confermi? La parte
+  incassata e non fatturata è un'operazione effettuata (art. 6 c.4, pagamento) → serve
+  **un'altra fattura di acconto** per la differenza, entro 12 giorni dall'incasso.
+- ③ **Il lavoro salta e l'acconto viene restituito**: nota di credito TD04 sull'intera
+  fattura di acconto, **dopo** la restituzione (art. 26 c.2). Confermi?
+- ④ Nel **forfettario** cambia qualcosa (bollo sulla nota, quote)? Per noi la nota di
+  credito sulla fattura di acconto segue le stesse regole della nota sulla fattura piena.
+
 **Segnalati come OPPORTUNITÀ, non come rischi** (non servono risposte, ma un parere se
 capita): la **fattura differita TD24** entro il 15 del mese successivo, che ci calzerebbe
 perché abbiamo già i rapportini firmati (= la «documentazione idonea» che la norma chiede);

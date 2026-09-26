@@ -50,7 +50,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     .select(`
       *,
       document_items(*),
-      clients(name, email, phone, piva, codice_fiscale, indirizzo, cap, citta, provincia, paese)
+      clients(name, surname, email, phone, piva, codice_fiscale, indirizzo, cap, citta, provincia, paese)
     `)
     .eq('id', id)
     .eq('workspace_id', workspace.id)

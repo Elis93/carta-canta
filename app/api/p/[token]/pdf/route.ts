@@ -36,7 +36,7 @@ export async function GET(
     .select(`
       *,
       document_items(*),
-      clients!client_id(name, email, phone, piva, codice_fiscale, indirizzo, cap, citta, provincia, paese)
+      clients!client_id(name, surname, email, phone, piva, codice_fiscale, indirizzo, cap, citta, provincia, paese)
     `)
     .eq('public_token', token)
     .is('deleted_at', null)

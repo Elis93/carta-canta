@@ -29,7 +29,12 @@ export interface PdfDocumentData {
   client: Pick<ClientRow,
     'name' | 'email' | 'phone' | 'piva' | 'indirizzo' |
     'cap' | 'citta' | 'provincia' | 'paese'
-  > | null
+  > & {
+    /** Cognome del cliente privato: art. 21 c.2 lett. e DPR 633/1972 chiede
+     *  «nome e cognome». Facoltativo: le righe senza (aziende) stampano la sola
+     *  ragione sociale. */
+    surname?: string | null
+  } | null
   template: (Pick<TemplateRowWithPreset,
     'color_primary' | 'font_family' | 'show_logo' | 'show_watermark' |
     'legal_notice' | 'preset_key'
@@ -599,12 +604,20 @@ export function buildPdfHtml(data: PdfDocumentData): string {
     return `<div style="height:${sz};width:${sz};border-radius:6px;background:${bgColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${svgIcon}</div>`
   }
 
+  // Nome completo del cliente (nome + cognome). Prima si stampava il solo
+  // `name`: un privato registrato «Giorgio» + «Galeazzi» usciva «Giorgio» —
+  // sul documento che va al cliente, e che per l'art. 21 deve riportare nome
+  // E cognome. Stessa composizione dell'XML SdI (doc-xml.ts).
+  const clientFullName = client
+    ? [client.name, client.surname].filter(Boolean).join(' ')
+    : ''
+
   // ── Client block helper ────────────────────────────────────
   function clientEl(nameSize = '15px', addrSize = '12px'): string {
     if (!client) return '<div style="font-size:19px;color:#999;font-style:italic;">Nessun cliente</div>'
     const cf = (client as Record<string, unknown>).codice_fiscale as string | undefined
     return [
-      `<div style="font-size:${nameSize};font-weight:700;color:#111;margin-bottom:2px;">${esc(client.name)}</div>`,
+      `<div style="font-size:${nameSize};font-weight:700;color:#111;margin-bottom:2px;">${esc(clientFullName)}</div>`,
       client.indirizzo ? `<div style="font-size:${addrSize};color:#666;">${esc(client.indirizzo)}</div>` : '',
       (client.cap || client.citta)
         ? `<div style="font-size:${addrSize};color:#666;">${[esc(client.cap ?? ''), esc(client.citta ?? ''), client.provincia ? `(${esc(client.provincia)})` : ''].filter(Boolean).join(' ')}</div>`
@@ -1156,7 +1169,7 @@ export function buildPdfHtml(data: PdfDocumentData): string {
       }, 6)
 
       const clientShort = client
-        ? esc((client.name ?? '').split(' ').slice(0, 3).join(' '))
+        ? esc(clientFullName.split(' ').slice(0, 3).join(' '))
         : '—'
 
       // Netto sconti SENZA bollo anche per i forfettari (review 25 lug A1):
