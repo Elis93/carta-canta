@@ -42,6 +42,7 @@ import { ArchivioBanner } from '@/components/shared/ArchivioBanner'
 import { Avviso } from '@/components/shared/Avviso'
 import { MenuAltro, RigaMenu, RigaArchivia, RigaSollecita } from '@/app/(app)/_components/documento/MenuAltro'
 import { EliminaDocumentoButton } from '@/app/(app)/_components/documento/EliminaDocumentoButton'
+import { messaggioPreventivoCollegato } from '@/lib/documents/collegati'
 import { btnBianco, btnNavy, btnBiancoPieno, rigaMenu } from '@/app/(app)/_components/documento/stili'
 import { PosticipaSollecito } from '@/components/shared/PosticipaSollecito'
 import { docNumberSlug } from '@/lib/documents/numero'
@@ -153,6 +154,13 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
     clients: { id: string; name: string; surname: string | null; email: string | null; phone: string | null; piva: string | null; indirizzo: string | null; cap: string | null; citta: string | null; provincia: string | null } | null
   }).clients
   const fatturaOrigin = doc.status === 'accepted' && doc.doc_type !== 'fattura' ? fatturaOriginRaw : null
+  // Preventivo con una fattura (o fattura di acconto) nata da lui: non si
+  // elimina (Eli 26 set). Letto dai dati GREZZI, in qualsiasi stato: anche un
+  // preventivo riportato indietro resta l'origine di quella fattura.
+  const bloccoCollegate = messaggioPreventivoCollegato([
+    ...(fatturaOriginRaw ? [{ doc_type: 'fattura', doc_number: fatturaOriginRaw.doc_number ?? null }] : []),
+    ...(fatturaAccontoRaw ? [{ doc_type: 'fattura_acconto', doc_number: fatturaAccontoRaw.doc_number ?? null }] : []),
+  ])
   // Le aperture del cliente restano SEMPRE in cronologia, anche se il
   // documento torna in bozza (Eli 3 ago notte: "è la storia di quel
   // documento, nulla si cancella") — prima il gate status!=='draft' le
@@ -883,7 +891,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
                   <ApriLavoroButton documentId={id} compact triggerStyle={rigaMenu} />
                 ) : null}
                 {!archiviato && <RigaArchivia documentId={id} />}
-                <EliminaDocumentoButton documentId={id} docType="preventivo" docNumber={doc.doc_number} signedProof={!!doc.signer_name || doc.accepted_ip != null} menu />
+                <EliminaDocumentoButton documentId={id} docType="preventivo" docNumber={doc.doc_number} signedProof={!!doc.signer_name || doc.accepted_ip != null} bloccoCollegate={bloccoCollegate} menu />
               </MenuAltro>
             </div>
             {/* Il passo successivo, a tutta larghezza: converti in fattura
@@ -1039,7 +1047,7 @@ export default async function PreventivoDetailPage({ params, searchParams }: Pro
           {/* Elimina in fondo, sotto un filetto (pagina A): l'azione
               distruttiva è l'ultima cosa che si incontra, mai fra le altre. */}
           <div style={{ margin: '20px 15px 0', paddingTop: 12, borderTop: '1px solid #e4e2dc' }}>
-            <EliminaDocumentoButton documentId={id} docType="preventivo" docNumber={doc.doc_number} signedProof={!!doc.signer_name || doc.accepted_ip != null} />
+            <EliminaDocumentoButton documentId={id} docType="preventivo" docNumber={doc.doc_number} signedProof={!!doc.signer_name || doc.accepted_ip != null} bloccoCollegate={bloccoCollegate} />
           </div>
         </div>
       )}

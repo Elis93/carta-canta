@@ -6,7 +6,9 @@
 // Stesse guardie della lista (DocumentRowActions): una fattura TRASMESSA
 // allo SdI non si elimina (è emessa: nota di credito), una fattura con un
 // INCASSO registrato nemmeno (i soldi sono nelle Entrate del Bilancio:
-// prima «Segna come non pagata»). Spento e spiegato, non nascosto.
+// prima «Segna come non pagata»), un PREVENTIVO da cui è nata una fattura
+// o una fattura di acconto nemmeno (Eli 26 set: si archivia). Spento e
+// spiegato, non nascosto.
 // ============================================================
 
 import { useState } from 'react'
@@ -19,13 +21,16 @@ import { deleteDocumentAction } from '@/lib/actions/documents'
 import { docTypeLabel, formatDocNumber } from '@/lib/utils'
 import { btnDanger, rigaMenuDanger } from './stili'
 
-export function EliminaDocumentoButton({ documentId, docType, docNumber, signedProof, sdiTransmitted, hasIncasso, menu }: {
+export function EliminaDocumentoButton({ documentId, docType, docNumber, signedProof, sdiTransmitted, hasIncasso, bloccoCollegate, menu }: {
   documentId: string
   docType: string
   docNumber: string | null
   signedProof?: boolean
   sdiTransmitted?: boolean
   hasIncasso?: boolean
+  /** Preventivo con una fattura (o fattura di acconto) nata da lui: il
+   *  messaggio del divieto (lib/documents/collegati.ts), null se eliminabile. */
+  bloccoCollegate?: string | null
   /** Riga del menu «⋯» invece del bottone in fondo. */
   menu?: boolean
 }) {
@@ -44,7 +49,7 @@ export function EliminaDocumentoButton({ documentId, docType, docNumber, signedP
     // correzione (azzera l'acconto sul preventivo — l'avviso sta nel dialog).
     : hasIncasso && docType !== 'fattura_acconto'
       ? 'Fattura non eliminabile: l’incasso registrato è nelle Entrate del Bilancio. Se è errato, seleziona «Segna come non pagata».'
-      : null
+      : bloccoCollegate ?? null
 
   async function elimina() {
     setBusy(true); setError(null)

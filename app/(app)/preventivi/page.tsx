@@ -9,6 +9,7 @@ import { Plus, FileCheck2, Inbox, Eye, Download, AlertTriangle, ArrowUpDown } fr
 import { StatusBadge } from './_components/StatusBadge'
 import { AdvancedFilters } from './_components/AdvancedFilters'
 import { DocumentRowActions } from './_components/DocumentRowActions'
+import { messaggioPreventivoCollegato } from '@/lib/documents/collegati'
 import { DraftSavedBanner } from './_components/DraftSavedBanner'
 import { SortSelect } from './_components/SortSelect'
 import { ListPager } from '../_components/ListPager'
@@ -343,9 +344,11 @@ export default async function PreventiviPage({ searchParams }: Props) {
   const [{ data: convertedRows }, { data: viewRows }, { data: counts }, { count: catalogCount }] = await Promise.all([
     supabase
       .from('documents')
-      .select('origin_document_id, status, doc_number')
+      // + le fatture di ACCONTO: servono solo al divieto di eliminazione
+      // (la dicitura «bozza fattura» resta sulle fatture piene, sotto).
+      .select('origin_document_id, status, doc_number, doc_type')
       .eq('workspace_id', workspace.id)
-      .eq('doc_type', 'fattura')
+      .in('doc_type', ['fattura', 'fattura_acconto'])
       .is('deleted_at', null)
       .not('origin_document_id', 'is', null),
     docIds.length > 0
@@ -383,9 +386,18 @@ export default async function PreventiviPage({ searchParams }: Props) {
 
   const convertedFattureMap = new Map<string, { docNumber: string | null; status: string }>(
     (convertedRows ?? [])
-      .filter((r) => r.origin_document_id)
+      .filter((r) => r.origin_document_id && r.doc_type === 'fattura')
       .map((r) => [r.origin_document_id as string, { docNumber: r.doc_number ?? null, status: r.status }])
   )
+  // Preventivo → fatture nate da lui (piene e di acconto): se ce n'è almeno
+  // una, il tasto Elimina del menu ⋯ è spento e spiegato (Eli 26 set).
+  const collegateByPrev = new Map<string, Array<{ doc_type: string; doc_number: string | null }>>()
+  for (const r of convertedRows ?? []) {
+    if (!r.origin_document_id) continue
+    const arr = collegateByPrev.get(r.origin_document_id) ?? []
+    arr.push({ doc_type: r.doc_type, doc_number: r.doc_number ?? null })
+    collegateByPrev.set(r.origin_document_id, arr)
+  }
 
   const viewCountMap = (viewRows ?? []).reduce<Record<string, number>>((acc, v) => {
     acc[v.document_id] = (acc[v.document_id] ?? 0) + 1
@@ -735,6 +747,7 @@ export default async function PreventiviPage({ searchParams }: Props) {
                     senderName={senderName}
                     archived={soloArchiviati || archiviatiIds.has(doc.id)}
                     locked={bloccatiIds.has(doc.id)}
+                    bloccoCollegate={messaggioPreventivoCollegato(collegateByPrev.get(doc.id) ?? [])}
                   />
                 </div>
               </div>

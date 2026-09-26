@@ -60,6 +60,9 @@ interface DocumentRowActionsProps {
    *  eliminarla toglierebbe quei soldi dalle Entrate del Bilancio
    *  (decisione Eli, 11 ago: spento e spiegato) */
   hasIncasso?: boolean
+  /** Preventivo con una fattura (o di acconto) nata da lui: messaggio del
+   *  divieto di eliminazione (lib/documents/collegati.ts). */
+  bloccoCollegate?: string | null
   /** Avviso dei 12 giorni alla PRIMA conferma via email dalla lista (080) */
   avvisoSdi?: boolean
   /** FASE 1 copia di cortesia (21 set, SdI attivo): bozza di fattura/nota
@@ -71,7 +74,7 @@ interface DocumentRowActionsProps {
   locked?: boolean
 }
 
-export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false, sdiTransmitted = false, hasIncasso = false, avvisoSdi = false, copiaBloccata = false, locked = false }: DocumentRowActionsProps) {
+export function DocumentRowActions({ doc, senderName, docType = 'preventivo', archived = false, sdiTransmitted = false, hasIncasso = false, bloccoCollegate = null, avvisoSdi = false, copiaBloccata = false, locked = false }: DocumentRowActionsProps) {
   const [duplicating, setDuplicating]       = useState(false)
   const [duplicateError, setDuplicateError] = useState<string | null>(null)
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
@@ -192,7 +195,7 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
               server rifiutava, ma solo DOPO la conferma: si scopriva il divieto
               a cose fatte. Spento e spiegato è più onesto che assente — dice
               che quel comando esiste e perché oggi non si può usare. */}
-          {sdiTransmitted || (hasIncasso && docType !== 'fattura_acconto') ? (
+          {sdiTransmitted || (hasIncasso && docType !== 'fattura_acconto') || bloccoCollegate ? (
             <>
               <DropdownMenuItem disabled>
                 <Trash2 className="size-4" />
@@ -210,7 +213,9 @@ export function DocumentRowActions({ doc, senderName, docType = 'preventivo', ar
                      mese senza che nulla lo dica. Prima si azzera l'incasso.
                      ⚠️ La FATTURA DI ACCONTO non passa di qui: eliminarla È
                      la strada di correzione (azzera l'acconto sul preventivo). */
-                  : 'Fattura non eliminabile: l’incasso registrato è nelle Entrate del Bilancio. Se è errato, seleziona «Segna come non pagata».'}
+                  : hasIncasso && docType !== 'fattura_acconto'
+                    ? 'Fattura non eliminabile: l’incasso registrato è nelle Entrate del Bilancio. Se è errato, seleziona «Segna come non pagata».'
+                    : bloccoCollegate}
               </p>
             </>
           ) : (

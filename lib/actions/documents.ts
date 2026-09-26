@@ -32,6 +32,7 @@ import { richiedeDatiFattura, datiFatturaMancanti, messaggioDatiFattura } from '
 // Fase 1 copia di cortesia (21 set): con SdI attivo, una fattura/nota senza
 // esito positivo NON si manda al cliente — prima la trasmissione, poi la copia.
 import { bloccoInvioCliente } from '@/lib/documents/copia-cortesia'
+import { fattureCollegateAttive, messaggioPreventivoCollegato } from '@/lib/documents/collegati'
 import { parseImportoIt, stripPrefissoLegacy, docTypePath } from '@/lib/utils'
 import { resolveWorkspaceForUser } from './resolve-workspace'
 
@@ -1757,6 +1758,21 @@ export async function deleteDocumentAction(
     }
   }
 
+  // ⚠️ PREVENTIVO con una FATTURA (o fattura di ACCONTO) nata da lui = NON SI
+  // ELIMINA (Eli, 26 set: *"se ci sono fatture collegate, i preventivi non
+  // possono essere eliminati"*). È l'origine di quella fattura e, per
+  // l'acconto, il posto dove vive l'incasso del Bilancio. Nessun tempo di
+  // sblocco: la fattura si conserva dieci anni. Per toglierlo dalla lista c'è
+  // «Archivia». FAIL-CLOSED: se la verifica non riesce, non si elimina.
+  if (docMeta?.doc_type === 'preventivo') {
+    const collegate = await fattureCollegateAttive(supabase, workspace.id, documentId)
+    if (collegate === null) {
+      return { error: 'Non riesco a verificare se il preventivo ha fatture collegate: riprova tra un istante.' }
+    }
+    const blocco = messaggioPreventivoCollegato(collegate)
+    if (blocco) return { error: blocco }
+  }
+
   const { error } = await supabase
     .from('documents')
     .update({ deleted_at: new Date().toISOString() })
@@ -2020,6 +2036,15 @@ export async function purgeDeletedDocumentAction(
         'Questa fattura è già stata trasmessa allo SdI: non si può cancellare. ' +
         'Per annullarne gli effetti serve una nota di credito — parlane col tuo commercialista.',
     }
+  }
+
+  // Preventivo nel cestino con una fattura ancora attiva nata da lui (caso
+  // storico: cestinato prima della guardia del 26 set) → niente cancellazione
+  // definitiva, altrimenti la fattura perde la sua origine.
+  const collegate = await fattureCollegateAttive(supabase, workspace.id, documentId)
+  const bloccoCollegate = collegate === null ? null : messaggioPreventivoCollegato(collegate)
+  if (bloccoCollegate) {
+    return { error: bloccoCollegate.replace('Per toglierlo dalla lista, usa «Archivia».', 'Ripristinalo dal cestino e, se vuoi toglierlo dalla lista, usa «Archivia».') }
   }
 
   // Foto del documento — PRIMA del delete: la FK è ON DELETE SET NULL, dopo

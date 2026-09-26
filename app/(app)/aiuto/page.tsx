@@ -165,7 +165,7 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
   },
   {
     q: 'Cosa posso eliminare e cosa devo tenere?',
-    parole: ['eliminare', 'cancellare', 'tenere', 'conservare', 'buttare', 'sdi', 'fisco', 'controllo'],
+    parole: ['eliminare', 'cancellare', 'tenere', 'conservare', 'buttare', 'sdi', 'fisco', 'controllo', 'preventivo collegato', 'acconto'],
     a: <><b>Puoi eliminare senza pensieri</b>{' '}i preventivi in <b>bozza</b>, i preventivi
       <b>rifiutati</b>{' '}o <b>scaduti</b>, le fatture in <b>bozza</b>{' '}mai partite, e le
       fatture <b>scartate dallo SdI</b>{' '}— per l&rsquo;Agenzia una fattura scartata non è mai
@@ -174,6 +174,13 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       <b>Non eliminare</b>{' '}una fattura già <b>trasmessa allo SdI</b>: è emessa, va conservata
       dieci anni e per annullarla serve una <b>nota di credito</b>. Non devi ricordartelo tu:
       su quelle fatture il tasto Elimina è <b>spento</b>.
+      <br /><br />
+      <b>Non si elimina</b>{' '}nemmeno un <b>preventivo da cui è nata una fattura</b>, anche solo
+      una <b>fattura di acconto</b>{' '}(pure se non ancora trasmessa): è l&rsquo;origine di quella
+      fattura, e l&rsquo;acconto incassato vive sul preventivo, nelle Entrate del Bilancio. Anche
+      qui il tasto Elimina è spento e spiega il perché. Per toglierlo dalla lista usa{' '}
+      <b>Archivia</b>. Se la fattura di acconto era sbagliata e non è ancora trasmessa, elimini <b>lei</b>: il preventivo
+      torna eliminabile.
       <br /><br />
       <b>Tieni</b>{' '}anche i preventivi <b>accettati e firmati</b>: non è una questione fiscale,
       è la tua prova dell&rsquo;accordo se un domani nasce una discussione sul prezzo o su cosa
