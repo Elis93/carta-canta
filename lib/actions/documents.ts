@@ -1805,6 +1805,18 @@ export async function restoreDocumentAction(
   const workspace = await resolveWorkspaceForUser(supabase, user.id, 'id')
   if (!workspace) return { error: 'Workspace non trovato' }
 
+  // ⚠️ FATTURA DI ACCONTO: il ripristino è il gesto INVERSO dell'eliminazione
+  // (collaudo T24, Eli 26 set: «se ripristino la fattura ACC, l'acconto sul
+  // preventivo continua a rimanere zero»). Eliminarla azzera l'acconto sul
+  // preventivo; ripristinarla deve RIMETTERLO — altrimenti la TD02 torna
+  // «pagata» nel registro mentre il preventivo dice «nessun acconto», e
+  // registrare di nuovo l'acconto creerebbe una SECONDA fattura sullo stesso
+  // incasso. Le verifiche stanno PRIMA del ripristino: se il preventivo nel
+  // frattempo è cambiato, si rifiuta con la spiegazione e il documento resta
+  // nel cestino (niente stati a metà).
+  const accontoDaRiallineare = await verificaRipristinoAcconto(supabase, workspace.id, documentId)
+  if ('error' in accontoDaRiallineare) return { error: accontoDaRiallineare.error }
+
   const { error } = await supabase
     .from('documents')
     .update({ deleted_at: null })
@@ -1836,6 +1848,8 @@ export async function restoreDocumentAction(
       console.error('[restoreDocument] ripristino senza numero fallito:', retryErr)
       return { error: 'Errore nel ripristino' }
     }
+    const riallineo = await riallineaAccontoRipristinato(supabase, workspace.id, documentId, accontoDaRiallineare)
+    if (riallineo.error) return { error: riallineo.error }
     revalidatePath('/preventivi')
     revalidatePath('/fatture')
     revalidatePath('/cestino')
@@ -1843,6 +1857,9 @@ export async function restoreDocumentAction(
     await fermaPilotaSdi(supabase, workspace.id, documentId)
     return { numberConflict: true }
   }
+
+  const riallineo = await riallineaAccontoRipristinato(supabase, workspace.id, documentId, accontoDaRiallineare)
+  if (riallineo.error) return { error: riallineo.error }
 
   // ⚠️ Il ripristino FERMA il pilota SdI (review 11 ago): una trasmissione
   // programmata prima del cestino avrebbe ormai la data passata — al primo
@@ -1853,6 +1870,112 @@ export async function restoreDocumentAction(
   revalidatePath('/preventivi')
   revalidatePath('/fatture')
   revalidatePath('/cestino')
+  return {}
+}
+
+// ── Ripristino di una fattura di acconto (TD02) ───────────────────────────
+// Specchio dell'azzeramento in deleteDocumentAction: la TD02 e l'incasso sul
+// preventivo stanno in piedi SOLO insieme (stessa regola della creazione, che
+// fa rollback se uno dei due manca).
+
+type RipristinoAcconto =
+  | { error: string }
+  | { preventivoId: string; importo: number; paidAt: string }
+  | { nessuno: true }
+
+async function verificaRipristinoAcconto(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  workspaceId: string,
+  documentId: string,
+): Promise<RipristinoAcconto> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038/080 non ancora in types/database.ts
+  const db = supabase as any
+  const { data: acc } = await db
+    .from('documents')
+    .select('doc_type, origin_document_id, paid_amount, paid_at, doc_date, total')
+    .eq('id', documentId)
+    .eq('workspace_id', workspaceId)
+    .maybeSingle()
+  if (!acc || acc.doc_type !== 'fattura_acconto' || !acc.origin_document_id) return { nessuno: true }
+
+  const { data: prev } = await db
+    .from('documents')
+    .select('id, doc_type, status, payment_status, deleted_at')
+    .eq('id', acc.origin_document_id)
+    .eq('workspace_id', workspaceId)
+    .maybeSingle()
+  if (!prev || prev.doc_type !== 'preventivo') {
+    return { error: 'Il preventivo di questa fattura di acconto non esiste più: non si può ripristinare.' }
+  }
+  if (prev.deleted_at) {
+    return { error: 'Il preventivo di questa fattura di acconto è nel cestino: ripristina prima il preventivo.' }
+  }
+  if (prev.status !== 'accepted') {
+    return {
+      error: 'Il preventivo non risulta più accettato: la fattura di acconto non si può ripristinare. ' +
+        'Se il cliente ha versato l’acconto, segna il preventivo come accettato e registra l’acconto da lì.',
+    }
+  }
+  if (prev.payment_status === 'partial' || prev.payment_status === 'paid') {
+    return {
+      error: 'Sul preventivo c’è già un altro acconto registrato: ripristinare questa fattura ' +
+        'conterebbe due volte lo stesso incasso.',
+    }
+  }
+  const { data: altre } = await supabase
+    .from('documents')
+    .select('id, doc_type')
+    .eq('origin_document_id', prev.id)
+    .in('doc_type', ['fattura', 'fattura_acconto'])
+    .neq('id', documentId)
+    .is('deleted_at', null)
+    .limit(1)
+  if (altre && altre.length > 0) {
+    return {
+      error: altre[0].doc_type === 'fattura'
+        ? 'Il preventivo è già stato convertito in fattura: ripristinare questa fattura di acconto conterebbe due volte l’incasso.'
+        : 'Sul preventivo c’è già un’altra fattura di acconto: ripristinare questa conterebbe due volte lo stesso incasso.',
+    }
+  }
+
+  const importo = Number(acc.paid_amount ?? acc.total ?? 0)
+  if (!Number.isFinite(importo) || importo <= 0) {
+    return { error: 'Non riesco a leggere l’importo di questa fattura di acconto: registra di nuovo l’acconto dal preventivo.' }
+  }
+  const paidAt = acc.paid_at
+    ?? (acc.doc_date ? new Date(`${acc.doc_date}T12:00:00`).toISOString() : new Date().toISOString())
+  return { preventivoId: prev.id, importo, paidAt }
+}
+
+async function riallineaAccontoRipristinato(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  workspaceId: string,
+  documentId: string,
+  esito: RipristinoAcconto,
+): Promise<{ error?: string }> {
+  if (!('preventivoId' in esito)) return {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colonne 038 non ancora in types/database.ts
+  const db = supabase as any
+  const { error } = await db
+    .from('documents')
+    .update({ payment_status: 'partial', paid_amount: esito.importo, paid_at: esito.paidAt })
+    .eq('id', esito.preventivoId)
+    .eq('workspace_id', workspaceId)
+    .eq('doc_type', 'preventivo')
+  if (error) {
+    // Rollback: la TD02 torna nel cestino. Senza l'incasso sul preventivo
+    // racconterebbe un pagamento che l'app non ha.
+    console.error('[acconto] ripristino: incasso sul preventivo non scritto:', error, esito.preventivoId)
+    await supabase
+      .from('documents')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', documentId)
+      .eq('workspace_id', workspaceId)
+    return { error: 'Non sono riuscito a rimettere l’acconto sul preventivo: la fattura di acconto resta nel cestino. Riprova.' }
+  }
+  revalidatePath(`/preventivi/${esito.preventivoId}`)
+  revalidatePath('/bilancio')
+  revalidatePath('/dashboard')
   return {}
 }
 

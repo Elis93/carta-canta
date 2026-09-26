@@ -662,6 +662,13 @@ trasmessa non si elimina più.)* Il nostro riassunto dalle fonti, da confermare:
 - ② **Importo fatturato PIÙ BASSO dell'incasso vero**: qui non c'è scelta, confermi? La parte
   incassata e non fatturata è un'operazione effettuata (art. 6 c.4, pagamento) → serve
   **un'altra fattura di acconto** per la differenza, entro 12 giorni dall'incasso.
+- ①-bis (dall'**interpello 488/2022**, letto per intero il 26 set): se l'acconto era giusto
+  quando è stato fatturato e **a fine lavoro risulta più alto del lavoro vero** (il lavoro
+  alla fine vale meno), l'Agenzia dice che NON è un errore di fatturazione ma una variazione
+  prevista dall'accordo → **art. 26 c.2**, nota entro la dichiarazione IVA dell'anno in cui
+  succede, con l'aliquota della fattura di acconto. Il termine di un anno (c.3) resta per
+  l'errore vero (importo scritto sbagliato). Confermi che la distinzione vale anche per un
+  artigiano con un preventivo (l'interpello riguarda un contratto quadro fra imprese)?
 - ③ **Il lavoro salta e l'acconto viene restituito**: nota di credito TD04 sull'intera
   fattura di acconto, **dopo** la restituzione (art. 26 c.2). Confermi?
 - ④ Nel **forfettario** cambia qualcosa (bollo sulla nota, quote)? Per noi la nota di

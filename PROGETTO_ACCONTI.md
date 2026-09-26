@@ -348,9 +348,21 @@ Motore · PDF (4 preset) · pagina cliente `/p/[token]` · fogli interni · `Fis
 >     (art. 6 c.4: la fattura emessa prima dell'incasso vale per l'importo fatturato) e il
 >     saldo la scomputa per intero (tabellare 2.1.6: `DatiFattureCollegate` ha proprio il
 >     caso d'uso «conguaglio a fronte di precedenti fatture di acconto»; 2.2.1.4 la riga
->     negativa). L'interpello **488/2022** (visto solo in sintesi: il sito AdE è bloccato
->     dal proxy — da leggere se Eli carica il PDF) conferma che in sede di conguaglio degli
->     acconti la riduzione passa da una nota di variazione.
+>     negativa).
+>     📄 **Interpello 488/2022 LETTO (PDF caricato da Eli, 26 set)** — cosa dice davvero:
+>     ① gli acconti seguono il regime IVA dell'operazione a cui si riferiscono; il criterio
+>     di ripartizione fra regimi diversi lo sceglie il contribuente, purché «oggettivo,
+>     coerente… e obiettivamente verificabile» (conferma la nostra ripartizione
+>     proporzionale 71/E §5.2); ② ⚠️ **distingue due casi che noi avevamo messo insieme**:
+>     se l'acconto era GIUSTO quando è stato fatturato e a consuntivo risulta eccedente
+>     (il lavoro alla fine vale meno), NON è un errore di fatturazione (art. 21 c.7 +
+>     26 c.3, termine di un anno) ma una variazione prevista dall'accordo → **art. 26
+>     c.2**, con la nota emessa entro la dichiarazione IVA dell'anno in cui si verifica
+>     il presupposto (circ. 20/E/2021); il termine di UN ANNO resta invece per l'errore
+>     vero (importo digitato sbagliato). ③ La nota riprende l'aliquota della fattura di
+>     acconto che rettifica. ⚠️ È una risposta a UN contribuente (grande impresa,
+>     contratto quadro con conguaglio annuale), non una circolare: vale come
+>     orientamento, la conferma resta a N22.
 >   · **fatturato MENO dell'incassato** → nessuna delle due: la parte incassata non
 >     fatturata è un'operazione effettuata (art. 6 c.4, pagamento) e richiede **un'altra
 >     TD02** per la differenza, entro 12 giorni. È il caso degli acconti multipli (Fase 3).

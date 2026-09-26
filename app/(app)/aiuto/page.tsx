@@ -723,7 +723,10 @@ const FAQ: Array<{ q: string; a: React.ReactNode; parole?: string[]; id?: string
       Non si modifica e non ha «Segna pagata»: l&rsquo;incasso vive sul preventivo. Se
       l&rsquo;importo è <b>sbagliato</b>, elimina la fattura di acconto (dal suo menu o dalla
       pagina): l&rsquo;acconto sul preventivo <b>si azzera</b>{' '}e puoi registrarlo di nuovo
-      con la cifra giusta. Una fattura di acconto <b>già trasmessa</b>{' '}allo SdI invece è
+      con la cifra giusta. Se la ripristini dal cestino, l&rsquo;acconto torna sul
+      preventivo; l&rsquo;app lo impedisce se nel frattempo sul preventivo hai registrato un
+      altro acconto o fatto la fattura, perché l&rsquo;incasso verrebbe contato due volte.
+      Una fattura di acconto <b>già trasmessa</b>{' '}allo SdI invece è
       emessa: non si elimina — parlane col commercialista.</>,
   },
   {
